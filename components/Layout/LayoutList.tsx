@@ -1,4 +1,5 @@
 import AppLayout from "@/components/Layout/AppLayout/Layout";
+import AssetInventoryLayout from "@/components/Layout/AssetInventoryLayout/Layout";
 import HomeLayout from "@/components/Layout/HomeLayout/Layout";
 import NoLayout from "@/components/Layout/NoLayout/Layout";
 import OnboardingLayout from "@/components/Layout/OnboardingLayout/Layout";
@@ -10,6 +11,7 @@ export const Layouts = {
   APP: AppLayout,
   ONBOARDING: OnboardingLayout,
   NOLAYOUT: NoLayout,
+  INVENTORY: AssetInventoryLayout,
 };
 
 export type LayoutKeys = keyof typeof Layouts;
