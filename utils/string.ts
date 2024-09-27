@@ -181,11 +181,15 @@ export const pesoFormatter = (value: string | undefined) =>
     : "₱ ";
 
 export const capitalizeEachWord = (value: string) => {
-  const words = value.split(" ");
+  const words = value
+    .trim()
+    .replace(/\s\s+/g, " ")
+    .toLocaleLowerCase()
+    .split(" ");
   for (let i = 0; i < words.length; i++) {
-    words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+    words[i] =
+      words[i][0].toUpperCase() + words[i].substring(1, words[i].length);
   }
-
   return words.join(" ");
 };
 

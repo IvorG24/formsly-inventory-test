@@ -20455,7 +20455,7 @@ USING (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT team_member_team_id
+    SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE 
@@ -20478,7 +20478,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT team_member_team_id
+    SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE 
