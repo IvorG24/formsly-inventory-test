@@ -1,4 +1,5 @@
 import {
+  OptionType,
   RequestListFilterValues,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -18,14 +19,17 @@ import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import FormEventModal from "../FormButton";
 
 type RequestListFilterProps = {
   formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
+  userId: string;
   handleFilterForms: () => void;
   localFilter: RequestListFilterValues;
   setLocalFilter: Dispatch<SetStateAction<RequestListFilterValues>>;
   projectList: TeamProjectTableRow[];
+  eventOptions: OptionType[];
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
 };
@@ -41,10 +45,12 @@ type FilterSelectedValuesType = {
 
 const AssetListFilter = ({
   formList,
+  eventOptions,
   teamMemberList,
   handleFilterForms,
   localFilter,
   setLocalFilter,
+  userId,
   projectList,
   showTableColumnFilter,
   setShowTableColumnFilter,
@@ -62,7 +68,11 @@ const AssetListFilter = ({
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const { ref: projectRef, focused: projectRefFocused } = useFocusWithin();
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null); // State to track selected event ID
 
+  const handleSelectChange = (value: string | null) => {
+    setSelectedEventId(value); // Update state with selected event ID
+  };
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       form: [],
@@ -118,6 +128,9 @@ const AssetListFilter = ({
 
   return (
     <>
+      {selectedEventId && (
+        <FormEventModal userId={userId} eventId={selectedEventId} />
+      )}
       <Flex
         gap="sm"
         wrap="wrap"
@@ -174,10 +187,8 @@ const AssetListFilter = ({
         <Group>
           <Select
             placeholder="More Actions"
-            data={[
-              { value: "Check In", label: "Check In" },
-              { value: "Check Out", label: "Check Out" },
-            ]}
+            data={eventOptions}
+            onChange={handleSelectChange}
           />
         </Group>
       </Flex>

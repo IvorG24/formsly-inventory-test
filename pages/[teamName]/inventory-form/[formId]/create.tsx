@@ -9,7 +9,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ user, context, supabaseClient }) => {
     try {
       const { data, error } = await supabaseClient.rpc(
-        "create_request_page_on_load",
+        "create_inventory_request_page_on_load",
         {
           input_data: {
             formId: context.query.formId,

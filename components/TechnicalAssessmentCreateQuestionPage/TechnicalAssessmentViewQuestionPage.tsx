@@ -474,13 +474,11 @@ const TechnicalAssessmentCreateQuestionPage = ({
                                 label={`${String.fromCharCode(
                                   65 + choiceIndex
                                 )} )`}
-                                mt={24}
                                 onChange={() =>
                                   handleRadioChange(questionIndex, choiceIndex)
                                 }
                               />
                               <TextInput
-                                label={`Question Choice ${choiceIndex + 1}`}
                                 required={
                                   choiceIndex === 0 || choiceIndex === 1
                                 }

@@ -53,6 +53,7 @@ import {
   HRProjectType,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
+  InventoryFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
@@ -7155,4 +7156,33 @@ export const getQuestionnaireDetails = async (
     questionnaire_name: string;
     questionnaire_date_created: string;
   };
+};
+
+export const getInventoryFormDetails = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    eventId: string;
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("modal_form_on_load", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as InventoryFormType;
+};
+
+export const getEventDetails = async (
+  supabaseClient: SupabaseClient<Database>,
+  teamId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("event_table")
+    .select("event_id,event_name")
+    .eq("event_team_id", teamId);
+  if (error) throw error;
+
+  return data;
 };

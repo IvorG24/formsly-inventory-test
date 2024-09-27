@@ -1,4 +1,4 @@
-import { getRequestList } from "@/backend/api/get";
+import { getEventDetails, getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
@@ -8,6 +8,7 @@ import {
 } from "@/utils/constant";
 
 import {
+  OptionType,
   RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
@@ -25,15 +26,11 @@ import AssetListTable from "./AssetListTable";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
-  isFormslyTeam: boolean;
+  userId: string;
   projectList: TeamProjectTableRow[];
 };
 
-const AssetListPage = ({
-  teamMemberList,
-  isFormslyTeam,
-  projectList,
-}: Props) => {
+const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -42,6 +39,7 @@ const AssetListPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
+  const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<RequestListFilterValues>({
       key: "request-list-filter",
@@ -189,8 +187,24 @@ const AssetListPage = ({
   };
 
   useEffect(() => {
+    const getEventOptions = async () => {
+      if (!activeTeam.team_id) return;
+      const eventOptions = await getEventDetails(
+        supabaseClient,
+        activeTeam.team_id
+      );
+
+      const initialEventOptions: OptionType[] = eventOptions.map((event) => ({
+        label: event.event_name,
+        value: event.event_id,
+      }));
+
+      setOptionsEvent(initialEventOptions);
+    };
+
+    getEventOptions();
     handlePagination(activePage);
-  }, [activeTeam.team_id, teamMember]);
+  }, [activeTeam.team_id]);
 
   return (
     <Container maw={3840} h="100%">
@@ -204,6 +218,8 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              userId={userId}
+              eventOptions={optionsEvent}
               teamMemberList={teamMemberList}
               handleFilterForms={handleFilterForms}
               formList={filteredFormList}

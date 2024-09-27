@@ -1,3 +1,4 @@
+import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -8,13 +9,21 @@ import {
   InventoryFormType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  Space,
+  Stack,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
-
 import InventoryFormSection from "./InventoryFormSection";
 
 export type Section = InventoryFormResponseType["form_section"][0];
@@ -44,12 +53,12 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
-  //   const formDetails = {
-  //     form_name: form.form_name,
-  //     form_description: form.form_description,
-  //     form_date_created: form.form_date_created,
-  //     form_team_member: form.form_team_member,
-  //   };
+  const formDetails = {
+    form_name: form.form_name,
+    form_description: form.form_description,
+    form_date_created: form.form_date_created,
+    form_team_member: form.form_team_member,
+  };
 
   const requestFormMethods = useForm<InventoryFormValues>();
   const { handleSubmit, control, getValues } = requestFormMethods;
@@ -121,52 +130,59 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       return;
     }
   };
+  useEffect(() => {
+    console.log(form);
 
+    replaceSection(form.form_section);
+  }, [form]);
   return (
     <Container>
       <Title order={2} color="dimmed">
         Create Asset
       </Title>
-      <Space h="xl" />
-      <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
-          <Stack spacing="xl">
-            {formSections.map((section, idx) => {
-              const sectionIdToFind = section.section_id;
-              const sectionLastIndex = getValues("sections")
-                .map((sectionItem) => sectionItem.section_id)
-                .lastIndexOf(sectionIdToFind);
+      <Space h="md" />
+      <Paper>
+        <FormProvider {...requestFormMethods}>
+          <form onSubmit={handleSubmit(handleCreateRequest)}>
+            <RequestFormDetails formDetails={formDetails} />
+            <Stack spacing="xl">
+              {formSections.map((section, idx) => {
+                const sectionIdToFind = section.section_id;
+                const sectionLastIndex = getValues("sections")
+                  .map((sectionItem) => sectionItem.section_id)
+                  .lastIndexOf(sectionIdToFind);
 
-              return (
-                <Box key={section.id}>
-                  <InventoryFormSection
-                    key={section.section_id}
-                    section={section}
-                    sectionIndex={idx}
-                    onRemoveSection={handleRemoveSection}
-                    formslyFormName={formslyFormName}
-                  />
-                  {section.section_is_duplicatable &&
-                    idx === sectionLastIndex && (
-                      <Button
-                        mt="md"
-                        variant="default"
-                        onClick={() =>
-                          handleDuplicateSection(section.section_id)
-                        }
-                        fullWidth
-                      >
-                        {section.section_name} +
-                      </Button>
-                    )}
-                </Box>
-              );
-            })}
+                return (
+                  <Box key={section.id}>
+                    <InventoryFormSection
+                      key={section.section_id}
+                      section={section}
+                      sectionIndex={idx}
+                      onRemoveSection={handleRemoveSection}
+                      formslyFormName={formslyFormName}
+                    />
+                    {section.section_is_duplicatable &&
+                      idx === sectionLastIndex && (
+                        <Button
+                          mt="md"
+                          variant="default"
+                          onClick={() =>
+                            handleDuplicateSection(section.section_id)
+                          }
+                          fullWidth
+                        >
+                          {section.section_name} +
+                        </Button>
+                      )}
+                  </Box>
+                );
+              })}
 
-            <Button type="submit">Submit</Button>
-          </Stack>
-        </form>
-      </FormProvider>
+              <Button type="submit">Submit</Button>
+            </Stack>
+          </form>
+        </FormProvider>
+      </Paper>
     </Container>
   );
 };

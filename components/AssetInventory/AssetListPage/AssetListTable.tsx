@@ -109,69 +109,69 @@ const AssetListTable = ({
       setSelectedRows([]);
     }
   };
-  const dummyData: RequestListItemType[] = [
-    {
-      request_id: "1",
-      request_formsly_id: "12345-abc",
-      request_date_created: "2024-09-26T04:36:00Z",
-      request_status: "Check out",
-      request_jira_id: "JIRA-001",
-      request_jira_link: "https://jira.example.com/browse/JIRA-001",
-      request_otp_id: "OTP-12345",
-      request_form_id: "form-12345",
-      request_team_member_id: "321",
-      request_signer: [
-        {
-          request_signer: {
-            signer_is_primary_signer: true,
-            signer_team_member_id: "",
-          },
-          request_signer_id: "",
-          request_signer_status: "Check Out",
-        },
-      ],
-      user_id: "123",
-      user_first_name: "Mark",
-      user_last_name: "Ivor Glorioso",
-      user_avatar: "https://example.com/avatar.jpg", // Optional
-      form_name: "This is a sample item",
-      request_is_with_view_indicator: true,
-      request_is_with_progress_indicator: false,
-    },
-    {
-      request_id: "1",
-      request_formsly_id: "12345-efg",
-      request_date_created: "2024-09-26T04:36:00Z",
-      request_status: "Check In",
-      request_jira_id: "JIRA-001",
-      request_jira_link: "https://jira.example.com/browse/JIRA-001",
-      request_otp_id: "OTP-12345",
-      request_form_id: "form-12345",
-      request_team_member_id: "321",
-      request_signer: [
-        {
-          request_signer: {
-            signer_is_primary_signer: true,
-            signer_team_member_id: "",
-          },
-          request_signer_id: "",
-          request_signer_status: "Check Out",
-        },
-      ],
-      user_id: "123",
-      user_first_name: "Mark",
-      user_last_name: "Ivor Glorioso",
-      user_avatar: "https://example.com/avatar.jpg", // Optional
-      form_name: "This is a sample item",
-      request_is_with_view_indicator: true,
-      request_is_with_progress_indicator: false,
-    },
-  ];
+  //   const dummyData: RequestListItemType[] = [
+  //     {
+  //       request_id: "1243123",
+  //       request_formsly_id: "12345-abc",
+  //       request_date_created: "2024-09-26T04:36:00Z",
+  //       request_status: "Check out",
+  //       request_jira_id: "JIRA-001",
+  //       request_jira_link: "https://jira.example.com/browse/JIRA-001",
+  //       request_otp_id: "OTP-12345",
+  //       request_form_id: "form-12345",
+  //       request_team_member_id: "321",
+  //       request_signer: [
+  //         {
+  //           request_signer: {
+  //             signer_is_primary_signer: true,
+  //             signer_team_member_id: "",
+  //           },
+  //           request_signer_id: "",
+  //           request_signer_status: "Check Out",
+  //         },
+  //       ],
+  //       user_id: "123",
+  //       user_first_name: "Mark",
+  //       user_last_name: "Ivor Glorioso",
+  //       user_avatar: "https://example.com/avatar.jpg", // Optional
+  //       form_name: "This is a sample item",
+  //       request_is_with_view_indicator: true,
+  //       request_is_with_progress_indicator: false,
+  //     },
+  //     {
+  //       request_id: "1",
+  //       request_formsly_id: "12345-efg",
+  //       request_date_created: "2024-09-26T04:36:00Z",
+  //       request_status: "Check In",
+  //       request_jira_id: "JIRA-001",
+  //       request_jira_link: "https://jira.example.com/browse/JIRA-001",
+  //       request_otp_id: "OTP-12345",
+  //       request_form_id: "form-12345",
+  //       request_team_member_id: "321",
+  //       request_signer: [
+  //         {
+  //           request_signer: {
+  //             signer_is_primary_signer: true,
+  //             signer_team_member_id: "",
+  //           },
+  //           request_signer_id: "",
+  //           request_signer_status: "Check Out",
+  //         },
+  //       ],
+  //       user_id: "123",
+  //       user_first_name: "Mark",
+  //       user_last_name: "Ivor Glorioso",
+  //       user_avatar: "https://example.com/avatar.jpg", // Optional
+  //       form_name: "This is a sample item",
+  //       request_is_with_view_indicator: true,
+  //       request_is_with_progress_indicator: false,
+  //     },
+  //   ];
 
   return (
     <ListTable
       idAccessor="request_id"
-      records={dummyData}
+      records={requestList}
       fetching={isFetchingRequestList}
       page={activePage}
       onPageChange={(page) => {

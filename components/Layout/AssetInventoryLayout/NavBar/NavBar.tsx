@@ -256,7 +256,7 @@ const Navbar = () => {
           <Button
             onClick={() => {
               router.push(
-                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory-form/1/create`
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
               );
             }}
             leftIcon={<IconCirclePlus size={26} />}

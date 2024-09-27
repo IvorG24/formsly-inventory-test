@@ -14,6 +14,7 @@ import InventoryFormFields from "./InventoryFormFields";
 type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
+  type?: "Modal" | "Form"; // Add type prop
   onRemoveSection?: (sectionDuplicatableId: string) => void;
   formslyFormName?: string;
   isEdit?: boolean;
@@ -27,12 +28,45 @@ const InventoryFormSection = ({
   formslyFormName = "",
   isEdit,
   loadingFieldList,
+  type = "Form", // Default to 'form' if no type is provided
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
-    section.section_field[0].field_section_duplicatable_id;
+    section.section_field?.[0]?.field_section_duplicatable_id;
 
+  if (type === "Modal") {
+    return (
+      <Stack mt="xl">
+        {section.section_field?.map((field, idx) => {
+          const isLoading = Boolean(
+            loadingFieldList?.find(
+              (loadingField) =>
+                loadingField.sectionIndex === sectionIndex &&
+                loadingField.fieldIndex === idx
+            )
+          );
+
+          return (
+            <InventoryFormFields
+              key={field.field_id + section.section_id}
+              field={{
+                ...field,
+                options: field.field_option ? field.field_option : [],
+                field_section_duplicatable_id:
+                  field.field_section_duplicatable_id,
+              }}
+              sectionIndex={sectionIndex}
+              fieldIndex={idx}
+              isEdit={isEdit}
+              isLoading={isLoading}
+              formslyFormName={formslyFormName}
+            />
+          );
+        })}
+      </Stack>
+    );
+  }
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="sm">
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}

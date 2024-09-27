@@ -10,11 +10,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ user, supabaseClient }) => {
     try {
       const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id,
+        userId: user.id, // Retrieve the user ID
       });
 
       return {
-        props: requestListData,
+        props: {
+          ...requestListData,
+          userId: user.id, // Pass userId as a prop
+        },
       };
     } catch (e) {
       return {
@@ -26,20 +29,21 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
+
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
-  isFormslyTeam: boolean;
+  userId: string; // Include userId in the props
   projectList: TeamProjectTableRow[];
 };
 
-const Page = ({ teamMemberList, isFormslyTeam, projectList }: Props) => {
+const Page = ({ teamMemberList, userId, projectList }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/teamName/inventory" />
       <AssetListPage
         teamMemberList={teamMemberList}
-        isFormslyTeam={isFormslyTeam}
         projectList={projectList}
+        userId={userId} // Pass userId to the AssetListPage component if needed
       />
     </>
   );
