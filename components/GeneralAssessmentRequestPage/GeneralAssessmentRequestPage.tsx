@@ -8,13 +8,12 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
+import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -29,12 +28,10 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
-  Accordion,
   Alert,
   Button,
   Container,
   Flex,
-  Paper,
   Stack,
   Text,
   Title,
@@ -53,7 +50,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const OnlineApplicationRequestPage = ({ request }: Props) => {
+const GeneralAssessmentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { colors } = useMantineTheme();
@@ -83,11 +80,11 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
     request.request_form.form_section
   );
 
-  const isWithDuplicatableSection = request.request_form.form_section.some(
-    (section) =>
-      section.section_is_duplicatable &&
-      section.section_field[0].field_response.length
-  );
+  // const isWithDuplicatableSection = request.request_form.form_section.some(
+  //   (section) =>
+  //     section.section_is_duplicatable &&
+  //     section.section_field[0].field_response.length
+  // );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -352,26 +349,26 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = false;
-  // request.request_status === "APPROVED" &&
-  // user?.user_email ===
-  //   safeParse(
-  //     request.request_form.form_section[1].section_field[0].field_response[0]
-  //       .request_response ?? ""
-  //   ) &&
-  // request.isWithNextStep;
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[1].section_field[0].field_response[0]
+          .request_response ?? ""
+      ) &&
+    request.isWithNextStep;
 
   return (
     <Container>
       <JoyRideNoSSR
         steps={[
           {
-            target: ".onboarding-create-team",
+            target: ".next-step",
             content: (
               <Text>
-                You can now continue with the online assessment since your
-                online application has been accepted. To continue, simply click
-                the &ldquo;Next Step&ldquo; button.
+                You passed the general assessment, you can now continue with the
+                technical assessment. To continue, simply click the &ldquo;Next
+                Step&ldquo; button.
               </Text>
             ),
             disableBeacon: true,
@@ -407,10 +404,10 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="onboarding-create-team"
+            className="next-step"
             onClick={() =>
               router.push(
-                `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?onlineApplicationId=${request.request_formsly_id}`
+                `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?generalAssessmentId=${request.request_formsly_id}`
               )
             }
           >
@@ -428,14 +425,8 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
         />
 
-        <Stack spacing="xl" mt="lg">
+        <Stack spacing="xl">
           {formSection.map((section, idx) => {
-            if (
-              !section.section_field[0].field_response ||
-              section.section_is_duplicatable ||
-              section.section_name === "Resume"
-            )
-              return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -447,38 +438,6 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
               />
             );
           })}
-
-          {isWithDuplicatableSection && (
-            <Accordion>
-              <Accordion.Item value={"workExperience"}>
-                <Paper shadow="xs">
-                  <Accordion.Control>
-                    <Title order={4} color="dimmed">
-                      Most Recent Work Experience
-                    </Title>
-                  </Accordion.Control>
-                </Paper>
-                <Accordion.Panel>
-                  <Stack spacing="xl" mt="lg">
-                    {formSection
-                      .filter((section) => section.section_is_duplicatable)
-                      .map((section, index) => {
-                        return (
-                          <RequestSection
-                            key={section.section_id + index}
-                            section={section}
-                            isFormslyForm={true}
-                            isOnlyWithResponse
-                            index={index + 1}
-                            isPublicRequest={true}
-                          />
-                        );
-                      })}
-                  </Stack>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
-          )}
         </Stack>
 
         {isRequestActionSectionVisible && (
@@ -502,8 +461,8 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
-
-        <RequestSignerSection signerList={signerList} />
+        {/* 
+        <RequestSignerSection signerList={signerList} /> */}
       </Stack>
 
       <RequestCommentList
@@ -519,4 +478,4 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
   );
 };
 
-export default OnlineApplicationRequestPage;
+export default GeneralAssessmentRequestPage;

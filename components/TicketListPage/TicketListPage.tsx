@@ -240,7 +240,7 @@ const TicketListPage = ({
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
           <Title order={4}>Ticket List Page</Title>
-          <Text> Manage your team requests here.</Text>
+          <Text> Manage your team tickets here.</Text>
         </Box>
 
         {["ADMIN", "OWNER"].includes(teamMember?.team_member_role ?? "") && (

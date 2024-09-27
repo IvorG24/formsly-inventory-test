@@ -1,4 +1,7 @@
-import { getApproverRequestCount } from "@/backend/api/get";
+import {
+  getApproverRequestCount,
+  getHRIndicatorCount,
+} from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
@@ -25,23 +28,43 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconBriefcase,
+  IconCode,
   IconDashboard,
   IconFile,
+  IconFileCertificate,
   IconFileDescription,
   IconFilePlus,
   IconFileReport,
   IconFileStack,
   IconFileText,
   IconFiles,
+  IconInfoCircle,
   IconListDetails,
+  IconPhoneCall,
+  IconQuestionMark,
   IconReportAnalytics,
   IconSettingsAutomation,
+  IconShieldCheck,
+  IconTerminal,
   IconTicket,
+  IconTools,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import NavLinkSection from "./NavLinkSection";
+
+type HRIndicatorCountType = {
+  applicationInformation: number;
+  hrPhoneInterview: number;
+  tradeTest: number;
+  technicalInterview1: number;
+  technicalInterview2: number;
+  directorInterview: number;
+  backgroundCheck: number;
+  jobOffer: number;
+};
 
 const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
@@ -49,6 +72,16 @@ const ReviewAppNavLink = () => {
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
+  const [hrIndicatorCount, setHrIndicatorCount] = useState({
+    applicationInformation: 0,
+    hrPhoneInterview: 0,
+    tradeTest: 0,
+    technicalInterview1: 0,
+    technicalInterview2: 0,
+    directorInterview: 0,
+    backgroundCheck: 0,
+    jobOffer: 0,
+  });
 
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -60,6 +93,7 @@ const ReviewAppNavLink = () => {
   const activeTeamNameToUrl = formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   );
+  const teamMemberGroup = useUserTeamMemberGroupList();
   const teamMemberGroups = useUserTeamMemberGroupList();
 
   const router = useRouter();
@@ -403,6 +437,106 @@ const ReviewAppNavLink = () => {
     // },
   ];
 
+  const hrSection = [
+    {
+      label: `Application Information`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconInfoCircle {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/application-information-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.applicationInformation),
+      indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
+    },
+    {
+      label: `HR Phone Interview`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconPhoneCall {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/hr-phone-interview-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.hrPhoneInterview),
+      indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
+    },
+    {
+      label: `Trade Test`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTools {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.tradeTest),
+      indicatorLabel: `${hrIndicatorCount.tradeTest}`,
+    },
+    {
+      label: `Technical Interview 1`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconCode {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/technical-interview-1-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.technicalInterview1),
+      indicatorLabel: `${hrIndicatorCount.technicalInterview1}`,
+    },
+    {
+      label: `Technical Interview 2`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTerminal {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
+      indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
+    },
+    {
+      label: `Director Interview`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconBriefcase {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/director-interview-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.directorInterview),
+      indicatorLabel: `${hrIndicatorCount.directorInterview}`,
+    },
+    {
+      label: `Background Check`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconShieldCheck {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/background-check-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.backgroundCheck),
+      indicatorLabel: `${hrIndicatorCount.backgroundCheck}`,
+    },
+    {
+      label: `Job Offer`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileCertificate {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.jobOffer),
+      indicatorLabel: `${hrIndicatorCount.jobOffer}`,
+    },
+    {
+      label: `Questionnaire List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconQuestionMark {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/technical-question`,
+    },
+  ];
+
   // const teamSection = [
   //   {
   //     label: "Create Team",
@@ -441,11 +575,22 @@ const ReviewAppNavLink = () => {
 
       setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
-    if (
-      userTeamMemberData &&
-      userTeamMemberData.team_member_role === "APPROVER"
-    ) {
-      fetchApproverRequestCount(userTeamMemberData);
+    const fetchHrIndicatorCount = async (
+      userTeamMemberData: TeamMemberTableRow
+    ) => {
+      const count = await getHRIndicatorCount(supabaseClient, {
+        teamMemberId: userTeamMemberData.team_member_id,
+      });
+
+      setHrIndicatorCount(count as HRIndicatorCountType);
+    };
+    if (userTeamMemberData) {
+      if (userTeamMemberData.team_member_role === "APPROVER") {
+        fetchApproverRequestCount(userTeamMemberData);
+      }
+      if (teamMemberGroup.includes("HUMAN RESOURCES")) {
+        fetchHrIndicatorCount(userTeamMemberData);
+      }
     }
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
 
@@ -459,6 +604,17 @@ const ReviewAppNavLink = () => {
           // />
           renderMetricsMenu()
         : null}
+
+      {!isEmpty(activeTeam) &&
+        hasTeam &&
+        (teamMemberGroup.includes("HUMAN RESOURCES") ||
+          teamMemberGroup.includes("HUMAN RESOURCES VIEWER")) && (
+          <NavLinkSection
+            label={"Human Resources"}
+            links={hrSection}
+            {...defaultNavLinkProps}
+          />
+        )}
 
       {itemForm &&
       itemForm.form_is_hidden === false &&

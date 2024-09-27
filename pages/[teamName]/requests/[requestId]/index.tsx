@@ -1,6 +1,8 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
+import ApplicationInformationV1RequestPage from "@/components/ApplicationInformationV1RequestPage/ApplicationInformationV1RequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
+import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -17,6 +19,7 @@ import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestP
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import TechnicalAssessmentRequestPage from "@/components/TechnicalAssessmentRequestPage/TechnicalAssessmentRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -171,8 +174,16 @@ const Page = ({
       request.request_form.form_name === "Petty Cash Voucher Balance"
     ) {
       return <PettyCashVoucherBalanceRequestPage request={request} />;
+    } else if (
+      request.request_form.form_name === "Application Information v1"
+    ) {
+      return <ApplicationInformationV1RequestPage request={request} />;
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "General Assessment") {
+      return <GeneralAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Technical Assessment") {
+      return <TechnicalAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

@@ -1,7 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getPositionType,
-  getRequestAdOwner,
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
@@ -10,14 +8,13 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { JoyRideNoSSR, safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
@@ -44,6 +41,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import RequestSignerSection from "../RequestPage/RequestSignerSection";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 type Props = {
   request: RequestWithResponseType;
@@ -52,6 +51,7 @@ type Props = {
 const ApplicationInformationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+
   const { colors } = useMantineTheme();
   const { setIsLoading } = useLoadingActions();
   const [isNoteClosed, setIsNoteClosed] = useState(false);
@@ -71,10 +71,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [requestJira, setRequestJira] = useState({
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  });
+
   const formSection = generateSectionWithDuplicateList(
     request.request_form.form_section
   );
@@ -94,11 +91,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
-  const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
-  ) => {
+  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -129,9 +122,57 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         teamId: request.request_team_member.team_member_team_id,
         requestFormslyId: request.request_formsly_id,
         userId,
-        jiraId,
-        jiraLink,
       });
+
+      if (status === "APPROVED") {
+        const emailAddress = safeParse(
+          `${formSection[2].section_field[1].field_response?.request_response}`
+        );
+        const firstName = safeParse(
+          `${formSection[1].section_field[0].field_response?.request_response}`
+        );
+        const lastName = safeParse(
+          `${formSection[1].section_field[2].field_response?.request_response}`
+        );
+
+        const requestLink = `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${request.request_formsly_id}`;
+
+        const emailNotificationProps: {
+          to: string;
+          subject: string;
+        } & EmailNotificationTemplateProps = {
+          to: emailAddress,
+          subject: `Application Information | Sta. Clara International Corporation`,
+          greetingPhrase: `Dear ${startCase(firstName)} ${startCase(
+            lastName
+          )},`,
+          message: `
+              <p>
+                We are pleased to inform you that your application has been
+                received. You may now proceed to the{" "}
+                <strong>General Assessment</strong> by clicking the link below.
+              </p>
+              <p>
+                <a href=${requestLink}>${requestLink}</a>
+              </p>
+              <p>
+                To get started, please create an account with Formsly. We
+                recommend signing up using your Google account for a smoother
+                process. If you need any assistance, feel free to contact us at
+                recruitment@staclara.com.ph.
+              </p>
+          `,
+          closingPhrase: "Best regards,",
+          signature: "Sta. Clara International Corporation Recruitment Team",
+        };
+        await fetch("/api/resend/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailNotificationProps),
+        });
+      }
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,
@@ -263,114 +304,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const onCreateJiraTicket = async () => {
-    try {
-      setIsLoading(true);
-
-      let candidateSource = "";
-      const adOwner = await getRequestAdOwner(
-        supabaseClient,
-        request.request_id
-      );
-
-      if (
-        adOwner?.ad_owner.ad_owner_name &&
-        adOwner?.ad_owner.ad_owner_name === "lgu"
-      ) {
-        candidateSource = adOwner?.ad_owner.ad_owner_name.toUpperCase();
-      } else {
-        candidateSource = safeParse(
-          `${formSection[0].section_field[3].field_response?.request_response}`
-        );
-      }
-
-      const personalInformationSection = formSection[1].section_field;
-      const firstName = safeParse(
-        `${personalInformationSection[0].field_response?.request_response}`
-      );
-      const middleName = personalInformationSection[1].field_response
-        ?.request_response
-        ? safeParse(
-            personalInformationSection[1].field_response?.request_response
-          )
-        : "";
-      const lastName = safeParse(
-        `${personalInformationSection[2].field_response?.request_response}`
-      );
-      let applicantName = `${lastName}, ${firstName}`;
-      if (middleName) {
-        applicantName = applicantName + ` ${middleName}`;
-      }
-
-      const applicantPosition = safeParse(
-        `${formSection[0].section_field[0].field_response?.request_response}`
-      );
-      const positionType = await getPositionType(
-        supabaseClient,
-        applicantPosition
-      );
-      const sssID = safeParse(
-        `${formSection[3].section_field[0].field_response?.request_response}`
-      );
-      const contactNumber = safeParse(
-        `${formSection[2].section_field[0].field_response?.request_response}`
-      );
-      const emailAddress = safeParse(
-        `${formSection[2].section_field[1].field_response?.request_response}`
-      );
-      const employmentStatus = safeParse(
-        `${formSection[5].section_field[0].field_response?.request_response}`
-      );
-      const isExperienced = formSection.some(
-        (section) => section.section_name === "Most Recent Work Experience"
-      );
-
-      const createTicketResponse = await fetch(
-        "/api/jira/create-recruitment-ticket",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicantName,
-            applicantPosition,
-            positionType,
-            sssID,
-            contactNumber,
-            emailAddress,
-            candidateSource,
-            employmentStatus,
-            isExperienced,
-          }),
-        }
-      );
-      const jiraTicket = await createTicketResponse.json();
-
-      if (!jiraTicket.jiraTicketId) {
-        notifications.show({
-          message: "Failed to create jira ticket",
-          color: "red",
-        });
-        return;
-      }
-      setRequestJira({
-        id: jiraTicket.jiraTicketId,
-        link: jiraTicket.jiraTicketLink,
-      });
-      return jiraTicket;
-    } catch (e) {
-      const errorMessage = (e as Error).message;
-      notifications.show({
-        message: `Error: ${errorMessage}`,
-        color: "red",
-      });
-      return { jiraTicketId: "", jiraTicketLink: "" };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     try {
       const fetchComments = async () => {
@@ -415,25 +348,25 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = false;
-  // request.request_status === "APPROVED" &&
-  // user?.user_email ===
-  //   safeParse(
-  //     request.request_form.form_section[2].section_field[1].field_response[0]
-  //       .request_response ?? ""
-  //   ) &&
-  // request.isWithNextStep;
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[2].section_field[1].field_response[0]
+          .request_response ?? ""
+      ) &&
+    request.isWithNextStep;
 
   return (
     <Container>
       <JoyRideNoSSR
         steps={[
           {
-            target: ".onboarding-create-team",
+            target: ".next-step",
             content: (
               <Text>
-                You can now continue with the online application since your
-                application information has been accepted. To continue, simply
+                You can now continue with the general assessment since your
+                application information has been approved. To continue, simply
                 click the &ldquo;Next Step&ldquo; button.
               </Text>
             ),
@@ -470,7 +403,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="onboarding-create-team"
+            className="next-step"
             onClick={() =>
               router.push(
                 `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`
@@ -488,7 +421,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
-          requestJira={requestJira}
         />
 
         <Stack spacing="xl" mt="lg">
@@ -569,11 +501,11 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             requestId={request.request_id}
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
-            onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
-
-        <RequestSignerSection signerList={signerList} />
+        {!router.pathname.includes("/user/requests/") && (
+          <RequestSignerSection signerList={signerList} />
+        )}
       </Stack>
 
       <RequestCommentList

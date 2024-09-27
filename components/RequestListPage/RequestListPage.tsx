@@ -1,10 +1,7 @@
 import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
@@ -52,7 +49,6 @@ const RequestListPage = ({
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -230,7 +226,7 @@ const RequestListPage = ({
                   )
                 }
               >
-                SSOT Spreadsheet View
+                SSOT
               </Menu.Item>
               <Menu.Item
                 onClick={async () =>
@@ -241,21 +237,8 @@ const RequestListPage = ({
                   )
                 }
               >
-                Liquidation Spreadsheet View
+                Liquidation
               </Menu.Item>
-              {teamMemberGroupList.includes("HUMAN RESOURCES") && (
-                <Menu.Item
-                  onClick={async () =>
-                    await router.push(
-                      `/${formatTeamNameToUrlKey(
-                        activeTeam.team_name
-                      )}/requests/application-information-spreadsheet-view`
-                    )
-                  }
-                >
-                  Application Information Spreadsheet View
-                </Menu.Item>
-              )}
             </Menu.Dropdown>
           </Menu>
         ) : null}

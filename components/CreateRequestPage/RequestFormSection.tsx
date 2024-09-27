@@ -239,6 +239,7 @@ type RequestFormSectionProps = {
       index: number
     ) => void;
     onHighestEducationalAttainmentChange: (value: string | null) => void;
+    onFieldOfStudyChange: (value: string | null) => void;
   };
 };
 

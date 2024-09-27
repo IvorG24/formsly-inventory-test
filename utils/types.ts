@@ -505,10 +505,79 @@ export type PositionTableInsert =
 export type PositionTableUpdate =
   Database["lookup_schema"]["Tables"]["position_table"]["Update"];
 
+export type FieldCorrectResponseTableRow =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Row"];
+export type FieldCorrectResponseTableInsert =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Insert"];
+export type FieldCorrectResponseTableUpdate =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Update"];
+
+export type HRPhoneInterviewTableRow =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Row"];
+export type HRPhoneInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Insert"];
+export type HRPhoneInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Update"];
+
+export type TradeTestTableRow =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Row"];
+export type TradeTestTableInsert =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Insert"];
+export type TradeTestTableUpdate =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Update"];
+
+export type TechnicalInterviewTableRow =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Row"];
+export type TechnicalInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Insert"];
+export type TechnicalInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Update"];
+
+export type DirectorInterviewTableRow =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Row"];
+export type DirectorInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Insert"];
+export type DirectorInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Update"];
+
+export type BackgroundCheckTableRow =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Row"];
+export type BackgroundCheckTableInsert =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Insert"];
+export type BackgroundCheckTableUpdate =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Update"];
+
+export type JobOfferTableRow =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Row"];
+export type JobOfferTableInsert =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Insert"];
+export type JobOfferTableUpdate =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
 export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
+
+export type InterviewOnlineMeetingTableRow =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Row"];
+export type InterviewOnlineMeetingTableInsert =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Insert"];
+export type InterviewOnlineMeetingTableUpdate =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Update"];
+
+export type HRProjectTableRow =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Row"];
+export type HRProjectTableInsert =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Insert"];
+export type HRProjectTableUpdate =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Update"];
+
+export type ErrorTableRow = Database["public"]["Tables"]["error_table"]["Row"];
+export type ErrorTableInsert =
+  Database["public"]["Tables"]["error_table"]["Insert"];
+export type ErrorTableUpdate =
+  Database["public"]["Tables"]["error_table"]["Update"];
 
 export type AdOwnerTableRow =
   Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];
@@ -530,7 +599,8 @@ export type AttachmentBucketType =
   | "REQUEST_ATTACHMENTS"
   | "MEMO_ATTACHMENTS"
   | "TEAM_PROJECT_ATTACHMENTS"
-  | "TICKET_ATTACHMENTS";
+  | "TICKET_ATTACHMENTS"
+  | "JOB_OFFER_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -548,7 +618,8 @@ export type FieldType =
   | "FILE"
   | "DATE"
   | "TIME"
-  | "LINK";
+  | "LINK"
+  | "MULTIPLE CHOICE" | "AUTOCOMPLETE";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
@@ -634,9 +705,9 @@ export type RequestWithResponseType = RequestTableRow & {
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_section_duplicatable_id?: string;
+        field_description?: string;
         field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
-      } & {
         field_options?: OptionTableRow[] | null;
       })[];
     })[];
@@ -777,6 +848,7 @@ export type FormType = {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
       field_section_duplicatable_id?: string;
+      field_correct_response?: FieldCorrectResponseTableRow | null;
     })[];
   })[];
   form_team_group: {
@@ -827,10 +899,12 @@ export type FormWithResponseType = {
   form_section: (SectionTableRow & {
     section_field: (FieldTableRow & {
       field_section_duplicatable_id?: string;
-    } & {
+      field_description?: string;
       field_option: OptionTableRow[];
+      field_correct_response?: FieldCorrectResponseTableRow | null;
       field_response?: unknown;
       field_prefix?: string;
+      field_is_correct?: boolean;
     })[];
   })[];
   form_team_group: {
@@ -1214,7 +1288,8 @@ export type RequestListItemType = {
   user_last_name: string;
   user_avatar: string | null;
   form_name: string;
-  request_is_with_indicator: boolean;
+  request_is_with_view_indicator: boolean;
+  request_is_with_progress_indicator: boolean;
 };
 
 export type ConnectedRequestItemType = {
@@ -2097,8 +2172,10 @@ export type ApplicationInformationSpreadsheetData = {
   request_date_created: string;
   request_status: string;
   request_status_date_updated: string;
+  request_score_value: string;
   request_response_list: (RequestResponseTableRow & { field_id: string })[];
   request_signer_list: RequestListItemSignerType[];
+  request_ad_owner: string;
 };
 
 export type SectionWithFieldType = SectionTableRow & {
@@ -2138,6 +2215,10 @@ export type ApplicationInformationFilterFormValues = {
     status?: string[];
     dateUpdatedRange?: { start?: string; end?: string };
     approver?: string[];
+    requestScoreRange?: {
+      start?: number;
+      end?: number;
+    };
   };
   responseFilter?: {
     position?: string[];
@@ -2175,6 +2256,7 @@ export type ApplicationInformationFilterFormValues = {
     };
     employmentStatus?: string;
     workedAtStaClara?: boolean;
+    shiftWillingToWork?: boolean;
     willingToBeAssignedAnywhere?: boolean;
     regionWillingToBeAssigned?: string[];
     soonestJoiningDate?: {
@@ -2220,10 +2302,226 @@ export type FetchUserRequestListParams = {
   form?: string[];
 };
 
+export type HRSpreadsheetGeneralData = {
+  hr_request_reference_id: string;
+  position: string;
+  application_information_request_id: string;
+  application_information_score: number;
+  general_assessment_request_id: string;
+  general_assessment_score: number;
+  technical_assessment_request_id: string;
+  technical_assessment_score: number;
+  application_information_full_name: string;
+  application_information_contact_number: string;
+  application_information_email: string;
+  assigned_hr: string;
+  assigned_hr_team_member_id: string;
+};
+
+export type HRSpreadsheetGeneralFilterFormValues = {
+  limit?: number;
+  page?: number;
+  sort?: {
+    sortBy: string;
+    order: string;
+  };
+  position?: string;
+  application_information_request_id?: string;
+  application_information_score?: {
+    start?: number;
+    end?: number;
+  };
+  general_assessment_request_id?: string;
+  general_assessment_score?: {
+    start?: number;
+    end?: number;
+  };
+  technical_assessment_request_id?: string;
+  technical_assessment_score?: {
+    start?: number;
+    end?: number;
+  };
+  assigned_hr?: string;
+};
+
+export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  hr_phone_interview_id: string;
+  hr_phone_interview_date_created: string;
+  hr_phone_interview_status: string;
+  hr_phone_interview_schedule: string;
+};
+
+export type HRPhoneInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    hr_phone_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    hr_phone_interview_status?: string;
+    hr_phone_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
+
+export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
+  trade_test_id: string;
+  trade_test_date_created: string;
+  trade_test_status: string;
+  trade_test_schedule: string;
+};
+
+export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
+  trade_test_date_created?: {
+    start?: string;
+    end?: string;
+  };
+  trade_test_status?: string;
+  trade_test_schedule?: {
+    start?: string;
+    end?: string;
+  };
+};
+
+export type TechnicalInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  technical_interview_id: string;
+  technical_interview_date_created: string;
+  technical_interview_status: string;
+  technical_interview_schedule: string;
+};
+
+export type TechnicalInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    technical_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    technical_interview_status?: string;
+    technical_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
+
+export type DirectorInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  director_interview_id: string;
+  director_interview_date_created: string;
+  director_interview_status: string;
+  director_interview_schedule: string;
+};
+
+export type DirectorInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    director_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    director_interview_status?: string;
+    director_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
+
+export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
+  background_check_id: string;
+  background_check_date_created: string;
+  background_check_status: string;
+  application_information_nickname: string;
+};
+
+export type BackgroundCheckFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    background_check_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    background_check_status?: string;
+  };
+
+export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
+  job_offer_id: string;
+  job_offer_date_created: string;
+  job_offer_status: string;
+  job_offer_project_assignment: string;
+  job_offer_attachment: AttachmentTableRow | null;
+};
+
+export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
+  job_offer_date_created?: {
+    start?: string;
+    end?: string;
+  };
+  job_offer_status?: string;
+};
+
+export type JobOfferHistoryType = JobOfferTableRow & {
+  job_offer_attachment: AttachmentTableRow | null;
+  job_offer_reason_for_rejection: string | null;
+  job_offer_team_member: {
+    team_member_id: string;
+    team_member_full_name: string;
+  }
+};
+export type MeetingDetails = {
+  breakDuration: number;
+  duration: number;
+};
+
+export type MeetingType =
+  | "hr_phone_interview"
+  | "trade_test"
+  | "technical_interview"
+  | "director_interview";
+
+
+export type HRProjectType = HRProjectTableRow & {hr_project_address: AddressTableRow}
+
+export type JobOfferFormType = {
+  title: string;
+  projectAssignment: string;
+  projectAddress: string;
+  projectLongitude?: string;
+  projectLatitude?: string;
+  manpowerLoadingId: string;
+  manpowerLoadingReferenceCreatedBy: string;
+  compensation: string;
+  attachment: File | null;
+}
+
+export type TechnicalAssessmentFilterValues = {
+    search?: string;
+    creator?: string;
+    isAscendingSort: boolean;
+  };
+
+  export type TechnicalAssessmentTableRow = {
+    questionnaire_id: string;
+    questionnaire_name: string;
+    questionnaire_is_disabled: boolean;
+    questionnaire_date_created: string | null;
+    questionnaire_date_updated: string | null;
+    questionnaire_team_id: string;
+    questionnaire_created_by: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+    questionnaire_updated_by: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    } | null;
+  };
+
+
 export type ApiKeyData = {
   team_key_api_key: string;
   team_key_label: string;
 };
+
 export type HRAnalyticsResponseType = {
   request_response: string;
   count: number;
@@ -2234,3 +2532,46 @@ export type HRAnalyticsData = {
   most_applied_position: HRAnalyticsResponseType[];
   applicant_age_bracket: HRAnalyticsResponseType[];
 };
+
+export type QuestionOption = {
+  option_id:string;
+  option_value:string | null;
+  option_order:number;
+  option_field_id:string;
+};
+export type QuestionFields = {
+  field_name: string;
+  field_id: string;
+  field_response: string;
+  field_is_required: boolean;
+  field_type: string;
+  field_position_type: string;
+  field_options: {
+      field_id: string;
+      field_name: string;
+      field_response: string;
+      field_is_correct: boolean;
+    }[],
+};
+
+export type QuestionnaireData = {
+  questionnaire_name: string;
+  questionnaire_date_created: string;
+  fields:QuestionFields[];
+  };
+
+  export type TechnicalQuestionFormValues = {
+    sections: {
+      field_id: string;
+      field_name: string;
+      question: string;
+      section_is_duplicatable: boolean;
+      choices: {
+        field_id: string;
+        field_name: string;
+        choice: string;
+        isCorrectAnswer: boolean;
+      }[];
+    }[];
+    positions?: string[];
+  };

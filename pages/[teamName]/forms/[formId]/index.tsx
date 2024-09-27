@@ -9,6 +9,7 @@ import PEDItemFormPage from "@/components/PEDItemFormPage/PEDItemFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
+import TechnicalAssessmentFormPage from "@/components/TechnicalAssessmentFormPage/TechnicalAssessmentFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
@@ -140,6 +141,16 @@ const Page = ({
       case "Application Information":
         return (
           <ApplicationInformationFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "Technical Assessment":
+        return (
+          <TechnicalAssessmentFormPage
             form={form}
             teamMemberList={teamMemberList}
             teamGroupList={teamGroupList}

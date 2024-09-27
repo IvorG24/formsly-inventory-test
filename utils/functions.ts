@@ -233,6 +233,16 @@ export const sendEmailTeamInvite = async ({
 export const calculateInvoiceAmountWithVAT = (amount: number) => {
   return (amount / 1.12) * 0.12;
 };
+export const formatTimeToLocal = (dateTime: string) => {
+  return moment(dateTime).format("hh:mm A");
+};
+
+export const isError = (error: unknown): error is Error => {
+  return (
+    error instanceof Error ||
+    (typeof error === "object" && error !== null && "message" in error)
+  );
+};
 
 export const formatStringToNumber = (numericString: string) => {
   return Number(numericString.replace(/\s/g, ""));

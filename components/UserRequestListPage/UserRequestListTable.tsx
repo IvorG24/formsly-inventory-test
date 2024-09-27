@@ -15,10 +15,11 @@ import {
   Badge,
   CopyButton,
   Flex,
+  Indicator,
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
+import { IconArrowsMaximize, IconCopy, IconGraph } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
@@ -163,47 +164,47 @@ const UserRequestListTable = ({
             <Text>{formatDate(new Date(String(request_date_created)))}</Text>
           ),
         },
-        // {
-        //   accessor: "progress",
-        //   title: "Progress",
-        //   hidden: checkIfColumnIsHidden("progress"),
-        //   textAlignment: "center",
-        //   render: ({
-        //     request_form_id,
-        //     request_is_with_indicator,
-        //     request_formsly_id,
-        //     request_id,
-        //   }) => {
-        //     if (request_form_id !== "151cc6d7-94d7-4c54-b5ae-44de9f59d170")
-        //       return null;
-        //     return (
-        //       <Tooltip label="View Progress" openDelay={100}>
-        //         <ActionIcon
-        //           maw={120}
-        //           mx="auto"
-        //           color="blue"
-        //           onClick={async () => {
-        //             const requestId =
-        //               request_formsly_id === "-"
-        //                 ? request_id
-        //                 : request_formsly_id;
-        //             await router.push(
-        //               `/user/application-progress/${requestId}`
-        //             );
-        //           }}
-        //         >
-        //           {request_is_with_indicator ? (
-        //             <Indicator color="red" size={8} offset={-4}>
-        //               <IconGraph size={16} />
-        //             </Indicator>
-        //           ) : (
-        //             <IconGraph size={16} />
-        //           )}
-        //         </ActionIcon>
-        //       </Tooltip>
-        //     );
-        //   },
-        // },
+        {
+          accessor: "progress",
+          title: "Progress",
+          hidden: checkIfColumnIsHidden("progress"),
+          textAlignment: "center",
+          render: ({
+            request_form_id,
+            request_is_with_progress_indicator,
+            request_formsly_id,
+            request_id,
+          }) => {
+            if (request_form_id !== "16ae1f62-c553-4b0e-909a-003d92828036")
+              return null;
+            return (
+              <Tooltip label="View Progress" openDelay={100}>
+                <ActionIcon
+                  maw={120}
+                  mx="auto"
+                  color="blue"
+                  onClick={async () => {
+                    const requestId =
+                      request_formsly_id === "-"
+                        ? request_id
+                        : request_formsly_id;
+                    await router.push(
+                      `/user/application-progress/${requestId}`
+                    );
+                  }}
+                >
+                  {request_is_with_progress_indicator ? (
+                    <Indicator color="red" size={8} offset={-4}>
+                      <IconGraph size={16} />
+                    </Indicator>
+                  ) : (
+                    <IconGraph size={16} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
+            );
+          },
+        },
         {
           accessor: "view",
           title: "View",
@@ -212,7 +213,7 @@ const UserRequestListTable = ({
           render: ({
             request_id,
             request_formsly_id,
-            // request_is_with_indicator,
+            request_is_with_view_indicator,
           }) => {
             const requestId =
               request_formsly_id === "-" ? request_id : request_formsly_id;
@@ -226,14 +227,13 @@ const UserRequestListTable = ({
                     await router.push(`/user/requests/${requestId}`)
                   }
                 >
-                  <IconArrowsMaximize size={16} />
-                  {/* {request_is_with_indicator ? (
+                  {request_is_with_view_indicator ? (
                     <Indicator color="red" size={8} offset={-4}>
                       <IconArrowsMaximize size={16} />
                     </Indicator>
                   ) : (
                     <IconArrowsMaximize size={16} />
-                  )} */}
+                  )}
                 </ActionIcon>
               </Tooltip>
             );

@@ -1,8 +1,8 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
+import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import Meta from "@/components/Meta/Meta";
-import OnlineApplicationRequestPage from "@/components/OnlineApplicationRequestPage/OnlineApplicationRequestPage";
-import OnlineAssessmentRequestPage from "@/components/OnlineAssessmentRequestPage/OnlineAssessmentRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
+import TechnicalAssessmentRequestPage from "@/components/TechnicalAssessmentRequestPage/TechnicalAssessmentRequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -39,10 +39,10 @@ const Page = ({ request }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
-    } else if (request.request_form.form_name === "Online Application") {
-      return <OnlineApplicationRequestPage request={request} />;
-    } else if (request.request_form.form_name === "Online Assessment") {
-      return <OnlineAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "General Assessment") {
+      return <GeneralAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Technical Assessment") {
+      return <TechnicalAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

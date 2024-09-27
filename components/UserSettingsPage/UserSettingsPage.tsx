@@ -3,14 +3,25 @@ import {
   resetPassword,
   uploadImage,
 } from "@/backend/api/post";
-import { useUserActions } from "@/stores/useUserStore";
+import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
+import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
-import { Container, Title } from "@mantine/core";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  CopyButton,
+  Group,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
+import { IconNote } from "@tabler/icons-react";
 import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -45,6 +56,7 @@ const UserSettingsPage = ({ user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
+  const teamMember = useUserTeamMember();
   const { setUserAvatar, setUserInitials } = useUserActions();
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -266,6 +278,33 @@ const UserSettingsPage = ({ user }: Props) => {
           employeeNumber={user.user_employee_number}
         />
       </FormProvider>
+
+      {teamMember && (
+        <Box m="xl">
+          <Alert
+            icon={<IconNote size="1rem" />}
+            title="Recruit Applicant!"
+            color="blue"
+          >
+            <Group>
+              <Text>Copy Link to Recruit & Earn Points</Text>
+              <CopyButton
+                value={`${BASE_URL}/public-form/16ae1f62-c553-4b0e-909a-003d92828036/create?recruiter=${teamMember.team_member_id}`}
+              >
+                {({ copied, copy }) => (
+                  <Button
+                    variant="outline"
+                    color={copied ? "teal" : "blue"}
+                    onClick={copy}
+                  >
+                    {copied ? "Copied link" : "Copy link"}
+                  </Button>
+                )}
+              </CopyButton>
+            </Group>
+          </Alert>
+        </Box>
+      )}
 
       <FormProvider {...changePasswordFormMethods}>
         <ChangePassword

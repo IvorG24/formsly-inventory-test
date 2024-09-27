@@ -6,12 +6,13 @@ import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
   FETCH_OPTION_LIMIT,
+  formatDate,
   FORMSLY_FORM_ORDER,
-  ITEM_FIELD_ID_LIST,
   IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
   SELECT_OPTION_LIMIT,
-  formatDate,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -24,15 +25,19 @@ import {
 } from "@/utils/string";
 import {
   AddressTableRow,
-  AppType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
   ApproverUnresolvedRequestCountType,
+  AppType,
   AttachmentBucketType,
   AttachmentTableRow,
-  CSICodeTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  DirectorInterviewFilterFormValues,
+  DirectorInterviewSpreadsheetData,
   EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
   EquipmentPartType,
@@ -43,7 +48,11 @@ import {
   FormTableRow,
   FormType,
   HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRProjectType,
   InitialFormType,
+  InterviewOnlineMeetingTableRow,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
@@ -55,6 +64,9 @@ import {
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
   LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
@@ -63,18 +75,19 @@ import {
   OptionTableRow,
   OtherExpensesTypeTableRow,
   PendingInviteType,
+  QuestionnaireData,
   ReferenceMemoType,
   RequestListItemType,
   RequestListOnLoad,
   RequestResponseTableRow,
   RequestTableRow,
   RequestWithResponseType,
-  SSOTOnLoad,
   SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
+  SSOTOnLoad,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
@@ -82,22 +95,27 @@ import {
   TeamOnLoad,
   TeamProjectTableRow,
   TeamTableRow,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
   TicketListOnLoad,
   TicketListType,
   TicketPageOnLoad,
   TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
   TransactionTableRow,
   UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  Database as OneOfficeDatabase,
   getBarangay,
   getCity,
   getProvince,
   getRegion,
   getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -128,6 +146,7 @@ export const getCurrentDate = async (
     .single();
   if (error) throw error;
   if (!data) throw error;
+
   return new Date(data);
 };
 
@@ -5178,6 +5197,9 @@ export const getFormSection = async (
     case "IT Asset":
       query = query.in("field_table.field_id", IT_ASSET_FIELD_ID_LIST);
       break;
+    case "Technical Assessment":
+      query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
+      break;
   }
 
   const { data, error } = await query;
@@ -5857,7 +5879,6 @@ export const getApplicationInformationPositionOptions = async (
     .eq("position_team_id", teamId)
     .eq("position_is_disabled", false)
     .eq("position_is_available", true)
-    .order("position")
     .limit(limit)
     .range(index, index + limit - 1);
   if (error) throw error;
@@ -5935,6 +5956,7 @@ export const getApplicationInformationSummaryData = async (
       input_data: updatedParams,
     }
   );
+
   if (error) throw error;
   return data as ApplicationInformationSpreadsheetData[];
 };
@@ -5954,6 +5976,7 @@ export const getFormSectionWithFieldList = async (
     }
   );
   if (error) throw error;
+
   return data as unknown as {
     sectionList: SectionWithFieldType[];
     optionList: (OptionTableRow & { field_name: string })[];
@@ -6031,6 +6054,22 @@ export const getUserIdInApplicationInformation = async (
   return data;
 };
 
+export const getUserIdInApplicationInformationV1 = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_id_in_application_information_v1",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as string | undefined;
+};
+
 export const checkUserIdNumber = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6061,19 +6100,326 @@ export const getPublicFormList = async (
   return data;
 };
 
-export const getPositionType = async (
+export const getPositionClassification = async (
   supabaseClient: SupabaseClient<Database>,
   position: string
 ) => {
   const { data, error } = await supabaseClient
     .schema("lookup_schema")
     .from("position_table")
-    .select("position_type")
+    .select("position_classification")
     .eq("position", position)
     .limit(1);
   if (error) throw error;
 
-  return data[0].position_type;
+  return data[0].position_classification;
+};
+
+export const getHRPhoneInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: HRPhoneInterviewFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    hr_phone_interview_date_created: {
+      start: params.hr_phone_interview_date_created?.start
+        ? new Date(
+            params.hr_phone_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.hr_phone_interview_date_created?.end
+        ? moment(params.hr_phone_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    hr_phone_interview_schedule: {
+      start: params.hr_phone_interview_schedule?.start
+        ? moment(params.hr_phone_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.hr_phone_interview_schedule?.end
+        ? moment(params.hr_phone_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_phone_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as HRPhoneInterviewSpreadsheetData[];
+};
+
+export const getPhoneMeetingSlots = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startTime: string;
+    endTime: string;
+    meetingDuration: number;
+    breakDuration: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_phone_meeting_available",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    slot_start: string;
+    slot_end: string;
+    isDisabled: boolean;
+  }[];
+};
+
+export const getTradeTestSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TradeTestFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    trade_test_date_created: {
+      start: params.trade_test_date_created?.start
+        ? new Date(params.trade_test_date_created?.start).toLocaleDateString()
+        : undefined,
+      end: params.trade_test_date_created?.end
+        ? moment(params.trade_test_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    trade_test_schedule: {
+      start: params.trade_test_schedule?.start
+        ? moment(params.trade_test_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.trade_test_schedule?.end
+        ? moment(params.trade_test_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_trade_test_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TradeTestSpreadsheetData[];
+};
+
+export const getTechnicalInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TechnicalInterviewFilterFormValues & {
+    userId: string;
+    technicalInterviewNumber: number;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    technical_interview_date_created: {
+      start: params.technical_interview_date_created?.start
+        ? new Date(
+            params.technical_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.technical_interview_date_created?.end
+        ? moment(params.technical_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    technical_interview_schedule: {
+      start: params.technical_interview_schedule?.start
+        ? moment(params.technical_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.technical_interview_schedule?.end
+        ? moment(params.technical_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_technical_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TechnicalInterviewSpreadsheetData[];
+};
+
+export const getDirectorInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: DirectorInterviewFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    director_interview_date_created: {
+      start: params.director_interview_date_created?.start
+        ? new Date(
+            params.director_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.director_interview_date_created?.end
+        ? moment(params.director_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    director_interview_schedule: {
+      start: params.director_interview_schedule?.start
+        ? moment(params.director_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.director_interview_schedule?.end
+        ? moment(params.director_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_director_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as DirectorInterviewSpreadsheetData[];
+};
+
+export const getBackgroundCheckSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: BackgroundCheckFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    background_check_date_created: {
+      start: params.background_check_date_created?.start
+        ? new Date(
+            params.background_check_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.background_check_date_created?.end
+        ? moment(params.background_check_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_background_check_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as BackgroundCheckSpreadsheetData[];
+};
+
+export const getJobOfferSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JobOfferFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    job_offer_date_created: {
+      start: params.job_offer_date_created?.start
+        ? new Date(params.job_offer_date_created?.start).toLocaleDateString()
+        : undefined,
+      end: params.job_offer_date_created?.end
+        ? moment(params.job_offer_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_job_offer_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as JobOfferSpreadsheetData[];
+};
+
+export const getJobHistory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_job_history", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as unknown as JobOfferHistoryType[];
+};
+
+export const getInterviewOnlineMeeting = async (
+  supabaseClient: SupabaseClient<Database>,
+  interviewId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("interview_online_meeting_table")
+    .select("*")
+    .eq("interview_meeting_interview_id", interviewId)
+    .limit(1);
+
+  if (error) throw error;
+
+  return data[0] as InterviewOnlineMeetingTableRow;
+};
+
+export const checkIfGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    groupName: string[];
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("check_if_group_member", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data;
 };
 export const checkIfOwner = async (
   supabaseClient: SupabaseClient<Database>,
@@ -6446,6 +6792,7 @@ export const getLatestApiKey = async (
   }
   return data;
 };
+
 export const getAdOwnerList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -6456,6 +6803,275 @@ export const getAdOwnerList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getInterview = async (
+  supabaseClient: SupabaseClient,
+  params: {
+    interviewId: string;
+    table: string;
+    interviewNumber?: number;
+  }
+) => {
+  const { interviewId, table, interviewNumber } = params;
+  let query = supabaseClient
+    .schema("hr_schema")
+    .from(`${table}_table`)
+    .select()
+    .eq(`${table}_id`, interviewId)
+    .limit(1);
+
+  if (interviewNumber) {
+    query = query.eq(`${table}_number`, interviewNumber);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return data[0];
+};
+
+export const phoneInterviewValidation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    interview_schedule?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "phone_interview_validation",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    message: string;
+    status: string;
+    assigned_hr_team_member_id: string;
+  };
+};
+
+export const getHRSpreadsheetViewOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_hr_spreadsheet_view_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
+
+export const checkSpreadsheetRowStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { table: string; status: string; id: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_spreadsheet_row_status", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+export const checkJobOfferRow = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { id: string; status: string; requestId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_job_offer_row", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+export const getHRIndicatorCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_hr_indicator_count", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data;
+};
+
+export const getFieldOfStudyOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    value: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_field_of_study_options",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as string[];
+};
+
+export const getDegreeNameOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    degreeType: string;
+    fieldOfStudy: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_degree_name_options", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as string[];
+};
+
+export const getHRProjectOptions = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient.rpc("get_hr_project_options");
+  if (error) throw error;
+  return data as HRProjectType[];
+};
+
+export const getQuestionnaireList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    creator?: string;
+    isAscendingSort: boolean;
+    search?: string;
+  }
+) => {
+  const { teamId, page, limit, creator, isAscendingSort, search } = params;
+  const sortCondition = isAscendingSort ? "asc" : "desc";
+
+  const creatorCondition =
+    creator && validate(creator)
+      ? `q.questionnaire_created_by = '${creator}'`
+      : `q.questionnaire_created_by '%' || '${creator}' || '%'`;
+
+  const searchCondition =
+    search && validate(search)
+      ? `q.questionnaire_name = '${search}'`
+      : `q.questionnaire_name ILIKE '%' || '${search}' || '%'`;
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_questionnare_table_on_load",
+    {
+      input_data: {
+        teamId,
+        search: search ? `AND (${searchCondition})` : "",
+        creator: creator ? `AND (${creatorCondition})` : "",
+        page,
+        isAscendingSort: sortCondition,
+        limit,
+      },
+    }
+  );
+  if (error) throw error;
+
+  return data as unknown as {
+    data: TechnicalAssessmentTableRow[];
+    count: number;
+  };
+};
+
+export const getQuestionnaireName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .select("questionnaire_name")
+    .eq("questionnaire_id", params.questionnaireId);
+
+  if (error) throw error;
+
+  return data[0] as { questionnaire_name: string };
+};
+
+export const getPositionPerQuestionnaire = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_alias")
+    .eq("position_questionnaire_id", params.questionnaireId);
+
+  if (error) throw error;
+
+  const positions = data.map((item) => item.position_alias);
+
+  return positions;
+};
+
+export const getOptionsTechnicalQuestion = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { fieldId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("option_table")
+    .select("*")
+    .eq("option_field_id", params.fieldId)
+    .order("option_order", { ascending: true });
+
+  if (error) throw error;
+  return data as OptionTableRow[];
+};
+
+export const getTechnicalOptionsItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    questionnaireId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_technical_options", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as unknown as QuestionnaireData;
+};
+export const getPositionTypeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", params.teamId)
+    .order("position_alias");
+
+  if (error) throw error;
+
+  const returnData = data.map((item, index) => {
+    return {
+      option_value: item.position_alias,
+      option_id: item.position_id,
+      option_field_id: uuidv4(),
+      option_order: index,
+    };
+  });
+
+  return returnData as OptionTableRow[];
 };
 
 export const getHRApplicantAnalytics = async (
@@ -6487,4 +7103,56 @@ export const getRequestAdOwner = async (
   if (error) throw error;
 
   return data as unknown as { ad_owner: { ad_owner_name: string } };
+};
+
+export const getEmailResendTimer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    email: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_email_resend_timer", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as number;
+};
+
+export const checkAssessmentCreateRequestPage = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldAndResponse: {
+      fieldId: string;
+      response: string;
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "check_assessment_create_request_page",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+
+  return data as boolean;
+};
+
+export const getQuestionnaireDetails = async (
+  supabaseClient: SupabaseClient<Database>,
+  questionnaireId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .select("questionnaire_name, questionnaire_date_created")
+    .eq("questionnaire_id", questionnaireId)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0] as unknown as {
+    questionnaire_name: string;
+    questionnaire_date_created: string;
+  };
 };

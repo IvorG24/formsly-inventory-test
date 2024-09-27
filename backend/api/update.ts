@@ -6,12 +6,17 @@ import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ApiKeyData,
   AppType,
+  BackgroundCheckSpreadsheetData,
+  DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
   EquipmentLookupTableUpdate,
   EquipmentPartTableUpdate,
   EquipmentTableUpdate,
+  HRPhoneInterviewSpreadsheetData,
+  InterviewOnlineMeetingTableRow,
+  InterviewOnlineMeetingTableUpdate,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
@@ -20,6 +25,7 @@ import {
   JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
+  JobOfferFormType,
   JobTitleTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
@@ -30,8 +36,11 @@ import {
   SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
+  TechnicalInterviewSpreadsheetData,
+  TechnicalQuestionFormValues,
   TicketTableRow,
   TicketType,
+  TradeTestSpreadsheetData,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -1311,6 +1320,399 @@ export const cancelPCVRequestByCostEngineer = async (
   };
 
   await createNotification(supabaseClient, notification);
+};
+
+export const updateHRPhoneInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: HRPhoneInterviewSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_hr_phone_interview_status",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateTradeTestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: TradeTestSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_trade_test_status", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    interviewSchedule: string;
+    targetId: string;
+    status: string;
+    table: string;
+    meetingTypeNumber?: number;
+    team_member_id: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_schedule", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateTradeTestSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_trade_test_schedule", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateTechnicalInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: TechnicalInterviewSpreadsheetData;
+    technicalInterviewNumber: number;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_technical_interview_status",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateTechnicalInterviewSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+    technicalInterviewNumber: number;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_technical_interview_schedule",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateDirectorInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: DirectorInterviewSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_director_interview_status",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateDirectorInterviewSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_director_interview_schedule",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateBackgroundCheckStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: BackgroundCheckSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_background_check_status", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const addJobOffer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: Omit<JobOfferFormType, "attachment"> & {
+    teamMemberId: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    attachmentId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("add_job_offer", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateJobOfferStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    requestReferenceId: string;
+    title: string;
+    attachmentId: string;
+    teamMemberId: string;
+    projectAssignment: string;
+    reason?: string;
+    projectAddress: string;
+    manpowerLoadingId: string;
+    manpowerLoadingReferenceCreatedBy: string;
+    compensation: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_job_offer_status", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateInterviewOnlineMeeting = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: InterviewOnlineMeetingTableUpdate
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("interview_online_meeting_table")
+    .update(params)
+    .eq("interview_meeting_id", params.interview_meeting_id as string)
+    .select("*");
+
+  if (error) throw error;
+
+  return data[0] as InterviewOnlineMeetingTableRow;
+};
+
+export const cancelInterview = async (
+  supabaseClient: SupabaseClient,
+  params: {
+    targetId: string;
+    status: string;
+    table: string;
+    meetingTypeNumber?: number;
+  }
+) => {
+  const { targetId, status, table, meetingTypeNumber } = params;
+
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  let query = supabaseClient
+    .schema("hr_schema")
+    .from(`${table}_table`)
+    .update({
+      [`${table}_status`]: status,
+      [`${table}_status_date_updated`]: currentDate,
+    })
+    .eq(`${table}_id`, targetId);
+
+  if (meetingTypeNumber) {
+    query = query.eq(`${table}_number`, meetingTypeNumber);
+  }
+  const { error } = await query;
+  if (error) throw error;
+};
+
+export const handleDeleteTechnicalQuestion = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldId: string;
+  }
+) => {
+  const { fieldId } = params;
+
+  const { error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_question_table")
+    .update({
+      questionnaire_question_is_disabled: true,
+    })
+    .eq("questionnaire_question_field_id", fieldId);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
+export const updateTechnicalQuestion = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestValues: TechnicalQuestionFormValues["sections"][0];
+    questionnaireId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { requestValues, questionnaireId, teamMemberId } = params;
+
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { error: questionnaireError } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .update({
+      questionnaire_updated_by: teamMemberId,
+      questionnaire_date_updated: currentDate,
+    })
+    .eq("questionnaire_id", questionnaireId);
+
+  if (questionnaireError) throw questionnaireError;
+
+  const correctAnswer = requestValues.choices.find(
+    (choice) => choice.isCorrectAnswer
+  );
+  const technicalQuestionId = requestValues.field_id;
+
+  let correctAnswerFieldName = "";
+  if (correctAnswer) {
+    correctAnswerFieldName = correctAnswer.choice;
+  }
+
+  const correctAnswerEscaped = escapeQuotes(correctAnswerFieldName);
+
+  const { error: correctResponseError } = await supabaseClient
+    .schema("form_schema")
+    .from("correct_response_table")
+    .update({
+      correct_response_value: correctAnswerEscaped,
+    })
+    .eq("correct_response_field_id", technicalQuestionId ?? "");
+
+  if (correctResponseError) throw correctResponseError;
+
+  const escapedQuestion = escapeQuotes(String(requestValues.question));
+
+  const { error: fieldTableError } = await supabaseClient
+    .schema("form_schema")
+    .from("field_table")
+    .update({
+      field_name: escapedQuestion,
+    })
+    .eq("field_id", requestValues.field_id);
+
+  if (fieldTableError) throw fieldTableError;
+
+  const { error: questionnaireQuestionError } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_question_table")
+    .update({
+      questionnaire_question: escapedQuestion,
+    })
+    .eq("questionnaire_question_field_id", requestValues.field_id);
+
+  if (questionnaireQuestionError) throw questionnaireQuestionError;
+
+  const promises = requestValues.choices.map(async (choice) => {
+    const escapedChoice = escapeQuotes(choice.choice);
+
+    if (choice.field_name.includes("Question Choice")) {
+      return supabaseClient
+        .schema("form_schema")
+        .from("question_option_table")
+        .update({
+          question_option_value: escapedChoice,
+        })
+        .eq("question_option_id", choice.field_id);
+    }
+    return null;
+  });
+
+  const results = await Promise.all(promises.map((p) => p.catch((e) => e)));
+
+  results.forEach((result) => {
+    if (result instanceof Error) {
+      console.error("Error updating choice:", result);
+    }
+  });
+};
+
+export const updateQuestionnairePosition = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+    position: string[];
+    teamMemberId: string;
+  }
+) => {
+  const { questionnaireId, teamMemberId, position } = params;
+
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const results = [];
+  for (const pos of position) {
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .update({
+        position_questionnaire_id: questionnaireId,
+      })
+      .eq("position_alias", pos);
+
+    if (error) {
+      console.error(`Failed to update position ${pos}:`, error);
+      throw error;
+    }
+
+    results.push(data);
+  }
+
+  const { error: updateError } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .update({
+      questionnaire_updated_by: teamMemberId,
+      questionnaire_date_updated: currentDate,
+    })
+    .eq("questionnaire_id", questionnaireId);
+
+  if (updateError) throw updateError;
+
+  return results;
 };
 
 export const disableApikey = async (

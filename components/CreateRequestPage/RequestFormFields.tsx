@@ -15,13 +15,16 @@ import {
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Autocomplete,
   Checkbox,
   FileInput,
   Flex,
   Loader,
   MultiSelect,
   NumberInput,
+  Radio,
   Select,
+  Stack,
   Switch,
   TextInput,
   Textarea,
@@ -46,8 +49,10 @@ import CurrencyFormField from "./SpecialField/CurrencyFormField";
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
+    isCorrect?: boolean;
   } & {
     field_section_duplicatable_id: string | undefined;
+    field_description?: string;
     field_prefix?: string | null;
   };
   sectionIndex: number;
@@ -276,6 +281,7 @@ type RequestFormFieldsProps = {
       index: number
     ) => void;
     onHighestEducationalAttainmentChange: (value: string | null) => void;
+    onFieldOfStudyChange: (value: string | null) => void;
   };
 };
 
@@ -631,6 +637,22 @@ const RequestFormFields = ({
                   return `${value}`[0] === "9"
                     ? true
                     : "Contact number must start with 9";
+                },
+                validateStreet: (value) => {
+                  if (
+                    !(
+                      field.field_name === "Street" &&
+                      applicationInformationFormMethods
+                    )
+                  )
+                    return true;
+                  const streetPattern = /^[a-zA-Z0-9\s,.'-]{5,100}$/;
+                  const trimmedStreet = (value as string).trim();
+                  if (!streetPattern.test(trimmedStreet)) {
+                    return "Invalid street address. Use letters, numbers, spaces, commas, and hyphens only.";
+                  } else {
+                    return true;
+                  }
                 },
               },
             }}
@@ -1139,6 +1161,11 @@ const RequestFormFields = ({
                         value
                       );
                       break;
+                    case "Field of Study":
+                      applicationInformationFormMethods?.onFieldOfStudyChange(
+                        value
+                      );
+                      break;
                   }
                 }}
                 onDropdownOpen={() => {
@@ -1238,6 +1265,40 @@ const RequestFormFields = ({
           />
         );
 
+      case "AUTOCOMPLETE":
+        const autoCompleteOption = dropdownOptionValue.map((option) => {
+          return {
+            value: option.option_value,
+            label: option.option_value,
+          };
+        });
+
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Autocomplete
+                value={value as string}
+                onChange={(value) => {
+                  onChange(value);
+                }}
+                data={autoCompleteOption}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+                error={fieldError}
+                limit={SELECT_OPTION_LIMIT}
+                disabled={isEdit && field.field_name === "Requesting Project"}
+                readOnly={field.field_is_read_only || isLoading}
+                rightSection={isLoading && <Loader size={16} />}
+                dropdownPosition="bottom"
+                maxDropdownHeight={220}
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
+
       case "MULTISELECT":
         const multiselectOption = field.options
           .map((option) => ({
@@ -1254,6 +1315,9 @@ const RequestFormFields = ({
               <MultiSelect
                 value={value as string[]}
                 onChange={(value) => onChange(value)}
+                searchable={
+                  formslyFormName === "Technical Questionnaire" ? true : false
+                }
                 data={multiselectOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
@@ -1341,7 +1405,7 @@ const RequestFormFields = ({
               <Flex w="100%" align="flex-end" gap="xs">
                 {["Certification", "License"].includes(field.field_name) && (
                   <Checkbox
-                    checked={field.field_is_required}
+                    checked={!field.field_is_read_only}
                     mb="xs"
                     readOnly
                   />
@@ -1356,6 +1420,7 @@ const RequestFormFields = ({
                   error={fieldError}
                   sx={{ width: prevFileLink ? "96%" : "100%" }}
                   disabled={field.field_is_read_only}
+                  description={field.field_description}
                 />
                 {parseJSONIfValid(`${value}`) && isEdit !== undefined ? (
                   <Tooltip
@@ -1387,6 +1452,38 @@ const RequestFormFields = ({
                 },
               },
             }}
+          />
+        );
+
+      case "MULTIPLE CHOICE":
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Radio.Group
+                {...inputProps}
+                value={value as string}
+                onChange={onChange}
+                mb="md"
+              >
+                <Stack mt="xs">
+                  {field.options.map((option, optionIdx) => (
+                    <Radio
+                      ml="xs"
+                      key={option.option_id}
+                      value={option.option_value}
+                      label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
+                      sx={{
+                        input: { cursor: "pointer" },
+                        label: { cursor: "pointer" },
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Radio.Group>
+            )}
+            rules={fieldRules}
           />
         );
     }

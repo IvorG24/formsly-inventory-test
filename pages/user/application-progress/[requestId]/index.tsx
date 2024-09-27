@@ -1,11 +1,22 @@
+import { insertError } from "@/backend/api/post";
 import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
+import { isError } from "@/utils/functions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { RequestViewRow } from "@/utils/types";
+import {
+  AttachmentTableRow,
+  BackgroundCheckTableRow,
+  DirectorInterviewTableRow,
+  HRPhoneInterviewTableRow,
+  JobOfferTableRow,
+  RequestViewRow,
+  TechnicalInterviewTableRow,
+  TradeTestTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, context }) => {
+  async ({ supabaseClient, context, user }) => {
     try {
       const { data, error } = await supabaseClient.rpc(
         "get_user_application_progress_on_load",
@@ -15,11 +26,23 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }
       );
+
       if (error) throw error;
       return {
         props: data as Props,
       };
     } catch (e) {
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: context.resolvedUrl,
+            error_function: "getServerSideProps",
+            error_user_email: user.email,
+            error_user_id: user.id,
+          },
+        });
+      }
       return {
         redirect: {
           destination: "/500",
@@ -32,14 +55,28 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   applicationInformationData: RequestViewRow;
-  onlineApplicationData: RequestViewRow;
-  onlineAssessmentData: RequestViewRow;
+  generalAssessmentData?: RequestViewRow;
+  technicalAssessmentData?: RequestViewRow;
+  hrPhoneInterviewData?: HRPhoneInterviewTableRow;
+  tradeTestData?: TradeTestTableRow | null;
+  technicalInterview1Data?: TechnicalInterviewTableRow | null;
+  technicalInterview2Data?: TechnicalInterviewTableRow | null;
+  directorInterviewData?: DirectorInterviewTableRow | null;
+  backgroundCheckData?: BackgroundCheckTableRow | null;
+  jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
 };
 
 const Page = ({
   applicationInformationData,
-  onlineApplicationData,
-  onlineAssessmentData,
+  generalAssessmentData,
+  technicalAssessmentData,
+  hrPhoneInterviewData,
+  tradeTestData,
+  technicalInterview1Data,
+  technicalInterview2Data,
+  directorInterviewData,
+  backgroundCheckData,
+  jobOfferData,
 }: Props) => {
   return (
     <>
@@ -49,8 +86,15 @@ const Page = ({
       />
       <ApplicationProgressPage
         applicationInformationData={applicationInformationData}
-        onlineApplicationData={onlineApplicationData}
-        onlineAssessmentData={onlineAssessmentData}
+        generalAssessmentData={generalAssessmentData}
+        technicalAssessmentData={technicalAssessmentData}
+        hrPhoneInterviewData={hrPhoneInterviewData}
+        tradeTestData={tradeTestData}
+        technicalInterview1Data={technicalInterview1Data}
+        technicalInterview2Data={technicalInterview2Data}
+        directorInterviewData={directorInterviewData}
+        backgroundCheckData={backgroundCheckData}
+        jobOfferData={jobOfferData}
       />
     </>
   );
