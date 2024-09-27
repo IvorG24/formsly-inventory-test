@@ -1,16 +1,20 @@
 // Imports
-import InventoryDashboardPage from "@/components/InventoryDashboardPage/InventoryDashboardPage";
+import { getRequestListOnLoad } from "@/backend/api/get";
+import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
+import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user }) => {
+  async ({ user, supabaseClient }) => {
     try {
+      const requestListData = await getRequestListOnLoad(supabaseClient, {
+        userId: user.id,
+      });
+
       return {
-        props: {
-          user, 
-        },
+        props: requestListData,
       };
     } catch (e) {
       return {
@@ -22,12 +26,21 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
+type Props = {
+  teamMemberList: TeamMemberWithUserType[];
+  isFormslyTeam: boolean;
+  projectList: TeamProjectTableRow[];
+};
 
-const Page = () => {
+const Page = ({ teamMemberList, isFormslyTeam, projectList }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/teamName/inventory" />
-      <InventoryDashboardPage />
+      <AssetListPage
+        teamMemberList={teamMemberList}
+        isFormslyTeam={isFormslyTeam}
+        projectList={projectList}
+      />
     </>
   );
 };

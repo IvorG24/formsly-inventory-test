@@ -1,16 +1,19 @@
 // Imports
-import InventoryDashboardPage from "@/components/InventoryDashboardPage/InventoryDashboardPage";
+import { getRequestListOnLoad } from "@/backend/api/get";
+import DashboardPage from "@/components/AssetInventory/DashboardPage/DashboardPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user }) => {
+  async ({ user, supabaseClient }) => {
     try {
+      const requestListData = await getRequestListOnLoad(supabaseClient, {
+        userId: user.id,
+      });
+
       return {
-        props: {
-          user,
-        },
+        props: requestListData,
       };
     } catch (e) {
       return {
@@ -26,8 +29,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 const Page = () => {
   return (
     <>
-      <Meta description="Request List Page" url="/teamName/dashboard" />
-      <InventoryDashboardPage />
+      <Meta
+        description="Request List Page"
+        url="/teamName/inventory/dashboard"
+      />
+      <DashboardPage />
     </>
   );
 };

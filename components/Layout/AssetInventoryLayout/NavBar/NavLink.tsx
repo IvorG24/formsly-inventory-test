@@ -6,10 +6,11 @@ type Props = {
   icon: ReactNode;
   label: string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
+  isCollapsed?: boolean;
   link: string;
 };
 
-const Navlink = ({ icon, label, onClick, link }: Props) => {
+const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
   const pathname = usePathname();
   return (
     <Button
@@ -33,7 +34,7 @@ const Navlink = ({ icon, label, onClick, link }: Props) => {
         },
       }}
     >
-      {label}
+      {isCollapsed ? null : label}
     </Button>
   );
 };

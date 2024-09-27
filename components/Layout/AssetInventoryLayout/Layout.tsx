@@ -128,7 +128,7 @@ const Layout = ({ children }: LayoutProps) => {
         },
       }}
       navbarOffsetBreakpoint="sm"
-      navbar={<Navbar openNavbar={true} />}
+      navbar={<Navbar />}
     >
       {children}
     </AppShell>

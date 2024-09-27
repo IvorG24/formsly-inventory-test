@@ -2,17 +2,20 @@ import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
+  Box,
+  Button,
   Group,
   Navbar as MantineNavbar,
   Stack,
 } from "@mantine/core";
 import {
-  IconArrowAutofitContentFilled,
   IconBriefcase,
   IconBriefcaseOff,
   IconBuilding,
   IconCategory,
   IconCategory2,
+  IconChevronDown,
+  IconCirclePlus,
   IconDashboard,
   IconDatabase,
   IconEditCircle,
@@ -40,7 +43,7 @@ const Navbar = () => {
       id: "dashboard",
       icon: IconDashboard,
       label: "Dashboard",
-      href: `/${formattedTeamName}/inventory`,
+      href: `/${formattedTeamName}/inventory/dashboard`,
     },
     {
       id: "asset",
@@ -245,12 +248,26 @@ const Navbar = () => {
     >
       <Stack p={16} spacing={12}>
         {teamList.length > 0 ? (
-          <Group position="apart">
+          <Group>
             <SelectTeam isCollapsed={isCollapsed} />
           </Group>
         ) : null}
+        <Box>
+          <Button
+            onClick={() => {
+              router.push(
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory-form/1/create`
+              );
+            }}
+            leftIcon={<IconCirclePlus size={26} />}
+            variant="subtle"
+          >
+            {isCollapsed ? null : "Add Asset"}
+          </Button>
+        </Box>
         <Accordion
-          chevron={isCollapsed ? null : <IconArrowAutofitContentFilled />}
+          chevron={isCollapsed ? null : <IconChevronDown size={14} />}
+          value={isCollapsed ? null : undefined}
           variant="filled"
         >
           <Group spacing={10}>{renderNavlinkData}</Group>

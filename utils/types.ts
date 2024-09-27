@@ -619,7 +619,8 @@ export type FieldType =
   | "DATE"
   | "TIME"
   | "LINK"
-  | "MULTIPLE CHOICE" | "AUTOCOMPLETE";
+  | "MULTIPLE CHOICE"
+  | "AUTOCOMPLETE";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
@@ -2461,7 +2462,7 @@ export type JobOfferHistoryType = JobOfferTableRow & {
   job_offer_team_member: {
     team_member_id: string;
     team_member_full_name: string;
-  }
+  };
 };
 export type MeetingDetails = {
   breakDuration: number;
@@ -2474,8 +2475,9 @@ export type MeetingType =
   | "technical_interview"
   | "director_interview";
 
-
-export type HRProjectType = HRProjectTableRow & {hr_project_address: AddressTableRow}
+export type HRProjectType = HRProjectTableRow & {
+  hr_project_address: AddressTableRow;
+};
 
 export type JobOfferFormType = {
   title: string;
@@ -2487,35 +2489,34 @@ export type JobOfferFormType = {
   manpowerLoadingReferenceCreatedBy: string;
   compensation: string;
   attachment: File | null;
-}
+};
 
 export type TechnicalAssessmentFilterValues = {
-    search?: string;
-    creator?: string;
-    isAscendingSort: boolean;
-  };
+  search?: string;
+  creator?: string;
+  isAscendingSort: boolean;
+};
 
-  export type TechnicalAssessmentTableRow = {
-    questionnaire_id: string;
-    questionnaire_name: string;
-    questionnaire_is_disabled: boolean;
-    questionnaire_date_created: string | null;
-    questionnaire_date_updated: string | null;
-    questionnaire_team_id: string;
-    questionnaire_created_by: {
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string;
-    };
-    questionnaire_updated_by: {
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string;
-    } | null;
+export type TechnicalAssessmentTableRow = {
+  questionnaire_id: string;
+  questionnaire_name: string;
+  questionnaire_is_disabled: boolean;
+  questionnaire_date_created: string | null;
+  questionnaire_date_updated: string | null;
+  questionnaire_team_id: string;
+  questionnaire_created_by: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
   };
-
+  questionnaire_updated_by: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string;
+  } | null;
+};
 
 export type ApiKeyData = {
   team_key_api_key: string;
@@ -2534,10 +2535,10 @@ export type HRAnalyticsData = {
 };
 
 export type QuestionOption = {
-  option_id:string;
-  option_value:string | null;
-  option_order:number;
-  option_field_id:string;
+  option_id: string;
+  option_value: string | null;
+  option_order: number;
+  option_field_id: string;
 };
 export type QuestionFields = {
   field_name: string;
@@ -2547,31 +2548,97 @@ export type QuestionFields = {
   field_type: string;
   field_position_type: string;
   field_options: {
-      field_id: string;
-      field_name: string;
-      field_response: string;
-      field_is_correct: boolean;
-    }[],
+    field_id: string;
+    field_name: string;
+    field_response: string;
+    field_is_correct: boolean;
+  }[];
 };
 
 export type QuestionnaireData = {
   questionnaire_name: string;
   questionnaire_date_created: string;
-  fields:QuestionFields[];
-  };
+  fields: QuestionFields[];
+};
 
-  export type TechnicalQuestionFormValues = {
-    sections: {
+export type TechnicalQuestionFormValues = {
+  sections: {
+    field_id: string;
+    field_name: string;
+    question: string;
+    section_is_duplicatable: boolean;
+    choices: {
       field_id: string;
       field_name: string;
-      question: string;
-      section_is_duplicatable: boolean;
-      choices: {
-        field_id: string;
-        field_name: string;
-        choice: string;
-        isCorrectAnswer: boolean;
-      }[];
+      choice: string;
+      isCorrectAnswer: boolean;
     }[];
-    positions?: string[];
+  }[];
+  positions?: string[];
+};
+
+export type InventoryFormResponseType = {
+  form_id: string;
+  form_name: string;
+  form_description: string;
+  form_date_created: string;
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_username: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+    team_member_team_id: string;
   };
+  form_section: (SectionTableRow & {
+    section_field: (FieldTableRow & {
+      field_section_duplicatable_id?: string;
+      field_description?: string;
+      field_option: OptionTableRow[];
+      field_response?: unknown;
+      field_prefix?: string;
+    })[];
+  })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
+};
+
+export type InventoryFormType = {
+  form_id: string;
+  form_name: string;
+  form_description: string;
+  form_date_created: string;
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_username: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+    team_member_team_id: string;
+  };
+  form_section: (SectionTableRow & {
+    section_field: (FieldTableRow & {
+      field_option: OptionTableRow[];
+      field_section_duplicatable_id?: string;
+      field_correct_response?: FieldCorrectResponseTableRow | null;
+    })[];
+  })[];
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_is_disabled: boolean;
+      team_group_name: string;
+    };
+  }[];
+};
