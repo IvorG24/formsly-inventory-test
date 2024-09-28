@@ -7170,7 +7170,7 @@ export const getInventoryFormDetails = async (
   });
   if (error) throw error;
 
-  return data as InventoryFormType;
+  return data as unknown as InventoryFormType;
 };
 
 export const getEventDetails = async (

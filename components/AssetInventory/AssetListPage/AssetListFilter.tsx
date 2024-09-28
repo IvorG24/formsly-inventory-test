@@ -19,7 +19,7 @@ import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import FormEventModal from "../FormButton";
+import EventFormModal from "../EventFormModal";
 
 type RequestListFilterProps = {
   formList: { label: string; value: string }[];
@@ -71,8 +71,16 @@ const AssetListFilter = ({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null); // State to track selected event ID
 
   const handleSelectChange = (value: string | null) => {
-    setSelectedEventId(value); // Update state with selected event ID
+    if (selectedEventId === value) {
+      setSelectedEventId(null);
+      setTimeout(() => {
+        setSelectedEventId(value);
+      }, 0);
+    } else {
+      setSelectedEventId(value);
+    }
   };
+
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       form: [],
@@ -129,7 +137,11 @@ const AssetListFilter = ({
   return (
     <>
       {selectedEventId && (
-        <FormEventModal userId={userId} eventId={selectedEventId} />
+        <EventFormModal
+          key={selectedEventId}
+          userId={userId}
+          eventId={selectedEventId}
+        />
       )}
       <Flex
         gap="sm"
@@ -188,7 +200,9 @@ const AssetListFilter = ({
           <Select
             placeholder="More Actions"
             data={eventOptions}
-            onChange={handleSelectChange}
+            onChange={(value) => {
+              handleSelectChange(value);
+            }}
           />
         </Group>
       </Flex>

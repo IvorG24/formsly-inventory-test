@@ -3,6 +3,7 @@ import { Database } from "@/utils/database";
 import {
   FormType,
   InventoryFormResponseType,
+  InventoryFormType,
   RequestResponseTableRow,
 } from "@/utils/types";
 import { Box, Button, Group, Modal } from "@mantine/core";
@@ -10,6 +11,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "./CreateAssetPage/InventoryFormSection";
+
 export type Section = InventoryFormResponseType["form_section"][0];
 
 export type InventoryFormValues = {
@@ -26,10 +28,12 @@ type Props = {
   userId: string;
 };
 
-const FormEventModal = ({ eventId, userId }: Props) => {
-  const [opened, setOpened] = useState(false);
+const EventFormModal = ({ eventId, userId }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const requestFormMethods = useForm<InventoryFormValues>();
+  const [opened, setOpened] = useState(true);
+
+  const [formData, setFormData] = useState<InventoryFormType>();
   const { handleSubmit, control } = requestFormMethods;
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
@@ -40,50 +44,56 @@ const FormEventModal = ({ eventId, userId }: Props) => {
     console.log(data);
     setOpened(false);
   };
+
   useEffect(() => {
     const getInventoryForm = async () => {
       try {
         if (!userId || !eventId) return;
 
-        const params = {
-          eventId,
-          userId,
-        };
+        const params = { eventId, userId };
         const form = await getInventoryFormDetails(supabaseClient, params);
-        console.log(form);
 
-        replaceSection(form.form_section);
-      } catch (e) {
-        console.log(e);
-      }
+        if (form) {
+          setFormData(form);
+          replaceSection(form.form_section);
+        }
+      } catch (e) {}
     };
-    getInventoryForm();
-  }, [userId, eventId]);
 
+    getInventoryForm();
+  }, [userId, eventId, replaceSection, opened]);
+  const formisEmpty = formData && formData.form_section.length > 0;
   return (
     <>
       <Modal
-        opened={true}
+        opened={formisEmpty ? opened : false}
         onClose={() => setOpened(false)}
-        title={`Form for Event: ${eventId}`}
+        size="xl"
+        title={`Form for Event: ${formData?.form_name}`}
       >
         <FormProvider {...requestFormMethods}>
           <form onSubmit={handleSubmit(onSubmit)}>
             {formSections.map((section, idx) => {
+              const sectionFields = section.section_field || [];
+
               return (
-                <Box key={section.id}>
+                <Box key={section.section_id}>
                   <InventoryFormSection
                     type="Modal"
                     key={section.section_id}
-                    section={section}
+                    section={{
+                      ...section,
+                      section_field: sectionFields,
+                    }}
                     sectionIndex={idx}
                   />
                 </Box>
               );
             })}
-
             <Group position="right" mt="md">
-              <Button type="submit">Submit</Button>
+              <Button fullWidth type="submit">
+                Submit
+              </Button>
             </Group>
           </form>
         </FormProvider>
@@ -92,4 +102,4 @@ const FormEventModal = ({ eventId, userId }: Props) => {
   );
 };
 
-export default FormEventModal;
+export default EventFormModal;

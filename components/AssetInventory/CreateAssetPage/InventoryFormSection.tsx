@@ -28,7 +28,7 @@ const InventoryFormSection = ({
   formslyFormName = "",
   isEdit,
   loadingFieldList,
-  type = "Form", // Default to 'form' if no type is provided
+  type = "Form",
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field?.[0]?.field_section_duplicatable_id;
@@ -36,7 +36,7 @@ const InventoryFormSection = ({
   if (type === "Modal") {
     return (
       <Stack mt="xl">
-        {section.section_field?.map((field, idx) => {
+        {section.section_field.map((field, idx) => {
           const isLoading = Boolean(
             loadingFieldList?.find(
               (loadingField) =>

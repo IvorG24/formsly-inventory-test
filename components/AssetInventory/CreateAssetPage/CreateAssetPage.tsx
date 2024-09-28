@@ -1,8 +1,6 @@
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { Database } from "@/utils/database";
 import {
   FormType,
   InventoryFormResponseType,
@@ -19,8 +17,6 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -44,12 +40,7 @@ type Props = {
 };
 
 const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
-  const router = useRouter();
-  const formId = router.query.formId as string;
-  const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
-  const activeTeam = useActiveTeam();
-
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
@@ -71,6 +62,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     control,
     name: "sections",
   });
+  console.log(form);
 
   const handleCreateRequest = async (data: InventoryFormValues) => {
     try {
@@ -131,8 +123,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     }
   };
   useEffect(() => {
-    console.log(form);
-
     replaceSection(form.form_section);
   }, [form]);
   return (

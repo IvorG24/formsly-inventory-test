@@ -1,12 +1,7 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  BASE_URL,
-  DEFAULT_REQUEST_LIST_LIMIT,
-  formatDate,
-} from "@/utils/constant";
+import { BASE_URL, DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   RequestListFilterValues,
   RequestListItemType,
@@ -15,11 +10,8 @@ import {
 import {
   ActionIcon,
   Anchor,
-  Avatar,
-  Badge,
   Checkbox,
   CopyButton,
-  createStyles,
   Flex,
   Text,
   Tooltip,
@@ -51,26 +43,26 @@ type Props = {
   tableColumnList: { value: string; label: string }[];
 };
 
-const useStyles = createStyles(() => ({
-  requestor: {
-    border: "solid 2px white",
-    cursor: "pointer",
-  },
-  clickable: {
-    cursor: "pointer",
-  },
-}));
+// const useStyles = createStyles(() => ({
+//   requestor: {
+//     border: "solid 2px white",
+//     cursor: "pointer",
+//   },
+//   clickable: {
+//     cursor: "pointer",
+//   },
+// }));
 
-const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
+// const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
 
 const AssetListTable = ({
   requestList,
   requestListCount,
-  teamMemberList,
+  //   teamMemberList,
   activePage,
   isFetchingRequestList,
   handlePagination,
-  selectedFormFilter,
+  //   selectedFormFilter,
   sortStatus,
   setSortStatus,
   setValue,
@@ -81,7 +73,7 @@ const AssetListTable = ({
   setListTableColumnFilter,
   tableColumnList,
 }: Props) => {
-  const { classes } = useStyles();
+  //   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
 
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -257,209 +249,26 @@ const AssetListTable = ({
             );
           },
         },
-        {
-          accessor: "request_status",
-          title: "Brand",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_status"),
-          render: ({ request_status }) => (
-            <Flex justify="center">
-              <Text>Asus</Text>
-            </Flex>
-          ),
-        },
-        {
-          accessor: "request_date_created",
-          title: "Purchase Date",
-          hidden: checkIfColumnIsHidden("request_date_created"),
-          sortable: true,
-          render: ({ request_date_created }) => (
-            <Text>{formatDate(new Date(String(request_date_created)))}</Text>
-          ),
-        },
-        {
-          accessor: "request_date_created",
-          title: "Cost",
-          hidden: checkIfColumnIsHidden("request_date_created"),
-          sortable: true,
-          render: ({ request_date_created }) => <Text> P 1,440</Text>,
-        },
+        // {
+        //   accessor: "request_status",
+        //   title: "Brand",
+        //   sortable: true,
+        //   hidden: checkIfColumnIsHidden("request_status"),
+        //   render: ({ request_status }) => (
+        //     <Flex justify="center">
+        //       <Text>Asus</Text>
+        //     </Flex>
+        //   ),
+        // },
 
-        {
-          accessor: "user_id",
-          title: "Created By",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_team_member_id"),
-          render: (request) => {
-            const {
-              user_id,
-              user_first_name,
-              user_last_name,
-              request_team_member_id,
-            } = request as {
-              user_id: string;
-              user_first_name: string;
-              user_last_name: string;
-              request_team_member_id: string;
-            };
+        // {
+        //   accessor: "request_date_created",
+        //   title: "Cost",
+        //   hidden: checkIfColumnIsHidden("request_date_created"),
+        //   sortable: true,
+        //   render: ({ request_date_created }) => <Text> P 1,440</Text>,
+        // },
 
-            return (
-              <Flex px={0} gap={8} align="center">
-                <Avatar
-                  // src={requestor.user_avatar}
-                  {...defaultAvatarProps}
-                  color={
-                    user_id
-                      ? getAvatarColor(Number(`${user_id.charCodeAt(0)}`))
-                      : undefined
-                  }
-                  className={classes.requestor}
-                  onClick={() =>
-                    request_team_member_id
-                      ? window.open(`/member/${request_team_member_id}`)
-                      : null
-                  }
-                >
-                  {user_id ? `${user_first_name[0] + user_last_name[0]}` : ""}
-                </Avatar>
-                {user_id && (
-                  <Anchor
-                    href={`/member/${request_team_member_id}`}
-                    target="_blank"
-                  >
-                    <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                  </Anchor>
-                )}
-                {!user_id && <Text>Public User</Text>}
-              </Flex>
-            );
-          },
-        },
-
-        {
-          accessor: "request_status",
-          title: "Status",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_status"),
-          render: ({ request_status }) => (
-            <Flex justify="center">
-              <Badge
-                variant="filled"
-                color={getStatusToColor(String(request_status))}
-              >
-                {String(request_status)}
-              </Badge>
-            </Flex>
-          ),
-        },
-
-        {
-          accessor: "request_date_created",
-          title: "Model",
-          hidden: checkIfColumnIsHidden("request_date_created"),
-          sortable: true,
-          render: ({ request_date_created }) => <Text>Model 001</Text>,
-        },
-        {
-          accessor: "user_id",
-          title: "Created By",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_team_member_id"),
-          render: (request) => {
-            const {
-              user_id,
-              user_first_name,
-              user_last_name,
-              request_team_member_id,
-            } = request as {
-              user_id: string;
-              user_first_name: string;
-              user_last_name: string;
-              request_team_member_id: string;
-            };
-
-            return (
-              <Flex px={0} gap={8} align="center">
-                <Avatar
-                  // src={requestor.user_avatar}
-                  {...defaultAvatarProps}
-                  color={
-                    user_id
-                      ? getAvatarColor(Number(`${user_id.charCodeAt(0)}`))
-                      : undefined
-                  }
-                  className={classes.requestor}
-                  onClick={() =>
-                    request_team_member_id
-                      ? window.open(`/member/${request_team_member_id}`)
-                      : null
-                  }
-                >
-                  {user_id ? `${user_first_name[0] + user_last_name[0]}` : ""}
-                </Avatar>
-                {user_id && (
-                  <Anchor
-                    href={`/member/${request_team_member_id}`}
-                    target="_blank"
-                  >
-                    <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                  </Anchor>
-                )}
-                {!user_id && <Text>Public User</Text>}
-              </Flex>
-            );
-          },
-        },
-        {
-          accessor: "user_id",
-          title: "Assigned To",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_team_member_id"),
-          render: (request) => {
-            const {
-              user_id,
-              user_first_name,
-              user_last_name,
-              request_team_member_id,
-            } = request as {
-              user_id: string;
-              user_first_name: string;
-              user_last_name: string;
-              request_team_member_id: string;
-            };
-
-            return (
-              <Flex px={0} gap={8} align="center">
-                <Avatar
-                  // src={requestor.user_avatar}
-                  {...defaultAvatarProps}
-                  color={
-                    user_id
-                      ? getAvatarColor(Number(`${user_id.charCodeAt(0)}`))
-                      : undefined
-                  }
-                  className={classes.requestor}
-                  onClick={() =>
-                    request_team_member_id
-                      ? window.open(`/member/${request_team_member_id}`)
-                      : null
-                  }
-                >
-                  {user_id ? `${user_first_name[0] + user_last_name[0]}` : ""}
-                </Avatar>
-                {user_id && (
-                  <Anchor
-                    href={`/member/${request_team_member_id}`}
-                    target="_blank"
-                  >
-                    <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                  </Anchor>
-                )}
-                {!user_id && <Text>Public User</Text>}
-              </Flex>
-            );
-          },
-        },
         {
           accessor: "view",
           title: "View",

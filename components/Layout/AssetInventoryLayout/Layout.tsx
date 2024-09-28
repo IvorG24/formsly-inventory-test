@@ -1,7 +1,6 @@
 import {
   getAllNotification,
   getAllTeamOfUser,
-  getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
@@ -77,10 +76,6 @@ const Layout = ({ children }: LayoutProps) => {
           });
           if (teamMember) {
             setUserTeamMember(teamMember);
-
-            const teamMemberList = await getTeamMemberList(supabaseClient, {
-              teamId: teamMember.team_member_team_id,
-            });
           }
         }
 

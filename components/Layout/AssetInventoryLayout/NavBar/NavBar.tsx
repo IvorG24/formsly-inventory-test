@@ -104,37 +104,37 @@ const Navbar = () => {
           id: "team-info",
           label: "Team info",
           icon: IconBriefcase,
-          href: `/${formattedTeamName}/inventory/team-info`,
+          href: `/${formattedTeamName}/inventory/setup/team-info`,
         },
         {
           id: "sites",
           label: "Sites",
           icon: IconGps,
-          href: `/${formattedTeamName}/inventory/sites`,
+          href: `/${formattedTeamName}/inventory/setup/sites`,
         },
         {
           id: "locations",
           label: "Locations",
           icon: IconLocation,
-          href: `/${formattedTeamName}/inventory/locations`,
+          href: `/${formattedTeamName}/inventory/setup/location`,
         },
         {
           id: "categories",
           label: "Categories",
           icon: IconCategory,
-          href: `/${formattedTeamName}/inventory/categories`,
+          href: `/${formattedTeamName}/inventory/setup/categories`,
         },
         {
           id: "sub-categories",
           label: "Sub Categories",
           icon: IconCategory2,
-          href: `/${formattedTeamName}/inventory/sub-categories`,
+          href: `/${formattedTeamName}/inventory/setup/sub-categories`,
         },
         {
           id: "departments",
           label: "Departments",
           icon: IconBuilding,
-          href: `/${formattedTeamName}/inventory/departments`,
+          href: `/${formattedTeamName}/inventory/setup/departments`,
         },
         {
           id: "databases",
@@ -146,7 +146,7 @@ const Navbar = () => {
           id: "manage-forms",
           label: "Manage Forms",
           icon: IconEditCircle,
-          href: `/${formattedTeamName}/inventory/events`,
+          href: `/${formattedTeamName}/inventory/setup/events`,
         },
       ],
     },
@@ -169,7 +169,7 @@ const Navbar = () => {
                   : theme.colors.blue[0],
             },
             "&[data-active]": {
-              backgroundColor: "transparent", // Background for expanded state
+              backgroundColor: "transparent",
             },
           })}
           key={link.id}
@@ -179,7 +179,7 @@ const Navbar = () => {
             icon={<link.icon fontWeight={100} size={20} />}
             style={{
               fontSize: ".9rem",
-              justifyContent: isCollapsed ? "flex-end" : "flex-start", // Center icon when collapsed
+              justifyContent: isCollapsed ? "flex-end" : "flex-start",
             }}
             styles={(theme) => ({
               control: {

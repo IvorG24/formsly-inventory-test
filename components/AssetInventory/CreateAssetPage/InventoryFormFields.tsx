@@ -26,7 +26,6 @@ import {
 } from "@mantine/core";
 import { DateInput, TimeInput, YearPickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCalendar,
   IconClock,
@@ -74,7 +73,6 @@ const InventoryFormFields = ({
     name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
   });
 
-  const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
 
   const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
