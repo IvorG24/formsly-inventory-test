@@ -19,7 +19,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 import InventoryFormSection from "./InventoryFormSection";
 
 export type Section = InventoryFormResponseType["form_section"][0];
@@ -52,17 +51,15 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   };
 
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control } = requestFormMethods;
   const {
     fields: formSections,
-    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
-  console.log(form);
 
   const handleCreateRequest = async (data: InventoryFormValues) => {
     try {
@@ -84,30 +81,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDuplicateSection = (sectionId: string) => {
-    const sectionLastIndex = formSections
-      .map((sectionItem) => sectionItem.section_id)
-      .lastIndexOf(sectionId);
-    const sectionMatch = form.form_section.find(
-      (section) => section.section_id === sectionId
-    );
-    if (sectionMatch) {
-      const sectionDuplicatableId = uuidv4();
-      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => ({
-          ...field,
-          field_section_duplicatable_id: sectionDuplicatableId,
-        })
-      );
-      const newSection = {
-        ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
-      };
-      insertSection(sectionLastIndex + 1, newSection);
-      return;
     }
   };
 
@@ -137,11 +110,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
             <RequestFormDetails formDetails={formDetails} />
             <Stack spacing="xl">
               {formSections.map((section, idx) => {
-                const sectionIdToFind = section.section_id;
-                const sectionLastIndex = getValues("sections")
-                  .map((sectionItem) => sectionItem.section_id)
-                  .lastIndexOf(sectionIdToFind);
-
                 return (
                   <Box key={section.id}>
                     <InventoryFormSection
@@ -151,19 +119,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                       onRemoveSection={handleRemoveSection}
                       formslyFormName={formslyFormName}
                     />
-                    {section.section_is_duplicatable &&
-                      idx === sectionLastIndex && (
-                        <Button
-                          mt="md"
-                          variant="default"
-                          onClick={() =>
-                            handleDuplicateSection(section.section_id)
-                          }
-                          fullWidth
-                        >
-                          {section.section_name} +
-                        </Button>
-                      )}
                   </Box>
                 );
               })}

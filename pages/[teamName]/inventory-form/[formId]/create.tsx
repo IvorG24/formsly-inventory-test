@@ -17,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         }
       );
-      console.log(error);
+
       if (error) {
         throw error;
       }
@@ -27,7 +27,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       };
     } catch (e) {
       return {
-        props: { form: {} },
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
       };
     }
   }
@@ -36,8 +39,6 @@ type Props = {
   form: InventoryFormResponseType;
 };
 const Page = ({ form }: Props) => {
-  console.log(form);
-
   return (
     <>
       <Meta
