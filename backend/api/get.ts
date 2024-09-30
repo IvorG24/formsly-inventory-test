@@ -7179,10 +7179,34 @@ export const getEventDetails = async (
 ) => {
   const { data, error } = await supabaseClient
     .schema("inventory_schema")
-    .from("event_table")
+    .from("inventory_event_table")
     .select("event_id,event_name")
     .eq("event_team_id", teamId);
   if (error) throw error;
 
   return data;
+};
+
+export const getCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page: number; limit: number; search?: string }
+) => {
+  const { page, limit, search } = params;
+  const start = (page - 1) * limit;
+  const end = start + limit - 1; // Calculate the ending index
+
+  let query = supabaseClient
+    .schema("inventory_schema")
+    .from("option_table")
+    .select("*")
+    .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb")
+    .range(start, end);
+  if (search) {
+    query = query.ilike("option_value", `%${search}%`); // Adjust to the field you want to search
+  }
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data as OptionTableRow[];
 };
