@@ -1,22 +1,20 @@
 // Imports
-import { getRequestListOnLoad } from "@/backend/api/get";
+import { getCategoryOptions } from "@/backend/api/get";
 import SubCategoriesSetupPage from "@/components/AssetInventory/SubCategoriesSetupPage/SubCategoriesSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
+import { OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, supabaseClient }) => {
+  async ({ supabaseClient }) => {
     try {
-      const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id, // Retrieve the user ID
-      });
+      const categoryOptions = await getCategoryOptions(supabaseClient, {});
 
       return {
         props: {
-          ...requestListData,
-          userId: user.id, // Pass userId as a prop
-        },
+          categoryOptions,
+        } as Props,
       };
     } catch (e) {
       return {
@@ -28,15 +26,17 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
-
-const Page = () => {
+type Props = {
+  categoryOptions: OptionTableRow[];
+};
+const Page = ({ categoryOptions }: Props) => {
   return (
     <>
       <Meta
         description="Request List Page"
         url="/teamName/setup/sub-categories"
       />
-      <SubCategoriesSetupPage />
+      <SubCategoriesSetupPage categoryOptions={categoryOptions} />
     </>
   );
 };

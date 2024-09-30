@@ -7189,24 +7189,55 @@ export const getEventDetails = async (
 
 export const getCategoryOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page: number; limit: number; search?: string }
+  params: { page?: number; limit?: number; search?: string }
 ) => {
   const { page, limit, search } = params;
-  const start = (page - 1) * limit;
-  const end = start + limit - 1; // Calculate the ending index
-
   let query = supabaseClient
     .schema("inventory_schema")
     .from("option_table")
     .select("*")
-    .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb")
-    .range(start, end);
+    .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb");
+
   if (search) {
-    query = query.ilike("option_value", `%${search}%`); // Adjust to the field you want to search
+    query = query.ilike("option_value", `%${search}%`);
   }
+
+  if (limit && limit > 0 && page && page > 0) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    query = query.range(start, end);
+  }
+
   const { data, error } = await query;
 
   if (error) throw error;
 
   return data as OptionTableRow[];
 };
+
+// export const getSubCategoryList = async (
+//   supabaseClient: SupabaseClient<Database>,
+//   params: { page: number; limit: number; search?: string }
+// ) => {
+//   const { page, limit, search } = params;
+//   const start = (page - 1) * limit;
+//   const end = start + limit - 1;
+//   let query = supabaseClient
+//     .schema("inventory_schema")
+//     .from("option_table")
+//     .select("*")
+//     .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb");
+//     .range(start, end);
+
+//   if (search) {
+//     query = query.ilike("option_value", `%${search}%`);
+//   }
+
+//   const { data, error } = await query;
+
+//   if (error) throw error;
+
+//   return data as OptionTableRow[];
+// };
+
+// export const getSubCategory;
