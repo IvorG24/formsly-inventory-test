@@ -187,7 +187,10 @@ const LocationSetupPage = () => {
 
         <DataTable
           fontSize={16}
-          style={{ borderRadius: 4 }}
+          style={{
+            borderRadius: 4,
+            minHeight: "300px",
+          }}
           withBorder
           idAccessor="location_id"
           page={activePage}

@@ -4,47 +4,47 @@ import { Controller, useFormContext } from "react-hook-form"; // Import necessar
 type Props = {
   isOpen: boolean;
   close: () => void;
-  handleCategorySubmit: (data: CategoryFormValues) => void; // Pass form data to the parent
+  handleDepartmentSubmit: (data: DepartmentFormvalues) => void; // Pass form data to the parent
 };
 
-export type CategoryFormValues = {
-  category_name: string;
+export type DepartmentFormvalues = {
+  department_name: string;
 };
 
-const CategoryDrawer = ({ isOpen, close, handleCategorySubmit }: Props) => {
-  const { control, handleSubmit, reset } = useFormContext<CategoryFormValues>();
-
-  const handleSubmitSiteForm = async (data: CategoryFormValues) => {
-    handleCategorySubmit(data);
+const DepartmentDrawer = ({ isOpen, close, handleDepartmentSubmit }: Props) => {
+  const { control, handleSubmit, reset } =
+    useFormContext<DepartmentFormvalues>();
+  const handleDepartmentSubmitForm = async (data: DepartmentFormvalues) => {
+    handleDepartmentSubmit(data);
     reset();
   };
 
   return (
     <Drawer
-      title="Create New Category"
+      title="Create New Location"
       position="right"
       overlayProps={{ opacity: 0.5, blur: 4 }}
       opened={isOpen}
       onClose={close}
     >
-      <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
+      <form onSubmit={handleSubmit(handleDepartmentSubmitForm)}>
         <Stack spacing={8}>
           <Controller
-            name="category_name"
+            name="department_name"
             control={control}
             render={({ field }) => (
               <TextInput
-                label="Category Name"
+                label="Deparment Name"
                 withAsterisk
-                placeholder="Enter category name"
                 required
                 {...field}
               />
             )}
           />
+
           <Group mt="md">
             <Button fullWidth type="submit">
-              Save Site
+              Save Location
             </Button>
           </Group>
         </Stack>
@@ -53,4 +53,4 @@ const CategoryDrawer = ({ isOpen, close, handleCategorySubmit }: Props) => {
   );
 };
 
-export default CategoryDrawer;
+export default DepartmentDrawer;

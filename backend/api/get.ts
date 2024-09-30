@@ -1,3 +1,4 @@
+import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -89,6 +90,7 @@ import {
   SignerRequestSLA,
   SignerWithProfile,
   SSOTOnLoad,
+  SubCategory,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
@@ -7215,29 +7217,43 @@ export const getCategoryOptions = async (
   return data as OptionTableRow[];
 };
 
-// export const getSubCategoryList = async (
-//   supabaseClient: SupabaseClient<Database>,
-//   params: { page: number; limit: number; search?: string }
-// ) => {
-//   const { page, limit, search } = params;
-//   const start = (page - 1) * limit;
-//   const end = start + limit - 1;
-//   let query = supabaseClient
-//     .schema("inventory_schema")
-//     .from("option_table")
-//     .select("*")
-//     .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb");
-//     .range(start, end);
+export const getSubCategoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page: number; limit: number; search?: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_sub_field_options", {
+    input_data: params,
+  });
 
-//   if (search) {
-//     query = query.ilike("option_value", `%${search}%`);
-//   }
+  if (error) throw error;
 
-//   const { data, error } = await query;
+  return data as unknown as SubCategory[];
+};
 
-//   if (error) throw error;
+export const getDepartmentList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { search, page, limit } = params;
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
+  let query = supabaseClient
+    .schema("team_schema")
+    .from("team_department_table")
+    .select("*")
+    .range(start, end);
 
-//   return data as OptionTableRow[];
-// };
+  if (search) {
+    query = query.ilike("team_department_name", `%${search}%`);
+  }
 
-// export const getSubCategory;
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data as unknown as Department[];
+};

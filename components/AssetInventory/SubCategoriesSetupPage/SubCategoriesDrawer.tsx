@@ -1,28 +1,28 @@
 import { OptionType } from "@/utils/types";
-import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
+import { Button, Drawer, Group, Select, Stack, TextInput } from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  categoryOptionList:OptionType[];
-  handleSiteSubmit: (data: CategoryFormValues) => void;
+  handleSubCategory: (data: CategoryFormValues) => void;
+  categoryList: OptionType[];
 };
 
 export type CategoryFormValues = {
-  category_id: string;
+  category_name: string;
   sub_category: string;
 };
 
-const LocationDrawer = ({
+const SubCategoryDrawer = ({
   isOpen,
   close,
-  handleSiteSubmit,
-  categoryOptionList,
+  handleSubCategory,
+  categoryList,
 }: Props) => {
   const { control, handleSubmit, reset } = useFormContext<CategoryFormValues>();
   const handleSubmitSiteForm = async (data: CategoryFormValues) => {
-    handleSiteSubmit(data);
+    handleSubCategory(data);
     reset();
   };
 
@@ -37,16 +37,19 @@ const LocationDrawer = ({
       <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
         <Stack spacing={8}>
           <Controller
-            name="category_id"
-            defaultValue={site_name}
+            name="category_name"
             control={control}
             render={({ field }) => (
-              <TextInput
-                label="Site Name"
-                variant="filled"
-                readOnly
-                required
+              <Select
+                label="Category Name"
+                placeholder="Search by location name"
+                withAsterisk
+                data={categoryList}
+                searchable
                 {...field}
+                onChange={(value) => {
+                  field.onChange(value || "");
+                }}
               />
             )}
           />
@@ -56,8 +59,9 @@ const LocationDrawer = ({
             control={control}
             render={({ field }) => (
               <TextInput
-                label="Location Name"
-                placeholder="Enter location name"
+                label="Sub Category Name"
+                placeholder="Enter sub category name"
+                withAsterisk
                 required
                 {...field}
               />
@@ -66,7 +70,7 @@ const LocationDrawer = ({
 
           <Group mt="md">
             <Button fullWidth type="submit">
-              Save Location
+              Save Sub Category
             </Button>
           </Group>
         </Stack>
@@ -75,4 +79,4 @@ const LocationDrawer = ({
   );
 };
 
-export default LocationDrawer;
+export default SubCategoryDrawer;

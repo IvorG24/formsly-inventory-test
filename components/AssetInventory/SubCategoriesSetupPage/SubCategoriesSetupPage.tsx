@@ -1,32 +1,32 @@
-import { getCategoryOptions } from "@/backend/api/get";
+import { getSubCategoryList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { OptionTableRow } from "@/utils/types";
+import { OptionTableRow, SubCategory } from "@/utils/types";
 import {
-    ActionIcon,
-    Button,
-    Container,
-    Flex,
-    Group,
-    Text,
-    TextInput,
-    Title,
+  ActionIcon,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Select,
+  Text,
+  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconCategory, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
-import CategoryDrawer, { CategoryFormValues } from "./SubCategoriesDrawer";
-
+import SubCategoryDrawer, { CategoryFormValues } from "./SubCategoriesDrawer";
 type FormValues = {
-  search: string;
+  category_id: string;
   category_name: string;
 };
+
 type Props = {
   categoryOptions: OptionTableRow[];
 };
@@ -34,40 +34,50 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
-  const [currentCategoryList, setCurrentCategoryList] = useState<
-    OptionTableRow[]
-  >([]);
-const categoryOptionList = categoryOptions.map((option) => ({
+  const [subCategory, setSubCategory] = useState<SubCategory[]>([]);
+  const categoryOptionList = categoryOptions.map((option) => ({
     label: option.option_value,
-    value: option.option_value
-}));
-const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
-const [opened, { open, close }] = useDisclosure(false);
+    value: option.option_value,
+  }));
+  const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
+  const [opened, { open, close }] = useDisclosure(false);
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      category_name: "",
+      category_name: categoryOptionList[0].label,
+      category_id: categoryOptionList[0].value,
     },
   });
 
   const { register, handleSubmit, getValues } = formMethods;
 
-  const handleFetchCategoryList = async (page: number) => {
-    const { search } = getValues();
-    const data = await getCategoryOptions(supabaseClient, {
-      page,
-      search,
-      limit: ROW_PER_PAGE,
-    });
-    setCurrentCategoryList(data);
-    console.log(search);
+  const handleFetchCategoryList = async (
+    page: number,
+    value: string | null
+  ) => {
+    try {
+      const { category_name } = getValues();
+      const categoryName = value ? value : category_name;
+
+      const data = await getSubCategoryList(supabaseClient, {
+        page,
+        search: categoryName,
+        limit: ROW_PER_PAGE,
+      });
+      setSubCategory(data);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
-  const handleFilterForms = async () => {
+  const handleFilterForms = async (value: string | null) => {
     try {
       setIsFetchingCategoryList(true);
       setActivePage(1);
-      await handleFetchCategoryList(1);
+      await handleFetchCategoryList(1, value);
     } catch (e) {
       console.error("Error fetching filtered categories:", e);
     } finally {
@@ -77,9 +87,10 @@ const [opened, { open, close }] = useDisclosure(false);
 
   const handlePagination = async (page: number) => {
     try {
+      const { category_name } = getValues();
       setIsFetchingCategoryList(true);
       setActivePage(page);
-      await handleFetchCategoryList(page);
+      await handleFetchCategoryList(page, category_name);
     } catch (e) {
       console.error("Error fetching paginated categories:", e);
     } finally {
@@ -95,17 +106,16 @@ const [opened, { open, close }] = useDisclosure(false);
     console.log("Delete category with ID:", category_id);
   };
 
-  const handleCategorySubmit = async (data: CategoryFormValues) => {
+  const handleSubCategorySubmit = async (data: CategoryFormValues) => {
     try {
-      const { category_name } = data;
-      const newCategory: OptionTableRow = {
-        option_id: uuidv4(),
-        option_value: category_name,
-        option_order: 4,
-        option_field_id: "913b5928-38ee-45eb-a808-6c1b5dd2a8cb",
+      const { sub_category, category_name } = data;
+      const subCategoryData = {
+        category_name: category_name,
+        sub_category_id: uuidv4(),
+        sub_category_name: sub_category,
       };
 
-      setCurrentCategoryList((prev) => [...prev, newCategory]);
+      setSubCategory((prev) => [...prev, subCategoryData]);
       notifications.show({
         message: "Category addedd successfully",
         color: "green",
@@ -118,6 +128,7 @@ const [opened, { open, close }] = useDisclosure(false);
       });
     }
   };
+  console.log(createPagesBrowserClient());
 
   useEffect(() => {
     handlePagination(1);
@@ -131,28 +142,38 @@ const [opened, { open, close }] = useDisclosure(false);
           edit or delete each sub category as needed.
         </Text>
 
-        <form onSubmit={handleSubmit(handleFilterForms)}>
+        <form
+          onSubmit={handleSubmit((data) =>
+            handleFilterForms(data.category_name)
+          )}
+        >
           <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by category name"
-              {...register("search")}
+            <Select
+              placeholder="Search by location name"
+              data={categoryOptionList}
+              defaultValue={getValues("category_id")}
+              searchable
+              {...register("category_name")}
               rightSection={
                 <ActionIcon size="xs" type="submit">
-                  <IconSearch />
+                  <IconCategory />
                 </ActionIcon>
               }
-              miw={250}
-              maw={320}
+              onChange={(value) => {
+                formMethods.setValue("category_name", value || "");
+                handleFilterForms(value);
+              }}
             />
             <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Category
+              Add New Sub Category
             </Button>
           </Group>
         </form>
 
         <FormProvider {...formMethods}>
-          <CategoryDrawer
-            handleCategorySubmit={handleCategorySubmit}
+          <SubCategoryDrawer
+            categoryList={categoryOptionList}
+            handleSubCategory={handleSubCategorySubmit}
             isOpen={opened}
             close={close}
           />
@@ -160,31 +181,42 @@ const [opened, { open, close }] = useDisclosure(false);
 
         <DataTable
           fontSize={16}
-          style={{ borderRadius: 4 }}
+          style={{
+            borderRadius: 4,
+            minHeight: "300px",
+          }}
           withBorder
-          idAccessor="category_id"
+          idAccessor="sub_category_id"
           page={activePage}
-          totalRecords={currentCategoryList.length}
+          totalRecords={subCategory.length}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
-          records={currentCategoryList}
+          records={subCategory}
           fetching={isFetchingCategoryList}
           columns={[
             {
+              accessor: "sub_category_id",
+              width: "40%",
+              title: "Sub Category Name",
+              render: (subCategory) => (
+                <Text>{subCategory.sub_category_name}</Text>
+              ),
+            },
+            {
               accessor: "category_name",
-              width: "90%",
+              width: "40%",
               title: "Category Name",
-              render: (category) => <Text>{category.option_value}</Text>,
+              render: (subCategory) => <Text>{subCategory.category_name}</Text>,
             },
             {
               accessor: "actions",
               title: "Actions",
-              render: (category) => (
+              render: (subCategory) => (
                 <Group spacing="xs">
                   <Button
                     size="xs"
                     variant="outline"
-                    onClick={() => handleEdit(category.option_id)}
+                    onClick={() => handleEdit(subCategory.sub_category_id)}
                   >
                     Edit
                   </Button>
@@ -192,7 +224,7 @@ const [opened, { open, close }] = useDisclosure(false);
                     size="xs"
                     variant="outline"
                     color="red"
-                    onClick={() => handleDelete(category.option_id)}
+                    onClick={() => handleDelete(subCategory.sub_category_id)}
                   >
                     Delete
                   </Button>

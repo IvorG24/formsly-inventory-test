@@ -37,6 +37,7 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
               <TextInput
                 label="Site Name"
                 placeholder="Enter site name"
+                withAsterisk
                 required
                 {...field}
               />

@@ -134,11 +134,11 @@ const Navbar = () => {
           id: "departments",
           label: "Departments",
           icon: IconBuilding,
-          href: `/${formattedTeamName}/inventory/setup/departments`,
+          href: `/${formattedTeamName}/inventory/setup/department`,
         },
         {
           id: "databases",
-          label: "Datebases",
+          label: "Databases",
           icon: IconDatabase,
         },
 
@@ -146,7 +146,6 @@ const Navbar = () => {
           id: "manage-forms",
           label: "Manage Forms",
           icon: IconEditCircle,
-          href: `/${formattedTeamName}/inventory/setup/events`,
         },
       ],
     },

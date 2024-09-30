@@ -56,7 +56,6 @@ const CategoriesSetupPage = () => {
       limit: ROW_PER_PAGE,
     });
     setCurrentCategoryList(data);
-    console.log(search);
   };
 
   const handleFilterForms = async () => {
@@ -156,7 +155,7 @@ const CategoriesSetupPage = () => {
 
         <DataTable
           fontSize={16}
-          style={{ borderRadius: 4 }}
+          style={{ borderRadius: 4, minHeight: "300px" }}
           withBorder
           idAccessor="category_id"
           page={activePage}

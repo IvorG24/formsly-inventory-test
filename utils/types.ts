@@ -2642,3 +2642,9 @@ export type InventoryFormType = {
     };
   }[];
 };
+
+export type SubCategory = {
+  category_name: string;
+  sub_category_id: string;
+  sub_category_name: string;
+};

@@ -57,6 +57,7 @@ const LocationDrawer = ({
               <TextInput
                 label="Location Name"
                 placeholder="Enter location name"
+                withAsterisk
                 required
                 {...field}
               />

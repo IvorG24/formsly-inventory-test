@@ -1,3 +1,4 @@
+import { getDepartmentList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
@@ -11,81 +12,63 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
+import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import SiteDrawer, { SiteFormValues } from "./SiteDrawer";
+import DepartmentDrawer, { DepartmentFormvalues } from "./DepartmentDrawer";
 
-type Site = {
-  site_id: string;
-  site_name: string;
-  site_description: string;
+export type Department = {
+  team_department_id: string;
+  team_department_name: string;
 };
-
-const mockSites: Site[] = [
-  {
-    site_id: "1",
-    site_name: "Site A",
-    site_description: "Description for Site A",
-  },
-  {
-    site_id: "2",
-    site_name: "Site B",
-    site_description: "Description for Site B",
-  },
-  {
-    site_id: "3",
-    site_name: "Site C",
-    site_description: "Description for Site C",
-  },
-];
 
 type FormValues = {
   search: string;
-  site_name: string;
-  site_description: string;
+  department_name: string;
 };
 
-const SiteSetupPage = () => {
+const DepartmentSetupPage = () => {
   const activeTeam = useActiveTeam();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
-  const [currentSiteList, setCurrentSiteList] = useState<Site[]>([]);
-  const [filteredSites, setFilteredSites] = useState<Site[]>(mockSites);
+  const [currentDepartment, setCurrentDepartment] = useState<Department[]>([]);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
 
   // Initialize React Hook Form with default values for the drawer
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      site_name: "",
-      site_description: "",
+      department_name: "",
     },
   });
 
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    const start = (activePage - 1) * ROW_PER_PAGE;
-    const end = start + ROW_PER_PAGE;
-    setCurrentSiteList(filteredSites.slice(start, end));
-  }, [activePage, filteredSites]);
+    handlePagination(1);
+  }, [activePage]);
 
-  const handleFetchSiteList = async (page: number) => {
+  const handleFetchDepartmentList = async (page: number) => {
     const { search } = getValues();
-    const filtered = mockSites.filter(
-      (site) =>
-        site.site_name.toLowerCase().includes(search.toLowerCase()) ||
-        site.site_description.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredSites(filtered);
+
+    const data = await getDepartmentList(supabaseClient, {
+      search,
+      limit: ROW_PER_PAGE,
+      page,
+    });
+    console.log(data);
+
+    setCurrentDepartment(data);
   };
 
   const handleFilterForms = async () => {
     try {
       setIsFetchingSiteList(true);
       setActivePage(1);
-      await handleFetchSiteList(1);
+      await handleFetchDepartmentList(1);
     } catch (e) {
       console.error("Error fetching filtered sites:", e);
     } finally {
@@ -97,7 +80,7 @@ const SiteSetupPage = () => {
     try {
       setIsFetchingSiteList(true);
       setActivePage(page);
-      await handleFetchSiteList(page);
+      await handleFetchDepartmentList(page);
     } catch (e) {
       console.error("Error fetching paginated sites:", e);
     } finally {
@@ -113,10 +96,8 @@ const SiteSetupPage = () => {
     console.log("Delete site with ID:", site_id);
   };
 
-  const handleSiteSubmit = async (data: SiteFormValues) => {
+  const handleDepartmentSubmit = async (data: DepartmentFormvalues) => {
     try {
-      const { site_name, site_description } = data;
-      console.log(site_name, site_description);
       //site logic put here
       close();
     } catch (e) {
@@ -127,11 +108,11 @@ const SiteSetupPage = () => {
   return (
     <Container fluid>
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Sites</Title>
+        <Title order={2}>List of Departments</Title>
         <Text>
-          This is the list of sites currently in the system, including their
-          descriptions and available actions. You can edit or delete each site
-          as needed.
+          This is the list of Departments currently in the system, including
+          their descriptions and available actions. You can edit or delete each
+          site as needed.
         </Text>
 
         <form onSubmit={handleSubmit(handleFilterForms)}>
@@ -148,14 +129,14 @@ const SiteSetupPage = () => {
               maw={320}
             />
             <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Site
+              Add New Department
             </Button>
           </Group>
         </form>
 
         <FormProvider {...formMethods}>
-          <SiteDrawer
-            handleSiteSubmit={handleSiteSubmit}
+          <DepartmentDrawer
+            handleDepartmentSubmit={handleDepartmentSubmit}
             isOpen={opened}
             close={close}
           />
@@ -168,35 +149,31 @@ const SiteSetupPage = () => {
             minHeight: "300px",
           }}
           withBorder
-          idAccessor="site_id"
+          idAccessor="department_id"
           page={activePage}
-          totalRecords={filteredSites.length}
+          totalRecords={currentDepartment.length}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
-          records={currentSiteList}
+          records={currentDepartment}
           fetching={isFetchingSiteList}
           columns={[
             {
-              accessor: "site_name",
-              width: "20%",
-              title: "Site Name",
-              render: (site) => <Text>{site.site_name}</Text>,
-            },
-            {
-              accessor: "site_description",
-              width: "70%",
-              title: "Site Description",
-              render: (site) => <Text>{site.site_description}</Text>,
+              accessor: "department_id",
+              width: "90%",
+              title: "Department Name",
+              render: (department) => (
+                <Text>{department.team_department_name}</Text>
+              ),
             },
             {
               accessor: "actions",
               title: "Actions",
-              render: (site) => (
+              render: (department) => (
                 <Group spacing="xs">
                   <Button
                     size="xs"
                     variant="outline"
-                    onClick={() => handleEdit(site.site_id)}
+                    onClick={() => handleEdit(department.team_department_id)}
                   >
                     Edit
                   </Button>
@@ -204,7 +181,7 @@ const SiteSetupPage = () => {
                     size="xs"
                     variant="outline"
                     color="red"
-                    onClick={() => handleDelete(site.site_id)}
+                    onClick={() => handleDelete(department.team_department_id)}
                   >
                     Delete
                   </Button>
@@ -218,4 +195,4 @@ const SiteSetupPage = () => {
   );
 };
 
-export default SiteSetupPage;
+export default DepartmentSetupPage;
