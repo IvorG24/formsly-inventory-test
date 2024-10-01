@@ -1,22 +1,22 @@
 // Imports
-import { getRequestListOnLoad } from "@/backend/api/get";
+import { getSiteList } from "@/backend/api/get";
 import LocationSetupPage from "@/components/AssetInventory/LocationSetupPage/LocationSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
+import { SiteTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, supabaseClient }) => {
+  async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id, // Retrieve the user ID
+      const siteListData = await getSiteList(supabaseClient, {
+        teamid: userActiveTeam.team_id,
       });
 
       return {
         props: {
-          ...requestListData,
-          userId: user.id, // Pass userId as a prop
-        },
+          siteListData,
+        } as Props,
       };
     } catch (e) {
       return {
@@ -28,12 +28,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
-
-const Page = () => {
+type Props = {
+  siteListData: SiteTableRow[];
+};
+const Page = ({ siteListData }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/teamName/setup/location" />
-      <LocationSetupPage />
+      <LocationSetupPage siteListData={siteListData} />
     </>
   );
 };

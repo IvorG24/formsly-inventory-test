@@ -69,6 +69,7 @@ import {
   JobOfferFilterFormValues,
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
+  LocationTableRow,
   LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
@@ -89,6 +90,7 @@ import {
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
+  SiteTableRow,
   SSOTOnLoad,
   SubCategory,
   TeamMemberOnLoad,
@@ -7256,4 +7258,69 @@ export const getDepartmentList = async (
   if (error) throw error;
 
   return data as unknown as Department[];
+};
+
+export const getSiteList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    teamid: string;
+  }
+) => {
+  const { search, page, limit, teamid } = params;
+
+  const start = page && limit ? (page - 1) * limit : undefined;
+  const end = start !== undefined && limit ? start + limit - 1 : undefined;
+
+  let query = supabaseClient
+    .schema("inventory_schema")
+    .from("site_table")
+    .select("*")
+    .eq("site_team_id", teamid);
+
+  if (start !== undefined && end !== undefined) {
+    query = query.range(start, end);
+  }
+
+  if (search) {
+    query = query.ilike("site_name", `%${search}%`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data as SiteTableRow[];
+};
+
+export const getLocationList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    site_id?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { site_id, page, limit } = params;
+  console.log(params);
+
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
+  let query = supabaseClient
+    .schema("inventory_schema")
+    .from("location_table")
+    .select("*")
+    .range(start, end);
+
+  if (site_id) {
+    query = query.eq("location_site_id", site_id);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data as LocationTableRow[];
 };

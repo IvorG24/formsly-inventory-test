@@ -1,5 +1,7 @@
+import { getSiteList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { SiteTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -11,35 +13,13 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
+import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SiteDrawer, { SiteFormValues } from "./SiteDrawer";
-
-type Site = {
-  site_id: string;
-  site_name: string;
-  site_description: string;
-};
-
-const mockSites: Site[] = [
-  {
-    site_id: "1",
-    site_name: "Site A",
-    site_description: "Description for Site A",
-  },
-  {
-    site_id: "2",
-    site_name: "Site B",
-    site_description: "Description for Site B",
-  },
-  {
-    site_id: "3",
-    site_name: "Site C",
-    site_description: "Description for Site C",
-  },
-];
 
 type FormValues = {
   search: string;
@@ -49,9 +29,9 @@ type FormValues = {
 
 const SiteSetupPage = () => {
   const activeTeam = useActiveTeam();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
-  const [currentSiteList, setCurrentSiteList] = useState<Site[]>([]);
-  const [filteredSites, setFilteredSites] = useState<Site[]>(mockSites);
+  const [currentSiteList, setCurrentSiteList] = useState<SiteTableRow[]>([]);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -66,19 +46,19 @@ const SiteSetupPage = () => {
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    const start = (activePage - 1) * ROW_PER_PAGE;
-    const end = start + ROW_PER_PAGE;
-    setCurrentSiteList(filteredSites.slice(start, end));
-  }, [activePage, filteredSites]);
+    handlePagination(1);
+  }, [activePage]);
 
   const handleFetchSiteList = async (page: number) => {
     const { search } = getValues();
-    const filtered = mockSites.filter(
-      (site) =>
-        site.site_name.toLowerCase().includes(search.toLowerCase()) ||
-        site.site_description.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredSites(filtered);
+    const data = await getSiteList(supabaseClient, {
+      search,
+      teamid: activeTeam.team_id,
+      page,
+      limit: ROW_PER_PAGE,
+    });
+
+    setCurrentSiteList(data);
   };
 
   const handleFilterForms = async () => {
@@ -170,7 +150,7 @@ const SiteSetupPage = () => {
           withBorder
           idAccessor="site_id"
           page={activePage}
-          totalRecords={filteredSites.length}
+          totalRecords={currentSiteList.length}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentSiteList}

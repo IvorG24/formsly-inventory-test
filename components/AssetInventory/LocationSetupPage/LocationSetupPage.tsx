@@ -1,5 +1,7 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
+import { getLocationList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { Database } from "@/utils/database";
+import { LocationTableRow, SiteTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -11,89 +13,60 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconLocation, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import LocationDrawer, { SiteFormValues } from "./LocationDrawer";
 
-type Location = {
-  location_id: string;
-  location_name: string;
-};
-
-const mockLocations: Location[] = [
-  {
-    location_id: "1",
-    location_name: "Location A",
-  },
-  {
-    location_id: "2",
-    location_name: "Location B",
-  },
-  {
-    location_id: "3",
-    location_name: "Location C",
-  },
-];
-
-const mockLocationsOptions = [
-  {
-    value: "Location A",
-    label: "Location A",
-  },
-  {
-    value: "Location B",
-    label: "Location B",
-  },
-  {
-    value: "Location C",
-    label: "Location C",
-  },
-];
-
 type FormValues = {
-  site_name: string;
+  site_id: string;
   location_name: string;
 };
-
-const LocationSetupPage = () => {
-  const activeTeam = useActiveTeam();
+type Props = {
+  siteListData: SiteTableRow[];
+};
+const LocationSetupPage = ({ siteListData }: Props) => {
   const [activePage, setActivePage] = useState(1);
-  const [currentLocationList, setCurrentLocationList] = useState<Location[]>(
-    []
-  );
-  const [filteredLocations, setFilteredLocations] =
-    useState<Location[]>(mockLocations);
+  const [currentLocationList, setCurrentLocationList] = useState<
+    LocationTableRow[]
+  >([]);
+  const supabaseClient = createPagesBrowserClient<Database>();
   const [isFetchingLocationList, setIsFetchingLocationList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
+  const siteOptionList = siteListData.map((option) => ({
+    label: option.site_name,
+    value: option.site_id,
+  }));
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      site_name: mockLocationsOptions[0].value,
+      site_id: siteOptionList[0].value,
       location_name: "",
     },
   });
 
-  const { register, handleSubmit, getValues } = formMethods;
+  const { control, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    const start = (activePage - 1) * ROW_PER_PAGE;
-    const end = start + ROW_PER_PAGE;
-    setCurrentLocationList(filteredLocations.slice(start, end));
-  }, [activePage, filteredLocations]);
+    handlePagination(1);
+  }, [activePage]);
 
   const handleFetchLocationList = async (
     page: number,
     value: string | null
   ) => {
-    const { site_name } = getValues();
-    const siteName = value ? value : site_name;
+    const { site_id } = getValues();
+    const siteId = value ? value : site_id;
 
-    const filtered = mockLocations.filter((location) =>
-      location.location_name.toLowerCase().includes(siteName.toLowerCase())
-    );
-    setFilteredLocations(filtered);
+    const data = await getLocationList(supabaseClient, {
+      site_id: siteId,
+      limit: ROW_PER_PAGE,
+      page,
+    });
+
+    setCurrentLocationList(data);
   };
 
   const handleFilterForms = async (value: string | null) => {
@@ -110,10 +83,10 @@ const LocationSetupPage = () => {
 
   const handlePagination = async (page: number) => {
     try {
-      const { site_name } = getValues();
+      const { site_id } = getValues();
       setIsFetchingLocationList(true);
       setActivePage(page);
-      await handleFetchLocationList(page, site_name);
+      await handleFetchLocationList(page, site_id);
     } catch (e) {
       console.error("Error fetching paginated locations:", e);
     } finally {
@@ -131,8 +104,8 @@ const LocationSetupPage = () => {
 
   const handleLocationSubmit = async (data: SiteFormValues) => {
     try {
-      const { site_name, location_name } = data;
-      console.log(site_name, location_name);
+      const { site_id, location_name } = data;
+      console.log(site_id, location_name);
 
       close();
     } catch (e) {
@@ -150,25 +123,31 @@ const LocationSetupPage = () => {
         </Text>
 
         <form
-          onSubmit={handleSubmit((data) => handleFilterForms(data.site_name))}
+          onSubmit={handleSubmit((data) => handleFilterForms(data.site_id))}
         >
           <Group position="apart" align="center">
-            <Select
-              placeholder="Search by location name"
-              data={mockLocationsOptions}
-              value={getValues("site_name")}
-              searchable
-              clearable
-              {...register("site_name")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconLocation />
-                </ActionIcon>
-              }
-              onChange={(value) => {
-                formMethods.setValue("site_name", value || "");
-                handleFilterForms(value);
-              }}
+            <Controller
+              name="site_id"
+              control={control}
+              defaultValue={getValues("site_id")}
+              render={({ field }) => (
+                <Select
+                  placeholder="Search by location name"
+                  data={siteOptionList}
+                  searchable
+                  clearable
+                  {...field}
+                  rightSection={
+                    <ActionIcon size="xs" type="submit">
+                      <IconLocation />
+                    </ActionIcon>
+                  }
+                  onChange={(value) => {
+                    field.onChange(value); // Update the form value
+                    handleFilterForms(value); // Call your custom handler
+                  }}
+                />
+              )}
             />
             <Button leftIcon={<IconPlus size={16} />} onClick={open}>
               Add New Location
@@ -178,7 +157,7 @@ const LocationSetupPage = () => {
 
         <FormProvider {...formMethods}>
           <LocationDrawer
-            site_name={getValues("site_name")}
+            siteOptionList={siteOptionList}
             handleSiteSubmit={handleLocationSubmit}
             isOpen={opened}
             close={close}
@@ -194,7 +173,7 @@ const LocationSetupPage = () => {
           withBorder
           idAccessor="location_id"
           page={activePage}
-          totalRecords={filteredLocations.length}
+          totalRecords={currentLocationList.length}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentLocationList}

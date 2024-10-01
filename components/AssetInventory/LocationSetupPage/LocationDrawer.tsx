@@ -1,23 +1,33 @@
-import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
+import { OptionType } from "@/utils/types";
+import {
+  ActionIcon,
+  Button,
+  Drawer,
+  Group,
+  Select,
+  Stack,
+  TextInput,
+} from "@mantine/core";
+import { IconLocation } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  site_name: string;
-  handleSiteSubmit: (data: SiteFormValues) => void; // Pass form data to the parent
+  siteOptionList: OptionType[];
+  handleSiteSubmit: (data: SiteFormValues) => void;
 };
 
 export type SiteFormValues = {
-  site_name: string;
+  site_id: string;
   location_name: string;
 };
 
 const LocationDrawer = ({
   isOpen,
   close,
+  siteOptionList,
   handleSiteSubmit,
-  site_name,
 }: Props) => {
   const { control, handleSubmit, reset } = useFormContext<SiteFormValues>();
   const handleSubmitSiteForm = async (data: SiteFormValues) => {
@@ -36,16 +46,23 @@ const LocationDrawer = ({
       <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
         <Stack spacing={8}>
           <Controller
-            name="site_name"
-            defaultValue={site_name}
+            name="site_id"
             control={control}
             render={({ field }) => (
-              <TextInput
-                label="Site Name"
-                variant="filled"
-                readOnly
-                required
+              <Select
+                placeholder="Search by location name"
+                data={siteOptionList}
+                searchable
+                clearable
                 {...field}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconLocation />
+                  </ActionIcon>
+                }
+                onChange={(label) => {
+                  field.onChange(label);
+                }}
               />
             )}
           />

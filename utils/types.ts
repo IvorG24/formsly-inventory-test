@@ -585,6 +585,11 @@ export type AdOwnerTableRow =
 export type AdOwnerRequestTableInsert =
   Database["lookup_schema"]["Tables"]["ad_owner_request_table"]["Insert"];
 
+export type SiteTableRow =
+  Database["inventory_schema"]["Tables"]["site_table"]["Row"];
+
+export type LocationTableRow =
+  Database["inventory_schema"]["Tables"]["location_table"]["Row"];
 // End: Database Table Types
 
 // Start: Database Enums
