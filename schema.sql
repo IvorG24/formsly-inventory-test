@@ -16117,7 +16117,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16358,7 +16358,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16747,7 +16747,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16987,7 +16987,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17051,7 +17051,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17468,7 +17468,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17529,7 +17529,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17581,7 +17581,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17865,7 +17865,7 @@ AS $$
       `
     )[0].job_offer_id;
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -18043,8 +18043,6 @@ AS $$
       `
     )[0].team_member_id;
 
-    const groupNameCondition = groupName.map(name => `team_group_name = '${name}'`).join(" OR ");
-
     const teamGroupId = plv8.execute(
       `
         SELECT team_group_id
@@ -18052,11 +18050,10 @@ AS $$
         WHERE
           team_group_is_disabled = false
           AND team_group_team_id = '${teamId}'
-          AND (${groupNameCondition})
+          AND team_group_name = '${groupName}'
+        LIMIT 1
       `
-    );
-
-    const groupIdCondition = teamGroupId.map(id => `team_group_id = '${id.team_group_id}'`).join(" OR ");
+    )[0].team_group_id;
 
     const teamGroupMemberCount = plv8.execute(
       `
@@ -18064,7 +18061,7 @@ AS $$
         FROM team_schema.team_group_member_table
         WHERE
           team_member_id = '${teamMemberId}'
-          AND (${groupIdCondition})
+          AND team_group_id = '${teamGroupId}'
       `
     )[0].count;
 
@@ -18104,8 +18101,10 @@ plv8.subtransaction(function(){
 });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
-RETURNS JSON 
+CREATE OR REPLACE FUNCTION get_application_information_analytics(
+  input_data JSON
+)
+RETURNS JSON
 SET search_path TO ''
 AS $$
   let data;
@@ -18121,18 +18120,18 @@ AS $$
     }
 
     const candidate_referral_source = plv8.execute(`
-        SELECT request_response, COUNT(request_response)::int AS count
-        FROM request_schema.request_response_table 
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
-        ${dateFilterCondition}
-        GROUP BY request_response
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      FROM request_schema.request_response_table
+      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+      WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
+      ${dateFilterCondition}
+      GROUP BY request_response
     `);
 
     const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
 
     const most_applied_position = plv8.execute(`
-      SELECT request_response, COUNT(request_response)::int AS count
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
       FROM request_schema.request_response_table
       INNER JOIN request_schema.request_table ON request_id = request_response_request_id
       WHERE request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
@@ -18144,32 +18143,23 @@ AS $$
 
     const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
 
-    const age_bracket_list = [
-      {min: 18, max: 25}, 
-      {min: 26, max: 30}, 
-      {min: 31, max: 35}, 
-      {min: 36, max: 40}, 
-      {min: 41, max: 100}
-    ];
+    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
 
     const applicant_age_bracket = age_bracket_list.map((bracket) => {
-      const result = plv8.execute(`
+      const count = plv8.execute(`
         SELECT COUNT(request_response)::int
         FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table 
-        ON request_id = request_response_request_id
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
         WHERE request_response_field_id = '22229778-e532-4b39-b15d-ca9f80c397c0'
-        AND CAST(request_response AS int) >= $1
-        AND CAST(request_response AS int) <= $2
+        AND request_response >= $1
+        AND request_response <= $2
         ${dateFilterCondition}
-      `, [bracket.min, bracket.max]);
-
-      const count = result.length > 0 ? result[0].count : 0;
+      `, [bracket.min, bracket.max])[0].count;
 
       return {
         request_response: `${bracket.min}-${bracket.max}`,
         count: Number(count)
-      };
+      }
     });
 
     data = {
@@ -20462,7 +20452,7 @@ USING (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT DISTINCT(team_member_team_id)
+    SELECT team_member_team_id
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE 
@@ -20485,7 +20475,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT DISTINCT(team_member_team_id)
+    SELECT team_member_team_id
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE 

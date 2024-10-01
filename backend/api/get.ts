@@ -6412,7 +6412,7 @@ export const checkIfGroupMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
-    groupName: string[];
+    groupName: string;
     teamId: string;
   }
 ) => {

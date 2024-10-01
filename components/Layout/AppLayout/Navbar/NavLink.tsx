@@ -607,8 +607,7 @@ const ReviewAppNavLink = () => {
 
       {!isEmpty(activeTeam) &&
         hasTeam &&
-        (teamMemberGroup.includes("HUMAN RESOURCES") ||
-          teamMemberGroup.includes("HUMAN RESOURCES VIEWER")) && (
+        teamMemberGroup.includes("HUMAN RESOURCES") && (
           <NavLinkSection
             label={"Human Resources"}
             links={hrSection}

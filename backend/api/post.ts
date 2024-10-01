@@ -535,12 +535,6 @@ export const createRequest = async (
           }
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
-        } else if (
-          ["TEXT", "TEXTAREA", "AUTOCOMPLETE"].includes(field.field_type)
-        ) {
-          responseValue = (responseValue as string)
-            .trim()
-            .replace(/\s\s+/g, " ");
         }
 
         if (

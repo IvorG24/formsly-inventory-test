@@ -299,16 +299,16 @@ export const formatJiraITAssetPayload = ({
         "20": {
           choices: [assignee.suffix ?? ""],
         },
-        "33": {
+        "21": {
           text: assignee.firstName,
         },
-        "34": {
+        "22": {
           text: assignee.middleName ?? "",
         },
-        "31": {
+        "23": {
           text: assignee.lastName,
         },
-        "29": {
+        "26": {
           text: assignee.employeeId,
         },
       },

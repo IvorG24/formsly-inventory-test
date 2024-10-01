@@ -10,7 +10,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       const questionnaireId = context.query?.questionnaireId;
       const iSHumanResourcesMember = await checkIfGroupMember(supabaseClient, {
         userId: user.id,
-        groupName: ["HUMAN RESOURCES", "HUMAN RESOURCES VIEWER"],
+        groupName: "HUMAN RESOURCES",
         teamId: userActiveTeam.team_id,
       });
       if (!iSHumanResourcesMember) {

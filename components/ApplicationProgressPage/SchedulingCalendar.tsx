@@ -271,17 +271,16 @@ const SchedulingCalendar = ({
     setIsLoading(true);
     setIsReadyToSelect(false);
     try {
-      const [time, meridiem] = selectedSlot.split(" ");
+      const [time] = selectedSlot.split(" ");
       const [hours, minutes] = time.split(":").map(Number);
 
       const tempDate = new Date(selectedDate);
-      tempDate.setHours(meridiem === "PM" ? hours + 12 : hours, minutes);
 
+      tempDate.setHours(hours, minutes);
       const { status, assigned_hr_team_member_id } =
         await phoneInterviewValidation(supabaseClient, {
           interview_schedule: tempDate.toISOString(),
         });
-
       if (status === "success") {
         await Promise.all([
           handleCreateOrUpdateOnlineMeeting(
