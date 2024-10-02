@@ -108,7 +108,7 @@ export const REPORT_LIST = [
     title: "Incident Report for Employees",
     description: "Track and analyze report for a user.",
     href: "/report/incident-report",
-  }
+  },
 ];
 
 export const UUID_EXP =
@@ -1393,20 +1393,20 @@ export const IT_ASSET_FIELD_ID_LIST = [
 ];
 
 export const TECHNICAL_ASSESSMENT_FIELD_LIST = [
-    "226b0080-b9bf-423e-ba3a-87132dfa9c6a",
-    "4858119a-9f7a-423b-8130-7f1a69f3c296",
-    "72abb19c-ac74-4378-941a-e4e64cf4f39e",
-    "ab67c29a-b82b-4012-b74e-c99fe3444ab1",
-    "c54ad877-222f-4e01-a77a-dd50a5839c12",
-    "362bff3d-54fa-413b-992c-fd344d8552c6",
-    "ef1e47d2-413f-4f92-b541-20c88f3a67b2",
-    "ce73bb3c-e3f3-4257-a546-d079dea4cfc5",
-    "f5f904e3-a13b-4369-a942-e686486dc827",
-    "1653cdf2-08e6-4a3a-8280-55a7bd7de486",
-    "8ff15d7e-c015-4ba1-8e16-59f5e47ffa67",
-    "fc32500d-62df-4b3c-84be-238c7fb374c9",
-    "a30ea8a0-ccd4-4e9c-8492-2487aad74cca"
-  ];
+  "226b0080-b9bf-423e-ba3a-87132dfa9c6a",
+  "4858119a-9f7a-423b-8130-7f1a69f3c296",
+  "72abb19c-ac74-4378-941a-e4e64cf4f39e",
+  "ab67c29a-b82b-4012-b74e-c99fe3444ab1",
+  "c54ad877-222f-4e01-a77a-dd50a5839c12",
+  "362bff3d-54fa-413b-992c-fd344d8552c6",
+  "ef1e47d2-413f-4f92-b541-20c88f3a67b2",
+  "ce73bb3c-e3f3-4257-a546-d079dea4cfc5",
+  "f5f904e3-a13b-4369-a942-e686486dc827",
+  "1653cdf2-08e6-4a3a-8280-55a7bd7de486",
+  "8ff15d7e-c015-4ba1-8e16-59f5e47ffa67",
+  "fc32500d-62df-4b3c-84be-238c7fb374c9",
+  "a30ea8a0-ccd4-4e9c-8492-2487aad74cca",
+];
 
 export const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },

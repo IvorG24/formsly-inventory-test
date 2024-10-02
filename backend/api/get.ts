@@ -6416,7 +6416,7 @@ export const checkIfGroupMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userId: string;
-    groupName: string;
+    groupName: string[];
     teamId: string;
   }
 ) => {
@@ -7395,11 +7395,23 @@ export const getAssetSpreadsheetView = async (
 export const getColumnList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_column_fields"
-  );
+  const { data, error } = await supabaseClient.rpc("get_column_fields");
 
   if (error) throw error;
 
   return data;
+};
+export const getPositionCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  position: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_category")
+    .eq("position_alias", position)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0].position_category;
 };

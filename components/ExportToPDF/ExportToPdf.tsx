@@ -9,7 +9,7 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import { Flex, Loader } from "@mantine/core";
-import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
+import { Font, usePDF } from "@react-pdf/renderer";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import ITAssetPdfDocumentTableVersion from "./ITAssetPdfDocumentTableVersion";

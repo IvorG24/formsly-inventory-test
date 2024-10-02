@@ -1724,28 +1724,27 @@ AS $$
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth();
 
-        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-        const week1End = new Date(currentYear, currentMonth, 7);
-        const week2Start = new Date(currentYear, currentMonth, 8);
-        const week2End = new Date(currentYear, currentMonth, 14);
-        const week3Start = new Date(currentYear, currentMonth, 15);
-        const week3End = new Date(currentYear, currentMonth, 21);
-        const week4Start = new Date(currentYear, currentMonth, 22);
-        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+        const getRange = (start, end) => [new Date(currentYear, currentMonth, start), new Date(currentYear, currentMonth, end)];
+
+        const weekRanges = [
+          getRange(1, 7),
+          getRange(8, 14),
+          getRange(15, 21), 
+          getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
+        ];
 
         let weekStart, weekEnd;
-        if (currentDate <= week1End) {
-          weekStart = firstDayOfMonth;
-          weekEnd = week1End;
-        } else if (currentDate >= week2Start && currentDate <= week2End) {
-          weekStart = week2Start;
-          weekEnd = week2End;
-        } else if (currentDate >= week3Start && currentDate <= week3End) {
-          weekStart = week3Start;
-          weekEnd = week3End;
-        } else if (currentDate >= week4Start && currentDate <= lastDayOfMonth) {
-          weekStart = week4Start;
-          weekEnd = lastDayOfMonth;
+        for (let [start, end] of weekRanges) {
+          if (currentDate >= start && currentDate <= end) {
+            weekStart = start;
+            weekEnd = end;
+            break;
+          }
+        }
+
+        if (!weekStart) {
+          weekStart = new Date(currentYear, currentMonth, 1);
+          weekEnd = weekRanges[0][1]; 
         }
 
         const teamMemberIdList = plv8.execute(
@@ -1766,7 +1765,7 @@ AS $$
               AND signer_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
           `
         ).map(signer => `'${signer.signer_id}'`);
-
+    
         const selectedSigner = plv8.execute(
           `
             SELECT
@@ -16117,7 +16116,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16358,7 +16357,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16747,7 +16746,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -16987,7 +16986,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17051,7 +17050,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17468,7 +17467,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17529,7 +17528,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17581,7 +17580,7 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -17865,7 +17864,7 @@ AS $$
       `
     )[0].job_offer_id;
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
     plv8.execute(
       `
         INSERT INTO public.notification_table
@@ -18043,6 +18042,8 @@ AS $$
       `
     )[0].team_member_id;
 
+    const groupNameCondition = groupName.map(name => `team_group_name = '${name}'`).join(" OR ");
+
     const teamGroupId = plv8.execute(
       `
         SELECT team_group_id
@@ -18050,10 +18051,11 @@ AS $$
         WHERE
           team_group_is_disabled = false
           AND team_group_team_id = '${teamId}'
-          AND team_group_name = '${groupName}'
-        LIMIT 1
+          AND (${groupNameCondition})
       `
-    )[0].team_group_id;
+    );
+
+    const groupIdCondition = teamGroupId.map(id => `team_group_id = '${id.team_group_id}'`).join(" OR ");
 
     const teamGroupMemberCount = plv8.execute(
       `
@@ -18061,7 +18063,7 @@ AS $$
         FROM team_schema.team_group_member_table
         WHERE
           team_member_id = '${teamMemberId}'
-          AND team_group_id = '${teamGroupId}'
+          AND (${groupIdCondition})
       `
     )[0].count;
 
@@ -18101,10 +18103,8 @@ plv8.subtransaction(function(){
 });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_application_information_analytics(
-  input_data JSON
-)
-RETURNS JSON
+CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
+RETURNS JSON 
 SET search_path TO ''
 AS $$
   let data;
@@ -18120,18 +18120,18 @@ AS $$
     }
 
     const candidate_referral_source = plv8.execute(`
-      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
-      FROM request_schema.request_response_table
-      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-      WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
-      ${dateFilterCondition}
-      GROUP BY request_response
+        SELECT request_response, COUNT(request_response)::int AS count
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
+        ${dateFilterCondition}
+        GROUP BY request_response
     `);
 
     const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
 
     const most_applied_position = plv8.execute(`
-      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      SELECT request_response, COUNT(request_response)::int AS count
       FROM request_schema.request_response_table
       INNER JOIN request_schema.request_table ON request_id = request_response_request_id
       WHERE request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
@@ -18143,23 +18143,32 @@ AS $$
 
     const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
 
-    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
+    const age_bracket_list = [
+      {min: 18, max: 25}, 
+      {min: 26, max: 30}, 
+      {min: 31, max: 35}, 
+      {min: 36, max: 40}, 
+      {min: 41, max: 100}
+    ];
 
     const applicant_age_bracket = age_bracket_list.map((bracket) => {
-      const count = plv8.execute(`
+      const result = plv8.execute(`
         SELECT COUNT(request_response)::int
         FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        INNER JOIN request_schema.request_table 
+        ON request_id = request_response_request_id
         WHERE request_response_field_id = '22229778-e532-4b39-b15d-ca9f80c397c0'
-        AND request_response >= $1
-        AND request_response <= $2
+        AND CAST(request_response AS int) >= $1
+        AND CAST(request_response AS int) <= $2
         ${dateFilterCondition}
-      `, [bracket.min, bracket.max])[0].count;
+      `, [bracket.min, bracket.max]);
+
+      const count = result.length > 0 ? result[0].count : 0;
 
       return {
         request_response: `${bracket.min}-${bracket.max}`,
         count: Number(count)
-      }
+      };
     });
 
     data = {
@@ -20452,7 +20461,7 @@ USING (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT team_member_team_id
+    SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE
@@ -20475,7 +20484,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
     WHERE form_id = request_form_id
   ) = (
-    SELECT team_member_team_id
+    SELECT DISTINCT(team_member_team_id)
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
     WHERE

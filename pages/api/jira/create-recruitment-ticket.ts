@@ -37,9 +37,7 @@ export default async function handler(
     } = req.body;
 
     const parsedPositionType =
-      positionType === "RANK AND FILE"
-        ? "Rank and File"
-        : startCase(positionType);
+      positionType === "MANAGERIAL" ? "Manager" : startCase(positionType);
 
     const ticketPayload = {
       fields: {

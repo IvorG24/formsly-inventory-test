@@ -2,6 +2,7 @@ import {
   BarElement,
   CategoryScale,
   Chart as ChartJs,
+  FontSpec,
   Legend,
   LinearScale,
   Title,
@@ -98,7 +99,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
           text: xAxisLabel ? xAxisLabel : "",
           color: "black",
           font: {
-            weight: "bold",
+            weight: "bold" as FontSpec["weight"],
           },
         },
       },
@@ -109,7 +110,7 @@ const StackedBarChart: React.FC<StackedBarChartProps> = ({
           text: yAxisLabel ? yAxisLabel : "",
           color: "black",
           font: {
-            weight: "bold",
+            weight: "bold" as FontSpec["weight"],
           },
         },
       },

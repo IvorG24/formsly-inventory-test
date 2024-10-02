@@ -2,6 +2,7 @@ import { LineChartDataType } from "@/utils/types";
 import {
   CategoryScale,
   Chart as ChartJS,
+  FontSpec,
   Legend,
   LineElement,
   LinearScale,
@@ -53,7 +54,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, legendLabel }) => {
           text: "Qty",
           color: "black",
           font: {
-            weight: "bold",
+            weight: "bold" as FontSpec["weight"],
           },
         },
         beginAtZero: true,

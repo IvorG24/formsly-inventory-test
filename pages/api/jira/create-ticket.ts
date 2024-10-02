@@ -141,6 +141,7 @@ export default async function handler(
 
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ error: e });
   }
 }

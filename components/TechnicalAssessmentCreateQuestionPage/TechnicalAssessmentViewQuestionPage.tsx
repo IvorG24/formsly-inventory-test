@@ -471,7 +471,9 @@ const TechnicalAssessmentCreateQuestionPage = ({
                                 checked={watch(
                                   `sections.${questionIndex}.choices.${choiceIndex}.isCorrectAnswer`
                                 )}
-                                label={`${String.fromCharCode(65 + choiceIndex)} )`}
+                                label={`${String.fromCharCode(
+                                  65 + choiceIndex
+                                )} )`}
                                 mt={24}
                                 onChange={() =>
                                   handleRadioChange(questionIndex, choiceIndex)

@@ -2,7 +2,7 @@ import { MemoType } from "@/utils/types";
 import { Box, Button } from "@mantine/core";
 
 import { formatDate } from "@/utils/constant";
-import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
+import { Font, usePDF } from "@react-pdf/renderer";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 import MemoPDF from "./MemoPDF";
 

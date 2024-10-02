@@ -29,16 +29,20 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
+  Alert,
   Box,
   Button,
   Container,
   Flex,
   Space,
   Stack,
+  Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -740,6 +744,29 @@ const EditITAssetRequestPage = ({
           employee.scic_employee_suffix
         );
       } else {
+        modals.open({
+          title: (
+            <Flex gap="xs" align="center">
+              <IconAlertTriangle size={16} color="red" />
+              <Text>Employee not found!</Text>
+            </Flex>
+          ),
+          centered: true,
+          children: (
+            <>
+              <Alert color="blue">
+                Employee not found. Please enter your Project Manager&apos;s
+                details as the assignee to continue. Rest assured that
+                we&apos;re continuously updating our employee records, so you
+                won&apos;t need to do this in future requests.
+              </Alert>
+              <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                I understand
+              </Button>
+            </>
+          ),
+        });
+        setValue(`sections.${sectionIndex}.section_field.0.field_response`, "");
         setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
         setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");
         setValue(`sections.${sectionIndex}.section_field.4.field_response`, "");

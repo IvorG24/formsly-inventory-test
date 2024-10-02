@@ -4,6 +4,7 @@ import {
   CategoryScale,
   ChartData,
   Chart as ChartJs,
+  FontSpec,
   LayoutPosition,
   Legend,
   LinearScale,
@@ -53,7 +54,7 @@ const VerticalBarChart = ({
               ? theme.colors.dark[0]
               : theme.colors.dark[9],
           font: {
-            weight: "bold",
+            weight: "bold" as FontSpec["weight"],
           },
         },
         grid: {
@@ -70,7 +71,7 @@ const VerticalBarChart = ({
               ? theme.colors.dark[0]
               : theme.colors.dark[9],
           font: {
-            weight: "bold",
+            weight: "bold" as FontSpec["weight"],
           },
         },
         grid: {

@@ -10,9 +10,12 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import { marked } from "marked";
-import Html from "react-pdf-html";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
+
+// removed temporarily to resolve 'fs' error
+// const Html = dynamic(() => import("react-pdf-html"), {
+//   ssr: false,
+// });
 
 const styles = StyleSheet.create({
   memoHeaderInput: {
@@ -117,23 +120,24 @@ const MemoPDF = ({
     },
   });
 
-  const lineItemStyleSheet = {
-    "*": {
-      fontSize: "10pt",
-      margin: "4px 0px 8px 0px",
-      lineHeight: "normal",
-    },
-  };
+  // const lineItemStyleSheet = {
+  //   "*": {
+  //     fontSize: "10pt",
+  //     margin: "4px 0px 8px 0px",
+  //     lineHeight: "normal",
+  //   },
+  // };
   const memoAuthorFullname = `${memo.memo_author_user.user_first_name} ${memo.memo_author_user.user_last_name}`;
 
   const renderLineItems = sortMemoLineItems.map((lineItem, lineItemIndex) => {
-    const lineItemContentHtml = marked(lineItem.memo_line_item_content);
+    // const lineItemContentHtml = marked(lineItem.memo_line_item_content);
 
     return (
       <View key={lineItem.memo_line_item_id} style={styles.memoLineItem}>
-        <Html stylesheet={lineItemStyleSheet}>
+        {/* // removed temporarily to resolve 'fs' error */}
+        {/* <Html stylesheet={lineItemStyleSheet}>
           {lineItemContentHtml as string}
-        </Html>
+        </Html> */}
         <View>
           {lineItem.memo_line_item_attachment
             ?.memo_line_item_attachment_name && (
@@ -194,12 +198,12 @@ const MemoPDF = ({
     return (
       <View style={sectionStyleSheet.header} fixed>
         {header.format_subsection.map((subsection) => {
-          const textStyleSheet = {
-            "*": {
-              fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
-              margin: 0,
-            },
-          };
+          // const textStyleSheet = {
+          //   "*": {
+          //     fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
+          //     margin: 0,
+          //   },
+          // };
 
           return (
             <View
@@ -218,9 +222,10 @@ const MemoPDF = ({
             >
               {subsection.memo_format_subsection_text && (
                 <View>
-                  <Html stylesheet={textStyleSheet}>
+                  {/* // removed temporarily to resolve 'fs' error */}
+                  {/* <Html stylesheet={textStyleSheet}>
                     {marked(subsection.memo_format_subsection_text) as string}
-                  </Html>
+                  </Html> */}
                 </View>
               )}
               {subsection.subsection_attachment.length > 0 &&
@@ -246,13 +251,13 @@ const MemoPDF = ({
     return (
       <View style={sectionStyleSheet.footer} fixed>
         {footer.format_subsection.map((subsection) => {
-          const textStyleSheet = {
-            "*": {
-              fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
-              margin: 0,
-              wordBreak: "break-word",
-            },
-          };
+          // const textStyleSheet = {
+          //   "*": {
+          //     fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
+          //     margin: 0,
+          //     wordBreak: "break-word",
+          //   },
+          // };
           return (
             <View
               key={subsection.memo_format_subsection_id}
@@ -270,9 +275,10 @@ const MemoPDF = ({
             >
               {subsection.memo_format_subsection_text && (
                 <View>
-                  <Html stylesheet={textStyleSheet}>
+                  {/* // removed temporarily to resolve 'fs' error */}
+                  {/* <Html stylesheet={textStyleSheet}>
                     {marked(subsection.memo_format_subsection_text) as string}
-                  </Html>
+                  </Html> */}
                 </View>
               )}
               {subsection.subsection_attachment.length > 0 &&
