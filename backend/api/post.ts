@@ -1,3 +1,4 @@
+import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
@@ -196,7 +197,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -2395,4 +2396,118 @@ export const getQuestionFieldOrder = async (
   if (error) throw error;
 
   return data as unknown as number;
+};
+
+export const createAssetRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    InventoryFormValues: InventoryFormValues;
+    formId: string;
+    teamMemberId?: string;
+    teamId: string;
+    formName: string;
+    teamName: string;
+  }
+) => {
+  const { InventoryFormValues, formId, teamMemberId, teamId, formName } =
+    params;
+
+  const requestId = uuidv4();
+
+  const requestResponseInput: RequestResponseTableInsert[] = [];
+  for (const section of InventoryFormValues.sections) {
+    for (const field of section.section_field) {
+      let responseValue = field.field_response;
+
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue ||
+        field.field_type === "SWITCH" ||
+        (field.field_type === "NUMBER" && responseValue === 0)
+      ) {
+        if (field.field_type === "FILE") {
+          const fileResponse = responseValue as File;
+
+          const uploadId = `${field.field_id}${
+            field.field_section_duplicatable_id
+              ? `_${field.field_section_duplicatable_id}`
+              : `_${uuidv4()}`
+          }`;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: uploadId,
+              image: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: uploadId,
+              file: fileResponse,
+              bucket: "REQUEST_ATTACHMENTS",
+            });
+          }
+        } else if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
+        }
+
+        const response = {
+          request_response: JSON.stringify(responseValue),
+          request_response_duplicatable_section_id:
+            field.field_section_duplicatable_id ?? null,
+          request_response_field_id: field.field_id,
+          request_response_request_id: requestId,
+          request_response_prefix: field.field_prefix ?? null,
+        };
+        requestResponseInput.push(response);
+      }
+    }
+  }
+
+  const responseValues = requestResponseInput
+    .map((response) => {
+      const escapedResponse = escapeQuotes(response.request_response);
+      return `('${escapedResponse}',${
+        response.request_response_duplicatable_section_id
+          ? `'${response.request_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.request_response_field_id}','${
+        response.request_response_request_id
+      }')`;
+    })
+    .join(",");
+
+  const { error } = await supabaseClient
+    .rpc("create_asset", {
+      input_data: {
+        requestId,
+        formId: formId,
+        teamMemberId: teamMemberId,
+        responseValues,
+        formName,
+        teamId,
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return requestId;
+};
+
+export const getItemOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .schema("item_schema")
+    .from("item_table")
+    .select("*")
+    .eq("item_team_id", params.teamId)
+    .limit(1);
+
+  if (error) throw error;
+
+  return data;
 };

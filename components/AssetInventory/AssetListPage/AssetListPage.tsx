@@ -1,16 +1,15 @@
-import { getEventDetails, getRequestList } from "@/backend/api/get";
+import { getAssetSpreadsheetView, getEventDetails } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
 import {
+  InventoryListType,
   OptionType,
   RequestListFilterValues,
-  RequestListItemType,
   TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
@@ -28,17 +27,27 @@ type Props = {
   teamMemberList: TeamMemberWithUserType[];
   userId: string;
   projectList: TeamProjectTableRow[];
+  fieldData: {
+    label: string;
+    value: string;
+  }[];
 };
 
-const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
+const AssetListPage = ({
+  teamMemberList,
+  userId,
+  projectList,
+  fieldData: tableColumnList,
+}: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
-  const teamMember = useUserTeamMember();
+
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
-  const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
-  const [requestListCount, setRequestListCount] = useState(0);
+  const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
+  const [inventoryListCount, setInventoryListCount] = useState(0);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<RequestListFilterValues>({
@@ -84,31 +93,9 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
     defaultValue: [],
   });
 
-  const tableColumnList = [
-    { value: "request_id", label: "Request ID" },
-    { value: "request_jira_id", label: "Request Jira ID" },
-    { value: "request_jira_status", label: "JIRA Status" },
-    { value: "request_otp_id", label: "OTP ID" },
-    { value: "request_form_name", label: "Form Name" },
-    { value: "request_ped_equipment_number", label: "PED Equipment Number" },
-    { value: "request_status", label: "Status" },
-    { value: "request_team_member_id", label: "Requested By" },
-    { value: "request_signer", label: "Approver" },
-    { value: "request_date_created", label: "Date Created" },
-    { value: "view", label: "View" },
-  ];
-
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
-  };
-
-  const columnAccessor = () => {
-    // requester
-    if (sortStatus.columnAccessor === "user_id") {
-      return `user_first_name ${sortStatus.direction.toUpperCase()}, user_last_name `;
-    }
-    return sortStatus.columnAccessor;
   };
 
   const handleFetchRequestList = async (page: number) => {
@@ -119,43 +106,16 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
           "RequestListPage handleFilterFormsError: active team_id not found"
         );
         return;
-      } else if (!teamMember) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: team member id not found"
-        );
-        return;
       }
-      const {
-        search,
-        requestor,
-        approver,
-        form,
-        status,
-        isAscendingSort,
-        isApproversView,
-        project,
-      } = getValues();
+      const { isAscendingSort } = getValues();
 
-      const params = {
-        teamId: activeTeam.team_id,
+      const newData = await getAssetSpreadsheetView(supabaseClient, {
         page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor: requestor && requestor.length > 0 ? requestor : undefined,
-        approver: approver && approver.length > 0 ? approver : undefined,
-        form: form && form.length > 0 ? form : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        project: project && project.length > 0 ? project : undefined,
-        search: search,
-        isApproversView,
-        isAscendingSort,
-        teamMemberId: teamMember.team_member_id,
-        columnAccessor: columnAccessor(),
-      };
-
-      const { data, count } = await getRequestList(supabaseClient, params);
-
-      setRequestList(data);
-      setRequestListCount(count || 0);
+        sort: isAscendingSort,
+      });
+      setInventoryList(newData);
+      setInventoryListCount(newData.length);
     } catch (e) {
       notifications.show({
         message: "Failed to fetch request list.",
@@ -185,6 +145,7 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
       setIsFetchingRequestList(false);
     }
   };
+  console.log(inventoryList);
 
   useEffect(() => {
     const getEventOptions = async () => {
@@ -204,7 +165,7 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
 
     getEventOptions();
     handlePagination(activePage);
-  }, [activeTeam.team_id]);
+  }, [activeTeam.team_id, activePage]);
 
   return (
     <Container maw={3840} h="100%">
@@ -218,6 +179,7 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              selectedRow={selectedRows}
               userId={userId}
               eventOptions={optionsEvent}
               teamMemberList={teamMemberList}
@@ -233,9 +195,10 @@ const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
         </FormProvider>
         <Box h="fit-content">
           <AssetListTable
-            requestList={requestList}
-            requestListCount={requestListCount}
-            teamMemberList={teamMemberList}
+            setSelectedRow={setSelectedRows}
+            selectedRow={selectedRows}
+            requestList={inventoryList}
+            requestListCount={inventoryListCount}
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}

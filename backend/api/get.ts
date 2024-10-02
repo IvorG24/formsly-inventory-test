@@ -1,3 +1,4 @@
+import { InventoryFormValues } from "@/components/AssetInventory/CreateAssetPage/CreateAssetPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
@@ -55,6 +56,7 @@ import {
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   InventoryFormType,
+  InventoryListType,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
@@ -7304,7 +7306,6 @@ export const getLocationList = async (
   }
 ) => {
   const { site_id, page, limit } = params;
-  console.log(params);
 
   const start = (page - 1) * limit;
   const end = start + limit - 1;
@@ -7323,4 +7324,82 @@ export const getLocationList = async (
   if (error) throw error;
 
   return data as LocationTableRow[];
+};
+
+export const getSubFieldOrCustomField = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryName: string | null;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_sub_or_custom_field", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as {
+    customFields: InventoryFormValues[];
+    subFields: InventoryFormValues[];
+  };
+};
+
+export const getLocationOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    siteName: string | null;
+  }
+) => {
+  const { siteName } = params;
+
+  const { data: siteData, error: siteError } = await supabaseClient
+    .schema("inventory_schema")
+    .from("site_table")
+    .select("site_id")
+    .eq("site_name", siteName ? siteName : "")
+    .limit(1);
+
+  if (siteError) throw siteError;
+
+  const { data: locationData, error: locationError } = await supabaseClient
+    .schema("inventory_schema")
+    .from("location_table")
+    .select("*")
+    .eq("location_site_id", siteData[0].site_id);
+
+  if (locationError) throw locationError;
+
+  return locationData as LocationTableRow[];
+};
+
+export const getAssetSpreadsheetView = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    limit: number;
+    page: number;
+    sort: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_asset_spreadsheet_view",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as unknown as InventoryListType[];
+};
+
+export const getColumnList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_column_fields"
+  );
+
+  if (error) throw error;
+
+  return data;
 };

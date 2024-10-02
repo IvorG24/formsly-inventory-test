@@ -50,6 +50,10 @@ type RequestFormFieldsProps = {
   formslyFormName?: string;
   isEdit?: boolean;
   isLoading: boolean | undefined;
+  assetFormMethods?: {
+    onCategoryNameChange: (index: number, value: string | null) => void;
+    onSiteNameChange: (index: number, value: string | null) => void;
+  };
 };
 
 const InventoryFormFields = ({
@@ -59,6 +63,7 @@ const InventoryFormFields = ({
   isEdit,
   isLoading,
   formslyFormName = "",
+  assetFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -279,6 +284,17 @@ const InventoryFormFields = ({
                 value={value as string}
                 onChange={(value) => {
                   onChange(value);
+                  switch (field.field_name) {
+                    case "Category":
+                      assetFormMethods?.onCategoryNameChange(
+                        sectionIndex,
+                        value
+                      );
+                      break;
+                    case "Site":
+                      assetFormMethods?.onSiteNameChange(sectionIndex, value);
+                      break;
+                  }
                 }}
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}

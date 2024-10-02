@@ -1,23 +1,29 @@
+import { getLocationOption, getSubFieldOrCustomField } from "@/backend/api/get";
+import { createAssetRequest, getItemOption } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
-import { useLoadingActions } from "@/stores/useLoadingStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import {
   FormType,
   InventoryFormResponseType,
   InventoryFormType,
+  OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
 import {
   Box,
   Button,
   Container,
+  LoadingOverlay,
   Paper,
   Space,
   Stack,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useEffect } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "./InventoryFormSection";
 
@@ -40,9 +46,10 @@ type Props = {
 
 const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const requestorProfile = useUserProfile();
-  const { setIsLoading } = useLoadingActions();
-
+  const supabaseClient = useSupabaseClient();
+  const [isLoading, setIsLoading] = useState(false);
   const formDetails = {
     form_name: form.form_name,
     form_description: form.form_description,
@@ -51,11 +58,12 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   };
 
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control } = requestFormMethods;
+  const { handleSubmit, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
     remove: removeSection,
     replace: replaceSection,
+    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -68,19 +76,108 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       setIsLoading(true);
 
-      console.log(data);
+      const asset = await createAssetRequest(supabaseClient, {
+        InventoryFormValues: data,
+        formId: form.form_id,
+        teamId: activeTeam.team_id,
+        teamMemberId: teamMember.team_member_id,
+        formName: form.form_name,
+        teamName: activeTeam.team_name,
+      });
+
+      console.log(asset);
 
       notifications.show({
-        message: "Request created.",
+        message: "Asset created.",
         color: "green",
       });
     } catch (e) {
+        console.log(e);
+
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOnCategoryNameChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const categorySection = getValues(`sections.${index}`);
+
+      const { subFields, customFields } = await getSubFieldOrCustomField(
+        supabaseClient,
+        {
+          categoryName: value,
+        }
+      );
+
+      const newSectionField = [
+        categorySection.section_field[0],
+        ...subFields,
+        ...customFields,
+      ];
+
+      updateSection(index, {
+        ...categorySection,
+        section_field: newSectionField as Omit<
+          (typeof categorySection.section_field)[0],
+          "field_special_field_template_id"
+        >[],
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later hey.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleOnSiteNameChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const siteLocationSection = getValues(`sections.${index}`);
+      const data = await getLocationOption(supabaseClient, {
+        siteName: value,
+      });
+
+      const optionList = data.map((option, index) => ({
+        option_id: option.location_id,
+        option_value: option.location_name,
+        option_order: index,
+        option_field_id: siteLocationSection.section_field[1].field_id,
+      }));
+      const newSectionField = [
+        siteLocationSection.section_field[0],
+
+        {
+          ...siteLocationSection.section_field[1],
+          field_option: optionList,
+        },
+        {
+          ...siteLocationSection.section_field[2],
+        },
+      ];
+
+      updateSection(index, {
+        ...siteLocationSection,
+        section_field: newSectionField as Omit<
+          (typeof siteLocationSection.section_field)[0],
+          "field_special_field_template_id"
+        >[],
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later hey.",
+        color: "red",
+      });
     }
   };
 
@@ -95,19 +192,68 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       return;
     }
   };
+
   useEffect(() => {
-    replaceSection(form.form_section);
-  }, [form]);
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!activeTeam.team_id) return;
+        const itemOptionList: OptionTableRow[] = [];
+        while (1) {
+          const itemData = await getItemOption(supabaseClient, {
+            teamId: activeTeam.team_id,
+          });
+          const itemOptions = itemData.map((item, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+          itemOptionList.push(...itemOptions);
+
+          if (itemData.length < FETCH_OPTION_LIMIT) break;
+        }
+
+        replaceSection([
+          {
+            ...form.form_section[0],
+            section_field: [
+              {
+                ...form.form_section[0].section_field[0],
+                field_option: itemOptionList,
+              },
+              ...form.form_section[0].section_field.slice(1, 6),
+            ],
+          },
+          form.form_section[1],
+          form.form_section[2],
+          form.form_section[3],
+        ]);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+  }, [activeTeam]);
   return (
     <Container>
+      <LoadingOverlay visible={isLoading} />
       <Title order={2} color="dimmed">
         Create Asset
       </Title>
       <Space h="md" />
+      <RequestFormDetails formDetails={formDetails} />
+      <Space h="md" />
       <Paper>
         <FormProvider {...requestFormMethods}>
           <form onSubmit={handleSubmit(handleCreateRequest)}>
-            <RequestFormDetails formDetails={formDetails} />
             <Stack spacing="xl">
               {formSections.map((section, idx) => {
                 return (
@@ -118,6 +264,10 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                       sectionIndex={idx}
                       onRemoveSection={handleRemoveSection}
                       formslyFormName={formslyFormName}
+                      assetFormMethods={{
+                        onCategoryNameChange: handleOnCategoryNameChange,
+                        onSiteNameChange: handleOnSiteNameChange,
+                      }}
                     />
                   </Box>
                 );

@@ -30,6 +30,7 @@ type RequestListFilterProps = {
   setLocalFilter: Dispatch<SetStateAction<RequestListFilterValues>>;
   projectList: TeamProjectTableRow[];
   eventOptions: OptionType[];
+  selectedRow: string[];
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
 };
@@ -51,6 +52,7 @@ const AssetListFilter = ({
   localFilter,
   setLocalFilter,
   userId,
+  selectedRow,
   projectList,
   showTableColumnFilter,
   setShowTableColumnFilter,
@@ -138,6 +140,7 @@ const AssetListFilter = ({
     <>
       {selectedEventId && (
         <EventFormModal
+          selectedRow={selectedRow}
           key={selectedEventId}
           userId={userId}
           eventId={selectedEventId}
@@ -197,13 +200,15 @@ const AssetListFilter = ({
           </Flex>
         </Group>
         <Group>
-          <Select
-            placeholder="More Actions"
-            data={eventOptions}
-            onChange={(value) => {
-              handleSelectChange(value);
-            }}
-          />
+          {selectedRow.length > 0 && (
+            <Select
+              placeholder="More Actions"
+              data={eventOptions}
+              onChange={(value) => {
+                handleSelectChange(value);
+              }}
+            />
+          )}
         </Group>
       </Flex>
       <Divider my="md" />

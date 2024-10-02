@@ -14,11 +14,15 @@ import InventoryFormFields from "./InventoryFormFields";
 type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
-  type?: "Modal" | "Form"; // Add type prop
+  type?: "Modal" | "Form";
   onRemoveSection?: (sectionDuplicatableId: string) => void;
   formslyFormName?: string;
   isEdit?: boolean;
   loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
+  assetFormMethods?: {
+    onCategoryNameChange: (index: number, value: string | null) => void;
+    onSiteNameChange: (index: number, value: string | null) => void;
+  };
 };
 
 const InventoryFormSection = ({
@@ -29,6 +33,7 @@ const InventoryFormSection = ({
   isEdit,
   loadingFieldList,
   type = "Form",
+  assetFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field?.[0]?.field_section_duplicatable_id;
@@ -111,6 +116,7 @@ const InventoryFormSection = ({
               isEdit={isEdit}
               isLoading={isLoading}
               formslyFormName={formslyFormName}
+              assetFormMethods={assetFormMethods}
             />
           );
         })}

@@ -20455,13 +20455,13 @@ USING (
     SELECT team_member_team_id
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE 
+    WHERE
       tmt.team_member_user_id = (SELECT auth.uid())
       AND (
         team_member_role IN ('OWNER', 'APPROVER')
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      ) 
+      )
   )
 )
 WITH CHECK (
@@ -20478,13 +20478,13 @@ WITH CHECK (
     SELECT team_member_team_id
     FROM team_schema.team_member_table AS tmt
     LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE 
+    WHERE
       tmt.team_member_user_id = (SELECT auth.uid())
       AND (
         team_member_role IN ('OWNER', 'APPROVER')
         OR
         tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      ) 
+      )
   )
 );
 

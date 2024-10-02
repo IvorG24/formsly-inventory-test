@@ -26,9 +26,10 @@ export type FieldWithResponseArray =
 type Props = {
   eventId: string;
   userId: string;
+  selectedRow:string[]
 };
 
-const EventFormModal = ({ eventId, userId }: Props) => {
+const EventFormModal = ({ eventId, userId,selectedRow }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const requestFormMethods = useForm<InventoryFormValues>();
   const [opened, setOpened] = useState(true);

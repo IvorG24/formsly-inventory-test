@@ -1,15 +1,16 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { BASE_URL, DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  RequestListFilterValues,
-  RequestListItemType,
-  TeamMemberWithUserType,
-} from "@/utils/types";
+  BASE_URL,
+  DEFAULT_REQUEST_LIST_LIMIT,
+  formatDate,
+} from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
+import { InventoryListType, RequestListFilterValues } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
+  Badge,
   Checkbox,
   CopyButton,
   Flex,
@@ -18,14 +19,11 @@ import {
 } from "@mantine/core";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
-import router from "next/router";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormSetValue } from "react-hook-form";
-
 type Props = {
-  requestList: RequestListItemType[];
+  requestList: InventoryListType[];
   requestListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   activePage: number;
   isFetchingRequestList: boolean;
   selectedFormFilter: string[] | undefined;
@@ -36,6 +34,8 @@ type Props = {
   checkIfColumnIsHidden: (column: string) => boolean;
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
+  setSelectedRow: (newSelectedRows: string[]) => void;
+  selectedRow: string[];
   listTableColumnFilter: string[];
   setListTableColumnFilter: (
     val: string[] | ((prevState: string[]) => string[])
@@ -43,40 +43,25 @@ type Props = {
   tableColumnList: { value: string; label: string }[];
 };
 
-// const useStyles = createStyles(() => ({
-//   requestor: {
-//     border: "solid 2px white",
-//     cursor: "pointer",
-//   },
-//   clickable: {
-//     cursor: "pointer",
-//   },
-// }));
-
-// const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
-
 const AssetListTable = ({
   requestList,
   requestListCount,
-  //   teamMemberList,
   activePage,
   isFetchingRequestList,
   handlePagination,
-  //   selectedFormFilter,
   sortStatus,
   setSortStatus,
   setValue,
   checkIfColumnIsHidden,
   showTableColumnFilter,
+  selectedRow,
+  setSelectedRow,
   setShowTableColumnFilter,
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
 }: Props) => {
-  //   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
-
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
@@ -84,85 +69,68 @@ const AssetListTable = ({
   }, [sortStatus]);
 
   const handleRowSelect = (requestId: string, isChecked: boolean) => {
+    let newSelectedRows: string[] = [...selectedRow];
     if (isChecked) {
-      setSelectedRows((prev) => [...prev, requestId]);
+      newSelectedRows = [...newSelectedRows, requestId];
     } else {
-      setSelectedRows((prev) => prev.filter((id) => id !== requestId));
+      newSelectedRows = newSelectedRows.filter((id) => id !== requestId);
     }
+    setSelectedRow(newSelectedRows);
   };
 
-  const isAllSelected = selectedRows.length === requestList.length;
+  const isAllSelected = selectedRow.length === requestList.length;
 
   const handleSelectAll = (isChecked: boolean) => {
     if (isChecked) {
-      const allIds = requestList.map((request) => request.request_id);
-      setSelectedRows(allIds);
+      const allIds = requestList.map((request) => request.inventory_request_id);
+      setSelectedRow(allIds);
     } else {
-      setSelectedRows([]);
+      setSelectedRow([]);
     }
   };
-  //   const dummyData: RequestListItemType[] = [
-  //     {
-  //       request_id: "1243123",
-  //       request_formsly_id: "12345-abc",
-  //       request_date_created: "2024-09-26T04:36:00Z",
-  //       request_status: "Check out",
-  //       request_jira_id: "JIRA-001",
-  //       request_jira_link: "https://jira.example.com/browse/JIRA-001",
-  //       request_otp_id: "OTP-12345",
-  //       request_form_id: "form-12345",
-  //       request_team_member_id: "321",
-  //       request_signer: [
-  //         {
-  //           request_signer: {
-  //             signer_is_primary_signer: true,
-  //             signer_team_member_id: "",
-  //           },
-  //           request_signer_id: "",
-  //           request_signer_status: "Check Out",
-  //         },
-  //       ],
-  //       user_id: "123",
-  //       user_first_name: "Mark",
-  //       user_last_name: "Ivor Glorioso",
-  //       user_avatar: "https://example.com/avatar.jpg", // Optional
-  //       form_name: "This is a sample item",
-  //       request_is_with_view_indicator: true,
-  //       request_is_with_progress_indicator: false,
-  //     },
-  //     {
-  //       request_id: "1",
-  //       request_formsly_id: "12345-efg",
-  //       request_date_created: "2024-09-26T04:36:00Z",
-  //       request_status: "Check In",
-  //       request_jira_id: "JIRA-001",
-  //       request_jira_link: "https://jira.example.com/browse/JIRA-001",
-  //       request_otp_id: "OTP-12345",
-  //       request_form_id: "form-12345",
-  //       request_team_member_id: "321",
-  //       request_signer: [
-  //         {
-  //           request_signer: {
-  //             signer_is_primary_signer: true,
-  //             signer_team_member_id: "",
-  //           },
-  //           request_signer_id: "",
-  //           request_signer_status: "Check Out",
-  //         },
-  //       ],
-  //       user_id: "123",
-  //       user_first_name: "Mark",
-  //       user_last_name: "Ivor Glorioso",
-  //       user_avatar: "https://example.com/avatar.jpg", // Optional
-  //       form_name: "This is a sample item",
-  //       request_is_with_view_indicator: true,
-  //       request_is_with_progress_indicator: false,
-  //     },
-  //   ];
+  const allKeys = Array.from(
+    new Set(
+      requestList.reduce((keys, current) => {
+        return keys.concat(Object.keys(current));
+      }, [] as string[])
+    )
+  );
+
+  const dynamicColumns = allKeys
+    .filter(
+      (key) =>
+        !tableColumnList.some((column) => column.value === key) &&
+        key !== "inventory_request_id" &&
+        key !== "inventory_request_status" &&
+        key !== "inventory_request_created" &&
+        key !== "asset_name" &&
+        key !== "user_id" &&
+        key !== "user_avatar" &&
+        key !== "user_first_name" &&
+        key !== "user_last_name" &&
+        key !== "site_name"
+    )
+    .map((key) => ({
+      accessor: key,
+      title: key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase()),
+      render: (record: Record<string, unknown>) => {
+        const value = record[key] ? String(record[key]) : "";
+        const fieldsWithPesoSign = ["cost", "price"];
+        const fieldWithDate = ["purchase_date"];
+        if (fieldsWithPesoSign.includes(key.toLowerCase())) {
+          return <Text>{value ? `₱ ${value}` : ""}</Text>;
+        } else if (fieldWithDate.includes(key.toLowerCase())) {
+          return <Text>{formatDate(new Date(value))}</Text>;
+        }
+        return <Text>{value}</Text>;
+      },
+    }));
 
   return (
     <ListTable
-      idAccessor="request_id"
+      idAccessor="inventory_request_id"
       records={requestList}
       fetching={isFetchingRequestList}
       page={activePage}
@@ -178,122 +146,117 @@ const AssetListTable = ({
           accessor: "checkbox",
           title: (
             <Checkbox
-              checked={isAllSelected}
-              onChange={(e) => handleSelectAll(e.target.checked)}
+              checked={isAllSelected} // Check if all rows are selected
+              onChange={(e) => handleSelectAll(e.target.checked)} // Handle select/deselect all rows
             />
           ),
           width: 40,
-          render: ({ request_id }) => {
-            const isChecked = selectedRows.includes(String(request_id));
+          render: ({ inventory_request_id }) => {
+            const isChecked = selectedRow.includes(
+              String(inventory_request_id)
+            );
             return (
               <Checkbox
                 checked={isChecked}
                 onChange={(e) =>
-                  handleRowSelect(String(request_id), e.target.checked)
+                  handleRowSelect(
+                    String(inventory_request_id),
+                    e.target.checked
+                  )
                 }
               />
             );
           },
         },
         {
-          accessor: "request_id",
+          accessor: "inventory_request_id",
           title: "Asset Tag ID",
           width: 180,
-          hidden: checkIfColumnIsHidden("request_id"),
-          render: ({ request_id, request_formsly_id }) => {
-            const requestId =
-              request_formsly_id === "-" ? request_id : request_formsly_id;
-
-            return (
-              <Flex key={String(requestId)} justify="space-between">
-                <Text truncate maw={150}>
-                  <Anchor
-                    href={`/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${requestId}`}
-                    target="_blank"
-                  >
-                    {String(requestId)}
-                  </Anchor>
-                </Text>
-                <CopyButton
-                  value={`${BASE_URL}/${formatTeamNameToUrlKey(
+          hidden: checkIfColumnIsHidden("inventory_request_id"),
+          render: ({ inventory_request_id }) => (
+            <Flex key={String(inventory_request_id)} justify="space-between">
+              <Text truncate maw={150}>
+                <Anchor
+                  href={`/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/requests/${requestId}`}
+                  )}/requests/${inventory_request_id}`}
+                  target="_blank"
                 >
-                  {({ copied, copy }) => (
-                    <Tooltip
-                      label={copied ? "Copied" : `Copy ${requestId}`}
-                      onClick={copy}
-                    >
-                      <ActionIcon>
-                        <IconCopy size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
-                </CopyButton>
-              </Flex>
-            );
-          },
+                  {String(inventory_request_id)}
+                </Anchor>
+              </Text>
+              <CopyButton
+                value={`${BASE_URL}/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${inventory_request_id}`}
+              >
+                {({ copied, copy }) => (
+                  <Tooltip
+                    label={copied ? "Copied" : `Copy ${inventory_request_id}`}
+                    onClick={copy}
+                  >
+                    <ActionIcon>
+                      <IconCopy size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            </Flex>
+          ),
         },
         {
-          accessor: "form_name",
-          title: "Description",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_form_name"),
-          render: ({ form_name }) => {
-            return (
-              <Text truncate maw={150}>
-                {String(form_name)}
-              </Text>
-            );
-          },
+          accessor: "asset_name",
+          title: "Asset Name",
+          render: (record: Record<string, unknown>) => (
+            <Text>
+              {record["asset_name"] ? String(record["asset_name"]) : ""}
+            </Text>
+          ),
         },
-        // {
-        //   accessor: "request_status",
-        //   title: "Brand",
-        //   sortable: true,
-        //   hidden: checkIfColumnIsHidden("request_status"),
-        //   render: ({ request_status }) => (
-        //     <Flex justify="center">
-        //       <Text>Asus</Text>
-        //     </Flex>
-        //   ),
-        // },
-
-        // {
-        //   accessor: "request_date_created",
-        //   title: "Cost",
-        //   hidden: checkIfColumnIsHidden("request_date_created"),
-        //   sortable: true,
-        //   render: ({ request_date_created }) => <Text> P 1,440</Text>,
-        // },
-
+        {
+          accessor: "inventory_request_status",
+          title: "Status",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("inventory_request_status"),
+          render: ({ inventory_request_status }) => (
+            <Text>
+              <Badge>{String(inventory_request_status)}</Badge>
+            </Text>
+          ),
+        },
+        {
+          accessor: "inventory_request_created",
+          title: "Date Created",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("inventory_request_created"),
+          render: ({ inventory_request_created }) => (
+            <Text>
+              {formatDate(new Date(String(inventory_request_created)))}
+            </Text>
+          ),
+        },
+        ...dynamicColumns,
         {
           accessor: "view",
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
           textAlignment: "center",
-          render: ({ request_id, request_formsly_id }) => {
-            const requestId =
-              request_formsly_id === "-" ? request_id : request_formsly_id;
-            return (
-              <ActionIcon
-                maw={120}
-                mx="auto"
-                color="blue"
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${requestId}`
-                  )
-                }
-              >
-                <IconArrowsMaximize size={16} />
-              </ActionIcon>
-            );
-          },
+          render: ({ inventory_request_id }) => (
+            <ActionIcon
+              maw={120}
+              mx="auto"
+              color="blue"
+              //   onClick={async () =>
+              //     await router.push(
+              //       `/${formatTeamNameToUrlKey(
+              //         activeTeam.team_name ?? ""
+              //       )}/requests/${inventory_request_id}`
+              //     )
+              //   }
+            >
+              <IconArrowsMaximize size={16} />
+            </ActionIcon>
+          ),
         },
       ]}
       showTableColumnFilter={showTableColumnFilter}

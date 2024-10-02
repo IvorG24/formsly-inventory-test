@@ -590,6 +590,9 @@ export type SiteTableRow =
 
 export type LocationTableRow =
   Database["inventory_schema"]["Tables"]["location_table"]["Row"];
+
+export type InventoryRequestRow =
+  Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 // End: Database Table Types
 
 // Start: Database Enums
@@ -2652,4 +2655,16 @@ export type SubCategory = {
   category_name: string;
   sub_category_id: string;
   sub_category_name: string;
+};
+
+export type InventoryListType = {
+  inventory_request_id: string;
+  inventory_request_created: string;
+  inventory_request_status: string;
+  user_first_name: string | null;
+  user_last_name: string | null;
+  user_id: string | null;
+  user_avatar: string | null;
+  site_name: string | null;
+  [key: string]: string | number | null; // Dynamic fields like "Brand", "Category", etc.
 };

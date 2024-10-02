@@ -1,19 +1,17 @@
 // Imports
-import { getRequestListOnLoad } from "@/backend/api/get";
+import { getColumnList } from "@/backend/api/get";
 import DashboardPage from "@/components/AssetInventory/DashboardPage/DashboardPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, supabaseClient }) => {
+  async ({ supabaseClient }) => {
     try {
-      const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id,
-      });
+      const fieldData = await getColumnList(supabaseClient);
 
       return {
-        props: requestListData,
+        props: {fieldData},
       };
     } catch (e) {
       return {
@@ -25,8 +23,13 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
-
-const Page = () => {
+type Props = {
+  fieldData: {
+    label: string;
+    value: string;
+  }[];
+};
+const Page = ({ fieldData }: Props) => {
   return (
     <>
       <Meta
