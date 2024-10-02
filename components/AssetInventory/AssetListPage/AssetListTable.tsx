@@ -67,7 +67,7 @@ const AssetListTable = ({
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
-
+ 
   const handleRowSelect = (requestId: string, isChecked: boolean) => {
     let newSelectedRows: string[] = [...selectedRow];
     if (isChecked) {
@@ -246,13 +246,13 @@ const AssetListTable = ({
               maw={120}
               mx="auto"
               color="blue"
-              //   onClick={async () =>
-              //     await router.push(
-              //       `/${formatTeamNameToUrlKey(
-              //         activeTeam.team_name ?? ""
-              //       )}/requests/${inventory_request_id}`
-              //     )
-              //   }
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/requests/${inventory_request_id}`
+                  )
+                }
             >
               <IconArrowsMaximize size={16} />
             </ActionIcon>
