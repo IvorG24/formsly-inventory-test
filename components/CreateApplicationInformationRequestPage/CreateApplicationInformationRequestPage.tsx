@@ -194,8 +194,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           ...form.form_section.slice(7),
         ]);
       } catch (e) {
-        console.log(e);
-        
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

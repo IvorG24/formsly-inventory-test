@@ -28,6 +28,8 @@ import {
   FormType,
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
+  InventoryAssetFormValues,
+  InventoryResponseValues,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
   ItemDescriptionFieldUOMTableInsert,
@@ -2521,4 +2523,21 @@ export const getItemOption = async (
   if (error) throw error;
 
   return data;
+};
+
+export const createDataDrawer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    type: string;
+    InventoryFormValues: InventoryAssetFormValues;
+    teamId?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("create_drawer_data", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as InventoryResponseValues;
 };

@@ -9,13 +9,13 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const siteListData = await getSiteList(supabaseClient, {
+      const { data } = await getSiteList(supabaseClient, {
         teamid: userActiveTeam.team_id,
       });
 
       return {
         props: {
-          siteListData,
+          data,
         } as Props,
       };
     } catch (e) {
@@ -29,13 +29,13 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 type Props = {
-  siteListData: SiteTableRow[];
+  data: SiteTableRow[];
 };
-const Page = ({ siteListData }: Props) => {
+const Page = ({ data }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/teamName/setup/location" />
-      <LocationSetupPage siteListData={siteListData} />
+      <LocationSetupPage siteListData={data} />
     </>
   );
 };

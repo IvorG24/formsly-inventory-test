@@ -1,34 +1,32 @@
-import { OptionType } from "@/utils/types";
+import { InventoryAssetFormValues, OptionType } from "@/utils/types";
 import { Button, Drawer, Group, Select, Stack, TextInput } from "@mantine/core";
-import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
+import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  handleSubCategory: (data: CategoryFormValues) => void;
+  handleFetchCategoryList: (page: number, value: string | null) => void;
+  handleSubCategory: (data: InventoryAssetFormValues) => void;
   categoryList: OptionType[];
-};
-
-export type CategoryFormValues = {
-  category_name: string;
-  sub_category: string;
 };
 
 const SubCategoryDrawer = ({
   isOpen,
   close,
+  handleFetchCategoryList,
   handleSubCategory,
   categoryList,
 }: Props) => {
-  const { control, handleSubmit, reset } = useFormContext<CategoryFormValues>();
-  const handleSubmitSiteForm = async (data: CategoryFormValues) => {
+  const { control, handleSubmit, reset } =
+    useFormContext<InventoryAssetFormValues>();
+  const handleSubmitSiteForm = async (data: InventoryAssetFormValues) => {
     handleSubCategory(data);
     reset();
   };
 
   return (
     <Drawer
-      title="Create New Location"
+      title="Create New Sub Category"
       position="right"
       overlayProps={{ opacity: 0.5, blur: 4 }}
       opened={isOpen}
@@ -37,7 +35,7 @@ const SubCategoryDrawer = ({
       <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
         <Stack spacing={8}>
           <Controller
-            name="category_name"
+            name="category_id"
             control={control}
             render={({ field }) => (
               <Select
@@ -48,7 +46,9 @@ const SubCategoryDrawer = ({
                 searchable
                 {...field}
                 onChange={(value) => {
-                  field.onChange(value || "");
+                  field.onChange(value);
+
+                  handleFetchCategoryList(1, value);
                 }}
               />
             )}

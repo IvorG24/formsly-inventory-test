@@ -1,21 +1,18 @@
+import { InventoryAssetFormValues } from "@/utils/types";
 import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  handleSiteSubmit: (data: SiteFormValues) => void; // Pass form data to the parent
-};
-
-export type SiteFormValues = {
-  site_name: string;
-  site_description: string;
+  handleSiteSubmit: (data: InventoryAssetFormValues) => void; // Pass form data to the parent
 };
 
 const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
-  const { control, handleSubmit, reset } = useFormContext<SiteFormValues>();
+  const { control, handleSubmit, reset } =
+    useFormContext<InventoryAssetFormValues>();
 
-  const handleSubmitSiteForm = async (data: SiteFormValues) => {
+  const handleSubmitSiteForm = async (data: InventoryAssetFormValues) => {
     handleSiteSubmit(data);
     reset();
   };

@@ -1,8 +1,9 @@
 import { getCategoryOptions } from "@/backend/api/get";
+import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { OptionTableRow } from "@/utils/types";
+import { CategoryTableRow, InventoryAssetFormValues } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -20,8 +21,7 @@ import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import CategoryDrawer, { CategoryFormValues } from "./CategoryDrawer";
+import CategoryDrawer from "./CategoryDrawer";
 
 type FormValues = {
   search: string;
@@ -33,13 +33,12 @@ const CategoriesSetupPage = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [currentCategoryList, setCurrentCategoryList] = useState<
-    OptionTableRow[]
+    CategoryTableRow[]
   >([]);
-
+  const [categoryCount, setCategoryCount] = useState(0);
   const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
 
-  // Initialize React Hook Form with default values for the drawer
   const formMethods = useForm<FormValues>({
     defaultValues: {
       category_name: "",
@@ -49,13 +48,23 @@ const CategoriesSetupPage = () => {
   const { register, handleSubmit, getValues } = formMethods;
 
   const handleFetchCategoryList = async (page: number) => {
-    const { search } = getValues();
-    const data = await getCategoryOptions(supabaseClient, {
-      page,
-      search,
-      limit: ROW_PER_PAGE,
-    });
-    setCurrentCategoryList(data);
+    if (!activeTeam.team_id) return;
+    try {
+      const { search } = getValues();
+      const { data, totalCount } = await getCategoryOptions(supabaseClient, {
+        page,
+        search,
+        limit: ROW_PER_PAGE,
+        teamId: activeTeam.team_id,
+      });
+      setCurrentCategoryList(data);
+      setCategoryCount(totalCount);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   const handleFilterForms = async () => {
@@ -76,7 +85,6 @@ const CategoriesSetupPage = () => {
       setActivePage(page);
       await handleFetchCategoryList(page);
     } catch (e) {
-      console.error("Error fetching paginated categories:", e);
     } finally {
       setIsFetchingCategoryList(false);
     }
@@ -90,14 +98,20 @@ const CategoriesSetupPage = () => {
     console.log("Delete category with ID:", category_id);
   };
 
-  const handleCategorySubmit = async (data: CategoryFormValues) => {
+  const handleCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
       const { category_name } = data;
-      const newCategory: OptionTableRow = {
-        option_id: uuidv4(),
-        option_value: category_name,
-        option_order: 4,
-        option_field_id: "913b5928-38ee-45eb-a808-6c1b5dd2a8cb",
+      const result = await createDataDrawer(supabaseClient, {
+        type: "category",
+        InventoryFormValues: data,
+        teamId: activeTeam.team_id,
+      });
+
+      const newCategory = {
+        category_id: result.result_id,
+        category_name: category_name || "",
+        category_is_disabled: false,
+        category_team_id: activeTeam.team_id,
       };
 
       setCurrentCategoryList((prev) => [...prev, newCategory]);
@@ -115,8 +129,8 @@ const CategoriesSetupPage = () => {
   };
 
   useEffect(() => {
-    handlePagination(1);
-  }, [activePage]);
+    handlePagination(activePage);
+  }, [activePage, activeTeam.team_id]);
   return (
     <Container fluid>
       <Flex direction="column" gap="sm">
@@ -159,7 +173,7 @@ const CategoriesSetupPage = () => {
           withBorder
           idAccessor="category_id"
           page={activePage}
-          totalRecords={currentCategoryList.length}
+          totalRecords={categoryCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentCategoryList}
@@ -169,17 +183,17 @@ const CategoriesSetupPage = () => {
               accessor: "category_name",
               width: "90%",
               title: "Category Name",
-              render: (category) => <Text>{category.option_value}</Text>,
+              render: (category) => <Text>{category.category_name}</Text>,
             },
             {
               accessor: "actions",
               title: "Actions",
               render: (category) => (
-                <Group spacing="xs">
+                <Group spacing="xs" noWrap>
                   <Button
                     size="xs"
                     variant="outline"
-                    onClick={() => handleEdit(category.option_id)}
+                    onClick={() => handleEdit(category.category_id)}
                   >
                     Edit
                   </Button>
@@ -187,7 +201,7 @@ const CategoriesSetupPage = () => {
                     size="xs"
                     variant="outline"
                     color="red"
-                    onClick={() => handleDelete(category.option_id)}
+                    onClick={() => handleDelete(category.category_id)}
                   >
                     Delete
                   </Button>

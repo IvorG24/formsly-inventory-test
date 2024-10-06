@@ -1,24 +1,32 @@
 import { getLocationList } from "@/backend/api/get";
+import { createDataDrawer } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { LocationTableRow, SiteTableRow } from "@/utils/types";
+import {
+  InventoryAssetFormValues,
+  LocationTableRow,
+  SiteTableRow,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
   Container,
   Flex,
   Group,
+  LoadingOverlay,
   Select,
   Text,
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconLocation, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import LocationDrawer, { SiteFormValues } from "./LocationDrawer";
+import LocationDrawer from "./LocationDrawer";
 
 type FormValues = {
   site_id: string;
@@ -28,12 +36,14 @@ type Props = {
   siteListData: SiteTableRow[];
 };
 const LocationSetupPage = ({ siteListData }: Props) => {
+  const activeTeam = useActiveTeam();
   const [activePage, setActivePage] = useState(1);
   const [currentLocationList, setCurrentLocationList] = useState<
     LocationTableRow[]
   >([]);
+  const [locationCount, setLocationCount] = useState(0);
   const supabaseClient = createPagesBrowserClient<Database>();
-  const [isFetchingLocationList, setIsFetchingLocationList] = useState(false); // Loading state
+  const [isFetchingLocationList, setIsFetchingLocationList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const siteOptionList = siteListData.map((option) => ({
     label: option.site_name,
@@ -50,23 +60,30 @@ const LocationSetupPage = ({ siteListData }: Props) => {
   const { control, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    handlePagination(1);
+    handlePagination(activePage);
   }, [activePage]);
 
   const handleFetchLocationList = async (
     page: number,
     value: string | null
   ) => {
-    const { site_id } = getValues();
-    const siteId = value ? value : site_id;
+    try {
+      const { site_id } = getValues();
+      const siteId = value ? value : site_id;
 
-    const data = await getLocationList(supabaseClient, {
-      site_id: siteId,
-      limit: ROW_PER_PAGE,
-      page,
-    });
-
-    setCurrentLocationList(data);
+      const { data, totalCount } = await getLocationList(supabaseClient, {
+        site_id: siteId,
+        limit: ROW_PER_PAGE,
+        page,
+      });
+      setCurrentLocationList(data);
+      setLocationCount(totalCount);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   const handleFilterForms = async (value: string | null) => {
@@ -74,6 +91,7 @@ const LocationSetupPage = ({ siteListData }: Props) => {
       setIsFetchingLocationList(true);
       setActivePage(1);
       handleFetchLocationList(1, value);
+      setIsFetchingLocationList(false);
     } catch (e) {
       console.error("Error fetching filtered locations:", e);
     } finally {
@@ -102,19 +120,40 @@ const LocationSetupPage = ({ siteListData }: Props) => {
     console.log("Delete location with ID:", location_id);
   };
 
-  const handleLocationSubmit = async (data: SiteFormValues) => {
+  const handleLocationSubmit = async (data: InventoryAssetFormValues) => {
     try {
-      const { site_id, location_name } = data;
-      console.log(site_id, location_name);
+      if (!activeTeam.team_id) return;
+      const result = await createDataDrawer(supabaseClient, {
+        type: "location",
+        InventoryFormValues: data,
+        teamId: activeTeam.team_id,
+      });
 
+      const newData = {
+        location_id: result.result_id,
+        location_name: result.result_name,
+        location_is_disabled: false,
+        location_site_id: result.result_id,
+      };
+
+      setCurrentLocationList((prev) => [...prev, newData]);
+
+      notifications.show({
+        message: "Location Data Created",
+        color: "green",
+      });
       close();
     } catch (e) {
-      console.log(e);
+      notifications.show({
+        message: "Someting went wrong",
+        color: "red",
+      });
     }
   };
 
   return (
     <Container fluid>
+      <LoadingOverlay visible={isFetchingLocationList} />
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Locations</Title>
         <Text>
@@ -143,8 +182,8 @@ const LocationSetupPage = ({ siteListData }: Props) => {
                     </ActionIcon>
                   }
                   onChange={(value) => {
-                    field.onChange(value); // Update the form value
-                    handleFilterForms(value); // Call your custom handler
+                    field.onChange(value);
+                    handleFilterForms(value);
                   }}
                 />
               )}
@@ -157,6 +196,7 @@ const LocationSetupPage = ({ siteListData }: Props) => {
 
         <FormProvider {...formMethods}>
           <LocationDrawer
+            handleFetchLocationList={handleFetchLocationList}
             siteOptionList={siteOptionList}
             handleSiteSubmit={handleLocationSubmit}
             isOpen={opened}
@@ -173,7 +213,7 @@ const LocationSetupPage = ({ siteListData }: Props) => {
           withBorder
           idAccessor="location_id"
           page={activePage}
-          totalRecords={currentLocationList.length}
+          totalRecords={locationCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentLocationList}
@@ -189,7 +229,7 @@ const LocationSetupPage = ({ siteListData }: Props) => {
               accessor: "actions",
               title: "Actions",
               render: (location) => (
-                <Group spacing="xs">
+                <Group spacing="xs" noWrap>
                   <Button
                     size="xs"
                     variant="outline"

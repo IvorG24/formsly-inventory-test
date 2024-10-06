@@ -1,8 +1,13 @@
 import { getSubCategoryList } from "@/backend/api/get";
+import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { OptionTableRow, SubCategory } from "@/utils/types";
+import {
+  CategoryTableRow,
+  InventoryAssetFormValues,
+  SubCategory,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -19,25 +24,25 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCategory, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import SubCategoryDrawer, { CategoryFormValues } from "./SubCategoriesDrawer";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import SubCategoryDrawer from "./SubCategoriesDrawer";
 type FormValues = {
   category_id: string;
   category_name: string;
 };
 
 type Props = {
-  categoryOptions: OptionTableRow[];
+  categoryOptions: CategoryTableRow[];
 };
 const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [subCategory, setSubCategory] = useState<SubCategory[]>([]);
+  const [subCategoryCount, setSubCategoryCount] = useState(0);
   const categoryOptionList = categoryOptions.map((option) => ({
-    label: option.option_value,
-    value: option.option_value,
+    label: option.category_name,
+    value: option.category_id,
   }));
   const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
@@ -49,25 +54,24 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
     },
   });
 
-  const { register, handleSubmit, getValues } = formMethods;
+  const { control, handleSubmit, getValues } = formMethods;
 
   const handleFetchCategoryList = async (
     page: number,
     value: string | null
   ) => {
     try {
-      const { category_name } = getValues();
-      const categoryName = value ? value : category_name;
+      const { category_id } = getValues();
+      const categoryId = value ? value : category_id;
 
       const data = await getSubCategoryList(supabaseClient, {
         page,
-        search: categoryName,
+        search: categoryId,
         limit: ROW_PER_PAGE,
       });
-      setSubCategory(data);
+      setSubCategory(data.data);
+      setSubCategoryCount(data.totalCount);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -81,7 +85,6 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
       setActivePage(1);
       await handleFetchCategoryList(1, value);
     } catch (e) {
-      console.error("Error fetching filtered categories:", e);
     } finally {
       setIsFetchingCategoryList(false); // Hide loading state
     }
@@ -89,12 +92,11 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
 
   const handlePagination = async (page: number) => {
     try {
-      const { category_name } = getValues();
+      const { category_id } = getValues();
       setIsFetchingCategoryList(true);
       setActivePage(page);
-      await handleFetchCategoryList(page, category_name);
+      await handleFetchCategoryList(page, category_id);
     } catch (e) {
-      console.error("Error fetching paginated categories:", e);
     } finally {
       setIsFetchingCategoryList(false);
     }
@@ -108,29 +110,35 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
     console.log("Delete category with ID:", category_id);
   };
 
-  const handleSubCategorySubmit = async (data: CategoryFormValues) => {
+  const handleSubCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
-      const { sub_category, category_name } = data;
-      const subCategoryData = {
-        category_name: category_name,
-        sub_category_id: uuidv4(),
-        sub_category_name: sub_category,
+      if (!activeTeam.team_id) return;
+      const result = await createDataDrawer(supabaseClient, {
+        type: "sub-category",
+        InventoryFormValues: data,
+        teamId: activeTeam.team_id,
+      });
+
+      const newData = {
+        category_name: result.result_category_name,
+        sub_category_id: result.result_id,
+        sub_category_name: result.result_name || "",
       };
 
-      setSubCategory((prev) => [...prev, subCategoryData]);
+      setSubCategory((prev) => [...prev, newData] as SubCategory[]);
+
       notifications.show({
-        message: "Category addedd successfully",
+        message: "Category added successfully",
         color: "green",
       });
       close();
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
-        color: "Red",
+        color: "red",
       });
     }
   };
-  console.log(createPagesBrowserClient());
 
   useEffect(() => {
     handlePagination(1);
@@ -150,22 +158,29 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
           )}
         >
           <Group position="apart" align="center">
-            <Select
-              placeholder="Search by location name"
-              data={categoryOptionList}
-              defaultValue={getValues("category_id")}
-              searchable
-              {...register("category_name")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconCategory />
-                </ActionIcon>
-              }
-              onChange={(value) => {
-                formMethods.setValue("category_name", value || "");
-                handleFilterForms(value);
-              }}
+            <Controller
+              name="category_id"
+              control={control}
+              defaultValue={getValues("category_name")}
+              render={({ field }) => (
+                <Select
+                  placeholder="Search by category name"
+                  data={categoryOptionList}
+                  searchable
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    handleFilterForms(value);
+                  }}
+                  rightSection={
+                    <ActionIcon size="xs" type="submit">
+                      <IconCategory />
+                    </ActionIcon>
+                  }
+                />
+              )}
             />
+
             <Button leftIcon={<IconPlus size={16} />} onClick={open}>
               Add New Sub Category
             </Button>
@@ -174,6 +189,7 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
 
         <FormProvider {...formMethods}>
           <SubCategoryDrawer
+            handleFetchCategoryList={handleFetchCategoryList}
             categoryList={categoryOptionList}
             handleSubCategory={handleSubCategorySubmit}
             isOpen={opened}
@@ -190,7 +206,7 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
           withBorder
           idAccessor="sub_category_id"
           page={activePage}
-          totalRecords={subCategory.length}
+          totalRecords={subCategoryCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={subCategory}
@@ -214,7 +230,7 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
               accessor: "actions",
               title: "Actions",
               render: (subCategory) => (
-                <Group spacing="xs">
+                <Group spacing="xs" noWrap>
                   <Button
                     size="xs"
                     variant="outline"

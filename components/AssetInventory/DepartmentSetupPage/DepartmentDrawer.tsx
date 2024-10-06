@@ -1,20 +1,17 @@
+import { InventoryAssetFormValues } from "@/utils/types";
 import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  handleDepartmentSubmit: (data: DepartmentFormvalues) => void; // Pass form data to the parent
-};
-
-export type DepartmentFormvalues = {
-  department_name: string;
+  handleDepartmentSubmit: (data: InventoryAssetFormValues) => void;
 };
 
 const DepartmentDrawer = ({ isOpen, close, handleDepartmentSubmit }: Props) => {
   const { control, handleSubmit, reset } =
-    useFormContext<DepartmentFormvalues>();
-  const handleDepartmentSubmitForm = async (data: DepartmentFormvalues) => {
+    useFormContext<InventoryAssetFormValues>();
+  const handleDepartmentSubmitForm = async (data: InventoryAssetFormValues) => {
     handleDepartmentSubmit(data);
     reset();
   };
@@ -44,7 +41,7 @@ const DepartmentDrawer = ({ isOpen, close, handleDepartmentSubmit }: Props) => {
 
           <Group mt="md">
             <Button fullWidth type="submit">
-              Save Location
+              Save Department
             </Button>
           </Group>
         </Stack>

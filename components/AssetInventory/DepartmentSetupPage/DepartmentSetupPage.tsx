@@ -1,6 +1,8 @@
 import { getDepartmentList } from "@/backend/api/get";
+import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { InventoryAssetFormValues } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -12,13 +14,14 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import DepartmentDrawer, { DepartmentFormvalues } from "./DepartmentDrawer";
+import DepartmentDrawer from "./DepartmentDrawer";
 
 export type Department = {
   team_department_id: string;
@@ -35,7 +38,8 @@ const DepartmentSetupPage = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [currentDepartment, setCurrentDepartment] = useState<Department[]>([]);
-  const [isFetchingSiteList, setIsFetchingSiteList] = useState(false); // Loading state
+  const [departmentCount, setDepartmentCount] = useState(0);
+  const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
 
   // Initialize React Hook Form with default values for the drawer
@@ -48,20 +52,25 @@ const DepartmentSetupPage = () => {
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    handlePagination(1);
+    handlePagination(activePage);
   }, [activePage]);
 
   const handleFetchDepartmentList = async (page: number) => {
-    const { search } = getValues();
-
-    const data = await getDepartmentList(supabaseClient, {
-      search,
-      limit: ROW_PER_PAGE,
-      page,
-    });
-    console.log(data);
-
-    setCurrentDepartment(data);
+    try {
+      const { search } = getValues();
+      const { data, totalCount } = await getDepartmentList(supabaseClient, {
+        search,
+        limit: ROW_PER_PAGE,
+        page,
+      });
+      setCurrentDepartment(data);
+      setDepartmentCount(totalCount);
+    } catch (e) {
+      notifications.show({
+        message: "Someting went wrong",
+        color: "red",
+      });
+    }
   };
 
   const handleFilterForms = async () => {
@@ -70,9 +79,8 @@ const DepartmentSetupPage = () => {
       setActivePage(1);
       await handleFetchDepartmentList(1);
     } catch (e) {
-      console.error("Error fetching filtered sites:", e);
     } finally {
-      setIsFetchingSiteList(false); // Hide loading state
+      setIsFetchingSiteList(false);
     }
   };
 
@@ -82,7 +90,6 @@ const DepartmentSetupPage = () => {
       setActivePage(page);
       await handleFetchDepartmentList(page);
     } catch (e) {
-      console.error("Error fetching paginated sites:", e);
     } finally {
       setIsFetchingSiteList(false);
     }
@@ -96,12 +103,32 @@ const DepartmentSetupPage = () => {
     console.log("Delete site with ID:", site_id);
   };
 
-  const handleDepartmentSubmit = async (data: DepartmentFormvalues) => {
+  const handleDepartmentSubmit = async (data: InventoryAssetFormValues) => {
     try {
-      //site logic put here
+      if (!activeTeam.team_id) return;
+      const result = await createDataDrawer(supabaseClient, {
+        type: "department",
+        InventoryFormValues: data,
+        teamId: activeTeam.team_id,
+      });
+
+      const newData = {
+        team_department_id: result.result_id,
+        team_department_name: result.result_name,
+      };
+
+      setCurrentDepartment((prev) => [...prev, newData]);
+
+      notifications.show({
+        message: "Category added successfully",
+        color: "green",
+      });
       close();
     } catch (e) {
-      console.log(e);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     }
   };
 
@@ -151,7 +178,7 @@ const DepartmentSetupPage = () => {
           withBorder
           idAccessor="department_id"
           page={activePage}
-          totalRecords={currentDepartment.length}
+          totalRecords={departmentCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentDepartment}
@@ -169,7 +196,7 @@ const DepartmentSetupPage = () => {
               accessor: "actions",
               title: "Actions",
               render: (department) => (
-                <Group spacing="xs">
+                <Group spacing="xs" noWrap>
                   <Button
                     size="xs"
                     variant="outline"

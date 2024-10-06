@@ -76,7 +76,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       setIsLoading(true);
 
-      const asset = await createAssetRequest(supabaseClient, {
+      await createAssetRequest(supabaseClient, {
         InventoryFormValues: data,
         formId: form.form_id,
         teamId: activeTeam.team_id,
@@ -85,15 +85,11 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         teamName: activeTeam.team_name,
       });
 
-      console.log(asset);
-
       notifications.show({
         message: "Asset created.",
         color: "green",
       });
     } catch (e) {
-        console.log(e);
-
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

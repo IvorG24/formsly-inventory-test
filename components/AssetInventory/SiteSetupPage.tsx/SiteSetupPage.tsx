@@ -1,7 +1,8 @@
 import { getSiteList } from "@/backend/api/get";
+import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { SiteTableRow } from "@/utils/types";
+import { InventoryAssetFormValues, SiteTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -13,13 +14,15 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import SiteDrawer, { SiteFormValues } from "./SiteDrawer";
+import DisableModal from "../DisableModal";
+import SiteDrawer from "./SiteDrawer";
 
 type FormValues = {
   search: string;
@@ -32,10 +35,10 @@ const SiteSetupPage = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [currentSiteList, setCurrentSiteList] = useState<SiteTableRow[]>([]);
+  const [siteListCount, setSiteListCount] = useState(0);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
-
-  // Initialize React Hook Form with default values for the drawer
+  const [modalOpened, setModalOpened] = useState(false);
   const formMethods = useForm<FormValues>({
     defaultValues: {
       site_name: "",
@@ -46,19 +49,27 @@ const SiteSetupPage = () => {
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
-    handlePagination(1);
-  }, [activePage]);
+    handlePagination(activePage);
+  }, [activePage, activeTeam.team_id]);
 
   const handleFetchSiteList = async (page: number) => {
-    const { search } = getValues();
-    const data = await getSiteList(supabaseClient, {
-      search,
-      teamid: activeTeam.team_id,
-      page,
-      limit: ROW_PER_PAGE,
-    });
-
-    setCurrentSiteList(data);
+    try {
+      if (!activeTeam.team_id) return;
+      const { search } = getValues();
+      const { data, totalCount } = await getSiteList(supabaseClient, {
+        search,
+        teamid: activeTeam.team_id,
+        page,
+        limit: ROW_PER_PAGE,
+      });
+      setCurrentSiteList(data);
+      setSiteListCount(totalCount);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   const handleFilterForms = async () => {
@@ -67,7 +78,10 @@ const SiteSetupPage = () => {
       setActivePage(1);
       await handleFetchSiteList(1);
     } catch (e) {
-      console.error("Error fetching filtered sites:", e);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     } finally {
       setIsFetchingSiteList(false); // Hide loading state
     }
@@ -79,7 +93,10 @@ const SiteSetupPage = () => {
       setActivePage(page);
       await handleFetchSiteList(page);
     } catch (e) {
-      console.error("Error fetching paginated sites:", e);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     } finally {
       setIsFetchingSiteList(false);
     }
@@ -90,22 +107,51 @@ const SiteSetupPage = () => {
   };
 
   const handleDelete = (site_id: string) => {
+    setModalOpened(true);
+    console.log(modalOpened);
+
     console.log("Delete site with ID:", site_id);
   };
 
-  const handleSiteSubmit = async (data: SiteFormValues) => {
+  const handleSiteSubmit = async (data: InventoryAssetFormValues) => {
     try {
-      const { site_name, site_description } = data;
-      console.log(site_name, site_description);
-      //site logic put here
+      if (!activeTeam.team_id) return;
+      const result = await createDataDrawer(supabaseClient, {
+        type: "site",
+        InventoryFormValues: data,
+        teamId: activeTeam.team_id,
+      });
+
+      const newData = {
+        site_id: result.result_id,
+        site_name: result.result_name,
+        site_description: result.result_description,
+        site_is_disabled: false,
+        site_team_id: result.result_team_id,
+      };
+
+      setCurrentSiteList((prev) => [...prev, newData]);
+
+      notifications.show({
+        message: "Site Data Created",
+        color: "green",
+      });
       close();
     } catch (e) {
-      console.log(e);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     }
   };
 
   return (
     <Container fluid>
+      <DisableModal
+        close={() => setModalOpened(false)} // Use setModalOpened to close the modal
+        opened={modalOpened}
+        type="site"
+      />
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Sites</Title>
         <Text>
@@ -150,7 +196,7 @@ const SiteSetupPage = () => {
           withBorder
           idAccessor="site_id"
           page={activePage}
-          totalRecords={currentSiteList.length}
+          totalRecords={siteListCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={currentSiteList}
@@ -172,7 +218,7 @@ const SiteSetupPage = () => {
               accessor: "actions",
               title: "Actions",
               render: (site) => (
-                <Group spacing="xs">
+                <Group spacing="xs" noWrap>
                   <Button
                     size="xs"
                     variant="outline"

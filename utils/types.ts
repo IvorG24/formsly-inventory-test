@@ -591,6 +591,9 @@ export type SiteTableRow =
 export type LocationTableRow =
   Database["inventory_schema"]["Tables"]["location_table"]["Row"];
 
+export type CategoryTableRow =
+  Database["inventory_schema"]["Tables"]["category_table"]["Row"];
+
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 // End: Database Table Types
@@ -2660,6 +2663,11 @@ export type SubCategory = {
   sub_category_name: string;
 };
 
+export type SubCategoryData = {
+  data: SubCategory[];
+  totalCount: number;
+};
+
 export type InventoryListType = {
   inventory_request_id: string;
   inventory_request_created: string;
@@ -2670,4 +2678,24 @@ export type InventoryListType = {
   user_avatar: string | null;
   site_name: string | null;
   [key: string]: string | number | null; // Dynamic fields like "Brand", "Category", etc.
+};
+
+export type InventoryAssetFormValues = {
+  site_id?: string;
+  location_name?: string;
+  category_name?: string;
+  category_id?: string;
+  sub_category?: string;
+  department_name?: string;
+  site_name?: string;
+  site_description?: string;
+};
+
+export type InventoryResponseValues = {
+  result_id: string;
+  result_name: string;
+  result_category_name: string;
+  result_description: string;
+  result_site_id: string;
+  result_team_id: string;
 };

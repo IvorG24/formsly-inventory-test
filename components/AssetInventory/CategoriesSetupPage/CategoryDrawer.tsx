@@ -1,10 +1,11 @@
+import { InventoryAssetFormValues } from "@/utils/types";
 import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
 
 type Props = {
   isOpen: boolean;
   close: () => void;
-  handleCategorySubmit: (data: CategoryFormValues) => void; // Pass form data to the parent
+  handleCategorySubmit: (data: InventoryAssetFormValues) => void; // Pass form data to the parent
 };
 
 export type CategoryFormValues = {
@@ -12,9 +13,10 @@ export type CategoryFormValues = {
 };
 
 const CategoryDrawer = ({ isOpen, close, handleCategorySubmit }: Props) => {
-  const { control, handleSubmit, reset } = useFormContext<CategoryFormValues>();
+  const { control, handleSubmit, reset } =
+    useFormContext<InventoryAssetFormValues>();
 
-  const handleSubmitSiteForm = async (data: CategoryFormValues) => {
+  const handleSubmitSiteForm = async (data: InventoryAssetFormValues) => {
     handleCategorySubmit(data);
     reset();
   };

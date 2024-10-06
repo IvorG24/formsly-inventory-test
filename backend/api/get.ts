@@ -6,123 +6,124 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  APP_SOURCE_ID,
-  FETCH_OPTION_LIMIT,
-  formatDate,
-  FORMSLY_FORM_ORDER,
-  IT_ASSET_FIELD_ID_LIST,
-  ITEM_FIELD_ID_LIST,
-  PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT,
-  TECHNICAL_ASSESSMENT_FIELD_LIST,
+    APP_SOURCE_ID,
+    FETCH_OPTION_LIMIT,
+    formatDate,
+    FORMSLY_FORM_ORDER,
+    IT_ASSET_FIELD_ID_LIST,
+    ITEM_FIELD_ID_LIST,
+    PED_ITEM_FIELD_ID_LIST,
+    SELECT_OPTION_LIMIT,
+    TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
-  addAmpersandBetweenWords,
-  escapeQuotes,
-  escapeQuotesForObject,
-  parseJSONIfValid,
-  startCase,
+    addAmpersandBetweenWords,
+    escapeQuotes,
+    escapeQuotesForObject,
+    parseJSONIfValid,
+    startCase,
 } from "@/utils/string";
 import {
-  AddressTableRow,
-  ApplicationInformationFilterFormValues,
-  ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType,
-  AppType,
-  AttachmentBucketType,
-  AttachmentTableRow,
-  BackgroundCheckFilterFormValues,
-  BackgroundCheckSpreadsheetData,
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  CSICodeTableRow,
-  DirectorInterviewFilterFormValues,
-  DirectorInterviewSpreadsheetData,
-  EquipmentDescriptionTableRow,
-  EquipmentPartTableInsert,
-  EquipmentPartType,
-  EquipmentTableRow,
-  FetchRequestListParams,
-  FetchUserRequestListParams,
-  FieldTableRow,
-  FormTableRow,
-  FormType,
-  HRAnalyticsData,
-  HRPhoneInterviewFilterFormValues,
-  HRPhoneInterviewSpreadsheetData,
-  HRProjectType,
-  InitialFormType,
-  InterviewOnlineMeetingTableRow,
-  InventoryFormType,
-  InventoryListType,
-  ItemCategoryType,
-  ItemCategoryWithSigner,
-  ItemDescriptionFieldWithUoM,
-  ItemDescriptionTableRow,
-  ItemWithDescriptionAndField,
-  ItemWithDescriptionType,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraFormslyProjectType,
-  JiraItemCategoryDataType,
-  JiraOrganizationTableRow,
-  JiraProjectDataType,
-  JobOfferFilterFormValues,
-  JobOfferHistoryType,
-  JobOfferSpreadsheetData,
-  LocationTableRow,
-  LRFSpreadsheetData,
-  MemoListItemType,
-  MemoType,
-  NotificationOnLoad,
-  NotificationTableRow,
-  OptionTableRow,
-  OtherExpensesTypeTableRow,
-  PendingInviteType,
-  QuestionnaireData,
-  ReferenceMemoType,
-  RequestListItemType,
-  RequestListOnLoad,
-  RequestResponseTableRow,
-  RequestTableRow,
-  RequestWithResponseType,
-  SectionWithFieldType,
-  ServiceWithScopeAndChoice,
-  SignatureHistoryTableRow,
-  SignerRequestSLA,
-  SignerWithProfile,
-  SiteTableRow,
-  SSOTOnLoad,
-  SubCategory,
-  TeamMemberOnLoad,
-  TeamMemberType,
-  TeamMemberWithUser,
-  TeamMemberWithUserDetails,
-  TeamOnLoad,
-  TeamProjectTableRow,
-  TeamTableRow,
-  TechnicalAssessmentTableRow,
-  TechnicalInterviewFilterFormValues,
-  TechnicalInterviewSpreadsheetData,
-  TicketListOnLoad,
-  TicketListType,
-  TicketPageOnLoad,
-  TicketStatusType,
-  TradeTestFilterFormValues,
-  TradeTestSpreadsheetData,
-  TransactionTableRow,
-  UserIssuedItem,
+    AddressTableRow,
+    ApplicationInformationFilterFormValues,
+    ApplicationInformationSpreadsheetData,
+    ApproverUnresolvedRequestCountType,
+    AppType,
+    AttachmentBucketType,
+    AttachmentTableRow,
+    BackgroundCheckFilterFormValues,
+    BackgroundCheckSpreadsheetData,
+    CategoryTableRow,
+    CreateTicketFormValues,
+    CreateTicketPageOnLoad,
+    CSICodeTableRow,
+    DirectorInterviewFilterFormValues,
+    DirectorInterviewSpreadsheetData,
+    EquipmentDescriptionTableRow,
+    EquipmentPartTableInsert,
+    EquipmentPartType,
+    EquipmentTableRow,
+    FetchRequestListParams,
+    FetchUserRequestListParams,
+    FieldTableRow,
+    FormTableRow,
+    FormType,
+    HRAnalyticsData,
+    HRPhoneInterviewFilterFormValues,
+    HRPhoneInterviewSpreadsheetData,
+    HRProjectType,
+    InitialFormType,
+    InterviewOnlineMeetingTableRow,
+    InventoryFormType,
+    InventoryListType,
+    ItemCategoryType,
+    ItemCategoryWithSigner,
+    ItemDescriptionFieldWithUoM,
+    ItemDescriptionTableRow,
+    ItemWithDescriptionAndField,
+    ItemWithDescriptionType,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraFormslyProjectType,
+    JiraItemCategoryDataType,
+    JiraOrganizationTableRow,
+    JiraProjectDataType,
+    JobOfferFilterFormValues,
+    JobOfferHistoryType,
+    JobOfferSpreadsheetData,
+    LocationTableRow,
+    LRFSpreadsheetData,
+    MemoListItemType,
+    MemoType,
+    NotificationOnLoad,
+    NotificationTableRow,
+    OptionTableRow,
+    OtherExpensesTypeTableRow,
+    PendingInviteType,
+    QuestionnaireData,
+    ReferenceMemoType,
+    RequestListItemType,
+    RequestListOnLoad,
+    RequestResponseTableRow,
+    RequestTableRow,
+    RequestWithResponseType,
+    SectionWithFieldType,
+    ServiceWithScopeAndChoice,
+    SignatureHistoryTableRow,
+    SignerRequestSLA,
+    SignerWithProfile,
+    SiteTableRow,
+    SSOTOnLoad,
+    SubCategoryData,
+    TeamMemberOnLoad,
+    TeamMemberType,
+    TeamMemberWithUser,
+    TeamMemberWithUserDetails,
+    TeamOnLoad,
+    TeamProjectTableRow,
+    TeamTableRow,
+    TechnicalAssessmentTableRow,
+    TechnicalInterviewFilterFormValues,
+    TechnicalInterviewSpreadsheetData,
+    TicketListOnLoad,
+    TicketListType,
+    TicketPageOnLoad,
+    TicketStatusType,
+    TradeTestFilterFormValues,
+    TradeTestSpreadsheetData,
+    TransactionTableRow,
+    UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -7197,17 +7198,17 @@ export const getEventDetails = async (
 
 export const getCategoryOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page?: number; limit?: number; search?: string }
+  params: { page?: number; limit?: number; search?: string; teamId: string }
 ) => {
-  const { page, limit, search } = params;
+  const { page, limit, search, teamId } = params;
   let query = supabaseClient
     .schema("inventory_schema")
-    .from("option_table")
-    .select("*")
-    .eq("option_field_id", "913b5928-38ee-45eb-a808-6c1b5dd2a8cb");
+    .from("category_table")
+    .select("*", { count: "exact" })
+    .eq("category_team_id", teamId);
 
   if (search) {
-    query = query.ilike("option_value", `%${search}%`);
+    query = query.ilike("category_name", `%${search}%`);
   }
 
   if (limit && limit > 0 && page && page > 0) {
@@ -7216,11 +7217,11 @@ export const getCategoryOptions = async (
     query = query.range(start, end);
   }
 
-  const { data, error } = await query;
+  const { data, count, error } = await query;
 
   if (error) throw error;
 
-  return data as OptionTableRow[];
+  return { data: data as CategoryTableRow[], totalCount: count ?? 0 };
 };
 
 export const getSubCategoryList = async (
@@ -7233,7 +7234,7 @@ export const getSubCategoryList = async (
 
   if (error) throw error;
 
-  return data as unknown as SubCategory[];
+  return data as SubCategoryData;
 };
 
 export const getDepartmentList = async (
@@ -7247,21 +7248,25 @@ export const getDepartmentList = async (
   const { search, page, limit } = params;
   const start = (page - 1) * limit;
   const end = start + limit - 1;
+
   let query = supabaseClient
     .schema("team_schema")
     .from("team_department_table")
-    .select("*")
+    .select("*", { count: "exact" })
     .range(start, end);
 
   if (search) {
     query = query.ilike("team_department_name", `%${search}%`);
   }
 
-  const { data, error } = await query;
+  const { data, count, error } = await query;
 
   if (error) throw error;
 
-  return data as unknown as Department[];
+  return {
+    data: data as Department[],
+    totalCount: count ?? 0,
+  };
 };
 
 export const getSiteList = async (
@@ -7281,7 +7286,7 @@ export const getSiteList = async (
   let query = supabaseClient
     .schema("inventory_schema")
     .from("site_table")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("site_team_id", teamid);
 
   if (start !== undefined && end !== undefined) {
@@ -7292,11 +7297,11 @@ export const getSiteList = async (
     query = query.ilike("site_name", `%${search}%`);
   }
 
-  const { data, error } = await query;
+  const { data, count, error } = await query;
 
   if (error) throw error;
 
-  return data as SiteTableRow[];
+  return { data: data as SiteTableRow[], totalCount: count ?? 0 };
 };
 
 export const getLocationList = async (
@@ -7314,18 +7319,21 @@ export const getLocationList = async (
   let query = supabaseClient
     .schema("inventory_schema")
     .from("location_table")
-    .select("*")
+    .select("*", { count: "exact" })
     .range(start, end);
 
   if (site_id) {
     query = query.eq("location_site_id", site_id);
   }
 
-  const { data, error } = await query;
+  const { data, count, error } = await query;
 
   if (error) throw error;
 
-  return data as LocationTableRow[];
+  return {
+    data: data as LocationTableRow[],
+    totalCount: count ?? 0,
+  };
 };
 
 export const getSubFieldOrCustomField = async (

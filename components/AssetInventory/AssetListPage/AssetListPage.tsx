@@ -145,7 +145,6 @@ const AssetListPage = ({
       setIsFetchingRequestList(false);
     }
   };
-  console.log(inventoryList);
 
   useEffect(() => {
     const getEventOptions = async () => {

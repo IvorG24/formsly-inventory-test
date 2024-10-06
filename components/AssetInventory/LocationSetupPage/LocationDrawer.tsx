@@ -1,4 +1,4 @@
-import { OptionType } from "@/utils/types";
+import { InventoryAssetFormValues, OptionType } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -15,12 +15,8 @@ type Props = {
   isOpen: boolean;
   close: () => void;
   siteOptionList: OptionType[];
-  handleSiteSubmit: (data: SiteFormValues) => void;
-};
-
-export type SiteFormValues = {
-  site_id: string;
-  location_name: string;
+  handleFetchLocationList: (page: number, value: string | null) => void;
+  handleSiteSubmit: (data: InventoryAssetFormValues) => void;
 };
 
 const LocationDrawer = ({
@@ -28,9 +24,11 @@ const LocationDrawer = ({
   close,
   siteOptionList,
   handleSiteSubmit,
+  handleFetchLocationList,
 }: Props) => {
-  const { control, handleSubmit, reset } = useFormContext<SiteFormValues>();
-  const handleSubmitSiteForm = async (data: SiteFormValues) => {
+  const { control, handleSubmit, reset } =
+    useFormContext<InventoryAssetFormValues>();
+  const handleSubmitSiteForm = async (data: InventoryAssetFormValues) => {
     handleSiteSubmit(data);
     reset();
   };
@@ -62,6 +60,7 @@ const LocationDrawer = ({
                 }
                 onChange={(label) => {
                   field.onChange(label);
+                  handleFetchLocationList(1, label);
                 }}
               />
             )}
