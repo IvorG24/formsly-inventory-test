@@ -340,7 +340,14 @@ const HRPhoneInterviewFilterMenu = ({
                 );
               }}
             />
-            <Button variant="light" mt="xs" onClick={handleReset}>
+            <Button
+              variant="light"
+              mt="xs"
+              onClick={() => {
+                handleReset();
+                closeFilterMenu();
+              }}
+            >
               Reset Filter
             </Button>
             <Button type="submit">Apply Filter</Button>

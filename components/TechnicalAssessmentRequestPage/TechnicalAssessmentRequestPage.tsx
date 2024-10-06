@@ -350,7 +350,14 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = request.request_status === "APPROVED";
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[1].section_field[1].field_response[0]
+          ?.request_response ?? ""
+      ) &&
+    request.isWithNextStep;
 
   return (
     <Container>
@@ -435,7 +442,10 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
-          {formSection[2].section_field.length ? (
+          {formSection[2].section_field.length &&
+          formSection[2].section_field.every(
+            (field) => field.field_response?.request_response
+          ) ? (
             formSection.slice(2).map((section, idx) => {
               return (
                 <RequestSection

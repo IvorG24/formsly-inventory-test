@@ -312,11 +312,12 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         const employee = await getEmployeeName(supabaseClient, {
           employeeId: assigneeEmployeeId,
         });
-        if (!employee) return;
-        assigneeFirstName = employee.scic_employee_first_name;
-        assigneeMiddleName = employee.scic_employee_middle_name ?? undefined;
-        assigneeLastName = employee.scic_employee_last_name;
-        assigneeSuffix = employee.scic_employee_suffix ?? undefined;
+        if (employee) {
+          assigneeFirstName = employee.scic_employee_first_name;
+          assigneeMiddleName = employee.scic_employee_middle_name ?? undefined;
+          assigneeLastName = employee.scic_employee_last_name;
+          assigneeSuffix = employee.scic_employee_suffix ?? undefined;
+        }
       } else {
         assigneeFirstName = getFieldResponse(3);
         assigneeMiddleName = getFieldResponse(4);

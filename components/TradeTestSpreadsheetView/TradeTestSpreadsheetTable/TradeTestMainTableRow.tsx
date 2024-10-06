@@ -1,12 +1,25 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { TradeTestSpreadsheetData } from "@/utils/types";
-import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Anchor,
+  Badge,
+  Button,
+  CopyButton,
+  createStyles,
+  Flex,
+  Text,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
+import { IconCopy, IconSquareCheck, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -36,6 +49,7 @@ const TradeTestMainTableRow = ({
   const { classes } = useStyles();
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const [isOverriding, setIsOverriding] = useState(false);
 
@@ -173,9 +187,39 @@ const TradeTestMainTableRow = ({
           <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
         </td>
       )}
+      {!hiddenColumnList.includes("meeting_link") && (
+        <td>
+          {item.meeting_link && (
+            <Flex align="center" justify="center" gap="xs">
+              <Button
+                className="meeting-link"
+                onClick={() => window.open(item.meeting_link, "_blank")}
+                variant="outline"
+                leftIcon={<IconVideo size={14} />}
+              >
+                Join Meeting
+              </Button>
+              <CopyButton value={item.meeting_link}>
+                {({ copied, copy }) =>
+                  copied ? (
+                    <ActionIcon onClick={copy} color="green" variant="light">
+                      <IconSquareCheck size={14} />
+                    </ActionIcon>
+                  ) : (
+                    <ActionIcon onClick={copy} color="blue" variant="light">
+                      <IconCopy size={14} />
+                    </ActionIcon>
+                  )
+                }
+              </CopyButton>
+            </Flex>
+          )}
+        </td>
+      )}
       <td>
         {item.trade_test_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+          teamMemberGroupList.includes("HUMAN RESOURCES") &&
           !isOverriding && (
             <Button
               w={140}

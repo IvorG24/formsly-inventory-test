@@ -58,6 +58,7 @@ const formDefaultValues = {
     end: null,
   },
   assigned_hr: [],
+  meeting_link: "",
 };
 
 type Props = {

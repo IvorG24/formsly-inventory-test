@@ -66,6 +66,7 @@ export const unsortableFieldList = [
   "Email",
   "Assigned HR",
   "Action",
+  "Meeting Link",
 ];
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [

@@ -9,7 +9,6 @@ import { createInterviewOnlineMeeting, insertError } from "@/backend/api/post";
 import {
   cancelInterview,
   updateInterviewOnlineMeeting,
-  updateSchedule,
 } from "@/backend/api/update";
 import { useUserProfile } from "@/stores/useUserStore";
 import {
@@ -19,6 +18,7 @@ import {
   MEETING_TYPE_DETAILS,
 } from "@/utils/constant";
 import { formatTimeToLocal, isError, JoyRideNoSSR } from "@/utils/functions";
+import { capitalizeEachWord } from "@/utils/string";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
@@ -144,7 +144,7 @@ const SchedulingCalendar = ({
 
       if (interviewOnlineMeeting) {
         await handleCancelOnlineMeeting(
-          interviewOnlineMeeting.interview_meeting_provider_id
+          interviewOnlineMeeting.interview_meeting_provider_id ?? ""
         );
       }
 
@@ -277,26 +277,30 @@ const SchedulingCalendar = ({
       const tempDate = new Date(selectedDate);
       tempDate.setHours(meridiem === "PM" ? hours + 12 : hours, minutes);
 
-      const { status, assigned_hr_team_member_id } =
-        await phoneInterviewValidation(supabaseClient, {
-          interview_schedule: tempDate.toISOString(),
-        });
+      const {
+        status,
+        assigned_hr_team_member_id,
+        assigned_hr_full_name,
+        assigned_hr_email,
+      } = await phoneInterviewValidation(supabaseClient, {
+        interview_schedule: tempDate.toISOString(),
+      });
 
       if (status === "success") {
-        await Promise.all([
-          handleCreateOrUpdateOnlineMeeting(
-            tempDate,
-            meetingType as MeetingType
-          ),
-          await updateSchedule(supabaseClient, {
+        await handleCreateOrUpdateOnlineMeeting(
+          tempDate,
+          meetingType as MeetingType,
+          assigned_hr_full_name,
+          assigned_hr_email,
+          {
             interviewSchedule: tempDate.toISOString(),
             targetId,
             status: APPLICATION_STATUS_PENDING,
             table: meetingType,
             meetingTypeNumber,
             team_member_id: assigned_hr_team_member_id,
-          }),
-        ]);
+          }
+        );
         setStatus(APPLICATION_STATUS_PENDING);
         setSelectedDate(tempDate);
       }
@@ -385,19 +389,30 @@ const SchedulingCalendar = ({
 
   const handleCreateOrUpdateOnlineMeeting = async (
     tempDate: Date,
-    meeting_type: MeetingType
+    meeting_type: MeetingType,
+    assigned_hr_full_name: string,
+    assigned_hr_email: string,
+    updateScheduleProps: {
+      interviewSchedule: string;
+      targetId: string;
+      status: string;
+      table: string;
+      meetingTypeNumber?: number;
+      team_member_id: string;
+    }
   ) => {
     const { breakDuration, duration } = MEETING_TYPE_DETAILS[meeting_type];
 
     if (interviewOnlineMeeting) {
       if (process.env.NODE_ENV === "production") {
-        await handleRescheduleOnlineMeeting(tempDate);
+        await handleRescheduleOnlineMeeting(tempDate, updateScheduleProps);
       } else {
         const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
           supabaseClient,
           {
             ...testOnlineMeetingProps,
             interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
+            updateScheduleProps,
           }
         );
         setInterviewOnlineMeeting(newInterviewOnlineMeeting);
@@ -405,7 +420,14 @@ const SchedulingCalendar = ({
     } else {
       // create online meeting
       if (process.env.NODE_ENV === "production") {
-        await handleCreateOnlineMeeting(tempDate, breakDuration, duration);
+        await handleCreateOnlineMeeting(
+          tempDate,
+          assigned_hr_full_name,
+          assigned_hr_email,
+          breakDuration,
+          duration,
+          updateScheduleProps
+        );
       } else {
         const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
           supabaseClient,
@@ -414,6 +436,7 @@ const SchedulingCalendar = ({
             interview_meeting_break_duration: breakDuration,
             interview_meeting_duration: duration,
             interview_meeting_schedule: tempDate.toISOString(),
+            updateScheduleProps,
           }
         );
 
@@ -424,11 +447,21 @@ const SchedulingCalendar = ({
 
   const handleCreateOnlineMeeting = async (
     tempDate: Date,
+    assigned_hr_full_name: string,
+    assigned_hr_email: string,
     breakDuration: number,
-    duration: number
+    duration: number,
+    updateScheduleProps: {
+      interviewSchedule: string;
+      targetId: string;
+      status: string;
+      table: string;
+      meetingTypeNumber?: number;
+      team_member_id: string;
+    }
   ) => {
-    const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
-    const hrRepresentativeEmail = "johndoe@gmail.com"; // replace with actual hr rep email
+    const hrRepresentativeName = capitalizeEachWord(assigned_hr_full_name);
+    const hrRepresentativeEmail = assigned_hr_email;
     const formattedDate = moment(tempDate).format("dddd, MMMM Do YYYY, h:mm A");
     const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
     const meetingDetails = {
@@ -448,15 +481,22 @@ const SchedulingCalendar = ({
       attendees: [
         {
           emailAddress: {
-            address: hrRepresentativeEmail, // replace with actual hr rep email
+            address: hrRepresentativeEmail,
             name: hrRepresentativeName,
           },
           type: "required",
         },
         {
           emailAddress: {
-            address: user?.user_email, // replace with actual user
+            address: user?.user_email,
             name: userFullname,
+          },
+          type: "required",
+        },
+        {
+          emailAddress: {
+            address: "recruitment@staclara.com.ph",
+            name: "Sta Clara Recruitment",
           },
           type: "required",
         },
@@ -466,40 +506,38 @@ const SchedulingCalendar = ({
       onlineMeetingProvider: "teamsForBusiness",
     };
 
-    const createMeetingResponse = await fetch("/api/ms-graph/create-meeting", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(meetingDetails),
-    });
+    let meetingUrl = "";
+    let meetingDataId = "";
 
-    const createMeetingData = await createMeetingResponse.json();
+    if (meetingType !== "hr_phone_interview") {
+      const createMeetingResponse = await fetch(
+        "/api/ms-graph/create-meeting",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(meetingDetails),
+        }
+      );
+      if (createMeetingResponse.status !== 200) throw new Error();
 
-    const meetingUrl = createMeetingData.onlineMeeting.joinUrl;
+      const createMeetingData = await createMeetingResponse.json();
 
-    const interviewOnlineMeeting: InterviewOnlineMeetingTableInsert = {
-      interview_meeting_interview_id: targetId,
-      interview_meeting_url: meetingUrl,
-      interview_meeting_provider_id: createMeetingData.id,
-      interview_meeting_break_duration: breakDuration,
-      interview_meeting_duration: duration,
-      interview_meeting_schedule: tempDate.toISOString(),
-    };
-
-    const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
-      supabaseClient,
-      interviewOnlineMeeting
-    );
-
-    setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+      meetingUrl = createMeetingData.onlineMeeting.joinUrl;
+      meetingDataId = createMeetingData.id;
+    }
 
     const emailNotificationProps = {
-      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
+      subject: `${meetingType
+        .replaceAll("_", " ")
+        .toUpperCase()} Schedule | Sta. Clara International Corporation`,
       userFullname,
       message: `
           <p>
-            Your HR phone interview has been scheduled. Please find the details
+            Your ${meetingType
+              .replaceAll("_", " ")
+              .toUpperCase()} has been scheduled. Please find the details
             of your interview below:
           </p>
           <p>
@@ -510,10 +548,16 @@ const SchedulingCalendar = ({
             <strong>Time</strong>:{" "}
             <span>${moment(tempDate).format("h:mm A")}</span>
           </p>
-          <p>
-            <strong>Meeting Link</strong>
-            <a href=${meetingUrl}>Interview Meeting Link</a>
-          </p>
+          ${
+            meetingUrl.length
+              ? `
+            <p>
+              <strong>Meeting Link</strong>
+              <a href=${meetingUrl}>Interview Meeting Link</a>
+            </p>
+            `
+              : ""
+          }
           <p>
             If you have any questions or need to make adjustments, please
             contact us at recruitment@staclara.com.ph. We look forward to
@@ -525,9 +569,37 @@ const SchedulingCalendar = ({
     };
 
     await handleSendEmailNotification(emailNotificationProps);
+
+    const interviewOnlineMeeting: InterviewOnlineMeetingTableInsert = {
+      interview_meeting_interview_id: targetId,
+      interview_meeting_url: meetingUrl,
+      interview_meeting_provider_id: meetingDataId,
+      interview_meeting_break_duration: breakDuration,
+      interview_meeting_duration: duration,
+      interview_meeting_schedule: tempDate.toISOString(),
+    };
+
+    const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
+      supabaseClient,
+      {
+        ...interviewOnlineMeeting,
+        updateScheduleProps,
+      }
+    );
+    setInterviewOnlineMeeting(newInterviewOnlineMeeting);
   };
 
-  const handleRescheduleOnlineMeeting = async (tempDate: Date) => {
+  const handleRescheduleOnlineMeeting = async (
+    tempDate: Date,
+    updateScheduleProps: {
+      interviewSchedule: string;
+      targetId: string;
+      status: string;
+      table: string;
+      meetingTypeNumber?: number;
+      team_member_id: string;
+    }
+  ) => {
     if (!interviewOnlineMeeting) {
       notifications.show({
         message: "Cannot reschedule meeting because it does not exist",
@@ -547,38 +619,38 @@ const SchedulingCalendar = ({
       },
     };
 
-    const updateMeetingResponse = await fetch("/api/ms-graph/update-meeting", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        meetingDetails,
-        meetingId: interviewOnlineMeeting.interview_meeting_provider_id,
-      }),
-    });
-    const updateMeetingData = await updateMeetingResponse.json();
-    const meetingUrl = updateMeetingData.onlineMeeting.joinUrl;
+    let meetingUrl = "";
+    let meetingDataId = "";
 
-    const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
-      interview_meeting_url: meetingUrl,
-      interview_meeting_provider_id: updateMeetingData.id,
-      interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
-    };
-
-    const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
-      supabaseClient,
-      interviewOnlineMeetingProps
-    );
-
-    setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+    if (meetingType !== "hr_phone_interview") {
+      const updateMeetingResponse = await fetch(
+        "/api/ms-graph/update-meeting",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meetingDetails,
+            meetingId: interviewOnlineMeeting.interview_meeting_provider_id,
+          }),
+        }
+      );
+      const updateMeetingData = await updateMeetingResponse.json();
+      meetingUrl = updateMeetingData.onlineMeeting.joinUrl;
+      meetingDataId = updateMeetingData.id;
+    }
 
     const emailNotificationProps = {
-      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
+      subject: `${meetingType
+        .replaceAll("_", " ")
+        .toUpperCase()} Schedule | Sta. Clara International Corporation`,
       userFullname,
       message: `
           <p>
-            Your HR phone interview has been rescheduled. Please find the
+            Your ${meetingType
+              .replaceAll("_", " ")
+              .toUpperCase()} has been rescheduled. Please find the
             details of your interview new interview below:
           </p>
           <p>
@@ -589,10 +661,16 @@ const SchedulingCalendar = ({
             <strong>Time</strong>:{" "}
             <span>${moment(tempDate).format("h:mm A")}</span>
           </p>
-          <p>
-            <strong>Meeting Link</strong>
-            <a href=${meetingUrl}>Interview Meeting Link</a>
-          </p>
+          ${
+            meetingUrl.length
+              ? ` 
+              <p>
+                <strong>Meeting Link</strong>
+                <a href=${meetingUrl}>Interview Meeting Link</a>
+              </p>
+            `
+              : ""
+          }
           <p>
             If you have any questions or need to make adjustments, please
             contact us at recruitment@staclara.com.ph. We look forward to
@@ -604,6 +682,22 @@ const SchedulingCalendar = ({
     };
 
     await handleSendEmailNotification(emailNotificationProps);
+
+    const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
+      interview_meeting_url: meetingUrl,
+      interview_meeting_provider_id: meetingDataId,
+      interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
+      interview_meeting_schedule: tempDate.toISOString(),
+    };
+
+    const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
+      supabaseClient,
+      {
+        ...interviewOnlineMeetingProps,
+        updateScheduleProps,
+      }
+    );
+    setInterviewOnlineMeeting(newInterviewOnlineMeeting);
   };
 
   const handleCancelOnlineMeeting = async (meetingId: string) => {
@@ -923,7 +1017,10 @@ const SchedulingCalendar = ({
           </>
         )}
 
-        {!isReadyToSelect && interviewOnlineMeeting && status === "PENDING" ? (
+        {!isReadyToSelect &&
+        interviewOnlineMeeting &&
+        status === "PENDING" &&
+        interviewOnlineMeeting.interview_meeting_url ? (
           <Flex gap="xs" align="center" mt="sm">
             <Text>Online Meeting:</Text>
             <Button

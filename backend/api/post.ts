@@ -2117,18 +2117,23 @@ export const addMemberToAllProject = async (
 
 export const createInterviewOnlineMeeting = async (
   supabaseClient: SupabaseClient<Database>,
-  params: InterviewOnlineMeetingTableInsert
+  params: InterviewOnlineMeetingTableInsert & {
+    updateScheduleProps: {
+      interviewSchedule: string;
+      targetId: string;
+      status: string;
+      table: string;
+      meetingTypeNumber?: number;
+      team_member_id: string;
+    };
+  }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("hr_schema")
-    .from("interview_online_meeting_table")
-    .insert(params)
-    .select("*")
-    .limit(1);
-
+  const { data, error } = await supabaseClient.rpc("create_schedule", {
+    input_data: params,
+  });
   if (error) throw error;
 
-  return data[0] as InterviewOnlineMeetingTableRow;
+  return data as InterviewOnlineMeetingTableRow;
 };
 export const generateApiKey = async (
   supabaseClient: SupabaseClient<Database>,

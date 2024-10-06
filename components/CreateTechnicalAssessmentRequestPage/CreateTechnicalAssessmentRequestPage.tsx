@@ -310,9 +310,9 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
             {form.form_section.length < 3 && (
               <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
                 <Text>
-                  The position your applying for doesn&apos;t have a technical
-                  assessment yet, just click the submit button to proceed to the
-                  next step.
+                  The position you&apos;re applying for doesn&apos;t have a
+                  technical assessment yet, just click the submit button to
+                  proceed to the next step.
                 </Text>
               </Alert>
             )}
@@ -325,3 +325,5 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
 };
 
 export default CreateTechnicalAssessmentRequestPage;
+
+

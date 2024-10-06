@@ -7,7 +7,11 @@ import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import {
   formatDate,
   formatTime,
@@ -92,6 +96,7 @@ const JobOfferMainTableRow = ({
   const team = useActiveTeam();
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const { setIsLoading } = useLoadingActions();
 
   const [
@@ -833,6 +838,7 @@ const JobOfferMainTableRow = ({
       )}
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+          teamMemberGroupList.includes("HUMAN RESOURCES") &&
           !isOverriding && (
             <Stack spacing="xs">
               {(isForPooling || isForAddOffer) && (

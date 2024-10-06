@@ -93,6 +93,7 @@ const columnList = [
     field_name: "Assigned HR",
     field_type: "TEXT",
   },
+  { field_id: "meeting_link", field_name: "Meeting Link" },
   {
     field_id: "action",
     field_name: "Action",

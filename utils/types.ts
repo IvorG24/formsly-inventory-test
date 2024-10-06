@@ -2378,6 +2378,7 @@ export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
   trade_test_date_created: string;
   trade_test_status: string;
   trade_test_schedule: string;
+  meeting_link: string;
 };
 
 export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
@@ -2397,6 +2398,7 @@ export type TechnicalInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
   technical_interview_date_created: string;
   technical_interview_status: string;
   technical_interview_schedule: string;
+  meeting_link: string;
 };
 
 export type TechnicalInterviewFilterFormValues =
@@ -2417,6 +2419,7 @@ export type DirectorInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
   director_interview_date_created: string;
   director_interview_status: string;
   director_interview_schedule: string;
+  meeting_link: string;
 };
 
 export type DirectorInterviewFilterFormValues =

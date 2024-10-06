@@ -6856,6 +6856,8 @@ export const phoneInterviewValidation = async (
     message: string;
     status: string;
     assigned_hr_team_member_id: string;
+    assigned_hr_full_name: string;
+    assigned_hr_email: string;
   };
 };
 

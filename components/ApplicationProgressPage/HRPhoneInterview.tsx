@@ -117,8 +117,8 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
             hrPhoneInterviewData.hr_phone_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>
                 <Text>
-                  Your HR Phone Interview is scheduled. The meeting link will be
-                  made available on the exact date of the meeting. Please wait
+                  Your HR Phone Interview is scheduled. The HR representative
+                  will call you on the exact date of the meeting. Please wait
                   for further details and let us know if you have any questions.
                   Looking forward to speaking with you soon!
                 </Text>

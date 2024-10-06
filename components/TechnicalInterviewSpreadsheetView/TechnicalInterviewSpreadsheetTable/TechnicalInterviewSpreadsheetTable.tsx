@@ -66,6 +66,7 @@ const columnList = [
     field_name: "Technical Interview Schedule",
   },
   { field_id: "assigned_hr", field_name: "Assigned HR" },
+  { field_id: "meeting_link", field_name: "Meeting Link" },
   { field_id: "action", field_name: "Action" },
 ];
 

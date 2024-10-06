@@ -1517,18 +1517,23 @@ export const updateJobOfferStatus = async (
 
 export const updateInterviewOnlineMeeting = async (
   supabaseClient: SupabaseClient<Database>,
-  params: InterviewOnlineMeetingTableUpdate
+  params: InterviewOnlineMeetingTableUpdate & {
+    updateScheduleProps: {
+      interviewSchedule: string;
+      targetId: string;
+      status: string;
+      table: string;
+      meetingTypeNumber?: number;
+      team_member_id: string;
+    };
+  }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("hr_schema")
-    .from("interview_online_meeting_table")
-    .update(params)
-    .eq("interview_meeting_id", params.interview_meeting_id as string)
-    .select("*");
-
+  const { data, error } = await supabaseClient.rpc("update_schedule", {
+    input_data: params,
+  });
   if (error) throw error;
 
-  return data[0] as InterviewOnlineMeetingTableRow;
+  return data as unknown as InterviewOnlineMeetingTableRow;
 };
 
 export const cancelInterview = async (
