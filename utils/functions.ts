@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { InventoryFormValues } from "@/components/AssetInventory/CreateAssetPage/CreateAssetPage";
 import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
@@ -303,4 +304,77 @@ export const parseDataForChart = ({
   };
 
   return chartData;
+};
+
+export const extractInventoryData = (
+  InventoryFormValues: InventoryFormValues
+) => {
+  const inventoryData: Record<string, string> = {
+    asset_name: "",
+    item_code: "",
+    brand: "",
+    model: "",
+    serial_number: "",
+    equipment_type: "",
+    category: "",
+    site: "",
+    location: "",
+    department: "",
+    purchase_order: "",
+    purchase_date: "",
+    purchase_form: "",
+    cost: "",
+    si_number: "",
+  };
+
+  const fieldMapping: Record<string, keyof typeof inventoryData> = {
+    "Asset Name": "asset_name",
+    "NAV Item Code": "item_code",
+    Brand: "brand",
+    Model: "model",
+    "Serial No.": "serial_number",
+    "IT Equipment Type": "equipment_type",
+    Category: "category",
+    Site: "site",
+    Location: "location",
+    Department: "department",
+    "PO Number": "purchase_order",
+    "Purchase Date": "purchase_date",
+    "Purchase From": "purchase_form",
+    Cost: "cost",
+    "SI No./DR No./WR": "si_number",
+  };
+
+  for (const section of InventoryFormValues.sections) {
+    for (const field of section.section_field) {
+      const mappedKey = fieldMapping[field.field_name];
+
+      let responseValue = field.field_response;
+
+      if (
+        typeof responseValue === "boolean" ||
+        responseValue !== undefined ||
+        field.field_type === "SWITCH" ||
+        (field.field_type === "NUMBER" && responseValue === 0) ||
+        field.field_type === "DATE"
+      ) {
+        if (field.field_type === "SWITCH" && !field.field_response) {
+          responseValue = false;
+        }
+
+        if (mappedKey) {
+          // Handle string, number, and date types
+          inventoryData[mappedKey] =
+            typeof responseValue === "string" ||
+            typeof responseValue === "number"
+              ? String(responseValue)
+              : responseValue instanceof Date
+                ? responseValue.toISOString()
+                : "";
+        }
+      }
+    }
+  }
+
+  return inventoryData;
 };

@@ -192,29 +192,6 @@ const DepartmentSetupPage = () => {
                 <Text>{department.team_department_name}</Text>
               ),
             },
-            {
-              accessor: "actions",
-              title: "Actions",
-              render: (department) => (
-                <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleEdit(department.team_department_id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    color="red"
-                    onClick={() => handleDelete(department.team_department_id)}
-                  >
-                    Delete
-                  </Button>
-                </Group>
-              ),
-            },
           ]}
         />
       </Flex>

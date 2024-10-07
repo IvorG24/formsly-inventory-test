@@ -6,124 +6,124 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-    APP_SOURCE_ID,
-    FETCH_OPTION_LIMIT,
-    formatDate,
-    FORMSLY_FORM_ORDER,
-    IT_ASSET_FIELD_ID_LIST,
-    ITEM_FIELD_ID_LIST,
-    PED_ITEM_FIELD_ID_LIST,
-    SELECT_OPTION_LIMIT,
-    TECHNICAL_ASSESSMENT_FIELD_LIST,
+  APP_SOURCE_ID,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  FORMSLY_FORM_ORDER,
+  IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+  SELECT_OPTION_LIMIT,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
-    addAmpersandBetweenWords,
-    escapeQuotes,
-    escapeQuotesForObject,
-    parseJSONIfValid,
-    startCase,
+  addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
+  parseJSONIfValid,
+  startCase,
 } from "@/utils/string";
 import {
-    AddressTableRow,
-    ApplicationInformationFilterFormValues,
-    ApplicationInformationSpreadsheetData,
-    ApproverUnresolvedRequestCountType,
-    AppType,
-    AttachmentBucketType,
-    AttachmentTableRow,
-    BackgroundCheckFilterFormValues,
-    BackgroundCheckSpreadsheetData,
-    CategoryTableRow,
-    CreateTicketFormValues,
-    CreateTicketPageOnLoad,
-    CSICodeTableRow,
-    DirectorInterviewFilterFormValues,
-    DirectorInterviewSpreadsheetData,
-    EquipmentDescriptionTableRow,
-    EquipmentPartTableInsert,
-    EquipmentPartType,
-    EquipmentTableRow,
-    FetchRequestListParams,
-    FetchUserRequestListParams,
-    FieldTableRow,
-    FormTableRow,
-    FormType,
-    HRAnalyticsData,
-    HRPhoneInterviewFilterFormValues,
-    HRPhoneInterviewSpreadsheetData,
-    HRProjectType,
-    InitialFormType,
-    InterviewOnlineMeetingTableRow,
-    InventoryFormType,
-    InventoryListType,
-    ItemCategoryType,
-    ItemCategoryWithSigner,
-    ItemDescriptionFieldWithUoM,
-    ItemDescriptionTableRow,
-    ItemWithDescriptionAndField,
-    ItemWithDescriptionType,
-    JiraFormslyItemCategoryWithUserDataType,
-    JiraFormslyProjectType,
-    JiraItemCategoryDataType,
-    JiraOrganizationTableRow,
-    JiraProjectDataType,
-    JobOfferFilterFormValues,
-    JobOfferHistoryType,
-    JobOfferSpreadsheetData,
-    LocationTableRow,
-    LRFSpreadsheetData,
-    MemoListItemType,
-    MemoType,
-    NotificationOnLoad,
-    NotificationTableRow,
-    OptionTableRow,
-    OtherExpensesTypeTableRow,
-    PendingInviteType,
-    QuestionnaireData,
-    ReferenceMemoType,
-    RequestListItemType,
-    RequestListOnLoad,
-    RequestResponseTableRow,
-    RequestTableRow,
-    RequestWithResponseType,
-    SectionWithFieldType,
-    ServiceWithScopeAndChoice,
-    SignatureHistoryTableRow,
-    SignerRequestSLA,
-    SignerWithProfile,
-    SiteTableRow,
-    SSOTOnLoad,
-    SubCategoryData,
-    TeamMemberOnLoad,
-    TeamMemberType,
-    TeamMemberWithUser,
-    TeamMemberWithUserDetails,
-    TeamOnLoad,
-    TeamProjectTableRow,
-    TeamTableRow,
-    TechnicalAssessmentTableRow,
-    TechnicalInterviewFilterFormValues,
-    TechnicalInterviewSpreadsheetData,
-    TicketListOnLoad,
-    TicketListType,
-    TicketPageOnLoad,
-    TicketStatusType,
-    TradeTestFilterFormValues,
-    TradeTestSpreadsheetData,
-    TransactionTableRow,
-    UserIssuedItem,
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AttachmentBucketType,
+  AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
+  CategoryTableRow,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  DirectorInterviewFilterFormValues,
+  DirectorInterviewSpreadsheetData,
+  EquipmentDescriptionTableRow,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
+  FetchRequestListParams,
+  FetchUserRequestListParams,
+  FieldTableRow,
+  FormTableRow,
+  FormType,
+  HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRProjectType,
+  InitialFormType,
+  InterviewOnlineMeetingTableRow,
+  InventoryFormType,
+  InventoryListType,
+  ItemCategoryType,
+  ItemCategoryWithSigner,
+  ItemDescriptionFieldWithUoM,
+  ItemDescriptionTableRow,
+  ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
+  JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
+  JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  LocationTableRow,
+  LRFSpreadsheetData,
+  MemoListItemType,
+  MemoType,
+  NotificationOnLoad,
+  NotificationTableRow,
+  OptionTableRow,
+  OtherExpensesTypeTableRow,
+  PendingInviteType,
+  QuestionnaireData,
+  ReferenceMemoType,
+  RequestListItemType,
+  RequestListOnLoad,
+  RequestResponseTableRow,
+  RequestTableRow,
+  RequestWithResponseType,
+  SectionWithFieldType,
+  ServiceWithScopeAndChoice,
+  SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
+  SiteTableRow,
+  SSOTOnLoad,
+  SubCategoryData,
+  TeamMemberOnLoad,
+  TeamMemberType,
+  TeamMemberWithUser,
+  TeamMemberWithUserDetails,
+  TeamOnLoad,
+  TeamProjectTableRow,
+  TeamTableRow,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
+  TransactionTableRow,
+  UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -7167,6 +7167,21 @@ export const getQuestionnaireDetails = async (
   };
 };
 
+export const getPositionCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  position: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_category")
+    .eq("position_alias", position)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0].position_category;
+};
+
 export const getInventoryFormDetails = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7205,6 +7220,7 @@ export const getCategoryOptions = async (
     .schema("inventory_schema")
     .from("category_table")
     .select("*", { count: "exact" })
+    .eq("category_is_disabled", false)
     .eq("category_team_id", teamId);
 
   if (search) {
@@ -7287,6 +7303,7 @@ export const getSiteList = async (
     .schema("inventory_schema")
     .from("site_table")
     .select("*", { count: "exact" })
+    .eq("site_is_disabled", false)
     .eq("site_team_id", teamid);
 
   if (start !== undefined && end !== undefined) {
@@ -7320,6 +7337,7 @@ export const getLocationList = async (
     .schema("inventory_schema")
     .from("location_table")
     .select("*", { count: "exact" })
+    .eq("location_is_disabled", false)
     .range(start, end);
 
   if (site_id) {
@@ -7366,6 +7384,7 @@ export const getLocationOption = async (
     .schema("inventory_schema")
     .from("site_table")
     .select("site_id")
+    .eq("site_is_disabled", false)
     .eq("site_name", siteName ? siteName : "")
     .limit(1);
 
@@ -7375,6 +7394,7 @@ export const getLocationOption = async (
     .schema("inventory_schema")
     .from("location_table")
     .select("*")
+    .eq("location_is_disabled", false)
     .eq("location_site_id", siteData[0].site_id);
 
   if (locationError) throw locationError;
@@ -7410,18 +7430,4 @@ export const getColumnList = async (
   if (error) throw error;
 
   return data;
-};
-export const getPositionCategory = async (
-  supabaseClient: SupabaseClient<Database>,
-  position: string
-) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("position_category")
-    .eq("position_alias", position)
-    .limit(1);
-  if (error) throw error;
-
-  return data[0].position_category;
 };

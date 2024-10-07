@@ -9,7 +9,10 @@ import {
   formslyPremadeFormsData,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { formatJiraItemUserTableData } from "@/utils/functions";
+import {
+  extractInventoryData,
+  formatJiraItemUserTableData,
+} from "@/utils/functions";
 import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
 import {
   AddressTableInsert,
@@ -2422,86 +2425,57 @@ export const createAssetRequest = async (
     teamName: string;
   }
 ) => {
-  const { InventoryFormValues, formId, teamMemberId, teamId, formName } =
-    params;
+  const { InventoryFormValues, formId, teamMemberId } = params;
+
+  const {
+    item_code,
+    asset_name,
+    brand,
+    model,
+    serial_number,
+    equipment_type,
+    category,
+    site,
+    location,
+    department,
+    purchase_order,
+    purchase_date,
+    purchase_form,
+    cost,
+    si_number,
+  } = extractInventoryData(InventoryFormValues);
 
   const requestId = uuidv4();
 
-  const requestResponseInput: RequestResponseTableInsert[] = [];
-  for (const section of InventoryFormValues.sections) {
-    for (const field of section.section_field) {
-      let responseValue = field.field_response;
-
-      if (
-        typeof responseValue === "boolean" ||
-        responseValue ||
-        field.field_type === "SWITCH" ||
-        (field.field_type === "NUMBER" && responseValue === 0)
-      ) {
-        if (field.field_type === "FILE") {
-          const fileResponse = responseValue as File;
-
-          const uploadId = `${field.field_id}${
-            field.field_section_duplicatable_id
-              ? `_${field.field_section_duplicatable_id}`
-              : `_${uuidv4()}`
-          }`;
-          if (fileResponse["type"].split("/")[0] === "image") {
-            responseValue = await uploadImage(supabaseClient, {
-              id: uploadId,
-              image: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
-          } else {
-            responseValue = await uploadFile(supabaseClient, {
-              id: uploadId,
-              file: fileResponse,
-              bucket: "REQUEST_ATTACHMENTS",
-            });
-          }
-        } else if (field.field_type === "SWITCH" && !field.field_response) {
-          responseValue = false;
-        }
-
-        const response = {
-          request_response: JSON.stringify(responseValue),
-          request_response_duplicatable_section_id:
-            field.field_section_duplicatable_id ?? null,
-          request_response_field_id: field.field_id,
-          request_response_request_id: requestId,
-          request_response_prefix: field.field_prefix ?? null,
-        };
-        requestResponseInput.push(response);
-      }
-    }
-  }
-
-  const responseValues = requestResponseInput
-    .map((response) => {
-      const escapedResponse = escapeQuotes(response.request_response);
-      return `('${escapedResponse}',${
-        response.request_response_duplicatable_section_id
-          ? `'${response.request_response_duplicatable_section_id}'`
-          : "NULL"
-      },'${response.request_response_field_id}','${
-        response.request_response_request_id
-      }')`;
-    })
-    .join(",");
+  // Preparing individual fields to send to the RPC function
+  const requestData = {
+    requestId,
+    formId,
+    teamMemberId,
+    asset_name,
+    item_code,
+    brand,
+    model,
+    serial_number,
+    equipment_type,
+    category,
+    site,
+    location,
+    department,
+    purchase_order,
+    purchase_date,
+    purchase_form,
+    cost,
+    si_number,
+  };
 
   const { error } = await supabaseClient
     .rpc("create_asset", {
-      input_data: {
-        requestId,
-        formId: formId,
-        teamMemberId: teamMemberId,
-        responseValues,
-        formName,
-        teamId,
-      },
+      input_data: requestData,
     })
     .select()
     .single();
+
   if (error) throw error;
 
   return requestId;

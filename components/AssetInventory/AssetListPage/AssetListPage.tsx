@@ -114,6 +114,8 @@ const AssetListPage = ({
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
       });
+      console.log(newData);
+
       setInventoryList(newData);
       setInventoryListCount(newData.length);
     } catch (e) {

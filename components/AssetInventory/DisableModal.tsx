@@ -4,10 +4,17 @@ type DisableModalProps = {
   opened: boolean;
   close: () => void;
   type: string;
+  request_id: string | null;
 };
 
-const DisableModal = ({ opened, close, type }: DisableModalProps) => {
+const DisableModal = ({
+  opened,
+  close,
+  type,
+  request_id,
+}: DisableModalProps) => {
   const handleConfirm = async () => {
+    request_id;
     console.log("Confirmed!");
     close(); // Close the modal after confirming
   };

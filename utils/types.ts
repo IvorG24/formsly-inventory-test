@@ -2668,17 +2668,18 @@ export type SubCategoryData = {
   totalCount: number;
 };
 
-export type InventoryListType = {
-  inventory_request_id: string;
-  inventory_request_created: string;
-  inventory_request_status: string;
-  user_first_name: string | null;
-  user_last_name: string | null;
-  user_id: string | null;
-  user_avatar: string | null;
-  site_name: string | null;
-  [key: string]: string | number | null; // Dynamic fields like "Brand", "Category", etc.
-};
+export type InventoryListType = (InventoryRequestRow & {
+  site_name?: string;
+  request_creator_team_member_id?: string;
+  request_creator_user_id?: string;
+  request_creator_first_name?: string;
+  request_creator_last_name?: string;
+  request_creator_avatar?: string;
+  assignee_team_member_id?: string;
+  assignee_user_id?: string;
+  assignee_first_name?: string;
+  assignee_last_name?: string;
+})[];
 
 export type InventoryAssetFormValues = {
   site_id?: string;

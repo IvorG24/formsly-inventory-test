@@ -56,9 +56,10 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
+  console.log(form);
 
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     remove: removeSection,
@@ -105,14 +106,20 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   ) => {
     try {
       const categorySection = getValues(`sections.${index}`);
-
+      if (value === null) {
+        setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        updateSection(index, {
+          ...categorySection,
+          section_field: form.form_section[1].section_field,
+        });
+        return;
+      }
       const { subFields, customFields } = await getSubFieldOrCustomField(
         supabaseClient,
         {
           categoryName: value,
         }
       );
-
       const newSectionField = [
         categorySection.section_field[0],
         ...subFields,
@@ -140,6 +147,15 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   ) => {
     try {
       const siteLocationSection = getValues(`sections.${index}`);
+      if (value === null) {
+        setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        updateSection(index, {
+          ...siteLocationSection,
+          section_field: form.form_section[2].section_field,
+        });
+        return;
+      }
+
       const data = await getLocationOption(supabaseClient, {
         siteName: value,
       });

@@ -45,7 +45,7 @@ const SiteSetupPage = () => {
       site_description: "",
     },
   });
-
+  let siteIdToDelete: string | null = null;
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
@@ -108,6 +108,7 @@ const SiteSetupPage = () => {
 
   const handleDelete = (site_id: string) => {
     setModalOpened(true);
+    siteIdToDelete = site_id;
     console.log(modalOpened);
 
     console.log("Delete site with ID:", site_id);
@@ -148,7 +149,8 @@ const SiteSetupPage = () => {
   return (
     <Container fluid>
       <DisableModal
-        close={() => setModalOpened(false)} // Use setModalOpened to close the modal
+        request_id={siteIdToDelete}
+        close={() => setModalOpened(false)}
         opened={modalOpened}
         type="site"
       />
