@@ -1437,7 +1437,7 @@ export const ALLOWED_USER_TO_EDIT_LRF_REQUESTS =
   "accounting.ca@staclara.com.ph";
 
 export const frequencyOptions = [
-  { label: "Daily", value: "daily" },
-  { label: "Monthly", value: "monthly" },
-  { label: "Yearly", value: "yearly" },
+  { label: "DAILY", value: "daily" },
+  { label: "MONTHLY", value: "monthly" },
+  { label: "YEARLY", value: "yearly" },
 ];

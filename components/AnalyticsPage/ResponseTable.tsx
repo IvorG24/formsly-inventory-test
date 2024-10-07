@@ -12,7 +12,7 @@ import {
   Title,
 } from "@mantine/core";
 import { IconChartBar, IconSquareRoundedFilled } from "@tabler/icons-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import StackedBarChartResponse from "../Chart/StackedBarChartResponse";
 
 type RequestStatisticsProps = {
@@ -55,18 +55,39 @@ const ResponseTable = ({
             ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
+  const [filteredDatasets, setFilteredDatasets] =
+    useState<DatasetChartResponse[]>(dataChartResponse);
 
-  const filterChart = (newFilter: string) => {
-    let updatedFilter = selectedFilter;
-    if (selectedFilter.includes(newFilter)) {
-      updatedFilter = selectedFilter.filter(
-        (oldFilter) => oldFilter !== newFilter
-      );
-    } else {
-      updatedFilter.push(newFilter);
-    }
-    setSelectedFilter(updatedFilter);
-  };
+  const filterChart = useCallback(
+    (newFilter: string) => {
+      setSelectedFilter((prevSelectedFilter) => {
+        let updatedFilter = [...prevSelectedFilter];
+        if (updatedFilter.includes(newFilter)) {
+          updatedFilter = updatedFilter.filter(
+            (oldFilter) => oldFilter !== newFilter
+          );
+        } else {
+          updatedFilter.push(newFilter);
+        }
+        return updatedFilter;
+      });
+    },
+    [setSelectedFilter]
+  );
+
+  useEffect(() => {
+    setFilteredDatasets(() => {
+      return dataChartResponse.map((dataset) => {
+        if (selectedFilter.includes(dataset.label.toLowerCase())) {
+          return {
+            ...dataset,
+            data: dataset.data.map(() => 0),
+          };
+        }
+        return dataset;
+      });
+    });
+  }, [selectedFilter, dataChartResponse]);
 
   return (
     <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
@@ -84,7 +105,7 @@ const ResponseTable = ({
                 key={status + idx}
                 gap={4}
                 w="fit-content"
-                onClick={() => filterChart(status)}
+                onClick={() => filterChart(status.toLowerCase())}
                 sx={{ cursor: "pointer" }}
               >
                 <Box c={getStatusToColorForCharts(status)}>
@@ -92,7 +113,7 @@ const ResponseTable = ({
                 </Box>
                 <Text
                   weight={600}
-                  strikethrough={selectedFilter.includes(status)}
+                  strikethrough={selectedFilter.includes(status.toLowerCase())}
                 >
                   {startCase(status)}
                 </Text>
@@ -103,7 +124,7 @@ const ResponseTable = ({
         <Box p="xs" w="100%">
           <StackedBarChartResponse
             label={monthLabel}
-            datasets={dataChartResponse as DatasetChartResponse[]}
+            datasets={filteredDatasets as DatasetChartResponse[]}
             xAxisLabel={`Filter ${frequency} ( ${xLabel} )`}
             yAxisLabel={yLabel}
           />

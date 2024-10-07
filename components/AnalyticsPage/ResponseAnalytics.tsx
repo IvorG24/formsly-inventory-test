@@ -29,16 +29,16 @@ export type FilterChartValues = {
 };
 
 const stepOptions = [
-  { label: "Application Information", value: "request" },
-  { label: "HR Phone Interview", value: "hr_phone_interview" },
-  { label: "Technical Interview 1", value: "technical_interview_1" },
-  { label: "Technical Interview 2", value: "technical_interview_2" },
-  { label: "Trade Test", value: "trade_test" },
-  { label: "Background Check", value: "background_check" },
-  { label: "Job Offer", value: "job_offer" },
+  { label: "APPLICTION INFORMATION", value: "request" },
+  { label: "HR PHONE INTERVIEW", value: "hr_phone_interview" },
+  { label: "TECHNICAL INTERVIEW 1", value: "technical_interview_1" },
+  { label: "TECHNICAL INTERVIEW 2", value: "technical_interview_2" },
+  { label: "TRADE TEST", value: "trade_test" },
+  { label: "BACKGROUND CHECK", value: "background_check" },
+  { label: "JOB OFFER", value: "job_offer" },
 ];
 
-const memberOptions = [{ label: "All", value: "All" }];
+const memberOptions = [{ label: "ALL", value: "All" }];
 
 const ResponseAnalytics = () => {
   const supabaseClient = useSupabaseClient();
@@ -201,7 +201,7 @@ const ResponseAnalytics = () => {
       });
 
       const teamMemberList = data.map((member) => ({
-        label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+        label: `${member.team_member_user.user_first_name.toUpperCase()} ${member.team_member_user.user_last_name.toUpperCase()}`,
         value: member.team_member_id,
       }));
       setMemberOptions([...memberOptions, ...teamMemberList]);
@@ -249,7 +249,9 @@ const ResponseAnalytics = () => {
     <Container fluid>
       <LoadingOverlay visible={isLoading} />
       <Stack spacing="sm">
-        <Title order={2}>HR Analytics</Title>
+        <Title order={3} mb="sm">
+          HR Analytics
+        </Title>
         <Alert title="Note!" icon={<IconNote size={16} />}>
           <Text>
             To access the date range, click submit. Make sure you have selected

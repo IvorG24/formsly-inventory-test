@@ -16036,28 +16036,26 @@ AS $$
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
 
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const week1End = new Date(currentYear, currentMonth, 7);
-    const week2Start = new Date(currentYear, currentMonth, 8);
-    const week2End = new Date(currentYear, currentMonth, 14);
-    const week3Start = new Date(currentYear, currentMonth, 15);
-    const week3End = new Date(currentYear, currentMonth, 21);
-    const week4Start = new Date(currentYear, currentMonth, 22);
-    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    const getRange = (start, end) => [new Date(currentYear, currentMonth, start), new Date(currentYear, currentMonth, end)];
+    const weekRanges = [
+      getRange(1, 7),
+      getRange(8, 14),
+      getRange(15, 21), 
+      getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
+    ];
 
     let weekStart, weekEnd;
-    if (currentDate <= week1End) {
-      weekStart = firstDayOfMonth;
-      weekEnd = week1End;
-    } else if (currentDate >= week2Start && currentDate <= week2End) {
-      weekStart = week2Start;
-      weekEnd = week2End;
-    } else if (currentDate >= week3Start && currentDate <= week3End) {
-      weekStart = week3Start;
-      weekEnd = week3End;
-    } else if (currentDate >= week4Start && currentDate <= lastDayOfMonth) {
-      weekStart = week4Start;
-      weekEnd = lastDayOfMonth;
+    for (let [start, end] of weekRanges) {
+      if (currentDate >= start && currentDate <= end) {
+        weekStart = start;
+        weekEnd = end;
+        break;
+      }
+    }
+
+    if (!weekStart) {
+      weekStart = new Date(currentYear, currentMonth, 1);
+      weekEnd = weekRanges[0][1]; 
     }
 
     const teamMemberData = plv8.execute(

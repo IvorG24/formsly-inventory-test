@@ -51,6 +51,8 @@ const ResponseTableFilter = ({
           render={({ field }) => (
             <Select
               label="HR Member"
+              searchable
+              clearable
               placeholder="Select HR Member"
               data={memberOptions}
               {...field}
@@ -71,6 +73,8 @@ const ResponseTableFilter = ({
             <Select
               label="Step"
               placeholder="Select Step"
+              searchable
+              clearable
               data={stepOptions}
               {...field}
               onChange={(value) => {
@@ -89,6 +93,8 @@ const ResponseTableFilter = ({
           render={({ field }) => (
             <Select
               label="Range"
+              searchable
+              clearable
               placeholder="Select Frequency"
               data={frequencyOptions}
               {...field}

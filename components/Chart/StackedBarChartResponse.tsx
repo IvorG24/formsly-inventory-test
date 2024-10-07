@@ -39,19 +39,28 @@ const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
     datasets: datasets.map((dataset) => ({
       label: dataset.label,
       data: dataset.data,
+      borderRadius: {
+        topLeft: 20,
+        topRight: 20,
+        bottomLeft: 20,
+        bottomRight: 20,
+      },
+      barPercentage: 0.7,
+      borderSkipped: false,
       backgroundColor: dataset.backgroundColor,
-      borderColor: dataset.borderColor,
-      borderWidth: dataset.borderWidth,
+      borderWidth: 2,
+      borderColor: "transparent",
     })),
   };
 
   const chartOptions = {
     responsive: true,
+
     scales: {
       x: {
         stacked: true,
         title: {
-          display: !!xAxisLabel,
+          display: true,
           text: xAxisLabel ? xAxisLabel : "",
           color: "black",
           font: {
@@ -62,7 +71,7 @@ const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
       y: {
         stacked: true,
         title: {
-          display: !!yAxisLabel,
+          display: true,
           text: yAxisLabel ? yAxisLabel : "",
           color: "black",
           font: {

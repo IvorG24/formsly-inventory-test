@@ -1,5 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { safeParse } from "@/utils/functions";
 import { publicRequestPath, requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
@@ -54,7 +55,7 @@ const RequestResponse = ({
   const supabaseClient = useSupabaseClient();
   const team = useActiveTeam();
   const [linkDisplayValue, setLinkDisplayValue] = useState(
-    response.value === "" ? "" : JSON.parse(response.value)
+    response.value === "" ? "" : safeParse(response.value)
   );
   const [ticketExists, setTicketExists] = useState(false);
 
@@ -97,7 +98,7 @@ const RequestResponse = ({
   }, []);
 
   const renderResponse = (response: RequestReponseProps["response"]) => {
-    const parsedValue = response.value === "" ? "" : JSON.parse(response.value);
+    const parsedValue = response.value === "" ? "" : safeParse(response.value);
     const responseType =
       response.type === "DROPDOWN" && isAnon ? "TEXT" : response.type;
 
@@ -382,7 +383,9 @@ const RequestResponse = ({
                   ml="xs"
                   key={option.option_id}
                   value={option.option_value}
-                  label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
+                  label={`${String.fromCharCode(65 + optionIdx)} ) ${
+                    option.option_value
+                  }`}
                 />
               ))}
             </Stack>
