@@ -2668,6 +2668,7 @@ export type InventoryFormType = {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
       field_section_duplicatable_id?: string;
+      field_response?: string;
       field_correct_response?: FieldCorrectResponseTableRow | null;
     })[];
   })[];
@@ -2691,7 +2692,7 @@ export type SubCategoryData = {
   totalCount: number;
 };
 
-export type InventoryListType = (InventoryRequestRow & {
+export type InventoryListType = InventoryRequestRow & {
   site_name?: string;
   request_creator_team_member_id?: string;
   request_creator_user_id?: string;
@@ -2702,7 +2703,7 @@ export type InventoryListType = (InventoryRequestRow & {
   assignee_user_id?: string;
   assignee_first_name?: string;
   assignee_last_name?: string;
-})[];
+};
 
 export type InventoryAssetFormValues = {
   site_id?: string;

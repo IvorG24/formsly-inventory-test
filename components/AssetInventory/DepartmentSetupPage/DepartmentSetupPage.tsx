@@ -95,13 +95,13 @@ const DepartmentSetupPage = () => {
     }
   };
 
-  const handleEdit = (site_id: string) => {
-    console.log("Edit site with ID:", site_id);
-  };
+//   const handleEdit = (site_id: string) => {
+//     console.log("Edit site with ID:", site_id);
+//   };
 
-  const handleDelete = (site_id: string) => {
-    console.log("Delete site with ID:", site_id);
-  };
+//   const handleDelete = (site_id: string) => {
+//     console.log("Delete site with ID:", site_id);
+//   };
 
   const handleDepartmentSubmit = async (data: InventoryAssetFormValues) => {
     try {

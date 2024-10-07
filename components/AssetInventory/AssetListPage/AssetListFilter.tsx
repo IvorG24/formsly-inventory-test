@@ -1,6 +1,5 @@
 import {
   OptionType,
-  RequestListFilterValues,
   TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
@@ -26,8 +25,8 @@ type RequestListFilterProps = {
   teamMemberList: TeamMemberWithUserType[];
   userId: string;
   handleFilterForms: () => void;
-  localFilter: RequestListFilterValues;
-  setLocalFilter: Dispatch<SetStateAction<RequestListFilterValues>>;
+  localFilter: FilterSelectedValuesType;
+  setLocalFilter: Dispatch<SetStateAction<FilterSelectedValuesType>>;
   projectList: TeamProjectTableRow[];
   eventOptions: OptionType[];
   selectedRow: string[];
@@ -35,13 +34,15 @@ type RequestListFilterProps = {
   showTableColumnFilter: boolean;
 };
 
-type FilterSelectedValuesType = {
-  form: string[];
-  status: string[];
-  requestor: string[];
-  approver: string[];
-  project: string[];
-  isApproversView: boolean;
+export type FilterSelectedValuesType = {
+  search?: string;
+  sites?: string;
+  locations?: string;
+  category?: string;
+  department?: string;
+  status?: string;
+  createdBy?: string[];
+  isAscendingSort?: boolean;
 };
 
 const AssetListFilter = ({
@@ -85,12 +86,13 @@ const AssetListFilter = ({
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
-      form: [],
-      status: [],
-      requestor: [],
-      approver: [],
-      project: [],
-      isApproversView: false,
+      search: "",
+      sites: "",
+      locations: "",
+      department: "",
+      category: "",
+      status: "",
+      createdBy: [],
     });
   const [isFilter, setIsfilter] = useState(false);
 
@@ -114,16 +116,15 @@ const AssetListFilter = ({
   });
 
   const { register, control, setValue } =
-    useFormContext<RequestListFilterValues>();
+    useFormContext<FilterSelectedValuesType>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
-    value: string[] | boolean = []
+    value: string[] | boolean | string = []
   ) => {
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
-      // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
       setLocalFilter({ ...localFilter, [key]: value });
@@ -132,7 +133,7 @@ const AssetListFilter = ({
 
   useEffect(() => {
     Object.entries(localFilter).forEach(([key, value]) => {
-      setValue(key as keyof RequestListFilterValues, value);
+      setValue(key as keyof FilterSelectedValuesType, value);
     });
   }, [localFilter]);
 
@@ -165,7 +166,6 @@ const AssetListFilter = ({
             sx={{ flex: 2 }}
             miw={250}
             maw={320}
-            disabled={filterSelectedValues.isApproversView}
           />
           <Button
             variant="light"
@@ -217,24 +217,26 @@ const AssetListFilter = ({
         <Flex gap="sm" wrap="wrap" mb="sm">
           <Controller
             control={control}
-            name="form"
-            defaultValue={localFilter.form}
+            name="sites"
+            defaultValue={localFilter.sites}
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
+              <Select
                 data={formList}
                 placeholder="Form"
                 ref={formRef}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!formRefFocused) handleFilterChange("form", value);
+                  if (!formRefFocused)
+                    handleFilterChange("sites", value as string | undefined);
                 }}
-                onDropdownClose={() => handleFilterChange("form", value)}
+                onDropdownClose={() =>
+                  handleFilterChange("sites", value as string | undefined)
+                }
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
               />
             )}
           />
@@ -242,96 +244,97 @@ const AssetListFilter = ({
             control={control}
             name="status"
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
+              <Select
                 data={statusList}
                 placeholder="Status"
                 ref={statusRef}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!statusRefFocused) handleFilterChange("status", value);
+                  if (!statusRefFocused)
+                    handleFilterChange("status", value as string | undefined);
                 }}
                 onDropdownClose={() =>
-                  handleFilterChange("status", value as string[])
+                  handleFilterChange("status", value as string | undefined)
                 }
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
               />
             )}
           />
 
           <Controller
             control={control}
-            name="project"
+            name="category"
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
+              <Select
                 data={projectListChoices}
-                placeholder="Project"
+                placeholder="category"
                 ref={projectRef}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!projectRefFocused) handleFilterChange("project", value);
+                  if (!projectRefFocused)
+                    handleFilterChange("category", value as string | undefined);
                 }}
                 onDropdownClose={() =>
-                  handleFilterChange("project", value as string[])
+                  handleFilterChange("category", value as string | undefined)
                 }
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
               />
             )}
           />
 
           <Controller
             control={control}
-            name="requestor"
+            name="department"
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Requestor"
+              <Select
+                placeholder="department"
                 ref={requestorRef}
                 data={memberList}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
                   if (!requestorRefFocused)
-                    handleFilterChange("requestor", value);
+                    handleFilterChange(
+                      "department",
+                      value as string | undefined
+                    );
                 }}
-                onDropdownClose={() => handleFilterChange("requestor", value)}
+                onDropdownClose={() => handleFilterChange("department", value)}
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
               />
             )}
           />
 
           <Controller
             control={control}
-            name="approver"
+            name="createdBy"
             render={({ field: { value, onChange } }) => (
               <MultiSelect
-                placeholder="Approver"
+                placeholder="createdBy"
                 ref={approverRef}
                 data={memberList}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
                   if (!approverRefFocused)
-                    handleFilterChange("approver", value);
+                    handleFilterChange("createdBy", value);
                 }}
-                onDropdownClose={() => handleFilterChange("approver", value)}
+                onDropdownClose={() => handleFilterChange("createdBy", value)}
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
               />
             )}
           />

@@ -56,7 +56,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  console.log(form);
 
   const requestFormMethods = useForm<InventoryFormValues>();
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;

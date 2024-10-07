@@ -23,6 +23,10 @@ type RequestFormSectionProps = {
     onCategoryNameChange: (index: number, value: string | null) => void;
     onSiteNameChange: (index: number, value: string | null) => void;
   };
+  eventFormMethods?: {
+    onCheckinCategoryChange: (index: number, value: string | null) => void;
+    onSiteCategorychange: (index: number, value: string | null) => void;
+  };
 };
 
 const InventoryFormSection = ({
@@ -34,6 +38,7 @@ const InventoryFormSection = ({
   loadingFieldList,
   type = "Form",
   assetFormMethods,
+  eventFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field?.[0]?.field_section_duplicatable_id;
@@ -64,6 +69,7 @@ const InventoryFormSection = ({
               isEdit={isEdit}
               isLoading={isLoading}
               formslyFormName={formslyFormName}
+              eventFormMethods={eventFormMethods}
             />
           );
         })}

@@ -9,7 +9,6 @@ import {
 import {
   InventoryListType,
   OptionType,
-  RequestListFilterValues,
   TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
@@ -27,18 +26,40 @@ type Props = {
   teamMemberList: TeamMemberWithUserType[];
   userId: string;
   projectList: TeamProjectTableRow[];
-  fieldData: {
-    label: string;
-    value: string;
-  }[];
 };
 
-const AssetListPage = ({
-  teamMemberList,
-  userId,
-  projectList,
-  fieldData: tableColumnList,
-}: Props) => {
+const tableColumnList = [
+  { label: "Asset Tag Id", value: "inventory_request_id" },
+  { label: "Asset Name", value: "inventory_request_name" },
+  { label: "Status", value: "inventory_request_status" },
+  { label: "Date Created", value: "inventory_request_created" },
+  { label: "Date Submitted", value: "inventory_request_date_updated" },
+  { label: "Item Code", value: "inventory_request_item_code" },
+  { label: "Brand", value: "inventory_request_brand" },
+  { label: "Model", value: "inventory_request_model" },
+  { label: "Serial No.", value: "inventory_request_serial_number" },
+  { label: "Site", value: "inventory_request_site" },
+  { label: "Location", value: "inventory_request_location" },
+  { label: "Department", value: "inventory_request_department" },
+  { label: "Purchase Order", value: "inventory_request_purchase_order" },
+  { label: "Purchase Date", value: "inventory_request_purchase_date" },
+  { label: "Purchase From", value: "inventory_request_purchase_from" },
+  { label: "Cost", value: "inventory_request_cost" },
+  { label: "SI No.", value: "inventory_request_si_number" },
+];
+
+type FilterSelectedValuesType = {
+  search?: string;
+  sites?: string;
+  locations?: string;
+  category?: string;
+  department?: string;
+  status?: string;
+  isAscendingSort?: boolean;
+  createdBy?: string[];
+};
+
+const AssetListPage = ({ teamMemberList, userId, projectList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -50,22 +71,22 @@ const AssetListPage = ({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
-    useLocalStorage<RequestListFilterValues>({
+    useLocalStorage<FilterSelectedValuesType>({
       key: "request-list-filter",
       defaultValue: {
         search: "",
-        requestor: [],
-        approver: [],
-        form: [],
-        status: undefined,
+        sites: "",
+        locations: "",
+        department: "",
+        category: "",
+        status: "",
+        createdBy: [],
         isAscendingSort: false,
-        isApproversView: false,
-        project: [],
       },
     });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
-  const filterFormMethods = useForm<RequestListFilterValues>({
+  const filterFormMethods = useForm<FilterSelectedValuesType>({
     defaultValues: localFilter,
     mode: "onChange",
   });
@@ -80,7 +101,7 @@ const AssetListPage = ({
 
   const { handleSubmit, getValues, control, setValue } = filterFormMethods;
 
-  const selectedFormFilter = useWatch({ name: "form", control });
+  const selectedFormFilter = useWatch({ name: "sites", control });
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "request_date_created",
@@ -114,7 +135,6 @@ const AssetListPage = ({
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
       });
-      console.log(newData);
 
       setInventoryList(newData);
       setInventoryListCount(newData.length);

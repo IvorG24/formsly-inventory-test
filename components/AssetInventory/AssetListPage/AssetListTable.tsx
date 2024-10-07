@@ -6,31 +6,37 @@ import {
   formatDate,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryListType, RequestListFilterValues } from "@/utils/types";
+import { getAvatarColor } from "@/utils/styling";
+import { InventoryListType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
+  Avatar,
   Badge,
   Checkbox,
   CopyButton,
+  createStyles,
   Flex,
   Text,
   Tooltip,
 } from "@mantine/core";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormSetValue } from "react-hook-form";
+import { FilterSelectedValuesType } from "./AssetListFilter";
+
 type Props = {
   requestList: InventoryListType[];
   requestListCount: number;
   activePage: number;
   isFetchingRequestList: boolean;
-  selectedFormFilter: string[] | undefined;
+  selectedFormFilter: string | undefined;
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  setValue: UseFormSetValue<RequestListFilterValues>;
+  setValue: UseFormSetValue<FilterSelectedValuesType>;
   checkIfColumnIsHidden: (column: string) => boolean;
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
@@ -42,7 +48,15 @@ type Props = {
   ) => void;
   tableColumnList: { value: string; label: string }[];
 };
-
+const useStyles = createStyles(() => ({
+  requestor: {
+    border: "solid 2px white",
+    cursor: "pointer",
+  },
+  clickable: {
+    cursor: "pointer",
+  },
+}));
 const AssetListTable = ({
   requestList,
   requestListCount,
@@ -62,12 +76,13 @@ const AssetListTable = ({
   tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
-
+  const { classes } = useStyles();
+  const router = useRouter();
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
- 
+
   const handleRowSelect = (requestId: string, isChecked: boolean) => {
     let newSelectedRows: string[] = [...selectedRow];
     if (isChecked) {
@@ -88,42 +103,37 @@ const AssetListTable = ({
       setSelectedRow([]);
     }
   };
-  const allKeys = Array.from(
-    new Set(
-      requestList.reduce((keys, current) => {
-        return keys.concat(Object.keys(current));
-      }, [] as string[])
-    )
-  );
 
-  const dynamicColumns = allKeys
+  const dynamicColumns = tableColumnList
     .filter(
-      (key) =>
-        !tableColumnList.some((column) => column.value === key) &&
-        key !== "inventory_request_id" &&
-        key !== "inventory_request_status" &&
-        key !== "inventory_request_created" &&
-        key !== "asset_name" &&
-        key !== "user_id" &&
-        key !== "user_avatar" &&
-        key !== "user_first_name" &&
-        key !== "user_last_name" &&
-        key !== "site_name"
+      (column) =>
+        !checkIfColumnIsHidden(column.value) &&
+        column.value !== "inventory_request_id" &&
+        column.value !== "inventory_request_status" &&
+        column.value !== "inventory_request_name"
     )
-    .map((key) => ({
-      accessor: key,
-      title: key
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase()),
+    .map((column) => ({
+      accessor: column.value,
+      title: column.label,
       render: (record: Record<string, unknown>) => {
-        const value = record[key] ? String(record[key]) : "";
-        const fieldsWithPesoSign = ["cost", "price"];
-        const fieldWithDate = ["purchase_date"];
-        if (fieldsWithPesoSign.includes(key.toLowerCase())) {
-          return <Text>{value ? `₱ ${value}` : ""}</Text>;
-        } else if (fieldWithDate.includes(key.toLowerCase())) {
-          return <Text>{formatDate(new Date(value))}</Text>;
+        const value =
+          record[column.value] !== undefined && record[column.value] !== null
+            ? String(record[column.value])
+            : "";
+
+        const fieldsWithPesoSign = ["inventory_request_cost"];
+        const fieldWithDate = [
+          "inventory_request_purchase_date",
+          "inventory_request_created",
+          "inventory_request_date_updated",
+        ];
+
+        if (fieldsWithPesoSign.includes(column.value)) {
+          return <Flex>{value ? `₱ ${value}` : ""}</Flex>;
+        } else if (fieldWithDate.includes(column.value)) {
+          return <Text>{value ? formatDate(new Date(value)) : ""}</Text>;
         }
+
         return <Text>{value}</Text>;
       },
     }));
@@ -146,8 +156,8 @@ const AssetListTable = ({
           accessor: "checkbox",
           title: (
             <Checkbox
-              checked={isAllSelected} // Check if all rows are selected
-              onChange={(e) => handleSelectAll(e.target.checked)} // Handle select/deselect all rows
+              checked={isAllSelected}
+              onChange={(e) => handleSelectAll(e.target.checked)}
             />
           ),
           width: 40,
@@ -173,67 +183,169 @@ const AssetListTable = ({
           title: "Asset Tag ID",
           width: 180,
           hidden: checkIfColumnIsHidden("inventory_request_id"),
-          render: ({ inventory_request_id }) => (
-            <Flex key={String(inventory_request_id)} justify="space-between">
-              <Text truncate maw={150}>
-                <Anchor
-                  href={`/${formatTeamNameToUrlKey(
-                    activeTeam.team_name ?? ""
-                  )}/requests/${inventory_request_id}`}
-                  target="_blank"
-                >
-                  {String(inventory_request_id)}
-                </Anchor>
-              </Text>
-              <CopyButton
-                value={`${BASE_URL}/${formatTeamNameToUrlKey(
-                  activeTeam.team_name ?? ""
-                )}/requests/${inventory_request_id}`}
-              >
-                {({ copied, copy }) => (
-                  <Tooltip
-                    label={copied ? "Copied" : `Copy ${inventory_request_id}`}
-                    onClick={copy}
+          render: ({ inventory_request_id }) => {
+            return (
+              <Flex key={String(inventory_request_id)} justify="space-between">
+                <Text truncate maw={150}>
+                  <Anchor
+                    href={`/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/inventory/${inventory_request_id}`}
+                    target="_blank"
                   >
-                    <ActionIcon>
-                      <IconCopy size={16} />
-                    </ActionIcon>
-                  </Tooltip>
-                )}
-              </CopyButton>
-            </Flex>
-          ),
-        },
-        {
-          accessor: "asset_name",
-          title: "Asset Name",
-          render: (record: Record<string, unknown>) => (
-            <Text>
-              {record["asset_name"] ? String(record["asset_name"]) : ""}
-            </Text>
-          ),
+                    {String(inventory_request_id)}
+                  </Anchor>
+                </Text>
+                <CopyButton
+                  value={`${BASE_URL}/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/inventory/${inventory_request_id}`}
+                >
+                  {({ copied, copy }) => (
+                    <Tooltip
+                      label={copied ? "Copied" : `Copy ${inventory_request_id}`}
+                      onClick={copy}
+                    >
+                      <ActionIcon>
+                        <IconCopy size={16} />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                </CopyButton>
+              </Flex>
+            );
+          },
         },
         {
           accessor: "inventory_request_status",
           title: "Status",
-          sortable: true,
+          width: 180,
           hidden: checkIfColumnIsHidden("inventory_request_status"),
-          render: ({ inventory_request_status }) => (
-            <Text>
-              <Badge>{String(inventory_request_status)}</Badge>
-            </Text>
-          ),
+          render: ({ inventory_request_status }) => {
+            return <Badge>{String(inventory_request_status)}</Badge>;
+          },
         },
         {
-          accessor: "inventory_request_created",
-          title: "Date Created",
+          accessor: "inventory_request_name",
+          title: "Asset",
+          width: 180,
+          hidden: checkIfColumnIsHidden("inventory_request_name"),
+          render: ({ inventory_request_name }) => {
+            return <Text>{String(inventory_request_name)}</Text>;
+          },
+        },
+        {
+          accessor: "request_creator_user_id",
+          title: "Created By",
           sortable: true,
-          hidden: checkIfColumnIsHidden("inventory_request_created"),
-          render: ({ inventory_request_created }) => (
-            <Text>
-              {formatDate(new Date(String(inventory_request_created)))}
-            </Text>
-          ),
+          hidden: checkIfColumnIsHidden("request_creator_user_id"),
+          render: (record) => {
+            const {
+              request_creator_user_id,
+              request_creator_first_name,
+              request_creator_last_name,
+              request_creator_team_member_id,
+            } = record as {
+              request_creator_user_id: string;
+              request_creator_first_name: string;
+              request_creator_last_name: string;
+              request_creator_team_member_id: string;
+            };
+
+            return (
+              <Flex px={0} gap={8} align="center">
+                <Avatar
+                  color={
+                    request_creator_user_id
+                      ? getAvatarColor(
+                          Number(`${request_creator_user_id.charCodeAt(0)}`)
+                        )
+                      : undefined
+                  }
+                  className={classes.requestor}
+                  onClick={() =>
+                    request_creator_team_member_id
+                      ? window.open(`/member/${request_creator_team_member_id}`)
+                      : null
+                  }
+                >
+                  {request_creator_user_id
+                    ? `${request_creator_first_name[0] + request_creator_last_name[0]}`
+                    : ""}
+                </Avatar>
+                {request_creator_user_id && (
+                  <Anchor
+                    href={`/member/${request_creator_team_member_id}`}
+                    target="_blank"
+                  >
+                    <Text>{`${request_creator_first_name} ${request_creator_last_name}`}</Text>
+                  </Anchor>
+                )}
+                {!request_creator_user_id && <Text>Public User</Text>}
+              </Flex>
+            );
+          },
+        },
+        {
+          accessor: "assignee_first_name",
+          title: "Assigned To",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("assignee_first_name"),
+          render: (record) => {
+            const {
+              site_name,
+              assignee_user_id,
+              assignee_first_name,
+              assignee_last_name,
+              assignee_team_member_d,
+            } = record as {
+              site_name: string;
+              assignee_user_id: string | null;
+              assignee_first_name: string;
+              assignee_last_name: string;
+              assignee_team_member_d: string;
+            };
+
+            const isAssignedUser = !!assignee_user_id;
+            const avatarLabel = isAssignedUser
+              ? `${assignee_first_name[0] + assignee_last_name[0]}`
+              : site_name;
+
+            return (
+              <Flex px={0} gap={8} align="center">
+                {assignee_user_id && (
+                  <Avatar
+                    color={
+                      isAssignedUser
+                        ? getAvatarColor(
+                            Number(`${assignee_user_id?.charCodeAt(0)}`)
+                          )
+                        : undefined
+                    }
+                    className={classes.requestor}
+                    onClick={() =>
+                      assignee_team_member_d
+                        ? window.open(`/member/${assignee_team_member_d}`)
+                        : null
+                    }
+                  >
+                    {avatarLabel}
+                  </Avatar>
+                )}
+
+                {isAssignedUser ? (
+                  <Anchor
+                    href={`/member/${assignee_team_member_d}`}
+                    target="_blank"
+                  >
+                    <Text>{`${assignee_first_name} ${assignee_last_name}`}</Text>
+                  </Anchor>
+                ) : (
+                  <Text>{site_name}</Text>
+                )}
+              </Flex>
+            );
+          },
         },
         ...dynamicColumns,
         {
@@ -246,13 +358,13 @@ const AssetListTable = ({
               maw={120}
               mx="auto"
               color="blue"
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${inventory_request_id}`
-                  )
-                }
+              onClick={async () =>
+                await router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/inventory/${inventory_request_id}`
+                )
+              }
             >
               <IconArrowsMaximize size={16} />
             </ActionIcon>

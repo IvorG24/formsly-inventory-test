@@ -1,3 +1,4 @@
+import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
@@ -1737,4 +1738,55 @@ export const disableApikey = async (
   if (error) throw error;
 
   return data as unknown as ApiKeyData[];
+};
+
+export const updateEvent = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    updateResponse: InventoryFormValues;
+    selectedRow: string[];
+    teamMemberId?: string;
+    type: string;
+  }
+) => {
+  const { updateResponse, selectedRow, teamMemberId, type } = params;
+
+  const fieldResponsesArray: { name: string; response: string }[] = [];
+
+  for (const section of updateResponse.sections) {
+    for (const field of section.section_field) {
+      const fieldResponse = field.field_response;
+      const fieldName = field.field_name;
+
+      if (
+        fieldResponse &&
+        (fieldName === "Site" ||
+          fieldName === "Due Date" ||
+          fieldName === "Notes" ||
+          fieldName === "Return Date")
+      ) {
+        fieldResponsesArray.push({
+          name: fieldName,
+          response: String(fieldResponse),
+        });
+      }
+    }
+  }
+
+  const input_params = {
+    fieldResponse: fieldResponsesArray,
+    selectedRow,
+    teamMemberId: teamMemberId ?? null,
+    type,
+  };
+
+  const { data, error } = await supabaseClient.rpc("event_status_update", {
+    input_data: input_params,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 };

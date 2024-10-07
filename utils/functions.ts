@@ -305,7 +305,45 @@ export const parseDataForChart = ({
 
   return chartData;
 };
+export const generateDateLabels = (
+  startDate: Date,
+  endDate: Date,
+  frequency: "daily" | "monthly" | "yearly"
+) => {
+  const labels: string[] = [];
+  let currentDate = moment(startDate);
 
+  if (frequency === "daily") {
+    while (
+      currentDate.isBefore(endDate) ||
+      currentDate.isSame(endDate, "day")
+    ) {
+      const dayOfWeek = currentDate.isoWeekday();
+      if (dayOfWeek >= 1 && dayOfWeek <= 7) {
+        labels.push(currentDate.format("dddd MMM DD"));
+      }
+      currentDate = currentDate.add(1, "day");
+    }
+  } else if (frequency === "monthly") {
+    while (
+      currentDate.isBefore(endDate) ||
+      currentDate.isSame(endDate, "month")
+    ) {
+      labels.push(currentDate.format("MMMM"));
+      currentDate = currentDate.add(1, "month");
+    }
+  } else if (frequency === "yearly") {
+    while (
+      currentDate.isBefore(endDate) ||
+      currentDate.isSame(endDate, "year")
+    ) {
+      labels.push(currentDate.format("YYYY"));
+      currentDate = currentDate.add(1, "year");
+    }
+  }
+
+  return labels;
+};
 export const extractInventoryData = (
   InventoryFormValues: InventoryFormValues
 ) => {

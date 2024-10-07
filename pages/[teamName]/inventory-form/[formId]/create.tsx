@@ -2,7 +2,7 @@
 import CreateAssetPage from "@/components/AssetInventory/CreateAssetPage/CreateAssetPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { InventoryFormResponseType } from "@/utils/types";
+import { InventoryFormType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -36,7 +36,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 type Props = {
-  form: InventoryFormResponseType;
+  form: InventoryFormType;
 };
 const Page = ({ form }: Props) => {
   return (

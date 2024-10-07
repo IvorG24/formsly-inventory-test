@@ -2446,8 +2446,7 @@ export const createAssetRequest = async (
   } = extractInventoryData(InventoryFormValues);
 
   const requestId = uuidv4();
-
-  // Preparing individual fields to send to the RPC function
+  
   const requestData = {
     requestId,
     formId,

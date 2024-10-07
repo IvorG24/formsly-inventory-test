@@ -31,14 +31,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
-  userId: string; // Include userId in the props
+  userId: string;
   projectList: TeamProjectTableRow[];
 };
 
 const Page = ({ teamMemberList, userId, projectList }: Props) => {
   return (
     <>
-      <Meta description="Asset List Page" url="/teamName/inventory" />
+      <Meta description="Asset List Page" url="/teamName/inventory[assetId]" />
       <AssetListPage
         teamMemberList={teamMemberList}
         projectList={projectList}

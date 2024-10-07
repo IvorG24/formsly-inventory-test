@@ -54,6 +54,10 @@ type RequestFormFieldsProps = {
     onCategoryNameChange: (index: number, value: string | null) => void;
     onSiteNameChange: (index: number, value: string | null) => void;
   };
+  eventFormMethods?: {
+    onCheckinCategoryChange: (index: number, value: string | null) => void;
+    onSiteCategorychange: (index: number, value: string | null) => void;
+  };
 };
 
 const InventoryFormFields = ({
@@ -64,6 +68,7 @@ const InventoryFormFields = ({
   isLoading,
   formslyFormName = "",
   assetFormMethods,
+  eventFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -282,6 +287,7 @@ const InventoryFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Select
                 value={value as string}
+                withinPortal={true}
                 onChange={(value) => {
                   onChange(value);
                   switch (field.field_name) {
@@ -293,6 +299,22 @@ const InventoryFormFields = ({
                       break;
                     case "Site":
                       assetFormMethods?.onSiteNameChange(sectionIndex, value);
+                      eventFormMethods?.onSiteCategorychange(
+                        sectionIndex,
+                        value
+                      );
+                      break;
+                    case "Check in from":
+                      eventFormMethods?.onCheckinCategoryChange(
+                        sectionIndex,
+                        value
+                      );
+                      break;
+                    case "Check out to":
+                      eventFormMethods?.onCheckinCategoryChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
                   }
                 }}

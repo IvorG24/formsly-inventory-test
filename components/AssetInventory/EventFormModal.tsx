@@ -1,4 +1,6 @@
-import { getInventoryFormDetails } from "@/backend/api/get";
+import { getInventoryFormDetails, getLocationOption } from "@/backend/api/get";
+import { updateEvent } from "@/backend/api/update";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -6,7 +8,8 @@ import {
   InventoryFormType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Group, Modal } from "@mantine/core";
+import { Box, Button, Group, Modal, Title } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -31,19 +34,37 @@ type Props = {
 
 const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
   const requestFormMethods = useForm<InventoryFormValues>();
   const [opened, setOpened] = useState(true);
 
   const [formData, setFormData] = useState<InventoryFormType>();
-  const { handleSubmit, control } = requestFormMethods;
-  const { fields: formSections, replace: replaceSection } = useFieldArray({
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const {
+    fields: formSections,
+    replace: replaceSection,
+    update: updateSection,
+  } = useFieldArray({
     control,
     name: "sections",
   });
 
-  const onSubmit = (data: InventoryFormValues) => {
-    console.log(data);
-    setOpened(false);
+  const onSubmit = async (data: InventoryFormValues) => {
+    try {
+      await updateEvent(supabaseClient, {
+        updateResponse: data,
+        selectedRow,
+        teamMemberId: teamMember?.team_member_id,
+        type: formData?.form_name ?? "",
+      });
+      setOpened(false);
+      notifications.show({
+        message: "Event Submitted",
+        color: "green",
+      });
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   useEffect(() => {
@@ -52,17 +73,129 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
         if (!userId || !eventId) return;
 
         const params = { eventId, userId };
+
         const form = await getInventoryFormDetails(supabaseClient, params);
 
-        if (form) {
-          setFormData(form);
-          replaceSection(form.form_section);
-        }
-      } catch (e) {}
+        replaceSection([
+          {
+            ...form.form_section[0],
+          },
+        ]);
+        setFormData(form);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong",
+          color: "red",
+        });
+      }
     };
 
     getInventoryForm();
   }, [userId, eventId, replaceSection, opened]);
+
+  const handleOnEventCategoryChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const categorySection = getValues(`sections.${index}`);
+      const params = { eventId, userId };
+
+      const form = await getInventoryFormDetails(supabaseClient, params);
+
+      if (value === null) {
+        replaceSection([
+          {
+            ...form.form_section[0],
+          },
+        ]);
+        return;
+      }
+
+      let newSectionField = [...categorySection.section_field];
+      console.log(value);
+
+      if (value === "Site") {
+        newSectionField = [
+          categorySection.section_field[0],
+          ...form.form_section[2].section_field,
+        ];
+      }
+
+      updateSection(index, {
+        ...categorySection,
+        section_field: newSectionField as typeof categorySection.section_field, // Ensure type matches
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+  const handleOnSiteNameChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const siteLocationSection = getValues(`sections.${index}`);
+      const params = { eventId, userId };
+      const form = await getInventoryFormDetails(supabaseClient, params);
+      if (value === null) {
+        setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        updateSection(index, {
+          ...siteLocationSection,
+          section_field: form.form_section[2].section_field,
+        });
+        return;
+      }
+
+      const data = await getLocationOption(supabaseClient, {
+        siteName: value,
+      });
+
+      const optionList = data.map((option, index) => ({
+        option_id: option.location_id,
+        option_value: option.location_name,
+        option_order: index,
+        option_field_id: siteLocationSection.section_field[1].field_id,
+      }));
+      const newSectionField = [
+        {
+          ...siteLocationSection.section_field[0],
+        },
+        {
+          ...siteLocationSection.section_field[1],
+        },
+        {
+          ...siteLocationSection.section_field[2],
+          field_option: optionList,
+        },
+        {
+          ...siteLocationSection.section_field[3],
+        },
+        {
+          ...siteLocationSection.section_field[4],
+        },
+        {
+          ...siteLocationSection.section_field[5],
+        },
+      ];
+
+      updateSection(index, {
+        ...siteLocationSection,
+        section_field: newSectionField as Omit<
+          (typeof siteLocationSection.section_field)[0],
+          "field_special_field_template_id"
+        >[],
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later hey.",
+        color: "red",
+      });
+    }
+  };
   const formisEmpty = formData && formData.form_section.length > 0;
   return (
     <>
@@ -70,8 +203,8 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
         opened={formisEmpty ? opened : false}
         onClose={() => setOpened(false)}
         size="xl"
-        title={`Form for Event: ${formData?.form_name}`}
       >
+        <Title order={3}>Event Form</Title>
         <FormProvider {...requestFormMethods}>
           <form onSubmit={handleSubmit(onSubmit)}>
             {formSections.map((section, idx) => {
@@ -85,6 +218,10 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
                     section={{
                       ...section,
                       section_field: sectionFields,
+                    }}
+                    eventFormMethods={{
+                      onCheckinCategoryChange: handleOnEventCategoryChange,
+                      onSiteCategorychange: handleOnSiteNameChange,
                     }}
                     sectionIndex={idx}
                   />
