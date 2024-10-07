@@ -68,8 +68,6 @@ export const getStatusToColor = (status: string) => {
       return "dark";
     case "missed":
       return "grape";
-    case "for pooling":
-      return "yellow";
     case "not responsive":
       return "gray";
     default:
@@ -106,8 +104,28 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#228BE6";
     case "closed":
       return "#40C057";
+    case "qualified":
+      return "#40C057";
+    case "not qualified":
+      return "#fa5252";
+    case "not responsive":
+      return "gray";
+    case "pending":
+      return "blue";
+    case "waiting for schedule":
+      return "#fd7e14";
+    case "waiting for offer":
+      return "#fd7e14";
+    case "rejected":
+      return "red";
+    case "cancelled":
+      return "dark";
     case "incorrect":
       return "#FA5252";
+    case "for pooling":
+      return "#fab005";
+    case "accepted":
+      return "#40C057";
   }
 };
 

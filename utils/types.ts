@@ -2591,6 +2591,29 @@ export type TechnicalQuestionFormValues = {
   positions?: string[];
 };
 
+export type DatasetChartResponse = {
+  label: string;
+  data: number[];
+  backgroundColor: string[];
+  borderColor: string[];
+  borderWidth: number;
+};
+
+export type Dataset = {
+  dates: string[];
+  pending_counts: string[];
+  approved_counts: string[];
+  rejected_counts: string[];
+  qualified_counts: string[];
+  for_pooling_counts: string[];
+  waiting_for_schedule_counts: string[];
+  waiting_for_offer_counts: string[];
+  not_qualified_counts: string[];
+  not_responsive_counts: string[];
+  accepted_counts: string[];
+  cancelled_counts: string[];
+};
+
 export type InventoryFormResponseType = {
   form_id: string;
   form_name: string;

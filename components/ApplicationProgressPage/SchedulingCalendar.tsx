@@ -663,7 +663,7 @@ const SchedulingCalendar = ({
           </p>
           ${
             meetingUrl.length
-              ? ` 
+              ? `
               <p>
                 <strong>Meeting Link</strong>
                 <a href=${meetingUrl}>Interview Meeting Link</a>

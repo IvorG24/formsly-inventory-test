@@ -1435,3 +1435,9 @@ export const CSI_HIDDEN_FIELDS = [
 
 export const ALLOWED_USER_TO_EDIT_LRF_REQUESTS =
   "accounting.ca@staclara.com.ph";
+
+export const frequencyOptions = [
+  { label: "Daily", value: "daily" },
+  { label: "Monthly", value: "monthly" },
+  { label: "Yearly", value: "yearly" },
+];

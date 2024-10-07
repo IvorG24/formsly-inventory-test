@@ -1,5 +1,5 @@
 import { getHRApplicantAnalytics } from "@/backend/api/get";
-import HRAnalytics from "@/components/AnalyticsPage/HRAnalytics";
+import AnalyticsPage from "@/components/AnalyticsPage/AnalyticsPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { HRAnalyticsData } from "@/utils/types";
@@ -31,7 +31,7 @@ const Page = ({ data }: Props) => {
   return (
     <>
       <Meta description="Analytics Page" url="/{teamName}/analytics" />
-      <HRAnalytics data={data} />
+      <AnalyticsPage analyticsData={data} />
     </>
   );
 };

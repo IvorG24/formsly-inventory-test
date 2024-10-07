@@ -86,7 +86,7 @@ const HRAnalytics = ({ data: initialData }: Props) => {
   return (
     <Container p={0}>
       <Title order={3} mb="sm">
-        Human Resources Application Information Analytics
+        Human Resources Application Information
       </Title>
       <Flex gap="sm" align="flex-end">
         <Select

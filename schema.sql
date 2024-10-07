@@ -16545,7 +16545,7 @@ AS $$
         ON iom.interview_meeting_interview_id = t.trade_test_id
         LEFT JOIN hr_schema.technical_interview_table ti
         ON iom.interview_meeting_interview_id = ti.technical_interview_id
-        WHERE iom.interview_meeting_schedule = $1
+        WHERE iom.interview_meeting_schedule::timestamp = $1::timestamp
         AND iom.interview_meeting_is_disabled = false
         AND COALESCE(
           hpi.hr_phone_interview_team_member_id,
@@ -19750,6 +19750,311 @@ plv8.subtransaction(function(){
   returnData = Boolean(Number(count) === Number(fieldAndResponse.length))
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_group_member(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    groupId
+  } = input_data;
+
+  const teamGroupMemberData = plv8.execute(
+    `
+      SELECT
+        team_group_member_id,
+        tmt.team_member_id,
+        tmt.team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_schema.team_group_member_table AS tgmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        tgmt.team_group_id = '${groupId}'
+        AND team_member_is_disabled = false
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+    `
+  );
+
+  teamGroupMemberData.forEach(teamGroupMember => {
+    const teamProjectMemberData = plv8.execute(
+      `
+        SELECT
+          team_project_name
+        FROM team_schema.team_project_member_table AS tpmt
+        INNER JOIN team_schema.team_project_table AS tpt ON tpt.team_project_id = tpmt.team_project_id
+        WHERE
+          team_project_is_disabled = false
+          AND team_member_id = '${teamGroupMember.team_member_id}'
+      `
+    );
+
+    returnData.push({
+      team_member_id: teamGroupMember.team_member_id,
+      team_member_date_created: teamGroupMember.team_member_date_created,
+      team_member_user: {
+        user_id: teamGroupMember.user_id,
+        user_first_name: teamGroupMember.user_first_name,
+        user_last_name: teamGroupMember.user_last_name,
+        user_avatar: teamGroupMember.user_avatar,
+        user_email: teamGroupMember.user_email,
+      },
+    });
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION hr_response_analytics(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {
+    dates: [],
+    pending_counts: [],
+    approved_counts: [],
+    rejected_counts: [],
+    qualified_counts: [],
+    missed_counts:[],
+    not_qualified_counts: [],
+    waiting_for_schedule_counts:[],
+    not_responsive_counts: [],
+    cancelled_counts: [],
+    accepted_counts:[],
+    waiting_for_offer_counts:[],
+    for_pooling_counts: []
+  };
+
+  const { filterChartValues } = input_data;
+  const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
+
+  const frequency = filterChartValues.frequencyFilter || 'monthly';
+
+  const normalizeDate = (date, isEndDate = false) => {
+    if (isEndDate) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+    }
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+  };
+
+  const getDateRange = (frequency, startDateValue, endDateValue) => {
+    let startDate;
+    let endDate;
+    let clonedCurrentDate = new Date(currentDate.getTime());
+
+    switch (frequency) {
+      case "daily":
+        startDate = startDateValue
+        ? new Date(normalizeDate(new Date(startDateValue)).setDate(normalizeDate(new Date(startDateValue)).getDate() + 1))
+        : normalizeDate(clonedCurrentDate);
+        endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : normalizeDate(clonedCurrentDate, true);
+        break;
+      case "monthly":
+        startDate = startDateValue ? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth(), 1);
+        endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth() + 1, 0, 23, 59, 59);
+        startDate.setDate(startDate.getDate() + 1);
+        break;
+      case "yearly":
+      startDate = startDateValue? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), 0, 1);
+        endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), 11, 31, 23, 59, 59);
+        startDate.setDate(startDate.getDate() + 1);
+        break;
+      default:
+        throw new Error("Invalid frequency");
+    }
+    return { startDate, endDate };
+  };
+
+  const generateAllDates = (startDate, endDate, frequency) => {
+    let dates = [];
+
+    startDate = new Date(startDate);
+    endDate = new Date(endDate);
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    if (frequency === 'daily') {
+      while (startDate <= endDate) {
+        dates.push(startDate.toISOString().slice(0, 10)); // 'YYYY-MM-DD'
+        startDate.setDate(startDate.getDate() + 1); // Increment by one day
+      }
+    } else if (frequency === 'monthly') {
+      while (startDate <= endDate) {
+        dates.push(startDate.toISOString().slice(0, 7));
+        startDate.setMonth(startDate.getMonth() + 1);
+      }
+    } else if (frequency === 'yearly') {
+      while (startDate <= endDate) {
+        dates.push(startDate.getFullYear().toString()); // 'YYYY'
+        startDate.setFullYear(startDate.getFullYear() + 1); // Increment by one year
+      }
+    }
+
+    return dates;
+  };
+
+  const { startDate, endDate } = getDateRange(
+    frequency,
+    filterChartValues.startDate,
+    filterChartValues.endDate
+  );
+  const allDates = generateAllDates(startDate, endDate, frequency);
+
+  plv8.subtransaction(function () {
+    const dateFormat = frequency === 'daily' ? 'YYYY-MM-DD'
+                       : frequency === 'weekly' ? 'IYYY-IW'
+                       : frequency === 'monthly' ? 'YYYY-MM'
+                       : 'YYYY';
+
+    if (filterChartValues.stepFilter === "request") {
+      const memberFilterCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
+        ? `AND team_member_table.team_member_id = '${filterChartValues.memberFilter}'`
+        : "";
+
+      const requestData = plv8.execute(`
+        SELECT
+          TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', request_table.request_date_created), '${dateFormat}') AS date_group,
+          COUNT(CASE WHEN request_table.request_status = 'PENDING' THEN 1 END) AS pending_count,
+          COUNT(CASE WHEN request_table.request_status = 'APPROVED' THEN 1 END) AS approved_count,
+          COUNT(CASE WHEN request_table.request_status = 'REJECTED' THEN 1 END) AS rejected_count
+        FROM request_schema.request_table
+        JOIN request_schema.request_signer_table
+          ON request_signer_table.request_signer_request_id = request_table.request_id
+        JOIN form_schema.signer_table
+          ON signer_table.signer_id = request_signer_table.request_signer_signer_id
+        JOIN team_schema.team_member_table
+          ON team_member_table.team_member_id = signer_table.signer_team_member_id
+        WHERE request_table.request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+          AND request_table.request_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+          ${memberFilterCondition}
+        GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', request_table.request_date_created), '${dateFormat}')
+        ORDER BY date_group
+      `);
+
+      const dateDataMap = {};
+      requestData.forEach(row => {
+        const dateKey = row.date_group;
+        dateDataMap[dateKey] = {
+          pending_count: String(row.pending_count),
+          approved_count: String(row.approved_count),
+          rejected_count: String(row.rejected_count)
+        };
+      });
+
+      allDates.forEach(date => {
+        const data = dateDataMap[date] || {
+          pending_count: "0",
+          approved_count: "0",
+          rejected_count: "0"
+        };
+
+        returnData.dates.push(date);
+        returnData.pending_counts.push(data.pending_count);
+        returnData.approved_counts.push(data.approved_count);
+        returnData.rejected_counts.push(data.rejected_count);
+      });
+
+      delete returnData.qualified_counts;
+      delete returnData.not_qualified_counts;
+      delete returnData.not_responsive_counts;
+      delete returnData.cancelled_counts;
+      delete returnData.for_pooling_counts;
+    } else {
+      let table = filterChartValues.stepFilter;
+      const technicalInterviewCondition = filterChartValues.stepFilter === "technical_interview_1"
+        ? "technical_interview_number = 1 AND"
+        : filterChartValues.stepFilter === "technical_interview_2"
+        ? "technical_interview_number = 2 AND"
+        : "";
+      table = (table === "technical_interview_1" || table === "technical_interview_2")
+        ? "technical_interview"
+        : table;
+
+      const memberFilterCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
+        ? `${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
+        : "";
+
+      const interviewData = plv8.execute(`
+        SELECT
+          TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
+          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count
+        FROM hr_schema.${table}_table
+        WHERE ${memberFilterCondition} ${technicalInterviewCondition} ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+        GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
+        ORDER BY date_group
+      `);
+
+      const dateDataMap = {};
+      interviewData.forEach(row => {
+        const dateKey = row.date_group;
+        dateDataMap[dateKey] = {
+          pending_count: String(row.pending_count),
+          qualified_count: String(row.qualified_count),
+          not_qualified_count: String(row.not_qualified_count),
+          not_responsive_count: String(row.not_responsive_count),
+          waiting_for_schedule_count:String(row.waiting_for_schedule_count),
+          waiting_for_offer_count:String(row.waiting_for_offer_count),
+          accepted_count:String(row.accepted_count,),
+          for_pooling_count: String(row.for_pooling_count),
+          cancelled_count: String(row.cancelled_count)
+        };
+      });
+
+      allDates.forEach(date => {
+        const data = dateDataMap[date] || {
+          pending_count: "0",
+          qualified_count: "0",
+          not_qualified_count: "0",
+          waiting_for_schedule_count:"0",
+          waiting_for_offer_count:"0",
+          accepted_count:"0",
+          not_responsive_count: "0",
+          for_pooling_count: "0",
+          cancelled_count: "0"
+        };
+
+        returnData.dates.push(date);
+        returnData.pending_counts.push(data.pending_count);
+        returnData.qualified_counts.push(data.qualified_count);
+        returnData.not_qualified_counts.push(data.not_qualified_count);
+        returnData.waiting_for_schedule_counts.push(data.waiting_for_schedule_count);
+        returnData.waiting_for_offer_counts.push(data.waiting_for_offer_count);
+        returnData.not_responsive_counts.push(data.not_responsive_count);
+        returnData.accepted_counts.push(data.accepted_count);
+        returnData.for_pooling_counts.push(data.for_pooling_count);
+        returnData.cancelled_counts.push(data.cancelled_count);
+      });
+
+      delete returnData.approved_counts;
+      if (table !== "job_offer") {
+        delete returnData.for_pooling_counts;
+      }
+    }
+  });
+
+  return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
