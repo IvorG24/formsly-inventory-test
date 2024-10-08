@@ -7,6 +7,7 @@ import {
   InventoryFormResponseType,
   InventoryFormType,
   RequestResponseTableRow,
+  TeamMemberWithUserType,
 } from "@/utils/types";
 import { Box, Button, Group, Modal, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -30,9 +31,17 @@ type Props = {
   eventId: string;
   userId: string;
   selectedRow: string[];
+  teamMemberList: TeamMemberWithUserType[];
+  handleFilterForms: () => void;
 };
 
-const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
+const EventFormModal = ({
+  eventId,
+  userId,
+  selectedRow,
+  teamMemberList,
+  handleFilterForms,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const requestFormMethods = useForm<InventoryFormValues>();
@@ -58,12 +67,16 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
         type: formData?.form_name ?? "",
       });
       setOpened(false);
+      handleFilterForms();
       notifications.show({
         message: "Event Submitted",
         color: "green",
       });
     } catch (e) {
-      console.log(e);
+      notifications.show({
+        message: "Something went wrong",
+        color: "green",
+      });
     }
   };
 
@@ -102,7 +115,12 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
       const params = { eventId, userId };
 
       const form = await getInventoryFormDetails(supabaseClient, params);
-
+      const teamMemberOption = teamMemberList.map((member, index) => ({
+        option_id: member.team_member_id,
+        option_value: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+        option_order: index,
+        option_field_id: form.form_section[1].section_field[0].field_id,
+      }));
       if (value === null) {
         replaceSection([
           {
@@ -113,18 +131,28 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
       }
 
       let newSectionField = [...categorySection.section_field];
-      console.log(value);
 
       if (value === "Site") {
         newSectionField = [
           categorySection.section_field[0],
           ...form.form_section[2].section_field,
         ];
-      }
+      } else if (value === "Person") {
+        newSectionField = [
+          {
+            ...categorySection.section_field[0],
+          },
+          {
+            ...form.form_section[1].section_field[0],
+            field_option: teamMemberOption,
+          },
 
+          ...form.form_section[1].section_field.slice(1, 4),
+        ];
+      }
       updateSection(index, {
         ...categorySection,
-        section_field: newSectionField as typeof categorySection.section_field, // Ensure type matches
+        section_field: newSectionField as typeof categorySection.section_field,
       });
     } catch (e) {
       notifications.show({
@@ -133,6 +161,7 @@ const EventFormModal = ({ eventId, userId, selectedRow }: Props) => {
       });
     }
   };
+
   const handleOnSiteNameChange = async (
     index: number,
     value: string | null

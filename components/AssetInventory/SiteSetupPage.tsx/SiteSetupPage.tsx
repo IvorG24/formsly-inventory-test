@@ -109,7 +109,6 @@ const SiteSetupPage = () => {
   const handleDelete = (site_id: string) => {
     setModalOpened(true);
     siteIdToDelete = site_id;
-    console.log(modalOpened);
 
     console.log("Delete site with ID:", site_id);
   };

@@ -15,7 +15,7 @@ const DisableModal = ({
 }: DisableModalProps) => {
   const handleConfirm = async () => {
     request_id;
-    console.log("Confirmed!");
+
     close(); // Close the modal after confirming
   };
 

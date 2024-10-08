@@ -7299,20 +7299,22 @@ export const getDepartmentList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     search?: string;
-    page: number;
-    limit: number;
+    page?: number;
+    limit?: number;
   }
 ) => {
   const { search, page, limit } = params;
-  const start = (page - 1) * limit;
-  const end = start + limit - 1;
+  const start = page && limit ? (page - 1) * limit : undefined;
+  const end = start !== undefined && limit ? start + limit - 1 : undefined;
 
   let query = supabaseClient
     .schema("team_schema")
     .from("team_department_table")
-    .select("*", { count: "exact" })
-    .range(start, end);
+    .select("*", { count: "exact" });
 
+  if (start !== undefined && end !== undefined) {
+    query = query.range(start, end);
+  }
   if (search) {
     query = query.ilike("team_department_name", `%${search}%`);
   }
@@ -7450,8 +7452,18 @@ export const getAssetSpreadsheetView = async (
     limit: number;
     page: number;
     sort?: boolean;
+    search?: string;
+    sites?: string;
+    locations?: string;
+    department?: string;
+    category?: string;
+    status?: string;
+    assignedToPerson?: string[];
+    assignedToSite?: string[];
   }
 ) => {
+
+
   const { data, error } = await supabaseClient.rpc(
     "get_asset_spreadsheet_view",
     {
@@ -7472,4 +7484,34 @@ export const getColumnList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getAssetListFilterOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+
+  const teamMemberList = await getTeamMemberList(supabaseClient, {
+    teamId: teamId,
+  });
+
+  const { data: siteList } = await getSiteList(supabaseClient, {
+    teamid: teamId,
+  });
+
+  const { data: departmentList } = await getDepartmentList(supabaseClient, {});
+
+  const { data: categoryList } = await getCategoryOptions(supabaseClient, {
+    teamId: teamId,
+  });
+
+  return {
+    teamMemberList,
+    siteList,
+    departmentList,
+    categoryList,
+  };
 };

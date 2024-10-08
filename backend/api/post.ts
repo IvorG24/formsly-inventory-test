@@ -2446,7 +2446,7 @@ export const createAssetRequest = async (
   } = extractInventoryData(InventoryFormValues);
 
   const requestId = uuidv4();
-  
+
   const requestData = {
     requestId,
     formId,
@@ -2490,8 +2490,7 @@ export const getItemOption = async (
     .schema("item_schema")
     .from("item_table")
     .select("*")
-    .eq("item_team_id", params.teamId)
-    .limit(1);
+    .eq("item_team_id", params.teamId);
 
   if (error) throw error;
 

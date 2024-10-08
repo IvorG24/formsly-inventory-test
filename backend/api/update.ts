@@ -1758,13 +1758,15 @@ export const updateEvent = async (
       const fieldResponse = field.field_response;
       const fieldName = field.field_name;
 
-      if (
-        fieldResponse &&
-        (fieldName === "Site" ||
-          fieldName === "Due Date" ||
-          fieldName === "Notes" ||
-          fieldName === "Return Date")
-      ) {
+      const allowedFields = new Set([
+        "Site",
+        "Due Date",
+        "Notes",
+        "Return Date",
+        "Assign To",
+      ]);
+
+      if (fieldResponse && allowedFields.has(fieldName)) {
         fieldResponsesArray.push({
           name: fieldName,
           response: String(fieldResponse),

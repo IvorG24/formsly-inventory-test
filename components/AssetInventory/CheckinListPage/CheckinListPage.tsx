@@ -20,9 +20,9 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
+import AssetListFilter from "../AssetListPage/AssetListFilter";
+import AssetListTable from "../AssetListPage/AssetListTable";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import AssetListFilter from "./AssetListFilter";
-import AssetListTable from "./AssetListTable";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -144,7 +144,6 @@ const AssetListPage = ({
         search,
         assignedToPerson,
         locations,
-        status,
         assignedToSite,
         department,
         sites,
@@ -157,7 +156,7 @@ const AssetListPage = ({
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
         search,
-        status,
+        status: "AVAILABLE",
         assignedToPerson,
         assignedToSite,
         department,
@@ -222,7 +221,7 @@ const AssetListPage = ({
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={4}>Asset List Page</Title>
+          <Title order={4}>Check in List Page</Title>
           <Text>Manage your team assets here.</Text>
         </Box>
       </Flex>
@@ -230,6 +229,7 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              type={"check in"}
               selectedRow={selectedRows}
               userId={userId}
               eventOptions={optionsEvent}

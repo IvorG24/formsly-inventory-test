@@ -1,5 +1,6 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
@@ -76,6 +77,8 @@ const AssetListTable = ({
   tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
+  const teamMember = useUserTeamMember();
+
   const { classes } = useStyles();
   const router = useRouter();
   useEffect(() => {
@@ -154,20 +157,25 @@ const AssetListTable = ({
       columns={[
         {
           accessor: "checkbox",
-          title: (
-            <Checkbox
-              checked={isAllSelected}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-            />
-          ),
+          title: "",
           width: 40,
-          render: ({ inventory_request_id }) => {
+          render: (record) => {
+            const { assignee_team_member_id, inventory_request_id } =
+              record as {
+                inventory_request_id: string;
+                assignee_team_member_id: string;
+              };
+
             const isChecked = selectedRow.includes(
               String(inventory_request_id)
             );
+            const isDisabled =
+              assignee_team_member_id === teamMember?.team_member_id;
+
             return (
               <Checkbox
                 checked={isChecked}
+                disabled={isDisabled}
                 onChange={(e) =>
                   handleRowSelect(
                     String(inventory_request_id),

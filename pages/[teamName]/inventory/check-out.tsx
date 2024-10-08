@@ -1,6 +1,6 @@
 // Imports
 import { getAssetListFilterOptions } from "@/backend/api/get";
-import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
+import CheckoutListPage from "@/components/AssetInventory/CheckoutListPage/CheckoutListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -52,13 +52,16 @@ const Page = ({
 }: Props) => {
   return (
     <>
-      <Meta description="Asset List Page" url="/teamName/inventory" />
-      <AssetListPage
+      <Meta
+        description="Check in List Page"
+        url="/teamName/inventory/check-out"
+      />
+      <CheckoutListPage
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
         teamMemberList={teamMemberList}
-        userId={userId} // Pass userId to the AssetListPage component if needed
+        userId={userId}
       />
     </>
   );
