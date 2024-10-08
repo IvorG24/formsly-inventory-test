@@ -1,9 +1,8 @@
 // Imports
 import { getRequestListOnLoad } from "@/backend/api/get";
-import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
+import AssetInventoryDetailsPage from "@/components/AssetInventory/AssetInventoryDetailsPage/AssetInventoryDetailsPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -29,21 +28,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 
-type Props = {
-  teamMemberList: TeamMemberWithUserType[];
-  userId: string;
-  projectList: TeamProjectTableRow[];
-};
-
-const Page = ({ teamMemberList, userId, projectList }: Props) => {
+const Page = () => {
   return (
     <>
       <Meta description="Asset List Page" url="/teamName/inventory[assetId]" />
-      <AssetListPage
-        teamMemberList={teamMemberList}
-        projectList={projectList}
-        userId={userId} // Pass userId to the AssetListPage component if needed
-      />
+      <AssetInventoryDetailsPage />
     </>
   );
 };
