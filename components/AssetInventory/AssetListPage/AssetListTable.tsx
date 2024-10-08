@@ -96,17 +96,6 @@ const AssetListTable = ({
     setSelectedRow(newSelectedRows);
   };
 
-  const isAllSelected = selectedRow.length === requestList.length;
-
-  const handleSelectAll = (isChecked: boolean) => {
-    if (isChecked) {
-      const allIds = requestList.map((request) => request.inventory_request_id);
-      setSelectedRow(allIds);
-    } else {
-      setSelectedRow([]);
-    }
-  };
-
   const dynamicColumns = tableColumnList
     .filter(
       (column) =>
