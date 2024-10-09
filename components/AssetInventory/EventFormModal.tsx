@@ -147,7 +147,7 @@ const EventFormModal = ({
             field_option: teamMemberOption,
           },
 
-          ...form.form_section[1].section_field.slice(1, 4),
+          ...form.form_section[1].section_field.slice(1, 7),
         ];
       }
       updateSection(index, {
@@ -189,27 +189,15 @@ const EventFormModal = ({
         option_order: index,
         option_field_id: siteLocationSection.section_field[1].field_id,
       }));
-      const newSectionField = [
-        {
-          ...siteLocationSection.section_field[0],
-        },
-        {
-          ...siteLocationSection.section_field[1],
-        },
-        {
-          ...siteLocationSection.section_field[2],
-          field_option: optionList,
-        },
-        {
-          ...siteLocationSection.section_field[3],
-        },
-        {
-          ...siteLocationSection.section_field[4],
-        },
-        {
-          ...siteLocationSection.section_field[5],
-        },
-      ];
+      const newSectionField = siteLocationSection.section_field.map((field) => {
+        if (field.field_name === "Location") {
+          return {
+            ...field,
+            field_option: optionList,
+          };
+        }
+        return { ...field };
+      });
 
       updateSection(index, {
         ...siteLocationSection,

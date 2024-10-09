@@ -107,6 +107,7 @@ const AssetListTable = ({
     .map((column) => ({
       accessor: column.value,
       title: column.label,
+      width: 180,
       render: (record: Record<string, unknown>) => {
         const value =
           record[column.value] !== undefined && record[column.value] !== null

@@ -1760,6 +1760,8 @@ export const updateEvent = async (
 
       const allowedFields = new Set([
         "Site",
+        "location",
+        "department",
         "Due Date",
         "Notes",
         "Return Date",

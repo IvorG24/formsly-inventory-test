@@ -4,15 +4,15 @@ import {
   Container,
   Grid,
   Group,
-  List,
   Paper,
   Table,
   Tabs,
   Text,
 } from "@mantine/core";
+import EventPanel from "./EventPanel";
+import HistoryPanel from "./HistoryPanel";
 
 const AssetInventoryDetailsPage = () => {
-  // Example asset data, replace with dynamic data as needed
   const assetDetails = {
     assetTagId: "zxadz",
     purchaseDate: "09/19/2024",
@@ -32,10 +32,6 @@ const AssetInventoryDetailsPage = () => {
     notes: "hey",
     createdBy: "Mark Ivor Glorioso",
   };
-
-  // Example lists for Events and History (replace with dynamic data)
-  const eventsList = ["Event 1", "Event 2", "Event 3"];
-  const historyList = ["History 1", "History 2", "History 3"];
 
   return (
     <Container size="lg">
@@ -142,86 +138,14 @@ const AssetInventoryDetailsPage = () => {
               <Text size="lg" weight={500}>
                 Asset Details
               </Text>
-              <Grid mt="sm">
-                <Grid.Col span={6}>
-                  <Table>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Serial No</Text>
-                        </td>
-                        <td>{assetDetails.serialNo}</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Purchased from</Text>
-                        </td>
-                        <td>{assetDetails.purchasedFrom}</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Date Disposed</Text>
-                        </td>
-                        <td>{assetDetails.dateDisposed}</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </Grid.Col>
-
-                <Grid.Col span={6}>
-                  <Table>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Dispose to</Text>
-                        </td>
-                        <td>{assetDetails.disposeTo}</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Date Created</Text>
-                        </td>
-                        <td>{assetDetails.dateCreated}</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <Text weight={500}>Notes</Text>
-                        </td>
-                        <td>{assetDetails.notes}</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </Grid.Col>
-              </Grid>
             </Card>
           </Tabs.Panel>
-
           <Tabs.Panel value="events" mt="md">
-            <Card withBorder shadow="sm">
-              <Text size="lg" weight={500}>
-                Events
-              </Text>
-              {/* List of Events */}
-              <List>
-                {eventsList.map((event, index) => (
-                  <List.Item key={index}>{event}</List.Item>
-                ))}
-              </List>
-            </Card>
+            <EventPanel />
           </Tabs.Panel>
 
           <Tabs.Panel value="history" mt="md">
-            <Card withBorder shadow="sm">
-              <Text size="lg" weight={500}>
-                History
-              </Text>
-
-              <List>
-                {historyList.map((history, index) => (
-                  <List.Item key={index}>{history}</List.Item>
-                ))}
-              </List>
-            </Card>
+            <HistoryPanel />
           </Tabs.Panel>
         </Tabs>
       </Paper>
