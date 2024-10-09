@@ -64,7 +64,7 @@ type Props = {
 const OnboardingPage = ({ user }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [idType, setIdType] = useState<string | null>(null);

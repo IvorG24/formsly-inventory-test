@@ -52,7 +52,7 @@ const Page = ({ positionOptionList, hrOptionList }: Props) => {
   return (
     <>
       <Meta
-        description="HR Phone Interview Spreadsheet View Page"
+        description="HR Interview Spreadsheet View Page"
         url="/{teamName}/requests/hr-phone-interview-spreadsheet-view"
       />
       <HRPhoneInterviewSpreadsheetView

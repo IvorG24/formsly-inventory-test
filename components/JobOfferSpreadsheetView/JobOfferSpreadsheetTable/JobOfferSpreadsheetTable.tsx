@@ -1,6 +1,14 @@
 import { unsortableFieldList } from "@/utils/constant";
 import { useStyles } from "@/utils/styling";
-import { JobOfferSpreadsheetData, OptionType } from "@/utils/types";
+import {
+  HRProjectType,
+  JobOfferSpreadsheetData,
+  OptionType,
+  TeamMemberTableRow,
+  TeamMemberType,
+  TeamTableRow,
+  UserTableRow,
+} from "@/utils/types";
 import {
   Button,
   Center,
@@ -87,6 +95,12 @@ type Props = {
   setData: Dispatch<SetStateAction<JobOfferSpreadsheetData[]>>;
   positionOptionList: OptionType[];
   handleCheckRow: (item: JobOfferSpreadsheetData) => Promise<boolean>;
+  user: UserTableRow | null;
+  teamMember: TeamMemberTableRow | null;
+  team: TeamTableRow;
+  projectOptions: HRProjectType[];
+  teamMemberGroupList: string[];
+  teamMemberOptions: TeamMemberType[];
 };
 
 const JobOfferSpreadsheetTable = ({
@@ -101,6 +115,12 @@ const JobOfferSpreadsheetTable = ({
   setData,
   positionOptionList,
   handleCheckRow,
+  user,
+  teamMember,
+  team,
+  projectOptions,
+  teamMemberGroupList,
+  teamMemberOptions,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -181,6 +201,12 @@ const JobOfferSpreadsheetTable = ({
                   setData={setData}
                   positionOptionList={positionOptionList}
                   handleCheckRow={handleCheckRow}
+                  user={user}
+                  teamMember={teamMember}
+                  team={team}
+                  projectOptions={projectOptions}
+                  teamMemberGroupList={teamMemberGroupList}
+                  teamMemberOptions={teamMemberOptions}
                 />
               ))}
             </tbody>

@@ -72,7 +72,7 @@ const HRPhoneInterviewSpreadsheetView = ({
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<HRPhoneInterviewSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
@@ -263,11 +263,12 @@ const HRPhoneInterviewSpreadsheetView = ({
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            HR Phone Interview Spreadsheet View
+            HR Interview Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -277,6 +278,7 @@ const HRPhoneInterviewSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <HRPhoneInterviewColumnsMenu

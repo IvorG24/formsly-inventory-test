@@ -52,7 +52,7 @@ const Page = ({ positionOptionList, hrOptionList }: Props) => {
   return (
     <>
       <Meta
-        description="Technical Interview 1 Spreadsheet View Page"
+        description="Department Interview Spreadsheet View Page"
         url="/{teamName}/requests/technical-interview-1-spreadsheet-view"
       />
       <TechnicalInterviewSpreadsheetView

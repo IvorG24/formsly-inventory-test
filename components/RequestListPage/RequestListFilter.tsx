@@ -17,6 +17,15 @@ import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+type FilterSelectedValuesType = {
+  form: string[];
+  status: string[];
+  requestor: string[];
+  approver: string[];
+  project: string[];
+  isApproversView: boolean;
+};
+
 type RequestListFilterProps = {
   formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
@@ -26,15 +35,7 @@ type RequestListFilterProps = {
   projectList: TeamProjectTableRow[];
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
-};
-
-type FilterSelectedValuesType = {
-  form: string[];
-  status: string[];
-  requestor: string[];
-  approver: string[];
-  project: string[];
-  isApproversView: boolean;
+  isFetchingRequestList: boolean;
 };
 
 const RequestListFilter = ({
@@ -46,6 +47,7 @@ const RequestListFilter = ({
   projectList,
   showTableColumnFilter,
   setShowTableColumnFilter,
+  isFetchingRequestList,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -136,6 +138,7 @@ const RequestListFilter = ({
           onClick={() => {
             handleFilterForms();
           }}
+          disabled={isFetchingRequestList}
         >
           Refresh
         </Button>
@@ -170,6 +173,7 @@ const RequestListFilter = ({
             }}
             onLabel="ON"
             offLabel="OFF"
+            disabled={isFetchingRequestList}
           />
         </Flex>
       </Flex>

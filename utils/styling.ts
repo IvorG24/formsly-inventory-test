@@ -70,6 +70,8 @@ export const getStatusToColor = (status: string) => {
       return "grape";
     case "not responsive":
       return "gray";
+    case "for pooling":
+      return "yellow";
     default:
       return "";
   }

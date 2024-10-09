@@ -344,6 +344,30 @@ export const generateDateLabels = (
 
   return labels;
 };
+
+export const getFilterConditionFromArray = ({
+  values,
+  column,
+  operator = "IN",
+}: {
+  values: string[] | undefined;
+  column: string;
+  operator?: "IN" | "SIMILAR TO";
+}) => {
+  if (!values) return "";
+  switch (operator) {
+    case "IN":
+      const inColumnCondition = values.map((value) => `'${value}'`).join(",");
+      return `${column} ${operator} (${inColumnCondition})`;
+
+    case "SIMILAR TO":
+      const ilikeColumnCondition = values.map((value) => `${value}%`).join("|");
+      return `${column} ${operator} '${ilikeColumnCondition}'`;
+
+    default:
+      break;
+  }
+};
 export const extractInventoryData = (
   InventoryFormValues: InventoryFormValues
 ) => {

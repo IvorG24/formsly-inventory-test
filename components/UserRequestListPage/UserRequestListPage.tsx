@@ -98,7 +98,6 @@ const UserRequestListPage = ({ formList }: Props) => {
       };
 
       const { data, count } = await getUserRequestList(supabaseClient, params);
-
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
@@ -153,6 +152,7 @@ const UserRequestListPage = ({ formList }: Props) => {
               setShowTableColumnFilter={setShowTableColumnFilter}
               localFilter={localFilter}
               setLocalFilter={setLocalFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

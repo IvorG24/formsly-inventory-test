@@ -1,17 +1,7 @@
-import {
-  getHRProjectOptions,
-  getJobHistory,
-  getTeamMemberList,
-} from "@/backend/api/get";
+import { getJobHistory } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
 import {
   formatDate,
   formatTime,
@@ -28,7 +18,10 @@ import {
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
   OptionType,
+  TeamMemberTableRow,
   TeamMemberType,
+  TeamTableRow,
+  UserTableRow,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -82,6 +75,12 @@ type Props = {
   setData: Dispatch<SetStateAction<JobOfferSpreadsheetData[]>>;
   positionOptionList: OptionType[];
   handleCheckRow: (item: JobOfferSpreadsheetData) => Promise<boolean>;
+  user: UserTableRow | null;
+  teamMember: TeamMemberTableRow | null;
+  team: TeamTableRow;
+  projectOptions: HRProjectType[];
+  teamMemberGroupList: string[];
+  teamMemberOptions: TeamMemberType[];
 };
 
 const JobOfferMainTableRow = ({
@@ -90,13 +89,16 @@ const JobOfferMainTableRow = ({
   setData,
   positionOptionList,
   handleCheckRow,
+  user,
+  teamMember,
+  team,
+  projectOptions,
+  teamMemberGroupList,
+  teamMemberOptions,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
-  const team = useActiveTeam();
-  const user = useUserProfile();
-  const teamMember = useUserTeamMember();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
+
   const { setIsLoading } = useLoadingActions();
 
   const [
@@ -111,10 +113,6 @@ const JobOfferMainTableRow = ({
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
   const [isOverriding, setIsOverriding] = useState(false);
-  const [teamMemberOptions, setTeamMemberOptions] = useState<TeamMemberType[]>(
-    []
-  );
-  const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
 
   const {
     handleSubmit,
@@ -136,30 +134,6 @@ const JobOfferMainTableRow = ({
       projectLongitude: undefined,
     },
   });
-
-  useEffect(() => {
-    const fetchJobOfferData = async () => {
-      try {
-        setIsLoading(true);
-        const teamMemberData = await getTeamMemberList(supabaseClient, {
-          teamId: team.team_id,
-        });
-        setTeamMemberOptions(teamMemberData);
-        const projectData = await getHRProjectOptions(supabaseClient);
-        setProjectOptions(projectData);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (team.team_id) {
-      fetchJobOfferData();
-    }
-  }, [team.team_id]);
 
   useEffect(() => {
     if (!jobOfferModalIsOpen) {
@@ -488,12 +462,21 @@ const JobOfferMainTableRow = ({
                       searchable
                       onChange={onChange}
                       error={errors.projectAssignment?.message}
-                      data={teamMemberOptions.map((teamMember) => {
-                        return {
-                          label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-                          value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-                        };
-                      })}
+                      data={teamMemberOptions
+                        .filter(
+                          (item, index, array) =>
+                            array.findIndex(
+                              (obj) =>
+                                `${obj.team_member_user.user_first_name} ${obj.team_member_user.user_last_name}` ===
+                                `${item.team_member_user.user_first_name} ${item.team_member_user.user_last_name}`
+                            ) === index
+                        )
+                        .map((teamMember) => {
+                          return {
+                            label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                            value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                          };
+                        })}
                       withinPortal
                       autoFocus={false}
                     />

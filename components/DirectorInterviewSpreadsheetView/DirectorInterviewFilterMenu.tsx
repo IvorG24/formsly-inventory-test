@@ -20,6 +20,7 @@ type Props = {
   handleReset: () => void;
   positionOptionList: OptionType[];
   hrOptionList: OptionType[];
+  isLoading: boolean;
 };
 
 const DirectorInterviewFilterMenu = ({
@@ -27,6 +28,7 @@ const DirectorInterviewFilterMenu = ({
   handleReset,
   positionOptionList,
   hrOptionList,
+  isLoading,
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
@@ -347,10 +349,13 @@ const DirectorInterviewFilterMenu = ({
                 handleReset();
                 closeFilterMenu();
               }}
+              disabled={isLoading}
             >
               Reset Filter
             </Button>
-            <Button type="submit">Apply Filter</Button>
+            <Button type="submit" disabled={isLoading}>
+              Apply Filter
+            </Button>
           </Stack>
         </form>
       </Drawer>

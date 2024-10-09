@@ -1,11 +1,11 @@
 import {
   getRequestStatusCount,
   getRequestStatusMonthlyCount,
-  getTeamMemberList,
 } from "@/backend/api/get";
 import { RadialChartData } from "@/components/Chart/RadialChart";
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
+import { useTeamMemberStore } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_ON_SCROLL_LIMIT } from "@/utils/constant";
 import { TeamMemberType } from "@/utils/types";
@@ -52,7 +52,7 @@ const Overview = ({
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = useSupabaseClient();
-  const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
+  const teamMemberList = useTeamMemberStore();
   const [requestStatusCount, setRequestStatusCount] = useState<
     RadialChartData[] | null
   >(null);
@@ -77,18 +77,6 @@ const Overview = ({
 
   const [signerOffset, setSignerOffset] = useState(1);
   const [isSignerFetchable, setIsSignerFetchable] = useState(false);
-
-  useEffect(() => {
-    const fetchTeamMemberList = async () => {
-      const members = await getTeamMemberList(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-      setTeamMemberList(members);
-    };
-    if (activeTeam.team_id) {
-      fetchTeamMemberList();
-    }
-  }, [activeTeam.team_id]);
 
   useEffect(() => {
     if (!startDateFilter || !endDateFilter) return;

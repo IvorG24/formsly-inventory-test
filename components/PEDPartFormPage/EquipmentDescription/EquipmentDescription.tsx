@@ -40,7 +40,7 @@ const EquipmentDescription = ({
     useState(false);
   const [editEquipmentDescription, setEditEquipmentDescription] =
     useState<EquipmentDescriptionType | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEquipmentDescriptionList = async () => {

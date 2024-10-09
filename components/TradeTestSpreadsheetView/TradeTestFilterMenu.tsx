@@ -20,6 +20,7 @@ type Props = {
   handleReset: () => void;
   positionOptionList: OptionType[];
   hrOptionList: OptionType[];
+  isLoading: boolean;
 };
 
 const TradeTestFilterMenu = ({
@@ -27,6 +28,7 @@ const TradeTestFilterMenu = ({
   handleReset,
   positionOptionList,
   hrOptionList,
+  isLoading
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
@@ -47,7 +49,7 @@ const TradeTestFilterMenu = ({
         opened={isFilterMenuOpen}
         onClose={closeFilterMenu}
         position="right"
-        title="Trade Test Filter Menu"
+        title="Practical Test Filter Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -206,7 +208,7 @@ const TradeTestFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Trade Test Date Created
+                Practical Test Date Created
               </Text>
               <Flex gap="xs">
                 <Controller
@@ -252,7 +254,7 @@ const TradeTestFilterMenu = ({
                 const newValue = value ?? [];
                 return (
                   <MultiSelect
-                    label="Trade Test Status"
+                    label="Practical Test Status"
                     data={[
                       { value: "PENDING", label: "Pending" },
                       { value: "QUALIFIED", label: "Qualified" },
@@ -284,7 +286,7 @@ const TradeTestFilterMenu = ({
             />
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Trade Test Schedule
+                Practical Test Schedule
               </Text>
               <Flex gap="xs">
                 <Controller
@@ -347,10 +349,13 @@ const TradeTestFilterMenu = ({
                 handleReset();
                 closeFilterMenu();
               }}
+              disabled={isLoading}
             >
               Reset Filter
             </Button>
-            <Button type="submit">Apply Filter</Button>
+            <Button type="submit" disabled={isLoading}>
+              Apply Filter
+            </Button>
           </Stack>
         </form>
       </Drawer>

@@ -2614,6 +2614,13 @@ export type Dataset = {
   cancelled_counts: string[];
 };
 
+export type UnformattedRequestListItemRequestSigner = {
+  request_signer_id: string;
+  request_signer_status: string;
+  signer_team_member_id: string;
+  signer_is_primary_signer: boolean;
+};
+
 export type InventoryFormResponseType = {
   form_id: string;
   form_name: string;

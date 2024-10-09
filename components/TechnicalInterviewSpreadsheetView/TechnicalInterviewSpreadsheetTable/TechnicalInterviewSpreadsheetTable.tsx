@@ -21,54 +21,6 @@ import {
 } from "@tabler/icons-react";
 import { Dispatch, SetStateAction } from "react";
 import TechnicalInterviewMainTableRow from "./TechnicalInterviewMainTableRow";
-const columnList = [
-  { field_id: "position", field_name: "Position" },
-  { field_id: "application_information_full_name", field_name: "Name" },
-  {
-    field_id: "application_information_contact_number",
-    field_name: "Contact Number",
-  },
-  { field_id: "application_information_email", field_name: "Email" },
-  {
-    field_id: "application_information_request_id",
-    field_name: "Application Information Request ID",
-  },
-  {
-    field_id: "application_information_score",
-    field_name: "Application Information Score",
-  },
-  {
-    field_id: "general_assessment_request_id",
-    field_name: "General Assessment Request ID",
-  },
-  {
-    field_id: "general_assessment_score",
-    field_name: "General Assessment Score",
-  },
-  {
-    field_id: "technical_assessment_request_id",
-    field_name: "Technical Assessment Request ID",
-  },
-  {
-    field_id: "technical_assessment_score",
-    field_name: "Technical Assessment Score",
-  },
-  {
-    field_id: "technical_interview_date_created",
-    field_name: "Technical Interview Date Created",
-  },
-  {
-    field_id: "technical_interview_status",
-    field_name: "Technical Interview Status",
-  },
-  {
-    field_id: "technical_interview_schedule",
-    field_name: "Technical Interview Schedule",
-  },
-  { field_id: "assigned_hr", field_name: "Assigned HR" },
-  { field_id: "meeting_link", field_name: "Meeting Link" },
-  { field_id: "action", field_name: "Action" },
-];
 
 type Props = {
   data: TechnicalInterviewSpreadsheetData[];
@@ -84,6 +36,7 @@ type Props = {
     data: TechnicalInterviewSpreadsheetData
   ) => void;
   handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
+  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -97,8 +50,59 @@ const TechnicalInterviewSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
   handleCheckRow,
+  technicalInterviewNumber,
 }: Props) => {
   const { classes } = useStyles();
+  const label = technicalInterviewNumber === 1 ? "Derpartment" : "Requestor";
+
+  const columnList = [
+    { field_id: "position", field_name: "Position" },
+    { field_id: "application_information_full_name", field_name: "Name" },
+    {
+      field_id: "application_information_contact_number",
+      field_name: "Contact Number",
+    },
+    { field_id: "application_information_email", field_name: "Email" },
+    {
+      field_id: "application_information_request_id",
+      field_name: "Application Information Request ID",
+    },
+    {
+      field_id: "application_information_score",
+      field_name: "Application Information Score",
+    },
+    {
+      field_id: "general_assessment_request_id",
+      field_name: "General Assessment Request ID",
+    },
+    {
+      field_id: "general_assessment_score",
+      field_name: "General Assessment Score",
+    },
+    {
+      field_id: "technical_assessment_request_id",
+      field_name: "Technical Assessment Request ID",
+    },
+    {
+      field_id: "technical_assessment_score",
+      field_name: "Technical Assessment Score",
+    },
+    {
+      field_id: "technical_interview_date_created",
+      field_name: `${label} Interview Date Created`,
+    },
+    {
+      field_id: "technical_interview_status",
+      field_name: `${label} Interview Status`,
+    },
+    {
+      field_id: "technical_interview_schedule",
+      field_name: `${label} Interview Schedule`,
+    },
+    { field_id: "assigned_hr", field_name: "Assigned HR" },
+    { field_id: "meeting_link", field_name: "Meeting Link" },
+    { field_id: "action", field_name: "Action" },
+  ];
 
   const handleSortClick = (sortBy: string) => {
     setSort((prev) => {

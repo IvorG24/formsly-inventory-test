@@ -76,7 +76,7 @@ const TechnicalInterviewSpreadsheetView = ({
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<TechnicalInterviewSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
@@ -271,11 +271,13 @@ const TechnicalInterviewSpreadsheetView = ({
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            Technical Interview {technicalInterviewNumber} Spreadsheet View
+            {technicalInterviewNumber === 1 ? "Department" : "Requestor"}{" "}
+            Interview Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -285,12 +287,15 @@ const TechnicalInterviewSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              technicalInterviewNumber={technicalInterviewNumber}
+              isLoading={isLoading}
             />
           </FormProvider>
           <TechnicalInterviewColumnsMenu
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
             columnList={Object.keys(formDefaultValues)}
+            technicalInterviewNumber={technicalInterviewNumber}
           />
         </Group>
       </Box>
@@ -307,6 +312,7 @@ const TechnicalInterviewSpreadsheetView = ({
           handleUpdateTechnicalInterviewStatus
         }
         handleCheckRow={handleCheckRow}
+        technicalInterviewNumber={technicalInterviewNumber}
       />
     </Stack>
   );

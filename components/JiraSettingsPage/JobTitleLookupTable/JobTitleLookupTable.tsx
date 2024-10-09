@@ -39,7 +39,7 @@ import JobTitleLookupForm from "./JobTitleLookupForm";
 const JobTitleLookupTable = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [openJobTitleLookupFormModal, setOpenJobTitleLookupFormModal] =
     useState(false);
   const [isUpdatingJobTitle, setIsUpdatingJobTitle] = useState(false);
@@ -230,6 +230,7 @@ const JobTitleLookupTable = () => {
               variant="light"
               leftIcon={<IconReload size={16} />}
               onClick={() => handlePagination(activePage)}
+              disabled={isLoading}
             >
               Refresh
             </Button>

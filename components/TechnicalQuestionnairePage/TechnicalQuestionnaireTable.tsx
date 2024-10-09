@@ -7,7 +7,6 @@ import {
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import {
-  TeamMemberWithUserType,
   TechnicalAssessmentFilterValues,
   TechnicalAssessmentTableRow,
 } from "@/utils/types";
@@ -31,7 +30,6 @@ import ListTable from "../ListTable/ListTable";
 type Props = {
   questionnairList: TechnicalAssessmentTableRow[];
   questionnairListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   activePage: number;
   isFetchingRequestList: boolean;
   handlePagination: (p: number) => void;
@@ -166,7 +164,6 @@ const TechnicalQuestionnaireTable = ({
           hidden: checkIfColumnIsHidden("questionnaire_created_by"),
           render: (questionnaire) => {
             if (!questionnaire) {
-              console.error("No data for created_by");
               return null;
             }
             const {

@@ -1,24 +1,13 @@
-import { getTeamMemberList, getUserActiveTeamId } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import UserItemAnalyticsPage from "@/components/UserItemAnalyticsPage/UserItemAnalyticsPage";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
-import { TeamMemberType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
-  async ({ supabaseClient, user }) => {
+  async () => {
     try {
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId,
-      });
-
       return {
-        props: {
-          teamMemberList,
-        },
+        props: {},
       };
     } catch (e) {
       return {
@@ -31,18 +20,14 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   }
 );
 
-type Props = {
-  teamMemberList: TeamMemberType[];
-};
-
-const Page = ({ teamMemberList }: Props) => {
+const Page = () => {
   return (
     <>
       <Meta
         description="Item Analytics Page"
         url="/{teamName}/item-analytics"
       />
-      <UserItemAnalyticsPage teamMemberList={teamMemberList} />
+      <UserItemAnalyticsPage />
     </>
   );
 };

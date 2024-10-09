@@ -367,7 +367,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
             target: ".next-step",
             content: (
               <Text>
-                You can now continue to HR Phone Interview since the technical
+                You can now continue to HR Interview since the technical
                 assessment has been approved. To continue, simply click the
                 &ldquo;Next Step&ldquo; button.
               </Text>

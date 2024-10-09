@@ -29,7 +29,7 @@ const CategoryLookup = ({ lookup }: Props) => {
   const [categoryLookupCount, setCategoryLookupCount] = useState(0);
   const [isCreatingCategoryLookup, setIsCreatingCategoryLookup] =
     useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editCategoryLookup, setEditCategoryLookup] =
     useState<LookupTable | null>(null);
 

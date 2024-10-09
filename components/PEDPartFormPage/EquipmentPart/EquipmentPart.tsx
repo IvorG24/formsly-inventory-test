@@ -33,7 +33,7 @@ const EquipmentPart = ({ selectedEquipment, setSelectedEquipment }: Props) => {
   const [isCreatingEquipmentPart, setIsCreatingEquipmentPart] = useState(false);
   const [editEquipmentPart, setEditEquipmentPart] =
     useState<EquipmentPartType | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchEquipmentPartList = async () => {

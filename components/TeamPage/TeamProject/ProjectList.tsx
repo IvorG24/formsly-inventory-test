@@ -1,14 +1,10 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getFileUrl, getTeamMemberList } from "@/backend/api/get";
+import { getFileUrl } from "@/backend/api/get";
 import { addMemberToAllProject } from "@/backend/api/post";
-import { useActiveTeam } from "@/stores/useTeamStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import {
-  AddressTableRow,
-  TeamMemberType,
-  TeamProjectWithAddressType,
-} from "@/utils/types";
+import { AddressTableRow, TeamProjectWithAddressType } from "@/utils/types";
 import {
   ActionIcon,
   Badge,
@@ -38,7 +34,7 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -91,41 +87,15 @@ const ProjectList = ({
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
-  const [isFetchingTeamMembers, setIsFetchingTeamMembers] = useState(false);
-  const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
   const [isAddingToAllProjects, setIsAddingToAllProjects] = useState(false);
   const [multiselectValue, setMultiSelectValue] = useState<string[]>([]);
-
+  const teamMemberList = useTeamMemberList();
   const headerCheckboxKey = generateRandomId();
-
-  const fetchProjectMembers = async () => {
-    setIsFetchingTeamMembers(true);
-    try {
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-      setTeamMemberList(teamMemberList);
-    } catch {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingTeamMembers(false);
-    }
-  };
-
-  useEffect(() => {
-    if (opened) {
-      fetchProjectMembers();
-    }
-  }, [opened]);
 
   const handleCheckRow = (projectId: string) => {
     if (checkList.includes(projectId)) {
@@ -369,11 +339,7 @@ const ProjectList = ({
         withCloseButton={false}
       >
         <Stack>
-          <LoadingOverlay
-            mt="xl"
-            visible={isFetchingTeamMembers}
-            overlayBlur={2}
-          />
+          <LoadingOverlay mt="xl" visible={false} overlayBlur={2} />
           <MultiSelect
             data={teamMemberList.map((member) => {
               return {

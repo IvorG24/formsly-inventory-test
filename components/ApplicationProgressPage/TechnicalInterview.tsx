@@ -75,7 +75,9 @@ const TechnicalInterview = ({
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <LoadingOverlay visible={isLoading} />
-      <Title order={3}>Technical Interview {technicalInterviewNumber}</Title>
+      <Title order={3}>
+        {technicalInterviewNumber === 1 ? "Department" : "Requestor"} Interview
+      </Title>
       <Stack>
         <Group>
           <Text>Date Created: </Text>
@@ -125,10 +127,14 @@ const TechnicalInterview = ({
             technicalInterviewData.technical_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>
                 <Text>
-                  Your Technical Interview is scheduled. The meeting link will
-                  be made available on the exact date of the meeting. Please
-                  wait for further details and let us know if you have any
-                  questions. Looking forward to speaking with you soon!
+                  Your{" "}
+                  {technicalInterviewData.technical_interview_number === 1
+                    ? "Department"
+                    : "Requestor"}{" "}
+                  Interview is scheduled. The meeting link will be made
+                  available on the exact date of the meeting. Please wait for
+                  further details and let us know if you have any questions.
+                  Looking forward to speaking with you soon!
                 </Text>
               </Alert>
             )}

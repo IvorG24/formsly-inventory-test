@@ -1,8 +1,4 @@
-import {
-  checkIfGroupMember,
-  getTechnicalOptionsItem,
-  getUserActiveTeamId,
-} from "@/backend/api/get";
+import { checkIfGroupMember, getTechnicalOptionsItem } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TechnicalAssessmentViewQuestionPage from "@/components/TechnicalAssessmentCreateQuestionPage/TechnicalAssessmentViewQuestionPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -26,12 +22,9 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
-      const getTeam = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
 
       const questionnaireData = await getTechnicalOptionsItem(supabaseClient, {
-        teamId: getTeam,
+        teamId: userActiveTeam.team_id,
         questionnaireId: questionnaireId,
       });
 

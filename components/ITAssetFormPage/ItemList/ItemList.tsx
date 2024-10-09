@@ -104,7 +104,7 @@ const ItemList = ({
   const activeTeam = useActiveTeam();
   const router = useRouter();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [activePage, setActivePage] = useState(1);
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({

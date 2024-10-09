@@ -58,7 +58,7 @@ const FormDepartmentSignerSection = ({
     DepartmentSigner[]
   >([]);
   const [departmentSignerCount, setDepartmentSignerCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activePage, setActivePage] = useState(1);
   const [departmentSearch, setDepartmentSearch] = useState("");
   const [openDepartmentSignerForm, setOpenDepartmentSignerForm] =
@@ -241,6 +241,7 @@ const FormDepartmentSignerSection = ({
             onClick={() =>
               handleFetchDepartmentSignerList(activePage, departmentSearch)
             }
+            disabled={isLoading}
           >
             Refresh
           </Button>

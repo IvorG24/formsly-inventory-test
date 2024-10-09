@@ -71,7 +71,7 @@ const BackgroundCheckSpreadsheetView = ({
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<BackgroundCheckSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
@@ -226,6 +226,7 @@ const BackgroundCheckSpreadsheetView = ({
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -235,6 +236,7 @@ const BackgroundCheckSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <BackgroundCheckColumnsMenu

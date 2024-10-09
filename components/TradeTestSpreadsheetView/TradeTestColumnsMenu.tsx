@@ -41,7 +41,7 @@ const TradeTestColumnsMenu = ({
         opened={isColumnMenuOpen}
         onClose={closeColumnMenu}
         position="right"
-        title="Trade Test Columns Menu"
+        title="Practical Test Columns Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -49,7 +49,11 @@ const TradeTestColumnsMenu = ({
           {columnList.map((column, index) => (
             <Grid key={index}>
               <Grid.Col span={10}>
-                <Text>{capitalizeEachWord(column.replaceAll("_", " "))}</Text>
+                <Text>
+                  {capitalizeEachWord(
+                    column.replaceAll("_", " ").replaceAll("trade", "practical")
+                  )}
+                </Text>
               </Grid.Col>
               <Grid.Col span={2}>
                 <Flex h="100%" align="center">
@@ -82,6 +86,7 @@ const TradeTestColumnsMenu = ({
           fullWidth
           onClick={() => {
             setHiddenColumnList([]);
+            closeColumnMenu();
           }}
         >
           Reset Column

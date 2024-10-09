@@ -42,7 +42,7 @@ const ExistingOptionsDialog = ({ item, opened, close }: Props) => {
   const { classes } = useStyles();
   const itemDescription = item.item_description[0];
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activePage, setActivePage] = useState(1);
   const [search, setSearch] = useState("");
   const [recordList, setRecordList] = useState<ItemDescriptionFieldWithUoM[]>(

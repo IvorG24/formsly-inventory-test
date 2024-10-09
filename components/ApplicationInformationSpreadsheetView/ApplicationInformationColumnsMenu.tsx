@@ -3,7 +3,6 @@ import {
   Accordion,
   Box,
   Button,
-  ColorSwatch,
   Drawer,
   Flex,
   Grid,
@@ -12,12 +11,10 @@ import {
   Stack,
   Switch,
   Text,
-  useMantineTheme,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconColumns3 } from "@tabler/icons-react";
 import { Dispatch, SetStateAction } from "react";
-import { ClassNameType } from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
 
 export const swatchMap = {
   Request: "blue",
@@ -58,10 +55,6 @@ const requestColumnList = {
       field_id: "Score",
       field_name: "Score",
     },
-    {
-      field_id: "Ad Owner",
-      field_name: "Add Owner",
-    },
   ],
 };
 
@@ -76,7 +69,6 @@ const ApplicationInformationColumnsMenu = ({
   hiddenColumnList,
   setHiddenColumnList,
 }: Props) => {
-  const theme = useMantineTheme();
   const [isColumnMenuOpen, { open: openColumnMenu, close: closeColumnMenu }] =
     useDisclosure(false);
 
@@ -115,14 +107,6 @@ const ApplicationInformationColumnsMenu = ({
               >
                 <Accordion.Control>
                   <Group>
-                    <ColorSwatch
-                      sx={{ width: 15, height: 15 }}
-                      color={
-                        theme.colors[
-                          swatchMap[section.section_name as ClassNameType]
-                        ][3]
-                      }
-                    />
                     <Text color="dimmed"> {section.section_name}</Text>
                   </Group>
                 </Accordion.Control>
@@ -209,6 +193,7 @@ const ApplicationInformationColumnsMenu = ({
           fullWidth
           onClick={() => {
             setHiddenColumnList([]);
+            closeColumnMenu();
           }}
         >
           Reset Column

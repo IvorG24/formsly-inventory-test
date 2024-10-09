@@ -1,6 +1,11 @@
-import { checkJobOfferRow, getJobOfferSummaryData } from "@/backend/api/get";
+import {
+  checkJobOfferRow,
+  getHRProjectOptions,
+  getJobOfferSummaryData,
+} from "@/backend/api/get";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
+  HRProjectType,
   JobOfferFilterFormValues,
   JobOfferSpreadsheetData,
   OptionType,
@@ -8,13 +13,20 @@ import {
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import JobOfferColumnsMenu from "./JobOfferColumnsMenu";
 
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import JobOfferFilterMenu from "./JobOfferFilterMenu";
 import JobOfferSpreadsheetTable from "./JobOfferSpreadsheetTable/JobOfferSpreadsheetTable";
 
@@ -63,11 +75,14 @@ const JobOfferSpreadsheetView = ({
   positionOptionList,
   hrOptionList,
 }: Props) => {
-  const user = useUser();
+  const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
+  const team = useActiveTeam();
+  const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const [data, setData] = useState<JobOfferSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
@@ -75,6 +90,8 @@ const JobOfferSpreadsheetView = ({
     key: "JobOfferColumns",
     defaultValue: [],
   });
+  const teamMemberOptions = useTeamMemberList();
+  const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
 
   const filterFormMethods = useForm<JobOfferFilterFormValues>({
     defaultValues: formDefaultValues as unknown as JobOfferFilterFormValues,
@@ -91,7 +108,7 @@ const JobOfferSpreadsheetView = ({
       const newData = await getJobOfferSummaryData(supabaseClient, {
         ...filterData,
         ...data,
-        userId: user.id,
+        userId: user.user_id,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
@@ -170,7 +187,27 @@ const JobOfferSpreadsheetView = ({
       }
     };
     fetchInitialData();
-  }, [user?.id]);
+  }, [user?.user_id]);
+
+  useEffect(() => {
+    const fetchJobOfferData = async () => {
+      try {
+        setIsLoading(true);
+        const projectData = await getHRProjectOptions(supabaseClient);
+        setProjectOptions(projectData);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (team.team_id) {
+      fetchJobOfferData();
+    }
+  }, [team.team_id]);
 
   const handleCheckRow = async (item: JobOfferSpreadsheetData) => {
     try {
@@ -216,6 +253,7 @@ const JobOfferSpreadsheetView = ({
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -225,6 +263,7 @@ const JobOfferSpreadsheetView = ({
               handleReset={handleReset}
               positionOptionList={positionOptionList}
               hrOptionList={hrOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <JobOfferColumnsMenu
@@ -246,6 +285,12 @@ const JobOfferSpreadsheetView = ({
         setData={setData}
         positionOptionList={positionOptionList}
         handleCheckRow={handleCheckRow}
+        user={user}
+        teamMember={teamMember}
+        team={team}
+        projectOptions={projectOptions}
+        teamMemberGroupList={teamMemberGroupList}
+        teamMemberOptions={teamMemberOptions}
       />
     </Stack>
   );

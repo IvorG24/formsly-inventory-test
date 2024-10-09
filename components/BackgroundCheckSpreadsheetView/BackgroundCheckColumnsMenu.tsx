@@ -82,6 +82,7 @@ const BackgroundCheckColumnsMenu = ({
           fullWidth
           onClick={() => {
             setHiddenColumnList([]);
+            closeColumnMenu();
           }}
         >
           Reset Column

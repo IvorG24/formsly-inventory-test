@@ -7,20 +7,19 @@ import {
   Title,
 } from "@mantine/core";
 
-import { TeamMemberType, UserIssuedItem } from "@/utils/types";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
+import { UserIssuedItem } from "@/utils/types";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useState } from "react";
 import UserItemBarChart from "./UserItemBarChart";
 import UserItemFilter from "./UserItemFilter";
 
-type Props = { teamMemberList: TeamMemberType[] };
-
-const UserItemAnalyticsPage = ({ teamMemberList }: Props) => {
+const UserItemAnalyticsPage = () => {
   const [resultList, setResultList] = useState<UserIssuedItem[] | undefined>(
     undefined
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
+  const teamMemberList = useTeamMemberList();
   return (
     <Container p={0}>
       <Title color="dimmed" order={2}>

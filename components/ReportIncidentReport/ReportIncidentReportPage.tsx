@@ -1,6 +1,6 @@
 import { getIncidentReport } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { Database } from "@/utils/database";
-import { TeamMemberType } from "@/utils/types";
 import {
   Alert,
   Container,
@@ -19,15 +19,11 @@ import IncidentReportListFilter, {
   IncidentReportFormValues,
 } from "./IncidentReportListFilter";
 
-type Props = {
-  teamMemberList: TeamMemberType[];
-};
-
-const ReportIncidentReportPage = ({ teamMemberList }: Props) => {
+const ReportIncidentReportPage = () => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [reportData, setReportData] = useState<DataItem[] | null>(null);
   const [isFetchingData, setIsFetchingData] = useState(false);
-
+  const teamMemberList = useTeamMemberList();
   const defaultYear = new Date().getFullYear().toString();
   const defaultMonth = `${new Date().getMonth() + 1}`;
   const filterMethods = useForm<IncidentReportFormValues>({

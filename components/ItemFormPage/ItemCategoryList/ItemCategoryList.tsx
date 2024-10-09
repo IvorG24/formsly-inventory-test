@@ -70,7 +70,7 @@ const ItemCategoryList = ({
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const headerCheckboxKey = generateRandomId();
 

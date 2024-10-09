@@ -4,7 +4,6 @@ import {
   SectionWithFieldType,
 } from "@/utils/types";
 import {
-  Box,
   Button,
   Center,
   createStyles,
@@ -25,9 +24,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
-import ApplicationInformationMainTableRow, {
-  duplicatableFieldIdList,
-} from "./ApplicationInformationMainTableRow";
+import ApplicationInformationMainTableRow from "./ApplicationInformationMainTableRow";
 
 const unsortableFieldList = [
   "Approver",
@@ -69,11 +66,6 @@ export const requestColumnList = [
     field_id: "request_score_value",
     field_name: "Score",
     field_type: "NUMBER",
-  },
-  {
-    field_id: "request_ad_owner",
-    field_name: "Ad Owner",
-    field_type: "DROPDOWN",
   },
 ];
 
@@ -317,27 +309,6 @@ const ApplicationInformationSpreadsheetTable = ({
                   hiddenColumnList={hiddenColumnList}
                 />
               ))}
-              <tr>
-                {Array.from(
-                  {
-                    length:
-                      Object.keys(fieldObject).length +
-                      requestColumnList.length -
-                      duplicatableFieldIdList.length -
-                      hiddenColumnList.length,
-                  },
-                  (_, index) => index
-                ).map((index) => (
-                  <td style={{ padding: 0, borderTop: "0" }} key={index}>
-                    <Box
-                      h="xs"
-                      sx={(theme) => ({
-                        backgroundColor: theme.colors.blue[0],
-                      })}
-                    />
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </Table>
         </ScrollArea>

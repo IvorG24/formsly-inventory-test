@@ -17,12 +17,14 @@ type Props = {
   hiddenColumnList: string[];
   setHiddenColumnList: Dispatch<SetStateAction<string[]>>;
   columnList: string[];
+  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewColumnsMenu = ({
   hiddenColumnList,
   setHiddenColumnList,
   columnList,
+  technicalInterviewNumber,
 }: Props) => {
   const [isColumnMenuOpen, { open: openColumnMenu, close: closeColumnMenu }] =
     useDisclosure(false);
@@ -41,7 +43,7 @@ const TechnicalInterviewColumnsMenu = ({
         opened={isColumnMenuOpen}
         onClose={closeColumnMenu}
         position="right"
-        title="Technical Interview Columns Menu"
+        title="Department Interview Columns Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -49,7 +51,20 @@ const TechnicalInterviewColumnsMenu = ({
           {columnList.map((column, index) => (
             <Grid key={index}>
               <Grid.Col span={10}>
-                <Text>{capitalizeEachWord(column.replaceAll("_", " "))}</Text>
+                <Text>
+                  {capitalizeEachWord(
+                    column
+                      .replaceAll("_", " ")
+                      .replaceAll(
+                        "technical",
+                        `${
+                          technicalInterviewNumber === 1
+                            ? "Department"
+                            : "Requestor"
+                        }`
+                      )
+                  )}
+                </Text>
               </Grid.Col>
               <Grid.Col span={2}>
                 <Flex h="100%" align="center">
@@ -82,6 +97,7 @@ const TechnicalInterviewColumnsMenu = ({
           fullWidth
           onClick={() => {
             setHiddenColumnList([]);
+            closeColumnMenu();
           }}
         >
           Reset Column

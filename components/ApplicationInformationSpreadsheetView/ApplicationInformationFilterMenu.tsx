@@ -61,11 +61,6 @@ const sectionList = [
         label: "Score",
         type: "NUMBER",
       },
-      {
-        id: "requestFilter.adOwner",
-        label: "Ad Owner",
-        type: "MULTISELECT",
-      },
     ],
   },
   {
@@ -74,21 +69,6 @@ const sectionList = [
       {
         id: "responseFilter.position",
         label: "Position",
-        type: "MULTISELECT",
-      },
-      {
-        id: "responseFilter.certification",
-        label: "Certification",
-        type: "BOOLEAN",
-      },
-      {
-        id: "responseFilter.license",
-        label: "License",
-        type: "BOOLEAN",
-      },
-      {
-        id: "responseFilter.source",
-        label: "Where did you learn the job vacancy?",
         type: "MULTISELECT",
       },
     ],
@@ -111,176 +91,6 @@ const sectionList = [
         label: "Last Name",
         type: "TEXT",
       },
-      {
-        id: "responseFilter.nickname",
-        label: "Nickname",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.gender",
-        label: "Gender",
-        type: "SELECT",
-      },
-      {
-        id: "responseFilter.ageRange",
-        label: "Age Range",
-        type: "NUMBER",
-      },
-      {
-        id: "responseFilter.civilStatus",
-        label: "Civil Status",
-        type: "MULTISELECT",
-      },
-    ],
-  },
-  {
-    sectionName: "Contact Information",
-    sectionFieldList: [
-      {
-        id: "responseFilter.contactNumber",
-        label: "Contact Number",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.emailAddress",
-        label: "Email Address",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.region",
-        label: "Region",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.province",
-        label: "Province",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.city",
-        label: "City",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.barangay",
-        label: "Barangay",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.street",
-        label: "Street",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.zipCode",
-        label: "Zip Code",
-        type: "TEXT",
-      },
-    ],
-  },
-  {
-    sectionName: "ID Number",
-    sectionFieldList: [
-      {
-        id: "responseFilter.sssId",
-        label: "SSS ID",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.philhealthNumber",
-        label: "Philhealth Number",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.pagibigNumber",
-        label: "Pag IBIG Number",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.tin",
-        label: "TIN",
-        type: "TEXT",
-      },
-    ],
-  },
-  {
-    sectionName: "Educational Background",
-    sectionFieldList: [
-      {
-        id: "responseFilter.highestEducationalAttainment",
-        label: "Highest Educational Attainment",
-        type: "MULTISELECT",
-      },
-      {
-        id: "responseFilter.fieldOfStudy",
-        label: "Field of Study",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.degreeName",
-        label: "Degree Name",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.torOrDiplomaAttachment",
-        label: "TOR / Diploma Attachment",
-        type: "BOOLEAN",
-      },
-      {
-        id: "responseFilter.school",
-        label: "School",
-        type: "TEXT",
-      },
-      {
-        id: "responseFilter.yearGraduated",
-        label: "Year Graduated",
-        type: "DATE",
-      },
-    ],
-  },
-  {
-    sectionName: "Work Information",
-    sectionFieldList: [
-      {
-        id: "responseFilter.employmentStatus",
-        label: "Employment Status",
-        type: "SELECT",
-      },
-      {
-        id: "responseFilter.workedAtStaClara",
-        label: "Already worked at Sta Clara before",
-        type: "BOOLEAN",
-      },
-      {
-        id: "responseFilter.shiftWillingToWork",
-        label: "Shift Willing to Work",
-        type: "SELECT",
-      },
-      {
-        id: "responseFilter.willingToBeAssignedAnywhere",
-        label: "Willing to be assigned anywhere",
-        type: "BOOLEAN",
-      },
-      {
-        id: "responseFilter.regionWillingToBeAssigned",
-        label: "Region willing to be assigned",
-        type: "MULTISELECT",
-      },
-      {
-        id: "responseFilter.soonestJoiningDate",
-        label: "Soonest Joining Date",
-        type: "DATE",
-      },
-      {
-        id: "responseFilter.workExperience",
-        label: "Total months of relevant work experience",
-        type: "NUMBER",
-      },
-      {
-        id: "responseFilter.expectedSalary",
-        label: "Expected Monthly Salary (PHP)",
-        type: "NUMBER",
-      },
     ],
   },
 ];
@@ -290,6 +100,7 @@ type Props = {
   optionList: ApplicationInformationFieldOptionType[];
   handleReset: () => void;
   approverOptionList: OptionType[];
+  isLoading: boolean;
 };
 
 const ApplicationInformationFilterMenu = ({
@@ -297,6 +108,7 @@ const ApplicationInformationFilterMenu = ({
   optionList,
   handleReset,
   approverOptionList,
+  isLoading,
 }: Props) => {
   const theme = useMantineTheme();
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
@@ -583,10 +395,13 @@ const ApplicationInformationFilterMenu = ({
                 handleReset();
                 closeFilterMenu();
               }}
+              disabled={isLoading}
             >
               Reset Filter
             </Button>
-            <Button type="submit">Apply Filter</Button>
+            <Button type="submit" disabled={isLoading}>
+              Apply Filter
+            </Button>
           </Stack>
         </form>
       </Drawer>

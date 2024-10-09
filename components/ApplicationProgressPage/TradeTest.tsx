@@ -68,7 +68,7 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <LoadingOverlay visible={isLoading} />
-      <Title order={3}>Trade Test</Title>
+      <Title order={3}>Practical Test</Title>
       <Stack>
         <Group>
           <Text>Date Created: </Text>
@@ -109,9 +109,9 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
             tradeTestData.trade_test_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>
                 <Text>
-                  Your Trade Test is scheduled. The meeting link will be made
-                  available on the exact date of the meeting. Please wait for
-                  further details and let us know if you have any questions.
+                  Your Practical Test is scheduled. The meeting link will be
+                  made available on the exact date of the meeting. Please wait
+                  for further details and let us know if you have any questions.
                   Looking forward to speaking with you soon!
                 </Text>
               </Alert>

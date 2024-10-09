@@ -1,4 +1,5 @@
 import { getMemoList } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -8,7 +9,7 @@ import {
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import { MemoListItemType, TeamMemberType } from "@/utils/types";
+import { MemoListItemType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -50,7 +51,6 @@ import MemoItemListSignerList from "./MemoListItemSignerList";
 type Props = {
   memoList: MemoListItemType[];
   memoListCount: number;
-  teamMemberList: TeamMemberType[];
 };
 
 type FilterFormValues = {
@@ -80,14 +80,13 @@ export const getMemoStatusColor = (status: string) => {
 const MemoListPage = ({
   memoList: initialMemoList,
   memoListCount: initialMemoListCount,
-  teamMemberList,
 }: Props) => {
   const router = useRouter();
   const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const [isFilter, setIsfilter] = useState(false);
-
+  const teamMemberList = useTeamMemberList();
   // filter data
   const { ref: authorRef, focused: authorRefFocused } = useFocusWithin();
   const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
@@ -279,6 +278,7 @@ const MemoListPage = ({
                 setActivePage(1);
                 handlePagination();
               }}
+              disabled={isLoading}
             >
               Refresh
             </Button>
@@ -403,7 +403,7 @@ const MemoListPage = ({
                 render: ({ memo_id, memo_reference_number }) => {
                   return (
                     <Flex gap="md" align="center">
-                      <Text size="xs" truncate maw={150}>
+                      <Text truncate maw={150}>
                         <Anchor
                           href={`/${formatTeamNameToUrlKey(
                             activeTeam.team_name ?? ""

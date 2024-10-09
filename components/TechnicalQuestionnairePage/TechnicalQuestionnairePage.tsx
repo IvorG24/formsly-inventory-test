@@ -3,11 +3,11 @@ import {
   checkQuestionnaireName,
   createQuestionnaire,
 } from "@/backend/api/post";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import {
-  TeamMemberWithUserType,
   TechnicalAssessmentFilterValues,
   TechnicalAssessmentTableRow,
 } from "@/utils/types";
@@ -21,18 +21,13 @@ import { FormProvider, useForm } from "react-hook-form";
 import TechnicalQuestionnaireFilter from "./TechnicalQuestionnaireFilter";
 import TechnicalQuestionnaireTable from "./TechnicalQuestionnaireTable";
 
-type Props = {
-  teamMemberList: TeamMemberWithUserType[];
-  isFormslyTeam: boolean;
-};
-
-const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
+const TechnicalQuestionnairePage = () => {
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
-
   const supabaseClient = useSupabaseClient();
-
   const teamMember = useUserTeamMember();
+  const teamMemberList = useTeamMemberList();
+
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [questionnaireName, setQuestionnaireName] = useState("");
@@ -102,12 +97,12 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
       setIsFetchingRequestList(true);
       if (!activeTeam.team_id) {
         console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
+          "TechnicalQuestionnairePage handleFetchQuestionnaireList: active team_id not found"
         );
         return;
       } else if (!teamMember) {
         console.warn(
-          "RequestListPage handleFilterFormsError: team member id not found"
+          "TechnicalQuestionnairePage handleFetchQuestionnaireList: team member id not found"
         );
         return;
       }
@@ -237,6 +232,7 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
               setLocalFilter={setLocalFilter}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>
@@ -245,7 +241,6 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
             setValue={setValue}
             questionnairList={questionnnaireList}
             questionnairListCount={questionnnaireListCount}
-            teamMemberList={teamMemberList}
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}

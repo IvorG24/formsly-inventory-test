@@ -75,17 +75,17 @@ const columnList = [
   },
   {
     field_id: "trade_test_date_created",
-    field_name: "Trade Test Date Created",
+    field_name: "Practical Test Date Created",
     field_type: "DATE",
   },
   {
     field_id: "trade_test_status",
-    field_name: "Trade Test Status",
+    field_name: "Practical Test Status",
     field_type: "TEXT",
   },
   {
     field_id: "trade_test_schedule",
-    field_name: "Trade Test Schedule",
+    field_name: "Practical Test Schedule",
     field_type: "DATE",
   },
   {

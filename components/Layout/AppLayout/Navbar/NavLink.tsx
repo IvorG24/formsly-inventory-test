@@ -450,7 +450,7 @@ const ReviewAppNavLink = () => {
       indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
     },
     {
-      label: `HR Phone Interview`,
+      label: `HR Interview`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconPhoneCall {...defaultIconProps} />
@@ -461,7 +461,7 @@ const ReviewAppNavLink = () => {
       indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
     },
     {
-      label: `Trade Test`,
+      label: `Practical Test`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconTools {...defaultIconProps} />
@@ -472,7 +472,7 @@ const ReviewAppNavLink = () => {
       indicatorLabel: `${hrIndicatorCount.tradeTest}`,
     },
     {
-      label: `Technical Interview 1`,
+      label: `Department Interview`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconCode {...defaultIconProps} />
@@ -483,7 +483,7 @@ const ReviewAppNavLink = () => {
       indicatorLabel: `${hrIndicatorCount.technicalInterview1}`,
     },
     {
-      label: `Technical Interview 2`,
+      label: `Requestor Interview`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconTerminal {...defaultIconProps} />

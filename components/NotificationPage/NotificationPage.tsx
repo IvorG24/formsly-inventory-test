@@ -149,7 +149,8 @@ const NotificationPage = ({
         page: Number(page),
         userId,
         teamId,
-        unreadOnly: currentTab === "unread" ?? tab === "unread",
+        unreadOnly:
+          currentTab === "unread" ? true : tab === "unread" ? true : false,
       });
 
       const result = data as NotificationTableRow[];

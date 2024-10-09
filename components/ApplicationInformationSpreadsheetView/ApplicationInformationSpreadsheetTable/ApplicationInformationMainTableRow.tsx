@@ -232,13 +232,6 @@ const ApplicationInformationMainTableRow = ({
           <Text>{item.request_score_value}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("Ad Owner") && (
-        <td className={classes["Request"]}>
-          <Text>
-            {item.request_ad_owner ? item.request_ad_owner.toUpperCase() : ""}
-          </Text>
-        </td>
-      )}
       {sortedFields
         .filter(
           (row) =>

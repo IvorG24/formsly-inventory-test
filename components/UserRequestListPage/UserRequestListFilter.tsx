@@ -28,6 +28,7 @@ type Props = {
   showTableColumnFilter: boolean;
   localFilter: UserRequestListFilterValues;
   setLocalFilter: Dispatch<SetStateAction<UserRequestListFilterValues>>;
+  isFetchingRequestList: boolean;
 };
 
 const UserRequestListFilter = ({
@@ -37,6 +38,7 @@ const UserRequestListFilter = ({
   setShowTableColumnFilter,
   localFilter,
   setLocalFilter,
+  isFetchingRequestList,
 }: Props) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -100,6 +102,7 @@ const UserRequestListFilter = ({
           onClick={() => {
             handleFilterForms();
           }}
+          disabled={isFetchingRequestList}
         >
           Refresh
         </Button>

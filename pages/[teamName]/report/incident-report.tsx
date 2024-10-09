@@ -1,19 +1,13 @@
-import { getTeamMemberList } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import ReportIncidentReportPage from "@/components/ReportIncidentReport/ReportIncidentReportPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { TeamMemberType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, userActiveTeam }) => {
+  async () => {
     try {
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId: userActiveTeam.team_id,
-      });
-
       return {
-        props: { teamMemberList },
+        props: {},
       };
     } catch (e) {
       return {
@@ -26,18 +20,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 
-type Props = {
-  teamMemberList: TeamMemberType[];
-};
-
-const Page = ({ teamMemberList }: Props) => {
+const Page = () => {
   return (
     <>
       <Meta
         description="Incident Report Page"
         url="/{teamName}/report/incident-report"
       />
-      <ReportIncidentReportPage teamMemberList={teamMemberList} />
+      <ReportIncidentReportPage />
     </>
   );
 };

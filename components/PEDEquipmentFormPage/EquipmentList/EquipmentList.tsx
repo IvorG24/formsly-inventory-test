@@ -65,7 +65,7 @@ const EquipmentList = ({
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);

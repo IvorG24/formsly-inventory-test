@@ -288,7 +288,7 @@ const ApplicationProgressPage = (props: Props) => {
             {...stepperProps(technicalAssessmentData?.request_status as string)}
           />
           <Stepper.Step
-            label="HR Phone Interview"
+            label="HR Interview"
             disabled={!Boolean(hrPhoneInterviewData)}
             {...stepperProps(
               hrPhoneInterviewData?.hr_phone_interview_status as string
@@ -296,16 +296,14 @@ const ApplicationProgressPage = (props: Props) => {
           />
           {tradeTestData !== null && (
             <Stepper.Step
-              label="Trade Test"
+              label="Practical Test"
               disabled={!Boolean(tradeTestData)}
               {...stepperProps(tradeTestData?.trade_test_status as string)}
             />
           )}
           {technicalInterview1Data !== null && (
             <Stepper.Step
-              label={`Technical Interview ${
-                technicalInterview2Data !== null ? "1" : ""
-              }`}
+              label={"Department Interview"}
               disabled={!Boolean(technicalInterview1Data)}
               {...stepperProps(
                 technicalInterview1Data?.technical_interview_status as string
@@ -314,7 +312,7 @@ const ApplicationProgressPage = (props: Props) => {
           )}
           {technicalInterview2Data !== null && (
             <Stepper.Step
-              label="Technical Interview 2"
+              label="Requestor Interview"
               disabled={!Boolean(technicalInterview1Data)}
               {...stepperProps(
                 technicalInterview2Data?.technical_interview_status as string

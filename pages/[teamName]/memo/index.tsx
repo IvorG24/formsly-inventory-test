@@ -1,8 +1,8 @@
-import { getMemoList, getTeamMemberList } from "@/backend/api/get";
+import { getMemoList } from "@/backend/api/get";
 import MemoListPage from "@/components/Memo/MemoListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { MemoListItemType, TeamMemberType } from "@/utils/types";
+import { MemoListItemType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -14,12 +14,8 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         limit: 13,
       });
 
-      const teamMemberList = await getTeamMemberList(supabaseClient, {
-        teamId: userActiveTeam.team_id,
-      });
-
       return {
-        props: { memoList: data, memoListCount: count, teamMemberList },
+        props: { memoList: data, memoListCount: count },
       };
     } catch (e) {
       return {
@@ -35,18 +31,13 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 type Props = {
   memoList: MemoListItemType[];
   memoListCount: number;
-  teamMemberList: TeamMemberType[];
 };
 
-const Page = ({ memoList, memoListCount, teamMemberList }: Props) => {
+const Page = ({ memoList, memoListCount }: Props) => {
   return (
     <>
       <Meta description="Create Memo Page" url="/teamName/memo/" />
-      <MemoListPage
-        memoList={memoList}
-        memoListCount={memoListCount}
-        teamMemberList={teamMemberList}
-      />
+      <MemoListPage memoList={memoList} memoListCount={memoListCount} />
     </>
   );
 };

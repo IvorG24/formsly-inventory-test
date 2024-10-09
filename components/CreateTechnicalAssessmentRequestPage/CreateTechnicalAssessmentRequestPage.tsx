@@ -307,6 +307,15 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
               );
             })}
             {/* <RequestFormSigner signerList={signerList} /> */}
+            {form.form_section.length >= 3 && (
+              <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+                <Text>
+                  Technical assessment questions may contain errors; if you find
+                  an error, please contact HR Representative Clemence at +63 906
+                  271 2673.
+                </Text>
+              </Alert>
+            )}
             {form.form_section.length < 3 && (
               <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
                 <Text>
@@ -325,5 +334,3 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
 };
 
 export default CreateTechnicalAssessmentRequestPage;
-
-

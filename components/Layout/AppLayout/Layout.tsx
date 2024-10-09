@@ -1,18 +1,17 @@
 import {
   getAllGroupOfTeamMember,
-  getAllNotification,
   getAllTeamOfUser,
   getFormList,
+  getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
-import { useNotificationActions } from "@/stores/useNotificationStore";
+import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TeamTableRow } from "@/utils/types";
+import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -32,7 +31,7 @@ const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const { setTeamMemberStore } = useTeamMemberListActions();
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
   const {
@@ -42,10 +41,31 @@ const Layout = ({ children }: LayoutProps) => {
     setUserProfile,
     setUserTeamMemberGroupList,
   } = useUserActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
+  // const { setNotificationList, setUnreadNotification } =
+  //   useNotificationActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
+
+  const fetchAllTeamMembers = async (teamId: string) => {
+    const allTeamMembers: TeamMemberType[] = [];
+    let offset = 0;
+    const limit = 500;
+    let moreMembers = true;
+
+    while (moreMembers) {
+      const currentBatch = await getTeamMemberList(supabaseClient, {
+        teamId: teamId,
+        offset: offset,
+        limit: limit,
+      });
+      if (currentBatch.length > 0) {
+        allTeamMembers.push(...currentBatch);
+        offset += limit;
+      }
+      moreMembers = currentBatch.length === limit;
+    }
+    return allTeamMembers;
+  };
 
   useEffect(() => {
     setOpenNavbar(false);
@@ -119,19 +139,22 @@ const Layout = ({ children }: LayoutProps) => {
           (user.user_first_name[0] + user.user_last_name[0]).toUpperCase()
         );
 
+        const teamMemberList = await fetchAllTeamMembers(activeTeamId);
+        setTeamMemberStore(teamMemberList);
+
         // fetch notification list
-        const { data: notificationList, count: unreadNotificationCount } =
-          await getAllNotification(supabaseClient, {
-            userId: user.user_id,
-            app: "REQUEST",
-            page: 1,
-            limit: NOTIFICATION_LIST_LIMIT,
-            teamId: activeTeamId,
-          });
+        // const { data: notificationList, count: unreadNotificationCount } =
+        //   await getAllNotification(supabaseClient, {
+        //     userId: user.user_id,
+        //     app: "REQUEST",
+        //     page: 1,
+        //     limit: NOTIFICATION_LIST_LIMIT,
+        //     teamId: activeTeamId,
+        //   });
 
         // set notification
-        setNotificationList(notificationList);
-        setUnreadNotification(unreadNotificationCount || 0);
+        // setNotificationList(notificationList);
+        // setUnreadNotification(unreadNotificationCount || 0);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

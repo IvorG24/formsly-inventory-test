@@ -14,6 +14,13 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
+type FilterSelectedValuesType = {
+  requesterList: string[];
+  approverList: string[];
+  categoryList: string[];
+  status?: string[];
+};
+
 type Props = {
   // requestList: RequestType[];
   ticketCategoryList: TicketCategoryTableRow[];
@@ -28,13 +35,7 @@ type Props = {
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
   setActivePage: Dispatch<SetStateAction<number>>;
-};
-
-type FilterSelectedValuesType = {
-  requesterList: string[];
-  approverList: string[];
-  categoryList: string[];
-  status?: string[];
+  isFetchingTicketList: boolean;
 };
 
 const TicketListFilter = ({
@@ -46,6 +47,7 @@ const TicketListFilter = ({
   setShowTableColumnFilter,
   showTableColumnFilter,
   setActivePage,
+  isFetchingTicketList,
 }: Props) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -114,6 +116,7 @@ const TicketListFilter = ({
           variant="light"
           leftIcon={<IconReload size={16} />}
           onClick={() => handlePagination()}
+          disabled={isFetchingTicketList}
         >
           Refresh
         </Button>

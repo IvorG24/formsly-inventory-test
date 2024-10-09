@@ -7,6 +7,16 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
+  APP_SOURCE_ID,
+  DEFAULT_NUMBER_SSOT_ROWS,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  FORMSLY_FORM_ORDER,
+  IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+  SELECT_OPTION_LIMIT,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
     APP_SOURCE_ID,
     FETCH_OPTION_LIMIT,
     formatDate,
@@ -18,7 +28,7 @@ import {
     TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
     addAmpersandBetweenWords,
     escapeQuotes,
@@ -27,6 +37,90 @@ import {
     startCase,
 } from "@/utils/string";
 import {
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AttachmentBucketType,
+  AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  Dataset,
+  DirectorInterviewFilterFormValues,
+  DirectorInterviewSpreadsheetData,
+  EquipmentDescriptionTableRow,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
+  FetchRequestListParams,
+  FetchUserRequestListParams,
+  FieldTableRow,
+  FormTableRow,
+  FormType,
+  HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRProjectType,
+  InitialFormType,
+  InterviewOnlineMeetingTableRow,
+  ItemCategoryType,
+  ItemCategoryWithSigner,
+  ItemDescriptionFieldWithUoM,
+  ItemDescriptionTableRow,
+  ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
+  JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
+  JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  LRFSpreadsheetData,
+  MemoListItemType,
+  MemoType,
+  NotificationOnLoad,
+  NotificationTableRow,
+  OptionTableRow,
+  OtherExpensesTypeTableRow,
+  PendingInviteType,
+  QuestionnaireData,
+  ReferenceMemoType,
+  RequestListItemType,
+  RequestListOnLoad,
+  RequestResponseTableRow,
+  RequestTableRow,
+  RequestWithResponseType,
+  SectionWithFieldType,
+  ServiceWithScopeAndChoice,
+  SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
+  SSOTOnLoad,
+  TeamMemberOnLoad,
+  TeamMemberType,
+  TeamMemberWithUser,
+  TeamMemberWithUserDetails,
+  TeamOnLoad,
+  TeamProjectTableRow,
+  TeamTableRow,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
+  TransactionTableRow,
+  UnformattedRequestListItemRequestSigner,
+  UserIssuedItem,
     AddressTableRow,
     ApplicationInformationFilterFormValues,
     ApplicationInformationSpreadsheetData,
@@ -258,55 +352,78 @@ export const getRequestList = async (
 
   const sort = isAscendingSort ? "ASC" : "DESC";
 
-  const requestorCondition = requestor
-    ?.map((value) => `request_view.request_team_member_id = '${value}'`)
-    .join(" OR ");
+  const requestorCondition = getFilterConditionFromArray({
+    values: requestor,
+    column: "request_view.request_team_member_id",
+  });
+  const statusCondition = getFilterConditionFromArray({
+    values: status,
+    column: "request_view.request_status",
+  });
+  const formCondition = getFilterConditionFromArray({
+    values: form,
+    column: "request_view.request_form_id",
+  });
+  const projectCondition = getFilterConditionFromArray({
+    values: project,
+    column: "request_view.request_formsly_id_prefix",
+    operator: "SIMILAR TO",
+  });
+
+  const approverList = approver?.map((approver) => `'${approver}'`).join(",");
   const approverCondition = approver
-    ?.map((value) => `signer_table.signer_team_member_id = '${value}'`)
-    .join(" OR ");
-  const statusCondition = status
-    ?.map((value) => `request_view.request_status = '${value}'`)
-    .join(" OR ");
-  const formCondition = form
-    ?.map((value) => `request_view.request_form_id = '${value}'`)
-    .join(" OR ");
-  const projectCondition = project
-    ?.map(
-      (value) =>
-        `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
-    )
-    .join(" OR ");
+    ? `EXISTS (SELECT 1 FROM form_schema.signer_table WHERE signer_team_member_id IN (${approverList}))`
+    : "";
 
-  const searchCondition =
-    search && validate(search)
+  const searchCondition = search
+    ? validate(search)
       ? `request_view.request_id = '${search}'`
-      : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+      : `request_view.request_formsly_id ILIKE '%${search}%'`
+    : "";
 
-  const { data: data, error } = await supabaseClient.rpc("fetch_request_list", {
-    input_data: {
-      teamId: teamId,
-      page: page,
-      limit: limit,
-      requestor: requestorCondition ? `AND (${requestorCondition})` : "",
-      approver: approverCondition ? `AND (${approverCondition})` : "",
-      project: projectCondition ? `AND (${projectCondition})` : "",
-      form: formCondition ? `AND (${formCondition})` : "",
-      status: statusCondition ? `AND (${statusCondition})` : "",
-      search: search ? `AND (${searchCondition})` : "",
-      sort,
-      isApproversView,
-      teamMemberId,
-      columnAccessor,
-    },
+  const inputData = {
+    teamId,
+    page,
+    limit,
+    requestor: requestorCondition ? `AND (${requestorCondition})` : "",
+    approver: approverCondition ? `AND (${approverCondition})` : "",
+    project: projectCondition ? `AND (${projectCondition})` : "",
+    form: formCondition ? `AND (${formCondition})` : "",
+    status: statusCondition ? `AND (${statusCondition})` : "",
+    search: search ? `AND (${searchCondition})` : "",
+    sort,
+    isApproversView,
+    teamMemberId,
+    columnAccessor,
+  };
+
+  const { data, error } = await supabaseClient.rpc("fetch_request_list", {
+    input_data: inputData,
   });
 
   if (error || !data) throw error;
+
   const dataFormat = data as unknown as {
-    data: RequestListItemType[];
+    data: (Omit<RequestListItemType, "request_signer"> & {
+      request_signer: UnformattedRequestListItemRequestSigner[];
+    })[];
     count: number;
   };
 
-  return { data: dataFormat.data, count: dataFormat.count };
+  const formattedData: RequestListItemType[] = dataFormat.data.map((item) => {
+    const formatted_request_signer = item.request_signer.map((signer) => ({
+      request_signer_id: signer.request_signer_id,
+      request_signer_status: signer.request_signer_status,
+      request_signer: {
+        signer_team_member_id: signer.signer_team_member_id,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+      },
+    }));
+
+    return { ...item, request_signer: formatted_request_signer };
+  });
+
+  return { data: formattedData, count: dataFormat.count };
 };
 
 // Get user's active team id
@@ -825,6 +942,8 @@ export const getTeamMemberList = async (
   params: {
     teamId: string;
     search?: string;
+    offset?: number;
+    limit?: number;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -4745,12 +4864,11 @@ export const getJiraItemCategoryList = async (
 
     return {
       ...item,
-      assigned_jira_user:
-        {
-          ...assignedUser[0],
-          ...assignedUser[0]?.jira_item_user_account_id,
-          ...assignedUser[0]?.jira_item_user_role_id,
-        } ?? null,
+      assigned_jira_user: {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      },
     };
   });
 
@@ -5960,15 +6078,200 @@ export const getApplicationInformationSummaryData = async (
     },
   };
 
+  const {
+    sort,
+    page = 1,
+    limit = DEFAULT_NUMBER_SSOT_ROWS,
+    responseFilter,
+    requestFilter,
+  } = updatedParams;
+
+  const isUUID = (str: string) => {
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidPattern.test(str);
+  };
+
+  const isSortByResponse = isUUID(sort?.field ?? "");
+
+  const offset = (page - 1) * limit;
+
+  const responseFilterCondition = [];
+  Boolean(responseFilter.position) && responseFilter?.position?.length
+    ? responseFilterCondition.push(
+        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
+          .map((value) => `'"${value}"'`)
+          .join(", ")}))`
+      )
+    : null;
+  responseFilter.firstName
+    ? responseFilterCondition.push(
+        `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`
+      )
+    : null;
+  responseFilter.middleName
+    ? responseFilterCondition.push(
+        `(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`
+      )
+    : null;
+  responseFilter.lastName
+    ? responseFilterCondition.push(
+        `(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`
+      )
+    : null;
+
+  const requestFilterCondition = [];
+  Boolean(requestFilter.requestId)
+    ? requestFilterCondition.push(
+        `request_formsly_id ILIKE '%${requestFilter.requestId}%'`
+      )
+    : null;
+  Boolean(requestFilter.status) && requestFilter?.status?.length
+    ? requestFilterCondition.push(
+        `request_status IN (${requestFilter.status.map(
+          (status) => `'${status}'`
+        )})`
+      )
+    : null;
+  Boolean(requestFilter.dateCreatedRange.start)
+    ? requestFilterCondition.push(
+        `request_date_created :: DATE >= '${requestFilter.dateCreatedRange.start}'`
+      )
+    : null;
+  Boolean(requestFilter.dateCreatedRange.end)
+    ? requestFilterCondition.push(
+        `request_date_created :: DATE <= '${requestFilter.dateCreatedRange.end}'`
+      )
+    : null;
+  Boolean(requestFilter.dateUpdatedRange.start)
+    ? requestFilterCondition.push(
+        `request_status_date_updated :: DATE >= '${requestFilter.dateUpdatedRange.start}'`
+      )
+    : null;
+  Boolean(requestFilter.dateUpdatedRange.end)
+    ? requestFilterCondition.push(
+        `request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`
+      )
+    : null;
+
+  const requestScoreFilterCondition = [];
+  requestFilter.requestScoreRange &&
+  Boolean(requestFilter.requestScoreRange.start)
+    ? requestScoreFilterCondition.push(
+        `request_score_value  >= ${requestFilter.requestScoreRange.start}`
+      )
+    : null;
+  requestFilter.requestScoreRange &&
+  Boolean(requestFilter.requestScoreRange.end)
+    ? requestScoreFilterCondition.push(
+        `request_score_value <= ${requestFilter.requestScoreRange.end}`
+      )
+    : null;
+
+  let requestSignerCondition = "";
+  Boolean(requestFilter.approver) && requestFilter?.approver?.length
+    ? (requestSignerCondition = `request_signer_signer_id IN (${requestFilter.approver.map(
+        (approver) => `'${approver}'`
+      )})`)
+    : null;
+
+  const filterCount = responseFilterCondition.length;
+
+  const castRequestResponse = (value: string) => {
+    switch (sort?.dataType) {
+      case "NUMBER":
+        return `CAST(${value} AS NUMERIC)`;
+      case "DATE":
+        return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
+      default:
+        return value;
+    }
+  };
+
+  const parentRequestQuery = `
+    SELECT request_id,
+      request_formsly_id,
+      request_date_created,
+      request_status,
+      request_status_date_updated,
+      request_score_value
+    FROM (
+      SELECT
+        request_id,
+        request_formsly_id,
+        request_date_created,
+        request_status,
+        request_status_date_updated,
+        request_response,
+        request_score_value,
+        ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
+      FROM public.request_view
+      INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+        AND request_response_field_id IN (
+          '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
+          'e48e7297-c250-4595-ba61-2945bf559a25',
+          '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
+          '9322b870-a0a1-4788-93f0-2895be713f9c'
+        )
+        ${
+          responseFilterCondition.length
+            ? `AND (${responseFilterCondition.join(" OR ")})`
+            : ""
+        }
+      INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
+        ${
+          requestScoreFilterCondition.length
+            ? `AND (${requestScoreFilterCondition.join(" OR ")})`
+            : ""
+        }
+      WHERE
+        request_is_disabled = FALSE
+        AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+    ) AS a
+    INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
+      ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
+    WHERE
+      a.rowNumber = ${filterCount ? filterCount : 1}
+      ${
+        requestFilterCondition.length
+          ? `AND (${requestFilterCondition.join(" AND ")})`
+          : ""
+      }
+    ${!isSortByResponse ? `ORDER BY ${sort?.field} ${sort?.order}` : ""}
+    ${
+      isSortByResponse
+        ? `
+      ORDER BY ${castRequestResponse(`(
+      SELECT request_response
+      FROM request_schema.request_response_table
+      WHERE
+        request_response_request_id = request_id
+        AND request_response_field_id = '${sort?.field}'
+      )`)} ${sort?.order}
+    `
+        : ""
+    }
+    LIMIT '${limit}'
+    OFFSET '${offset}'
+  `;
+
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
-      input_data: updatedParams,
+      input_data: { parentRequestQuery },
     }
   );
-
   if (error) throw error;
-  return data as ApplicationInformationSpreadsheetData[];
+
+  const { data: columnData, error: columnError } = await supabaseClient.rpc(
+    "get_application_information_summary_table_columns",
+    {
+      input_data: { parentRequests: data },
+    }
+  );
+  if (columnError) throw columnError;
+
+  return columnData as ApplicationInformationSpreadsheetData[];
 };
 
 export const getFormSectionWithFieldList = async (
@@ -6013,19 +6316,16 @@ export const getUserRequestList = async (
   const statusCondition = status
     ?.map((value) => `a.request_status = '${value}'`)
     .join(" OR ");
-
   const formCondition = form
     ?.map((value) => `a.request_form_id = '${value}'`)
     .join(" OR ");
-
   const searchCondition =
     search && validate(search)
       ? `a.request_id = '${search}'`
       : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
-  const { data: data, error } = await supabaseClient.rpc(
-    "fetch_user_request_list",
-    {
+  const { data: requestList, error: requestListError } =
+    await supabaseClient.rpc("fetch_user_request_list", {
       input_data: {
         page: page,
         limit: limit,
@@ -6036,16 +6336,27 @@ export const getUserRequestList = async (
         email,
         form: formCondition ? `AND (${formCondition})` : "",
       },
-    }
-  );
+    });
+  if (requestListError) throw requestListError;
 
-  if (error || !data) throw error;
-  const dataFormat = data as unknown as {
+  const dataFormat = requestList as unknown as {
     data: RequestListItemType[];
     count: number;
   };
 
-  return { data: dataFormat.data, count: dataFormat.count };
+
+  const { data: requestListData, error: requestListDataError } =
+    await supabaseClient.rpc("fetch_user_request_list_data", {
+      input_data: {
+        requestList: dataFormat.data,
+      },
+    });
+  if (requestListDataError) throw requestListDataError;
+
+  return {
+    data: requestListData as RequestListItemType[],
+    count: dataFormat.count,
+  };
 };
 
 export const getUserIdInApplicationInformation = async (

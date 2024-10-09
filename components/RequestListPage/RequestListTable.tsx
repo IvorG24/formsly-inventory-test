@@ -718,18 +718,17 @@ const RequestListTable = ({
           title: "Requested By",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_team_member_id"),
-          render: (request) => {
+          render: ({ request_team_member_id }) => {
+            const requestorMemberData = teamMemberList.find(
+              (member) => member.team_member_id === request_team_member_id
+            );
+            if (!requestorMemberData) {
+              return <Text>Public User</Text>;
+            }
+
             const {
-              user_id,
-              user_first_name,
-              user_last_name,
-              request_team_member_id,
-            } = request as {
-              user_id: string;
-              user_first_name: string;
-              user_last_name: string;
-              request_team_member_id: string;
-            };
+              team_member_user: { user_id, user_first_name, user_last_name },
+            } = requestorMemberData;
 
             return (
               <Flex px={0} gap={8} align="center">
@@ -758,7 +757,6 @@ const RequestListTable = ({
                     <Text>{`${user_first_name} ${user_last_name}`}</Text>
                   </Anchor>
                 )}
-                {!user_id && <Text>Public User</Text>}
               </Flex>
             );
           },
@@ -771,7 +769,9 @@ const RequestListTable = ({
             const { request_signer } = request as {
               request_signer: requestSignerType[];
             };
-
+            if (!teamMemberList || teamMemberList.length === 0) {
+              return;
+            }
             const signerList = request_signer.map(
               (signer: requestSignerType) => {
                 const signerTeamMemberData = teamMemberList.find(
@@ -789,9 +789,13 @@ const RequestListTable = ({
             );
 
             return (
-              <RequestSignerList
-                signerList={signerList as RequestListItemSignerType[]}
-              />
+              <>
+                {signerList[0].signer_team_member_user?.user_id && (
+                  <RequestSignerList
+                    signerList={signerList as RequestListItemSignerType[]}
+                  />
+                )}
+              </>
             );
           },
         },

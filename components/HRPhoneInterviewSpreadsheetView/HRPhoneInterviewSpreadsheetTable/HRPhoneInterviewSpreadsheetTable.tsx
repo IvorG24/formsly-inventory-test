@@ -71,17 +71,17 @@ const columnList = [
   },
   {
     field_id: "hr_phone_interview_date_created",
-    field_name: "HR Phone Interview Date Created",
+    field_name: "HR Interview Date Created",
     field_type: "DATE",
   },
   {
     field_id: "hr_phone_interview_status",
-    field_name: "HR Phone Interview Status",
+    field_name: "HR Interview Status",
     field_type: "TEXT",
   },
   {
     field_id: "hr_phone_interview_schedule",
-    field_name: "HR Phone Interview Schedule",
+    field_name: "HR Interview Schedule",
     field_type: "DATE",
   },
   { field_id: "assigned_hr", field_name: "Assigned HR", field_type: "TEXT" },

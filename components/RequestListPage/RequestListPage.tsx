@@ -1,5 +1,6 @@
 import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -10,7 +11,6 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   RequestListFilterValues,
   RequestListItemType,
-  TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
 import {
@@ -34,23 +34,19 @@ import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
 };
 
-const RequestListPage = ({
-  teamMemberList,
-  isFormslyTeam,
-  projectList,
-}: Props) => {
+const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
+  const teamMemberList = useTeamMemberList();
   const [activePage, setActivePage] = useState(1);
-  const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
+  const [isFetchingRequestList, setIsFetchingRequestList] = useState(true);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
   const [localFilter, setLocalFilter] =
@@ -127,17 +123,8 @@ const RequestListPage = ({
   const handleFetchRequestList = async (page: number) => {
     try {
       setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
-        );
-        return;
-      } else if (!teamMember) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: team member id not found"
-        );
-        return;
-      }
+      if (!activeTeam.team_id || !teamMember) return;
+
       const {
         search,
         requestor,
@@ -180,28 +167,20 @@ const RequestListPage = ({
   };
 
   const handleFilterForms = async () => {
-    try {
-      setActivePage(1);
-      await handleFetchRequestList(1);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(1);
+    await handleFetchRequestList(1);
   };
 
   const handlePagination = async (page: number) => {
-    try {
-      setActivePage(page);
-      await handleFetchRequestList(page);
-    } catch (e) {
-    } finally {
-      setIsFetchingRequestList(false);
-    }
+    setActivePage(page);
+    await handleFetchRequestList(page);
   };
 
   useEffect(() => {
-    handlePagination(activePage);
-  }, [activeTeam.team_id, teamMember]);
+    if (activeTeam.team_id && teamMember) {
+      handlePagination(activePage);
+    }
+  }, [activeTeam, teamMember, teamMemberList]);
 
   return (
     <Container maw={3840} h="100%">
@@ -255,6 +234,7 @@ const RequestListPage = ({
               projectList={projectList}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              isFetchingRequestList={isFetchingRequestList}
             />
           </form>
         </FormProvider>

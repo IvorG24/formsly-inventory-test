@@ -3,7 +3,7 @@ import { getRequestListOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
+import { TeamProjectTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -28,17 +28,15 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
 };
 
-const Page = ({ teamMemberList, isFormslyTeam, projectList }: Props) => {
+const Page = ({ isFormslyTeam, projectList }: Props) => {
   return (
     <>
       <Meta description="Request List Page" url="/teamName/requests" />
       <RequestListPage
-        teamMemberList={teamMemberList}
         isFormslyTeam={isFormslyTeam}
         projectList={projectList}
       />

@@ -70,7 +70,7 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <LoadingOverlay visible={isLoading} />
-      <Title order={3}>HR Phone Interview</Title>
+      <Title order={3}>HR Interview</Title>
       <Stack>
         <Group>
           <Text>Date Created: </Text>
@@ -117,9 +117,9 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
             hrPhoneInterviewData.hr_phone_interview_status === "PENDING" && (
               <Alert title="Note!" icon={<IconNote size={16} />}>
                 <Text>
-                  Your HR Phone Interview is scheduled. The HR representative
-                  will call you on the exact date of the meeting. Please wait
-                  for further details and let us know if you have any questions.
+                  Your HR Interview is scheduled. The HR representative will
+                  call you on the exact date of the meeting. Please wait for
+                  further details and let us know if you have any questions.
                   Looking forward to speaking with you soon!
                 </Text>
               </Alert>

@@ -18,6 +18,12 @@ import { IconPlus, IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+type FilterSelectedValuesType = {
+  creator: string;
+  isAscendingSort: boolean;
+  search?: string;
+};
+
 type RequestListFilterProps = {
   teamMemberList: TeamMemberWithUserType[];
   open: () => void;
@@ -31,12 +37,7 @@ type RequestListFilterProps = {
   setLocalFilter: Dispatch<SetStateAction<TechnicalAssessmentFilterValues>>;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
-};
-
-type FilterSelectedValuesType = {
-  creator: string;
-  isAscendingSort: boolean;
-  search?: string;
+  isFetchingRequestList: boolean;
 };
 
 const TechnicalQuestionnaireFilter = ({
@@ -52,6 +53,7 @@ const TechnicalQuestionnaireFilter = ({
   setLocalFilter,
   showTableColumnFilter,
   setShowTableColumnFilter,
+  isFetchingRequestList,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -151,6 +153,7 @@ const TechnicalQuestionnaireFilter = ({
             onClick={() => {
               handleFilterForms();
             }}
+            disabled={isFetchingRequestList}
           >
             Refresh
           </Button>

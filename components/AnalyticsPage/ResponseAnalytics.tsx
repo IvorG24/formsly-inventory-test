@@ -29,7 +29,7 @@ export type FilterChartValues = {
 };
 
 const stepOptions = [
-  { label: "APPLICTION INFORMATION", value: "request" },
+  { label: "APPLICATION INFORMATION", value: "request" },
   { label: "HR PHONE INTERVIEW", value: "hr_phone_interview" },
   { label: "TECHNICAL INTERVIEW 1", value: "technical_interview_1" },
   { label: "TECHNICAL INTERVIEW 2", value: "technical_interview_2" },
@@ -246,7 +246,7 @@ const ResponseAnalytics = () => {
   };
 
   return (
-    <Container fluid>
+    <Container p={0}>
       <LoadingOverlay visible={isLoading} />
       <Stack spacing="sm">
         <Title order={3} mb="sm">
@@ -266,6 +266,7 @@ const ResponseAnalytics = () => {
               handleFetchResponseTable={handleFetchResponseTable}
               memberOptions={groupMemberOptions}
               stepOptions={stepOptions}
+              isLoading={isLoading}
             />
           </form>
         </FormProvider>

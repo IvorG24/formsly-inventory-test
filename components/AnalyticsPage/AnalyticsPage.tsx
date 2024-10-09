@@ -16,7 +16,7 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
           including employee performance and response analytics. Use the tabs
           below to explore detailed reports and make data-driven decisions.
         </Text>
-        <Tabs defaultValue="analytics">
+        <Tabs defaultValue="response">
           <Tabs.List>
             <Tabs.Tab
               value="response"

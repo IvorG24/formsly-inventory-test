@@ -52,7 +52,7 @@ const Page = ({ positionOptionList, hrOptionList }: Props) => {
   return (
     <>
       <Meta
-        description="Trade Test Spreadsheet View Page"
+        description="Practical Test Spreadsheet View Page"
         url="/{teamName}/requests/trade-test-spreadsheet-view"
       />
       <TradeTestSpreadsheetView

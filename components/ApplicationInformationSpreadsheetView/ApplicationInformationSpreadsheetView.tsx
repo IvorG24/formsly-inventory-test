@@ -1,6 +1,5 @@
 import {
   fetchRegion,
-  getAdOwnerList,
   getApplicationInformationPositionOptions,
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
@@ -46,67 +45,17 @@ const formDefaultValues = {
       end: "",
     },
     status: [],
-    dateUpdatedRange: { start: "", end: "" },
     approver: [],
     requestScoreRange: {
       start: null,
       end: null,
     },
-    adOwner: "",
   },
   responseFilter: {
     position: [],
-    certification: null,
-    license: null,
-    source: [],
     firstName: "",
     middleName: "",
     lastName: "",
-    nickname: "",
-    gender: "",
-    ageRange: {
-      start: null,
-      end: null,
-    },
-    civilStatus: [],
-    contactNumber: "",
-    emailAddress: "",
-    region: "",
-    province: "",
-    city: "",
-    barangay: "",
-    street: "",
-    zipCode: "",
-    sssId: "",
-    philhealthNumber: "",
-    pagibigNumber: "",
-    tin: "",
-    highestEducationalAttainment: [],
-    fieldOfStudy: "",
-    degreeName: "",
-    torOrDiplomaAttachment: null,
-    school: "",
-    yearGraduated: {
-      start: null,
-      end: null,
-    },
-    employmentStatus: "",
-    workedAtStaClara: null,
-    shiftWillingToWork: null,
-    willingToBeAssignedAnywhere: null,
-    regionWillingToBeAssigned: [],
-    soonestJoiningDate: {
-      start: null,
-      end: null,
-    },
-    workExperience: {
-      start: null,
-      end: null,
-    },
-    expectedSalary: {
-      start: null,
-      end: null,
-    },
   },
 };
 
@@ -124,7 +73,7 @@ const ApplicationInformationSpreadsheetView = ({
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const [data, setData] = useState<ApplicationInformationSpreadsheetData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [optionList, setOptionList] = useState(initialOptionList);
@@ -235,24 +184,6 @@ const ApplicationInformationSpreadsheetView = ({
         });
       }
 
-      const addOwner = await getAdOwnerList(supabaseClient);
-      if (addOwner) {
-        setOptionList((prev) => {
-          const regionOption = {
-            field_name: "Ad Owner",
-            field_option: addOwner.map((adOwner, index) => {
-              return {
-                option_id: uuidv4(),
-                option_value: adOwner.ad_owner_name.toUpperCase(),
-                option_order: index + 1,
-                option_field_id: uuidv4(),
-              };
-            }),
-          };
-          return [...prev, regionOption];
-        });
-      }
-
       let index = 0;
       const positionOptionList: OptionTableRow[] = [];
       while (1) {
@@ -326,6 +257,7 @@ const ApplicationInformationSpreadsheetView = ({
           <Button
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
+            disabled={isLoading}
           >
             Refresh
           </Button>
@@ -335,13 +267,11 @@ const ApplicationInformationSpreadsheetView = ({
               optionList={optionList}
               handleReset={handleReset}
               approverOptionList={approverOptionList}
+              isLoading={isLoading}
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu
-            sectionList={sectionList.filter(
-              (section) =>
-                section.section_name !== "Most Recent Work Experience"
-            )}
+            sectionList={sectionList}
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
           />

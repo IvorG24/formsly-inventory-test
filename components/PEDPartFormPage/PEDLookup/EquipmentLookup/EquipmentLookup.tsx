@@ -29,7 +29,7 @@ const EquipmentLookup = ({ lookup }: Props) => {
   const [equipmentLookupCount, setEquipmentLookupCount] = useState(0);
   const [isCreatingEquipmentLookup, setIsCreatingEquipmentLookup] =
     useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editEquipmentLookup, setEditEquipmentLookup] =
     useState<LookupTable | null>(null);
 

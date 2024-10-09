@@ -3277,7 +3277,7 @@ CREATE OR REPLACE FUNCTION fetch_request_list(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let return_value
+  let return_value;
   plv8.subtransaction(function(){
     const {
       teamId,
@@ -3300,116 +3300,96 @@ AS $$
     let request_list = [];
     let request_count = 0;
 
-    let fetch_request_list_query =
-      `
-        SELECT DISTINCT
-          request_id,
-          request_formsly_id,
-          request_date_created,
-          request_status,
-          request_team_member_id,
-          request_jira_id,
-          request_jira_link,
-          request_otp_id,
-          request_form_id,
-          form_name,
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_avatar
+    const base_request_list_query = `
+        SELECT
+            request_id,
+            request_formsly_id,
+            request_date_created,
+            request_status,
+            request_team_member_id,
+            request_jira_id,
+            request_jira_link,
+            request_otp_id,
+            request_form_id,
+            form_name
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
-        LEFT JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-        LEFT JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
         WHERE
-          ftmt.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-      `;
+            tmt.team_member_team_id = $1
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
+    `;
 
-    let sort_request_list_query =
-      `
+    const base_sort_query = `
         ORDER BY ${columnAccessor} ${sort}
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-      `;
+    `;
 
-    let request_list_count_query =
-      `
-        SELECT COUNT(DISTINCT request_id)
+    const base_request_count_query = `
+        SELECT COUNT(request_id)
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
-        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
         WHERE
-          ftm.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-      `;
+            tmt.team_member_team_id = $1
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND form_table.form_is_public_form = false
+    `;
 
-    if (!isApproversView) {
-      const nonApproverFilterQuery =
-        `
-          ${requestor}
-          ${approver}
-          ${status}
-          ${form}
-          ${project}
-          ${search}
+    if (isApproversView) {
+        const approver_filter_query = `
+            AND EXISTS (
+                SELECT 1
+                FROM request_schema.request_signer_table
+                INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id
+                WHERE
+                    request_signer_request_id = request_view.request_id
+                    AND request_signer_status = 'PENDING'
+                    AND signer.signer_team_member_id = $2
+            )
+            AND request_view.request_status != 'CANCELED'
         `;
 
-      request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
-      request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
+        request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
+
+        request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
     } else {
-      const approverFilterQuery =
-        `
-          AND signer_team_member_id = '${teamMemberId}'
-          AND request_signer_status = 'PENDING'
-          AND request_status != 'CANCELED'
-        `;
-      request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
-      request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
+        const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
+
+        request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+
+        request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
     const request_data = request_list.map(request => {
       const request_signer = plv8.execute(
-        `
-          SELECT
+        `SELECT
             request_signer_table.request_signer_id,
             request_signer_table.request_signer_status,
             signer_table.signer_is_primary_signer,
             signer_table.signer_team_member_id
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
-        `
-      ).map(signer => {
-        return {
-          request_signer_id: signer.request_signer_id,
-          request_signer_status: signer.request_signer_status,
-          request_signer: {
-              signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
-          }
-        }
-      });
+         FROM request_schema.request_signer_table
+         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+         WHERE request_signer_table.request_signer_request_id = $1`,
+        [request.request_id]
+      )
 
       return {
         ...request,
-        request_signer: request_signer,
-      }
+        request_signer,
+      };
     });
 
     return_value = {
       data: request_data,
       count: Number(request_count.count)
     };
+
   });
-  return return_value
+  return return_value;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_team_project(
@@ -4349,13 +4329,11 @@ AS $$
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name, 'user_avatar',usert.user_avatar) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
-
     const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
-    request_data = {teamMemberList,isFormslyTeam,projectList}
+    request_data = {isFormslyTeam,projectList}
  });
  return request_data;
 $$ LANGUAGE plv8;
@@ -11995,7 +11973,9 @@ let returnData = [];
 plv8.subtransaction(function() {
   const {
     teamId,
-    search
+    search,
+    limit = 500,
+    offset = 0
   } = input_data;
 
   let searchCondition = '';
@@ -12020,6 +12000,7 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
         AND user_is_disabled = false
+       LIMIT ${limit} OFFSET ${offset}
     `
   );
 
@@ -14772,7 +14753,10 @@ plv8.subtransaction(function(){
                 },
                 {
                   ...form.form_section[1].section_field[4],
-                  field_response: safeParse(applicantData[4].request_response),
+                  field_response:
+                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  ? safeParse(applicantData[4].request_response)
+                  : safeParse(applicantData[3].request_response),
                 },
               ],
             },
@@ -14807,162 +14791,24 @@ AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
-      userId,
-      limit,
-      page,
-      sort,
-      requestFilter,
-      responseFilter
+      parentRequestQuery
     } = input_data;
+    returnData = plv8.execute(parentRequestQuery);
+  });
+return returnData;
+$$ LANGUAGE plv8;
 
-    const isUUID = (str) => {
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      return uuidPattern.test(str);
-    };
-
-    const onlyNumber = (value) => (value.match(/\d+/g) || []).join('');
-
-    const numberRangeCondition = (property, fieldId) => {
-      let returnData = "";
-      if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]} AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]}))`;
-      } else if (responseFilter[property]["start"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]})`;
-      } else if (responseFilter[property]["end"]){
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]})`;
-      }
-      return returnData;
-    }
-
-    const dateRangeCondition = (property, fieldId) => {
-      let returnData = "";
-      if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND (REPLACE(request_response, '"', '') >= '${new Date(responseFilter[property]["start"]).toISOString()}' AND REPLACE(request_response, '"', '') <= '${new Date(responseFilter[property]["end"]).toISOString()}'))`;
-      } else if (responseFilter[property]["start"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND REPLACE(request_response, '"', '') >= '${new Date(responseFilter[property]["start"]).toISOString()}')`;
-      } else if (responseFilter[property]["end"]){
-        returnData = `(request_response_field_id = '${fieldId}' AND REPLACE(request_response, '"', '') <= '${new Date(responseFilter[property]["end"]).toISOString()}')`;
-      }
-      return returnData;
-    }
-
-    const isSortByResponse = isUUID(sort.field);
-
-    const offset = (page - 1) * limit;
-    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-
-    const responseFilterCondition = [];
-    Boolean(responseFilter.position) && responseFilter.position.length ? responseFilterCondition.push(`(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    Boolean(responseFilter.source) && responseFilter.source.length ? responseFilterCondition.push(`(request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3' AND request_response IN (${responseFilter.source.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    responseFilter.firstName ? responseFilterCondition.push(`(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`) : null;
-    responseFilter.middleName ? responseFilterCondition.push(`(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`) : null;
-    responseFilter.lastName ? responseFilterCondition.push(`(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`) : null;
-    responseFilter.nickname ? responseFilterCondition.push(`(request_response_field_id = '72c5db8c-9aef-40fb-b741-2ae69fb517ed' AND request_response ILIKE '%${responseFilter.nickname}%')`) : null;
-    responseFilter.gender ? responseFilterCondition.push(`(request_response_field_id = 'b684821b-9dec-4b2d-ad67-c46e58e1bb87' AND request_response = '"${responseFilter.gender}"')`) : null;
-    responseFilter.ageRange && (responseFilter.ageRange.start || responseFilter.ageRange.end) ? responseFilterCondition.push(numberRangeCondition('ageRange', '22229778-e532-4b39-b15d-ca9f80c397c0')) : null;
-    Boolean(responseFilter.civilStatus) && responseFilter.civilStatus.length ? responseFilterCondition.push(`(request_response_field_id = 'aaa09989-fe93-488d-b6e6-1891644c97ad' AND request_response IN (${responseFilter.civilStatus.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    responseFilter.contactNumber ? responseFilterCondition.push(`(request_response_field_id = 'b2972102-99b0-4014-8560-caee2fdaf44e' AND request_response ILIKE '%${onlyNumber(responseFilter.contactNumber)}%')`) : null;
-    responseFilter.emailAddress ? responseFilterCondition.push(`(request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b' AND request_response ILIKE '%${responseFilter.emailAddress}%')`) : null;
-    responseFilter.region ? responseFilterCondition.push(`(request_response_field_id = '491806f6-970a-429b-ab83-0fdc5a23e916' AND request_response ILIKE '%${responseFilter.region}%')`) : null;
-    responseFilter.province ? responseFilterCondition.push(`(request_response_field_id = '417938cc-16cf-4c1a-a99b-13451d0187e1' AND request_response ILIKE '%${responseFilter.province}%')`) : null;
-    responseFilter.city ? responseFilterCondition.push(`(request_response_field_id = '7a82f009-f97d-4343-a4fe-7354018b2fec' AND request_response ILIKE '%${responseFilter.city}%')`) : null;
-    responseFilter.barangay ? responseFilterCondition.push(`(request_response_field_id = 'ef0e847c-0932-4de9-bf5f-8ae30c4d18b5' AND request_response ILIKE '%${responseFilter.barangay}%')`) : null;
-    responseFilter.street ? responseFilterCondition.push(`(request_response_field_id = '47645789-5b6e-4f31-aed7-1f8a717428ab' AND request_response ILIKE '%${responseFilter.street}%')`) : null;
-    responseFilter.zipCode ? responseFilterCondition.push(`(request_response_field_id = '3fbdd3a9-ec45-46d8-bbb9-17148d0adef5' AND request_response ILIKE '%${responseFilter.zipCode}%')`) : null;
-    responseFilter.sssId ? responseFilterCondition.push(`(request_response_field_id = 'ab7bf673-c22d-4290-b858-7cba2c4d2474' AND request_response ILIKE '%${onlyNumber(responseFilter.sssId)}%')`) : null;
-    responseFilter.philhealthNumber ? responseFilterCondition.push(`(request_response_field_id = '3cb0cf19-4fca-42d2-8267-6bf99750818b' AND request_response ILIKE '%${onlyNumber(responseFilter.philhealthNumber)}%')`) : null;
-    responseFilter.pagibigNumber ? responseFilterCondition.push(`(request_response_field_id = '3b228009-09a9-425f-85f9-9dfb860a9f71' AND request_response ILIKE '%${onlyNumber(responseFilter.pagibigNumber)}%')`) : null;
-    responseFilter.tin ? responseFilterCondition.push(`(request_response_field_id = '3f483bf0-1117-434f-a737-6a3646726530' AND request_response ILIKE '%${onlyNumber(responseFilter.tin)}%')`) : null;
-    Boolean(responseFilter.highestEducationalAttainment) && responseFilter.highestEducationalAttainment.length ? responseFilterCondition.push(`(request_response_field_id = 'b1b5edf3-be04-45cf-9fb7-d2d1a9ba57b0' AND request_response IN (${responseFilter.highestEducationalAttainment.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    responseFilter.fieldOfStudy ? responseFilterCondition.push(`(request_response_field_id = '8907c594-6abf-4e77-8969-b2070a2711d8' AND request_response ILIKE '%${responseFilter.fieldOfStudy}%')`) : null;
-    responseFilter.degreeName ? responseFilterCondition.push(`(request_response_field_id = '5f4098e5-71d5-40c7-a5f9-14db63309837' AND request_response ILIKE '%${responseFilter.degreeName}%')`) : null;
-    responseFilter.school ? responseFilterCondition.push(`(request_response_field_id = 'c0dbf3f5-cbd4-4ab7-bd4d-1977dca2fcce' AND request_response ILIKE '%${responseFilter.school}%')`) : null;
-    responseFilter.yearGraduated && (Boolean(responseFilter.yearGraduated.start) || Boolean(responseFilter.yearGraduated.end)) ? responseFilterCondition.push(dateRangeCondition('yearGraduated', 'fd699cdb-0073-41d9-b81f-0178fad54746')) : null;
-    responseFilter.employmentStatus ? responseFilterCondition.push(`(request_response_field_id = 'f264f914-dcb8-45d1-8f40-da44bab471cb' AND request_response = '"${responseFilter.employmentStatus}"')`) : null;
-    responseFilter.workedAtStaClara ? responseFilterCondition.push(`(request_response_field_id = '738ab073-d076-4087-b058-5951e89d03bf' AND request_response = '${responseFilter.workedAtStaClara}')`) : null;
-    responseFilter.shiftWillingToWork ? responseFilterCondition.push(`(request_response_field_id = 'a086b07e-cedf-418c-ab60-4caa32b1bdde' AND request_response = '"${responseFilter.shiftWillingToWork}"')`) : null;
-    responseFilter.willingToBeAssignedAnywhere ? responseFilterCondition.push(`(request_response_field_id = 'c72f8295-a8b1-478a-bb07-63ce6cb5641b' AND request_response = '${responseFilter.willingToBeAssignedAnywhere}')`) : null;
-    Boolean(responseFilter.regionWillingToBeAssigned) && responseFilter.regionWillingToBeAssigned.length ? responseFilterCondition.push(`(request_response_field_id = '1a901f84-4f55-47aa-bfa0-42f56d1eb6c5' AND request_response IN (${responseFilter.regionWillingToBeAssigned.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    responseFilter.soonestJoiningDate && (Boolean(responseFilter.soonestJoiningDate.start) || Boolean(responseFilter.soonestJoiningDate.end)) ? responseFilterCondition.push(dateRangeCondition('soonestJoiningDate', '3e8ee62f-5483-462a-b91e-63ad04454215')) : null;
-    responseFilter.workExperience && (responseFilter.workExperience.start || responseFilter.workExperience.end) ? responseFilterCondition.push(numberRangeCondition('workExperience', 'f294ce1b-9d5d-4a6c-aea9-4c26e68165df')) : null;
-    responseFilter.expectedSalary && (responseFilter.expectedSalary.start || responseFilter.expectedSalary.end) ? responseFilterCondition.push(numberRangeCondition('expectedSalary', 'bcfba5e2-b9cc-4c4b-a308-174993c4564d')) : null;
-
-    const responseBooleanFilterCondition = [];
-    responseFilter.certification ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.certification === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'cf9a92db-0d27-42ef-ae70-86f3a173b1c0'))`) : null;
-    responseFilter.license ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.license === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'fb2314e5-6e02-4493-8af6-849a0c56521a'))`) : null;
-    responseFilter.torOrDiplomaAttachment ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.torOrDiplomaAttachment === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'ca5d710e-29cd-4c33-9415-e70395d91fb3'))`) : null;
-
-    const requestFilterCondition = [];
-    Boolean(requestFilter.requestId) ? requestFilterCondition.push(`request_formsly_id ILIKE '%${requestFilter.requestId}%'`) : null;
-    Boolean(requestFilter.status) && requestFilter.status.length ? requestFilterCondition.push(`request_status IN (${requestFilter.status.map(status => `'${status}'`)})`) : null;
-    Boolean(requestFilter.dateCreatedRange.start) ? requestFilterCondition.push(`request_date_created :: DATE >= '${requestFilter.dateCreatedRange.start}'`) : null;
-    Boolean(requestFilter.dateCreatedRange.end) ? requestFilterCondition.push(`request_date_created :: DATE <= '${requestFilter.dateCreatedRange.end}'`) : null;
-    Boolean(requestFilter.dateUpdatedRange.start) ? requestFilterCondition.push(`request_status_date_updated :: DATE >= '${requestFilter.dateUpdatedRange.start}'`) : null;
-    Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
-    requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.start) ? requestFilterCondition.push(`request_score_value  >= ${requestFilter.requestScoreRange.start}`) : null;
-    requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.end) ? requestFilterCondition.push(`request_score_value <= ${requestFilter.requestScoreRange.end}`) : null;
-    Boolean(requestFilter.adOwner) && requestFilter.adOwner.length ? requestFilterCondition.push(`request_ad_owner IN (${requestFilter.adOwner.map(adOwner => `'${adOwner.toLowerCase()}'`)})`) : null;
-
-    let requestSignerCondition = "";
-    Boolean(requestFilter.approver) && requestFilter.approver.length ? requestSignerCondition = `request_signer_signer_id IN (${requestFilter.approver.map(approver => `'${approver}'`)})` : null;
-
-    const filterCount = responseFilterCondition.length;
-
-    const castRequestResponse = (value) => {
-      switch(sort.dataType) {
-        case "NUMBER": return `CAST(${value} AS NUMERIC)`;
-        case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
-        default: return value;
-      }
-    }
-
-    const parentRequests = plv8.execute(
-      `
-        SELECT * FROM (
-          SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            request_status,
-            request_status_date_updated,
-            request_response,
-            request_score_value,
-            ad_owner_name AS request_ad_owner,
-            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-          FROM public.request_view
-          INNER JOIN form_schema.form_table ON form_id = request_form_id
-          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
-          LEFT JOIN lookup_schema.ad_owner_request_table ON ad_owner_request_request_id = request_id
-          LEFT JOIN lookup_schema.ad_owner_table ON ad_owner_id = ad_owner_request_owner_id
-          WHERE
-            team_member_team_id = '${teamId}'
-            AND request_is_disabled = FALSE
-            AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-            ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
-        ) AS a
-        INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
-        WHERE
-          a.rowNumber = ${filterCount ? filterCount : 1}
-          ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
-          ${requestFilterCondition.length ? `AND (${requestFilterCondition.join(" AND ")})` : ""}
-          ${responseBooleanFilterCondition.length ? `AND (${responseBooleanFilterCondition.join(" AND ")})` : ""}
-        ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
-        ${isSortByResponse ?
-        `
-          ORDER BY ${castRequestResponse(`(
-          SELECT request_response
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = request_id
-            AND request_response_field_id = '${sort.field}'
-          )`)} ${sort.order}
-        ` : ""}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
-      `
-    );
+CREATE OR REPLACE FUNCTION get_application_information_summary_table_columns(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      parentRequests
+    } = input_data;
 
     const requestListWithResponses = [];
     parentRequests.forEach((parentRequest) => {
@@ -14978,6 +14824,12 @@ AS $$
             ON field_id = request_response_field_id
           WHERE
             request_response_request_id = '${parentRequest.request_id}'
+            AND request_response_field_id IN (
+            '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
+            'e48e7297-c250-4595-ba61-2945bf559a25',
+            '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
+            '9322b870-a0a1-4788-93f0-2895be713f9c'
+          )
         `
       );
 
@@ -15008,7 +14860,6 @@ AS $$
         request_status: parentRequest.request_status,
         request_status_date_updated: parentRequest.request_status_date_updated,
         request_score_value: parentRequest.request_score_value,
-        request_ad_owner: parentRequest.request_ad_owner,
         request_response_list: responseList,
         request_signer_list: signerList.map(signer => {
           return {
@@ -15172,10 +15023,16 @@ AS $$
 
     const offset = (page - 1) * limit;
 
-
     const request_list = plv8.execute(
       `
-        SELECT * FROM (
+        SELECT
+          request_id,
+          request_formsly_id,
+          request_date_created,
+          request_status,
+          request_form_id,
+          form_name
+        FROM (
           SELECT
             request_id,
             request_formsly_id,
@@ -15186,14 +15043,18 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          WHERE
-            request_is_disabled = false
             AND form_table.form_is_disabled = false
             AND form_is_public_form = true
-            AND field_name = 'Email Address'
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response = '"${email}"'
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            AND field_id IN (
+              '56438f2d-da70-4fa4-ade6-855f2f29823b',
+              '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
+            )
+          WHERE
+            request_is_disabled = false
         ) AS a
         WHERE
           a.rowNumber = 1
@@ -15235,7 +15096,27 @@ AS $$
       `
     )[0];
 
-    const request_data = request_list.map(request => {
+    return_value = {
+      data: request_list,
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      requestList
+    } = input_data;
+
+    return_value = requestList.map(request => {
       const request_signer = plv8.execute(
         `
           SELECT
@@ -15398,11 +15279,6 @@ AS $$
         request_is_with_progress_indicator: isWithProgressIndicator
       }
     });
-
-    return_value = {
-      data: request_data,
-      count: Number(request_count.count)
-    };
   });
   return return_value
 $$ LANGUAGE plv8;
@@ -16040,7 +15916,7 @@ AS $$
     const weekRanges = [
       getRange(1, 7),
       getRange(8, 14),
-      getRange(15, 21), 
+      getRange(15, 21),
       getRange(22, new Date(currentYear, currentMonth + 1, 0).getDate())
     ];
 
@@ -16055,7 +15931,7 @@ AS $$
 
     if (!weekStart) {
       weekStart = new Date(currentYear, currentMonth, 1);
-      weekEnd = weekRanges[0][1]; 
+      weekEnd = weekRanges[0][1];
     }
 
     const teamMemberData = plv8.execute(
@@ -16381,7 +16257,7 @@ AS $$
           (
             'REQUEST',
             '${status}',
-            'Trade Test status is updated to ${status}',
+            'Practical Test status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
             '${userId[0].user_id}'
           )
@@ -17111,7 +16987,7 @@ AS $$
           (
             'REQUEST',
             '${status}',
-            'Technical Interview ${technicalInterviewNumber} status is updated to ${status}',
+            '${technicalInterviewNumber === 1 ? "Department Interview" : "Requestor Interview"} status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
             '${userId[0].user_id}'
           )
@@ -23557,7 +23433,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table tm
     JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
-    WHERE tm.team_member_user_id = auth.uid()
+    WHERE tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role = 'OWNER'
   )
 );
@@ -23572,7 +23448,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table tm
     JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
-    WHERE tm.team_member_user_id = auth.uid()
+    WHERE tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role = 'OWNER'
   )
 );
@@ -23690,9 +23566,29 @@ SELECT
 
 ----- START: INDEXES
 
-CREATE INDEX request_response_request_id_idx ON request_schema.request_response_table (request_response, request_response_request_id);
-CREATE INDEX request_list_idx ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
-CREATE INDEX request_response_idx ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
+CREATE INDEX request_response_request_id_idx
+ON request_schema.request_response_table (request_response, request_response_request_id);
+
+CREATE INDEX request_list_idx
+ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
+
+CREATE INDEX request_response_idx
+ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
+
+CREATE INDEX request_response_table_request_response_field_id_idx
+ON request_schema.request_response_table (request_response_field_id);
+
+CREATE INDEX request_signer_table_request_signer_request_id_idx
+ON request_schema.request_signer_table (request_signer_request_id);
+
+CREATE INDEX request_signer_table_request_signer_signer_id_idx
+ON request_schema.request_signer_table (request_signer_signer_id);
+
+CREATE INDEX request_table_request_form_id_idx
+ON request_schema.request_table (request_form_id);
+
+CREATE INDEX request_team_member_id_idx
+ON request_schema.request_table (request_team_member_id);
 
 ----- END: INDEXES
 

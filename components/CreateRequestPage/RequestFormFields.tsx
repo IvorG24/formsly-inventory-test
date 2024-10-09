@@ -704,6 +704,7 @@ const RequestFormFields = ({
                     withAsterisk: inputProps.required,
                     required: inputProps.required,
                     error: inputProps.error,
+                    readOnly: field.field_is_read_only,
                   }}
                 />
               )}
@@ -783,6 +784,7 @@ const RequestFormFields = ({
                   }}
                   min={0}
                   max={MAX_INT}
+                  readOnly={field.field_is_read_only}
                 />
               )}
               rules={{
@@ -1473,7 +1475,9 @@ const RequestFormFields = ({
                       ml="xs"
                       key={option.option_id}
                       value={option.option_value}
-                      label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
+                      label={`${String.fromCharCode(65 + optionIdx)} ) ${
+                        option.option_value
+                      }`}
                       sx={{
                         input: { cursor: "pointer" },
                         label: { cursor: "pointer" },
