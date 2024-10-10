@@ -2464,9 +2464,7 @@ export const createAssetRequest = async (
 
   const responseValues = fieldResponse
     .map((response) => {
-      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${
-        response.inventory_response_asset_request_id
-      }')`;
+      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
     })
     .join(",");
 
