@@ -124,6 +124,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         ...subFields,
         ...customFields,
       ];
+      console.log(newSectionField);
 
       updateSection(index, {
         ...categorySection,

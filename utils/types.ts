@@ -596,6 +596,9 @@ export type CategoryTableRow =
 
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
+
+export type InventoryRequestResponseInsert =
+  Database["inventory_request_schema"]["Tables"]["inventory_custom_response_table"]["Insert"];
 // End: Database Table Types
 
 // Start: Database Enums
@@ -2644,6 +2647,8 @@ export type InventoryFormResponseType = {
       field_option: OptionTableRow[];
       field_response?: unknown;
       field_prefix?: string;
+      field_is_sub_category?: boolean;
+      field_is_custom_field?: boolean;
     })[];
   })[];
   form_team_group: {

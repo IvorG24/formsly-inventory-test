@@ -32,6 +32,7 @@ import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InventoryAssetFormValues,
+  InventoryRequestResponseInsert,
   InventoryResponseValues,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
@@ -2434,6 +2435,7 @@ export const createAssetRequest = async (
     model,
     serial_number,
     equipment_type,
+    old_asset_number,
     category,
     site,
     location,
@@ -2446,6 +2448,27 @@ export const createAssetRequest = async (
   } = extractInventoryData(InventoryFormValues);
 
   const requestId = uuidv4();
+  const fieldResponse: InventoryRequestResponseInsert[] = [];
+
+  for (const section of InventoryFormValues.sections) {
+    for (const field of section.section_field) {
+      if (field.field_is_sub_category || field.field_is_custom_field) {
+        fieldResponse.push({
+          inventory_response_field_id: field.field_id,
+          inventory_response_value: field.field_response as string,
+          inventory_response_asset_request_id: requestId,
+        });
+      }
+    }
+  }
+
+  const responseValues = fieldResponse
+    .map((response) => {
+      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${
+        response.inventory_response_asset_request_id
+      }')`;
+    })
+    .join(",");
 
   const requestData = {
     requestId,
@@ -2456,6 +2479,7 @@ export const createAssetRequest = async (
     brand,
     model,
     serial_number,
+    old_asset_number,
     equipment_type,
     category,
     site,
@@ -2466,6 +2490,7 @@ export const createAssetRequest = async (
     purchase_form,
     cost,
     si_number,
+    responseValues,
   };
 
   const { error } = await supabaseClient
