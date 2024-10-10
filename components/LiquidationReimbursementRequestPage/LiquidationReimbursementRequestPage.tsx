@@ -150,6 +150,9 @@ const LiquidationReimbursementRequestPage = ({
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
+  const isBOQNotRequired =
+    request.request_project.team_project_name.includes("CENTRAL OFFICE") ||
+    selectedDepartment === "Plants and Equipment";
 
   const [canCreateBOQ, setCanCreateBOQ] = useState(false);
 
@@ -365,7 +368,7 @@ const LiquidationReimbursementRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      if (selectedDepartment !== "Plants and Equipment") {
+      if (!isBOQNotRequired) {
         return { jiraTicketId: "", jiraTicketLink: "" };
       }
       if (!user) throw new Error("User is not defined.");
@@ -373,7 +376,6 @@ const LiquidationReimbursementRequestPage = ({
         throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
-
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
         { teamProjectId: request.request_project_id }
@@ -595,7 +597,7 @@ const LiquidationReimbursementRequestPage = ({
       setCanCreateBOQ(
         requestStatus === "APPROVED" &&
           isUserCostEngineer &&
-          selectedDepartment !== "Plants and Equipment" &&
+          !isBOQNotRequired &&
           !boqRequest
       );
       if (boqRequest) {
@@ -768,9 +770,7 @@ const LiquidationReimbursementRequestPage = ({
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={
-              selectedDepartment === "Plants and Equipment"
-                ? onCreateJiraTicket
-                : undefined
+              isBOQNotRequired ? onCreateJiraTicket : undefined
             }
             requestSignerId={isUserSigner?.request_signer_id}
           />

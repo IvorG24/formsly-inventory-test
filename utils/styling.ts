@@ -100,7 +100,7 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#40C057";
     case "rejected":
       return "#FA5252";
-    case "canceled":
+    case "cancelled":
       return "#868E96";
     case "under review":
       return "#228BE6";

@@ -139,8 +139,10 @@ const Layout = ({ children }: LayoutProps) => {
           (user.user_first_name[0] + user.user_last_name[0]).toUpperCase()
         );
 
-        const teamMemberList = await fetchAllTeamMembers(activeTeamId);
-        setTeamMemberStore(teamMemberList);
+        if (activeTeamId) {
+          const teamMemberList = await fetchAllTeamMembers(activeTeamId);
+          setTeamMemberStore(teamMemberList);
+        }
 
         // fetch notification list
         // const { data: notificationList, count: unreadNotificationCount } =

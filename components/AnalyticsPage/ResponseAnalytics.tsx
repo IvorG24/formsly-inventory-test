@@ -122,12 +122,6 @@ const ResponseAnalytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Accepted",
-        rawData?.pending_counts,
-        "accepted"
-      );
-      addDatasetIfAvailable(
-        datasetChartResponse,
         "Approved",
         rawData?.approved_counts,
         "approved"

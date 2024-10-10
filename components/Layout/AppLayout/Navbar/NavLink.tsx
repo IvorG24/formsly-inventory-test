@@ -124,7 +124,9 @@ const ReviewAppNavLink = () => {
     )}`;
     switch (option) {
       case "Human Resources":
-        const isUserAllowed = teamMemberGroups.includes(option.toUpperCase());
+        const isUserAllowed =
+          teamMemberGroups.includes("HUMAN RESOURCES") ||
+          teamMemberGroups.includes("HUMAN RESOURCES VIEWER");
         if (!isUserAllowed) {
           notifications.show({
             message: "You do not have permission to access this page.",
