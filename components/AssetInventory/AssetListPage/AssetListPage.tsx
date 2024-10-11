@@ -30,27 +30,11 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   userId: string;
+  tableColumnList: {
+    label: string;
+    value: string;
+  }[];
 };
-
-const tableColumnList = [
-  { label: "Asset Tag Id", value: "inventory_request_id" },
-  { label: "Asset Name", value: "inventory_request_name" },
-  { label: "Status", value: "inventory_request_status" },
-  { label: "Date Created", value: "inventory_request_created" },
-  { label: "Date Submitted", value: "inventory_request_date_updated" },
-  { label: "Item Code", value: "inventory_request_item_code" },
-  { label: "Brand", value: "inventory_request_brand" },
-  { label: "Model", value: "inventory_request_model" },
-  { label: "Serial No.", value: "inventory_request_serial_number" },
-  { label: "Site", value: "inventory_request_site" },
-  { label: "Location", value: "inventory_request_location" },
-  { label: "Department", value: "inventory_request_department" },
-  { label: "Purchase Order", value: "inventory_request_purchase_order" },
-  { label: "Purchase Date", value: "inventory_request_purchase_date" },
-  { label: "Purchase From", value: "inventory_request_purchase_from" },
-  { label: "Cost", value: "inventory_request_cost" },
-  { label: "SI No.", value: "inventory_request_si_number" },
-];
 
 type FilterSelectedValuesType = {
   search?: string;
@@ -70,6 +54,7 @@ const AssetListPage = ({
   siteList,
   departmentList,
   categoryList,
+  tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();

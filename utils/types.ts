@@ -2744,3 +2744,15 @@ export type InventoryResponseValues = {
   result_site_id: string;
   result_team_id: string;
 };
+
+export type InventoryHistory = {
+  inventory_history_id: string;
+  inventory_history_date_created: string;
+  inventory_history_event: string;
+  inventory_history_changed_from: string;
+  inventory_history_changed_to: string;
+  user_id: string;
+  user_first_name: string;
+  user_last_name: string;
+  team_member_id: string;
+};

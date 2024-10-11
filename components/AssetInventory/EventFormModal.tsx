@@ -73,9 +73,11 @@ const EventFormModal = ({
         color: "green",
       });
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
-        color: "green",
+        color: "red",
       });
     }
   };
@@ -174,7 +176,7 @@ const EventFormModal = ({
         setValue(`sections.${index}.section_field.${0}.field_response`, "");
         updateSection(index, {
           ...siteLocationSection,
-          section_field: form.form_section[2].section_field,
+          section_field: form.form_section[index].section_field,
         });
         return;
       }

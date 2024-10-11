@@ -1,5 +1,5 @@
 // Imports
-import { getAssetListFilterOptions } from "@/backend/api/get";
+import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
 import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
@@ -14,13 +14,17 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ user, userActiveTeam, supabaseClient }) => {
     try {
+      // Await the result of getColumnList to ensure it's not undefined
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
 
+      const fields = await getColumnList(supabaseClient);
+
       return {
         props: {
           ...data,
+          fields,
           userId: user.id,
         },
       };
@@ -41,6 +45,10 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  fields: {
+    value: string;
+    label: string;
+  }[];
 };
 
 const Page = ({
@@ -49,6 +57,7 @@ const Page = ({
   siteList,
   departmentList,
   categoryList,
+  fields,
 }: Props) => {
   return (
     <>
@@ -58,7 +67,8 @@ const Page = ({
         departmentList={departmentList}
         categoryList={categoryList}
         teamMemberList={teamMemberList}
-        userId={userId} // Pass userId to the AssetListPage component if needed
+        userId={userId}
+        tableColumnList={fields}
       />
     </>
   );

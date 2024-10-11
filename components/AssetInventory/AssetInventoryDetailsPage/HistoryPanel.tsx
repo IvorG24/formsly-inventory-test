@@ -1,49 +1,17 @@
-import { ROW_PER_PAGE } from "@/utils/constant";
-import { Text } from "@mantine/core";
+import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { getAvatarColor } from "@/utils/styling";
+import { InventoryHistory } from "@/utils/types";
+import { Avatar, Flex, Text } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
-type History = {
-  date: string;
-  event: string;
-  field: string;
-  changedFrom: string;
-  changedTo: string;
-  actionBy: string;
+import { useState } from "react";
+
+type Props = {
+  asset_history: InventoryHistory[];
 };
-const HistoryPanel = () => {
-  const historyList: History[] = [
-    {
-      date: "10/07/2024 07:38 PM",
-      event: "Check in",
-      field: "Status",
-      changedFrom: "Checked out",
-      changedTo: "Available",
-      actionBy: "Mark Ivor Glorioso",
-    },
-    {
-      date: "10/07/2024 03:55 AM",
-      event: "Check out",
-      field: "Status",
-      changedFrom: "Available",
-      changedTo: "Checked out",
-      actionBy: "Mark Ivor Glorioso",
-    },
-    {
-      date: "10/07/2024 03:09 AM",
-      event: "Check in",
-      field: "Status",
-      changedFrom: "Checked out",
-      changedTo: "Available",
-      actionBy: "Mark Ivor Glorioso",
-    },
-    {
-      date: "10/07/2024 02:16 AM",
-      event: "Check out",
-      field: "Status",
-      changedFrom: "Available",
-      changedTo: "Checked out",
-      actionBy: "Mark Ivor Glorioso",
-    },
-  ];
+
+const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
+  const [page, setPage] = useState(1);
+
   return (
     <>
       <DataTable
@@ -53,43 +21,74 @@ const HistoryPanel = () => {
           minHeight: "300px",
         }}
         withBorder
-        idAccessor="department_id"
-        page={1}
-        totalRecords={historyList.length}
+        idAccessor="inventory_history_id"
+        page={page} // Updated to use state
+        totalRecords={historyDetails.length}
         recordsPerPage={ROW_PER_PAGE}
-        records={historyList}
-        fetching={false}
-        onPageChange={(page) => console.log(`Page changed to: ${page}`)}
+        records={historyDetails.slice(
+          (page - 1) * ROW_PER_PAGE,
+          page * ROW_PER_PAGE
+        )}
+        onPageChange={setPage}
         columns={[
           {
-            accessor: "date",
+            accessor: "inventory_history_date_created",
             title: "Date",
-            render: (history: History) => <Text>{history.date}</Text>,
+            render: (record) => (
+              <Text>
+                {formatDate(
+                  new Date(String(record.inventory_history_date_created))
+                )}
+              </Text>
+            ),
           },
           {
-            accessor: "event",
-            title: "Event",
-            render: (history: History) => <Text>{history.event}</Text>,
+            accessor: "inventory_history_changed_from", // Updated accessor
+            title: "Changed From",
+            render: (record) => (
+              <Text>{String(record.inventory_history_changed_from)}</Text>
+            ),
           },
           {
-            accessor: "field",
-            title: "Field",
-            render: (history: History) => <Text>{history.field}</Text>,
+            accessor: "inventory_history_changed_to", // Updated accessor
+            title: "Changed To",
+            render: (record) => (
+              <Text>{String(record.inventory_history_changed_to)}</Text>
+            ),
           },
           {
-            accessor: "changedFrom",
-            title: "Changed from",
-            render: (history: History) => <Text>{history.changedFrom}</Text>,
-          },
-          {
-            accessor: "changedTo",
-            title: "Changed to",
-            render: (history: History) => <Text>{history.changedTo}</Text>,
-          },
-          {
-            accessor: "actionBy",
-            title: "Action by",
-            render: (history: History) => <Text>{history.actionBy}</Text>,
+            accessor: "request_creator_user_id",
+            title: "Action By",
+            render: (record) => {
+              const {
+                user_id,
+                user_first_name,
+                user_last_name,
+                team_member_id,
+              } = record as {
+                user_id: string;
+                user_first_name: string;
+                user_last_name: string;
+                team_member_id: string;
+              };
+              return (
+                <Flex px={0} gap={8} align="center">
+                  <Avatar
+                    color={
+                      user_id
+                        ? getAvatarColor(Number(`${user_id.charCodeAt(0)}`))
+                        : undefined
+                    }
+                    onClick={() =>
+                      team_member_id
+                        ? window.open(`/member/${team_member_id}`)
+                        : null
+                    }
+                  >{`${user_first_name[0] + user_last_name[0]}`}</Avatar>
+                  <Text>{`${user_first_name + user_last_name}`}</Text>
+                </Flex>
+              );
+            },
           },
         ]}
       />

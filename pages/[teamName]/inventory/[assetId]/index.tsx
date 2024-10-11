@@ -1,23 +1,27 @@
 // Imports
-import { getRequestListOnLoad } from "@/backend/api/get";
+import { getAssetDetails } from "@/backend/api/get";
 import AssetInventoryDetailsPage from "@/components/AssetInventory/AssetInventoryDetailsPage/AssetInventoryDetailsPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
+import { InventoryHistory, InventoryListType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, supabaseClient }) => {
+  async ({ supabaseClient, context }) => {
     try {
-      const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id, // Retrieve the user ID
+      const assetData = await getAssetDetails(supabaseClient, {
+        asset_request_id: context.query.assetId as string,
       });
+
       return {
         props: {
-          ...requestListData,
-          userId: user.id,
+          asset_details: assetData.asset_details,
+          asset_history: assetData.asset_history,
         },
       };
     } catch (e) {
+      console.log(e);
+
       return {
         redirect: {
           destination: "/500",
@@ -27,12 +31,18 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
-
-const Page = () => {
+type Props = {
+  asset_details: InventoryListType[];
+  asset_history: InventoryHistory[];
+};
+const Page = ({ asset_details, asset_history }: Props) => {
   return (
     <>
       <Meta description="Asset List Page" url="/teamName/inventory[assetId]" />
-      <AssetInventoryDetailsPage />
+      <AssetInventoryDetailsPage
+        asset_details={asset_details}
+        asset_history={asset_history}
+      />
     </>
   );
 };

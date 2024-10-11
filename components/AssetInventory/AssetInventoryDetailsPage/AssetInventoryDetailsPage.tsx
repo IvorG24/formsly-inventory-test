@@ -1,153 +1,151 @@
+import { formatDate } from "@/utils/constant";
+import { InventoryHistory, InventoryListType } from "@/utils/types";
 import {
   Button,
-  Card,
   Container,
-  Grid,
   Group,
   Paper,
   Table,
   Tabs,
   Text,
+  Title,
 } from "@mantine/core";
+import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
 import EventPanel from "./EventPanel";
 import HistoryPanel from "./HistoryPanel";
 
-const AssetInventoryDetailsPage = () => {
-  const assetDetails = {
-    assetTagId: "zxadz",
-    purchaseDate: "09/19/2024",
-    cost: "$4,444.00",
-    brand: "zxcasd",
-    model: "zxcasd",
-    site: "Site 1",
-    location: "fff",
-    category: "Software",
-    department: "department 1",
-    status: "Disposed",
-    serialNo: "asdzxcasdzxcz",
-    purchasedFrom: "qweasd",
-    dateDisposed: "09/26/2024",
-    disposeTo: "ttweqsadz",
-    dateCreated: "09/26/2024 02:17 AM",
-    notes: "hey",
-    createdBy: "Mark Ivor Glorioso",
-  };
+type Props = {
+  asset_details: InventoryListType[];
+  asset_history: InventoryHistory[];
+};
 
+const excludedKeys = [
+  "inventory_request_name",
+  "request_creator_first_name",
+  "request_creator_last_name",
+  "site_name",
+  "inventory_assignee_team_member_id",
+  "request_creator_team_member_id",
+  "request_creator_user_id",
+  "assignee_user_id",
+  "inventory_assignee_asset_request_id",
+  "request_creator_avatar",
+  "assignee_team_member_id",
+  "assignee_first_name",
+  "assignee_last_name",
+  "inventory_request_purchase_date",
+  "inventory_request_purchase_from",
+  "inventory_request_purchase_order",
+  "inventory_request_created_by",
+  "inventory_request_created",
+  "inventory_request_cost",
+];
+
+const formatLabel = (key: string) => {
+  if (key === "inventory_request_id") {
+    return "Asset Tag Id";
+  }
+  const formattedKey = key.replace(/^inventory_request_/, "");
+  return formattedKey
+    .replace(/_/g, " ")
+    .replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+};
+
+const AssetInventoryDetailsPage = ({ asset_details, asset_history }: Props) => {
   return (
     <Container size="lg">
       <Paper shadow="lg" p="lg">
-        <Grid>
-          <Grid.Col span={6}>
-            <Text size="xl" weight={500}>
-              {assetDetails.assetTagId}
-            </Text>
-          </Grid.Col>
-          <Grid.Col span={6} style={{ textAlign: "right" }}>
-            <Group position="right">
-              <Button>Edit Asset</Button>
-              <Button>More Actions</Button>
+        {asset_details.map((detail, idx) => (
+          <div key={idx}>
+            <Group position="apart" mb="md">
+              <Title order={3}>
+                {detail.inventory_request_name || "Unknown Asset Name"}
+              </Title>
+              <Group>
+                <Button>Edit Asset</Button>
+                <Button>More Actions</Button>
+              </Group>
             </Group>
-          </Grid.Col>
-        </Grid>
 
-        <Grid mt="md">
-          <Grid.Col span={6}>
-            <Table>
+            <Table striped highlightOnHover withBorder withColumnBorders>
               <tbody>
+                {Object.entries(detail)
+                  .filter(([key]) => !excludedKeys.includes(key))
+                  .reduce<JSX.Element[]>((acc, [key, value], index, array) => {
+                    if (index % 2 === 0) {
+                      const nextEntry = array[index + 1];
+                      acc.push(
+                        <tr key={key}>
+                          <td>
+                            <Text weight={500}>{formatLabel(key)}</Text>
+                          </td>
+                          <td>
+                            {key === "purchase_date"
+                              ? formatDate(new Date(String(value)))
+                              : value || "N/A"}
+                          </td>
+                          {nextEntry ? (
+                            <>
+                              <td>
+                                <Text weight={500}>
+                                  {formatLabel(nextEntry[0])}
+                                </Text>
+                              </td>
+                              <td>
+                                {nextEntry[0] === "purchase_date"
+                                  ? formatDate(new Date(String(nextEntry[1])))
+                                  : nextEntry[1] || "N/A"}
+                              </td>
+                            </>
+                          ) : (
+                            <td colSpan={2}></td>
+                          )}
+                        </tr>
+                      );
+                    }
+                    return acc;
+                  }, [])}
+
                 <tr>
                   <td>
-                    <Text weight={500}>Asset Tag ID</Text>
+                    <Text weight={500}>Created By</Text>
                   </td>
-                  <td>{assetDetails.assetTagId}</td>
-                </tr>
-                <tr>
                   <td>
-                    <Text weight={500}>Purchase Date</Text>
+                    {detail.request_creator_first_name}{" "}
+                    {detail.request_creator_last_name || "N/A"}
                   </td>
-                  <td>{assetDetails.purchaseDate}</td>
-                </tr>
-                <tr>
                   <td>
-                    <Text weight={500}>Cost</Text>
+                    <Text weight={500}>Assigned To</Text>
                   </td>
-                  <td>{assetDetails.cost}</td>
-                </tr>
-                <tr>
                   <td>
-                    <Text weight={500}>Brand</Text>
+                    {detail.site_name || ""}
+                    {`${detail.assignee_first_name || ""} ${detail.assignee_last_name || ""}`}
                   </td>
-                  <td>{assetDetails.brand}</td>
-                </tr>
-                <tr>
-                  <td>
-                    <Text weight={500}>Model</Text>
-                  </td>
-                  <td>{assetDetails.model}</td>
                 </tr>
               </tbody>
             </Table>
-          </Grid.Col>
 
-          <Grid.Col span={6}>
-            <Table>
-              <tbody>
-                <tr>
-                  <td>
-                    <Text weight={500}>Site</Text>
-                  </td>
-                  <td>{assetDetails.site}</td>
-                </tr>
-                <tr>
-                  <td>
-                    <Text weight={500}>Location</Text>
-                  </td>
-                  <td>{assetDetails.location}</td>
-                </tr>
-                <tr>
-                  <td>
-                    <Text weight={500}>Category</Text>
-                  </td>
-                  <td>{assetDetails.category}</td>
-                </tr>
-                <tr>
-                  <td>
-                    <Text weight={500}>Department</Text>
-                  </td>
-                  <td>{assetDetails.department}</td>
-                </tr>
-                <tr>
-                  <td>
-                    <Text weight={500}>Status</Text>
-                  </td>
-                  <td>{assetDetails.status}</td>
-                </tr>
-              </tbody>
-            </Table>
-          </Grid.Col>
-        </Grid>
+            <Tabs mt="xl" defaultValue="details">
+              <Tabs.List>
+                <Tabs.Tab value="details">Additional Details</Tabs.Tab>
+                <Tabs.Tab value="events">Events</Tabs.Tab>
+                <Tabs.Tab value="history">History</Tabs.Tab>
+              </Tabs.List>
 
-        <Tabs mt="xl" defaultValue="details">
-          <Tabs.List>
-            <Tabs.Tab value="details">Details</Tabs.Tab>
-            <Tabs.Tab value="events">Events</Tabs.Tab>
-            <Tabs.Tab value="history">History</Tabs.Tab>
-          </Tabs.List>
+              <Tabs.Panel value="details" mt="md">
+                <AdditionalDetailsPanel detail={detail} />
+              </Tabs.Panel>
 
-          <Tabs.Panel value="details" mt="md">
-            <Card withBorder shadow="sm">
-              <Text size="lg" weight={500}>
-                Asset Details
-              </Text>
-            </Card>
-          </Tabs.Panel>
-          <Tabs.Panel value="events" mt="md">
-            <EventPanel />
-          </Tabs.Panel>
+              <Tabs.Panel value="events" mt="md">
+                <EventPanel />
+              </Tabs.Panel>
 
-          <Tabs.Panel value="history" mt="md">
-            <HistoryPanel />
-          </Tabs.Panel>
-        </Tabs>
+              <Tabs.Panel value="history" mt="md">
+                <HistoryPanel asset_history={asset_history} />
+              </Tabs.Panel>
+            </Tabs>
+          </div>
+        ))}
       </Paper>
     </Container>
   );
