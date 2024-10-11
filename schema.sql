@@ -22,6 +22,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM
 INSERT INTO storage.buckets (id, name) VALUES ('USER_VALID_IDS', 'USER_VALID_IDS');
 INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('JOB_OFFER_ATTACHMENTS', 'JOB_OFFER_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('SSS_ID_ATTACHMENTS', 'SSS_ID_ATTACHMENTS');
 
 ----- END: STORAGES
 
@@ -239,6 +240,16 @@ CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_approver_user_id UUID REFERENCES user_schema.user_table(user_id),
   user_valid_id_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
+);
+
+CREATE TABLE user_schema.user_sss_table (
+  user_sss_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_sss_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_sss_number VARCHAR(4000) UNIQUE NOT NULL,
+  user_sss_front_image_url VARCHAR(4000) NOT NULL,
+  user_sss_back_image_url VARCHAR(4000) NOT NULL,
+
+  user_sss_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE user_schema.user_employee_number_table (
@@ -1569,6 +1580,64 @@ AS $$
     }
  });
  return user_data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_user_with_sss_id(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      user_id,
+      user_email,
+      user_first_name,
+      user_last_name,
+      user_username,
+      user_avatar,
+      user_phone_number,
+      user_active_team_id,
+      user_employee_number,
+      user_job_title,
+      sss_number,
+      sss_front_image_url,
+      sss_back_image_url,
+    } = input_data;
+
+    if (user_active_team_id) {
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
+    } else {
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
+    }
+    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+
+    if (invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+
+    if (user_employee_number) {
+      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO user_schema.user_sss_table
+        (
+          user_sss_number,
+          user_sss_front_image_url,
+          user_sss_back_image_url,
+          user_sss_user_id
+        )
+        VALUES
+        (
+          '${sss_number}',
+          '${sss_front_image_url}',
+          '${sss_back_image_url}',
+          '${user_id}'
+        )
+        RETURNING *
+      `
+    );
+ });
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_request(
@@ -4641,22 +4710,6 @@ AS $$
         LIMIT ${limit}
       `)[0].count;
 
-    const teamMemberList = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-      `
-    );
-
     returnData = {
       formList: formList.map(form => {
         return {
@@ -4688,17 +4741,6 @@ AS $$
         }
       }),
       formListCount: Number(`${formListCount}`),
-      teamMemberList: teamMemberList.map(teamMember => {
-        return {
-          team_member_id: teamMember.team_member_id,
-          team_member_role: teamMember.team_member_role,
-          team_member_user: {
-            user_id: teamMember.user_id,
-            user_first_name: teamMember.user_first_name,
-            user_last_name: teamMember.user_last_name,
-          }
-        }
-      }),
       teamId
     }
  });
@@ -4718,38 +4760,10 @@ AS $$
     } = input_data;
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-    const teamMemberList = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
-        ORDER BY user_first_name, user_last_name ASC
-      `
-    );
     const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
     const formId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
     returnData = {
-      teamMemberList: teamMemberList.map(teamMember => {
-        return {
-          team_member_id: teamMember.team_member_id,
-          team_member_role: teamMember.team_member_role,
-          team_member_user: {
-            user_id: teamMember.user_id,
-            user_first_name: teamMember.user_first_name,
-            user_last_name: teamMember.user_last_name,
-          }
-        }
-      }),
       groupList,
       formId
     }
@@ -4773,36 +4787,6 @@ AS $$
     } = input_data;
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const teamMembers = plv8.execute(
-      `
-        SELECT
-          team_member_id,
-          team_member_role,
-          user_id,
-          user_first_name,
-          user_last_name
-        FROM team_schema.team_member_table
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND team_member_is_disabled = false
-          AND (team_member_role = 'APPROVER' OR team_member_role = 'OWNER')
-        ORDER BY user_first_name, user_last_name ASC;
-      `
-    );
-    const teamMemberList = teamMembers.map(member => {
-      return {
-        team_member_id: member.team_member_id,
-        team_member_role: member.team_member_role,
-        team_member_user: {
-          user_id: member.user_id,
-          user_first_name: member.user_first_name,
-          user_last_name: member.user_last_name,
-        }
-      }
-    })
-
     const teamGroupList = plv8.execute(`SELECT team_group_id, team_group_name FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false;`);
 
     if(isFormslyForm){
@@ -4810,14 +4794,12 @@ AS $$
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
 
       returnData = {
-        teamMemberList,
         teamGroupList,
         teamProjectList,
         teamProjectListCount: Number(`${teamProjectListCount}`)
       }
     } else {
       returnData = {
-        teamMemberList,
         teamGroupList
       }
     }
@@ -5712,16 +5694,6 @@ AS $$
           }
         });
 
-        const equipmentCodeList = plv8.execute(`SELECT equipment_description_id, equipment_description_property_number_with_prefix FROM equipment_schema.equipment_description_view`);
-        const equipmentCodeOptions = equipmentCodeList.map((equipmentCode, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[7].field_id,
-            option_id: equipmentCode.equipment_description_id,
-            option_order: index,
-            option_value: equipmentCode.equipment_description_property_number_with_prefix
-          }
-        });
-
         const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
           if (field.field_name === 'Requesting Project') {
             return {
@@ -5733,23 +5705,20 @@ AS $$
               ...field,
               field_option: departmentOptions,
             }
-          } else if (field.field_name === 'Equipment Code') {
-            return {
-              ...field,
-              field_option: equipmentCodeOptions,
-            }
           } else {
             return field;
           }
         });
 
+        const filteredRequestDetailsField = ['BOQ Code', 'Equipment Code'];
+        
         returnData = {
           form: {
             ...form,
             form_section: [
               {
                 ...form.form_section[0],
-                section_field: firstSectionFieldList.filter((field) => field.field_name !== 'BOQ Code'),
+                section_field: firstSectionFieldList.filter((field) => !filteredRequestDetailsField.includes(field.field_name)),
               },
               form.form_section[1],
               form.form_section[2]
@@ -9683,16 +9652,13 @@ AS $$
       userId,
     } = input_data;
 
-
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
-    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
+    returnData = {ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -11979,7 +11945,7 @@ plv8.subtransaction(function() {
   } = input_data;
 
   let searchCondition = '';
-  if(search){
+  if (search) {
     searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
 
@@ -12000,7 +11966,9 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
         AND user_is_disabled = false
-       LIMIT ${limit} OFFSET ${offset}
+        ${searchCondition}
+      ORDER BY user_first_name, user_last_name
+      LIMIT ${limit} OFFSET ${offset}
     `
   );
 
@@ -12018,7 +11986,7 @@ plv8.subtransaction(function() {
         user_employee_number: teamMember.user_employee_number
       }
     }
-  })
+  });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -12755,58 +12723,6 @@ plv8.subtransaction(function() {
     }),
     count: Number(itemCategoryCount)
   }
-});
-return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION get_team_admin_list(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    teamId
-  } = input_data;
-
-  const teamMemberData = plv8.execute(
-    `
-      SELECT
-        team_member_id,
-        team_member_role,
-        team_member_date_created,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_username,
-        user_avatar
-      FROM team_schema.team_member_table
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        team_member_team_id = '${teamId}'
-        AND team_member_role = 'ADMIN'
-      ORDER BY
-        user_first_name ASC,
-        user_last_name ASC
-    `
-  );
-
-  returnData = teamMemberData.map(teamMember => {
-    return {
-      team_member_id: teamMember.team_member_id,
-      team_member_role: teamMember.team_member_role,
-      team_member_date_created: teamMember.team_member_date_created,
-      team_member_user: {
-        user_id: teamMember.user_id,
-        user_first_name: teamMember.user_first_name,
-        user_last_name: teamMember.user_last_name,
-        user_avatar: teamMember.user_avatar,
-        user_email: teamMember.user_email,
-      }
-    }
-  });
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -19699,17 +19615,17 @@ AS $$
   let returnData = {
     dates: [],
     pending_counts: [],
-    approved_counts: [],
-    rejected_counts: [],
     qualified_counts: [],
-    missed_counts:[],
     not_qualified_counts: [],
     waiting_for_schedule_counts:[],
     not_responsive_counts: [],
     cancelled_counts: [],
+    for_pooling_counts: [],
     accepted_counts:[],
     waiting_for_offer_counts:[],
-    for_pooling_counts: []
+    rejected_counts: [],
+    missed_counts:[],
+    approved_counts: []
   };
 
   const { filterChartValues } = input_data;
@@ -19737,14 +19653,12 @@ AS $$
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : normalizeDate(clonedCurrentDate, true);
         break;
       case "monthly":
-        startDate = startDateValue ? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth(), 1);
+        startDate = startDateValue ? new Date(normalizeDate(new Date(startDateValue)).setDate(normalizeDate(new Date(startDateValue)).getDate() + 1)) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth(), 1);
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), clonedCurrentDate.getMonth() + 1, 0, 23, 59, 59);
-        startDate.setDate(startDate.getDate() + 1);
         break;
       case "yearly":
-      startDate = startDateValue? normalizeDate(new Date(startDateValue)) : new Date(clonedCurrentDate.getFullYear(), 0, 1);
+      startDate = startDateValue?new Date(normalizeDate(new Date(startDateValue)).setDate(normalizeDate(new Date(startDateValue)).getDate() + 1)) : new Date(clonedCurrentDate.getFullYear(), 0, 1);
         endDate = endDateValue ? normalizeDate(new Date(endDateValue), true) : new Date(clonedCurrentDate.getFullYear(), 11, 31, 23, 59, 59);
-        startDate.setDate(startDate.getDate() + 1);
         break;
       default:
         throw new Error("Invalid frequency");
@@ -19763,8 +19677,8 @@ AS $$
 
     if (frequency === 'daily') {
       while (startDate <= endDate) {
-        dates.push(startDate.toISOString().slice(0, 10)); // 'YYYY-MM-DD'
-        startDate.setDate(startDate.getDate() + 1); // Increment by one day
+        dates.push(startDate.toISOString().slice(0, 10));
+        startDate.setDate(startDate.getDate() + 1);
       }
     } else if (frequency === 'monthly') {
       while (startDate <= endDate) {
@@ -19773,8 +19687,8 @@ AS $$
       }
     } else if (frequency === 'yearly') {
       while (startDate <= endDate) {
-        dates.push(startDate.getFullYear().toString()); // 'YYYY'
-        startDate.setFullYear(startDate.getFullYear() + 1); // Increment by one year
+        dates.push(startDate.getFullYear().toString());
+        startDate.setFullYear(startDate.getFullYear() + 1);
       }
     }
 
@@ -19859,42 +19773,76 @@ AS $$
         : table;
 
       const memberFilterCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
-        ? `${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
+        ? `WHERE ${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}' AND`
         : "";
 
-      const interviewData = plv8.execute(`
-        SELECT
-          TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
-          COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count
-        FROM hr_schema.${table}_table
-        WHERE ${memberFilterCondition} ${technicalInterviewCondition} ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
-        GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
-        ORDER BY date_group
-      `);
+      const jobOfferCondition = filterChartValues.memberFilter && filterChartValues.memberFilter !== "All"
+        ? `WHERE ${table}_table.${table}_team_member_id = '${filterChartValues.memberFilter}'`
+        : "";
 
+   let interviewData;
+    if (table === 'job_offer') {
+        interviewData = plv8.execute(`
+            WITH latest_status AS (
+              SELECT DISTINCT ON (job_offer_table.job_offer_request_id)
+                  job_offer_table.job_offer_request_id,
+                  job_offer_table.job_offer_status,
+                  job_offer_table.job_offer_date_created
+              FROM hr_schema.job_offer_table
+              ${jobOfferCondition}
+              ORDER BY job_offer_table.job_offer_request_id, job_offer_table.job_offer_date_created DESC
+            )
+            SELECT
+                TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', latest_status.job_offer_date_created), '${dateFormat}') AS date_group,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'PENDING' THEN 1 END) AS pending_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
+                COUNT(CASE WHEN latest_status.job_offer_status = 'REJECTED' THEN 1 END) AS rejected_count
+            FROM latest_status
+            WHERE latest_status.job_offer_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+            GROUP BY date_group
+            ORDER BY date_group;
+        `);
+    } else {
+        interviewData = plv8.execute(`
+            SELECT
+            TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}') AS date_group,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'PENDING' THEN 1 END) AS pending_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'QUALIFIED' THEN 1 END) AS qualified_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT QUALIFIED' THEN 1 END) AS not_qualified_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR SCHEDULE' THEN 1 END) AS waiting_for_schedule_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'NOT RESPONSIVE' THEN 1 END) AS not_responsive_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'CANCELLED' THEN 1 END) AS cancelled_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'FOR POOLING' THEN 1 END) AS for_pooling_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'ACCEPTED' THEN 1 END) AS accepted_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'WAITING FOR OFFER' THEN 1 END) AS waiting_for_offer_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'REJECTED' THEN 1 END) AS rejected_count,
+            COUNT(CASE WHEN ${table}_table.${table}_status = 'MISSED' THEN 1 END) AS missed_count
+            FROM hr_schema.${table}_table
+            WHERE ${memberFilterCondition} ${technicalInterviewCondition}
+            ${table}_table.${table}_date_created BETWEEN '${startDate.toISOString()}' AND '${endDate.toISOString()}'
+            GROUP BY TO_CHAR(DATE_TRUNC('${frequency === 'weekly' ? 'week' : 'day'}', ${table}_table.${table}_date_created), '${dateFormat}')
+            ORDER BY date_group DESC;
+        `);
+    }
       const dateDataMap = {};
       interviewData.forEach(row => {
         const dateKey = row.date_group;
         dateDataMap[dateKey] = {
-          pending_count: String(row.pending_count),
-          qualified_count: String(row.qualified_count),
-          not_qualified_count: String(row.not_qualified_count),
-          not_responsive_count: String(row.not_responsive_count),
-          waiting_for_schedule_count:String(row.waiting_for_schedule_count),
-          waiting_for_offer_count:String(row.waiting_for_offer_count),
-          accepted_count:String(row.accepted_count,),
-          for_pooling_count: String(row.for_pooling_count),
-          cancelled_count: String(row.cancelled_count)
-        };
-      });
+          pending_count: String(row.pending_count ?? "0"),
+          qualified_count: String(row.qualified_count ?? "0"),
+          not_qualified_count: String(row.not_qualified_count ?? "0"),
+          waiting_for_schedule_count: String(row.waiting_for_schedule_count ?? "0"),
+          not_responsive_count: String(row.not_responsive_count ?? "0"),
+          cancelled_count: String(row.cancelled_count ?? "0"),
+          for_pooling_count: String(row.for_pooling_count ?? "0"),
+          accepted_count: String(row.accepted_count ?? "0"),
+          waiting_for_offer_count: String(row.waiting_for_offer_count ?? "0"),
+          rejected_count: String(row.rejected_count ?? "0"),
+          missed_count: String(row.missed_count ?? "0")
+      };
+    });
 
       allDates.forEach(date => {
         const data = dateDataMap[date] || {
@@ -19904,9 +19852,11 @@ AS $$
           waiting_for_schedule_count:"0",
           waiting_for_offer_count:"0",
           accepted_count:"0",
+          rejected_count: "0",
           not_responsive_count: "0",
           for_pooling_count: "0",
-          cancelled_count: "0"
+          cancelled_count: "0",
+          missed_count: "0"
         };
 
         returnData.dates.push(date);
@@ -19914,11 +19864,13 @@ AS $$
         returnData.qualified_counts.push(data.qualified_count);
         returnData.not_qualified_counts.push(data.not_qualified_count);
         returnData.waiting_for_schedule_counts.push(data.waiting_for_schedule_count);
-        returnData.waiting_for_offer_counts.push(data.waiting_for_offer_count);
         returnData.not_responsive_counts.push(data.not_responsive_count);
-        returnData.accepted_counts.push(data.accepted_count);
-        returnData.for_pooling_counts.push(data.for_pooling_count);
         returnData.cancelled_counts.push(data.cancelled_count);
+        returnData.for_pooling_counts.push(data.for_pooling_count);
+        returnData.accepted_counts.push(data.accepted_count);
+        returnData.waiting_for_offer_counts.push(data.waiting_for_offer_count);
+        returnData.rejected_counts.push(data.rejected_count);
+        returnData.missed_counts.push(data.missed_count);
       });
 
       delete returnData.approved_counts;

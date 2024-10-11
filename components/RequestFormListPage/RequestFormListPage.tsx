@@ -2,10 +2,11 @@ import { deleteForm } from "@/backend/api/delete";
 import { getFormListWithFilter } from "@/backend/api/get";
 import { updateFormVisibility } from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { DEFAULT_FORM_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { startCase } from "@/utils/string";
-import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
+import { FormWithOwnerType } from "@/utils/types";
 import {
   ActionIcon,
   Container,
@@ -35,7 +36,6 @@ import FormCard from "./FormCard";
 type Props = {
   formList: FormWithOwnerType[];
   formListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   teamId: string;
 };
 
@@ -53,11 +53,10 @@ type FormFilterValues = {
 const RequestFormListPage = ({
   formList: initialFormList,
   formListCount: initialFormListCount,
-  teamMemberList,
   teamId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const teamMemberList = useTeamMemberList();
   const forms = useFormList();
 
   const [formList, setFormList] =

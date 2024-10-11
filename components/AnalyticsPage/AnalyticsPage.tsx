@@ -1,11 +1,13 @@
 import { HRAnalyticsData } from "@/utils/types";
 import { Container, Stack, Tabs, Text, Title } from "@mantine/core";
 import { IconFileAnalytics, IconReportAnalytics } from "@tabler/icons-react";
-import HRAnalytics from "./HRAnalytics";
-import ResponseAnalytics from "./ResponseAnalytics";
+import Analytics from "./Analytics";
+import Response from "./Response";
+
 type Props = {
   analyticsData: HRAnalyticsData;
 };
+
 const AnalyticsPage = ({ analyticsData }: Props) => {
   return (
     <Container fluid>
@@ -33,11 +35,11 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
           </Tabs.List>
 
           <Tabs.Panel value="response" pt="xs">
-            <HRAnalytics data={analyticsData} />
+            <Response data={analyticsData} />
           </Tabs.Panel>
 
           <Tabs.Panel value="analytics" pt="xs">
-            <ResponseAnalytics />
+            <Analytics />
           </Tabs.Panel>
         </Tabs>
       </Stack>

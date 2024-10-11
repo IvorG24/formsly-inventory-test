@@ -1,6 +1,7 @@
 import {
   checkIfUserIsRequestOwner,
   getNonDuplictableSectionResponse,
+  getRequestFieldResponse,
 } from "@/backend/api/get";
 import { createComment, createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -62,7 +63,6 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const team = useActiveTeam();
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
-
   const isReferenceOnly = Boolean(router.query.referenceOnly);
 
   const [initialRequestDetails, setInitialRequestDetails] =
@@ -99,17 +99,17 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
 
       setIsLoading(true);
 
-      const response = data.sections[1].section_field[0]
-        .field_response as string;
-
-      const projectId = data.sections[1].section_field[0].field_option.find(
-        (option) => option.option_value === response
-      )?.option_id as string;
-
       const additionalSignerList: FormType["form_signer"] = [];
 
       let request: RequestTableRow;
       if (isReferenceOnly) {
+        const response = data.sections[1].section_field[0]
+          .field_response as string;
+
+        const projectId = data.sections[1].section_field[0].field_option.find(
+          (option) => option.option_value === response
+        )?.option_id as string;
+
         request = await createRequest(supabaseClient, {
           requestFormValues: data,
           formId: form.form_id,
@@ -134,7 +134,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
         });
 
         // add comment
-        if (isUserCostEngineer && form.form_section[2]) {
+        if (isUserCostEngineer && data.sections[2]) {
           const newBoqCodeFieldValue = safeParse(
             `${data.sections[2].section_field[0].field_response}`
           );
@@ -246,11 +246,37 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           };
         }
 
-        replaceSection([
-          formSectionWithResponse[0],
-          balanceSection,
-          costCodeSection,
-        ]);
+        let isPED = false;
+
+        const lrfDepartmentField = await getRequestFieldResponse(
+          supabaseClient,
+          {
+            requestId: safeParse(formSectionResponseList[0].request_response),
+            fieldId: ["694465de-8aa9-4361-be52-f8c091c13fde"],
+          }
+        );
+
+        if (lrfDepartmentField.length > 0) {
+          const lrfDepartmentFieldResponse = safeParse(
+            `${lrfDepartmentField[0].request_response}`
+          );
+
+          isPED =
+            lrfDepartmentFieldResponse.toLowerCase() === "plants and equipment";
+        }
+
+        if (lrfDepartmentField.length <= 0) return;
+
+        if (isPED) {
+          replaceSection([
+            formSectionWithResponse[0],
+            balanceSection,
+            costCodeSection,
+          ]);
+        } else {
+          replaceSection([formSectionWithResponse[0], balanceSection]);
+        }
+
         setInitialRequestDetails({ sections: formSectionWithResponse });
         setOldBoqCodeValue(
           safeParse(costCodeSection.section_field[0].field_response)

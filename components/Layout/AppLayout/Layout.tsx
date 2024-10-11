@@ -1,4 +1,5 @@
 import {
+  checkIfUserHaveSSSID,
   getAllGroupOfTeamMember,
   getAllTeamOfUser,
   getFormList,
@@ -13,6 +14,7 @@ import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -20,6 +22,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Header from "./Header/Header";
 import Navbar from "./Navbar/Navbar";
+import SSSModal from "./SSSModal";
 type LayoutProps = {
   children: React.ReactNode;
 };
@@ -157,6 +160,25 @@ const Layout = ({ children }: LayoutProps) => {
         // set notification
         // setNotificationList(notificationList);
         // setUnreadNotification(unreadNotificationCount || 0);
+
+        // temporary prompt
+        const isWithSSSId = await checkIfUserHaveSSSID(supabaseClient, {
+          userId,
+        });
+        if (!isWithSSSId) {
+          modals.open({
+            id: "SSSModal",
+            title: "SSS ID Information",
+            withCloseButton: false,
+            closeOnClickOutside: false,
+            closeOnEscape: false,
+            centered: true,
+            children: (
+              <SSSModal userId={user.user_id} supabaseClient={supabaseClient} />
+            ),
+            size: "xl",
+          });
+        }
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

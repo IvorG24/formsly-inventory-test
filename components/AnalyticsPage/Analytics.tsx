@@ -2,7 +2,8 @@ import { getHrAnalyticsData, getTeamGroupMember } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { frequencyOptions } from "@/utils/constant";
 import { generateDateLabels } from "@/utils/functions";
-import { getStatusToColorForCharts } from "@/utils/styling";
+import { capitalizeEachWord } from "@/utils/string";
+import { getHRAnalyticsStatusToColor } from "@/utils/styling";
 import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
 import {
   Alert,
@@ -17,8 +18,8 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import ResponseTable from "./ResponseTable";
-import ResponseTableFilter from "./ResponseTableFilter"; // Your filter form component
+import AnalyticsTable from "./AnalyticsTable";
+import AnalyticsTableFilter from "./AnalyticsTableFilter"; // Your filter form component
 
 export type FilterChartValues = {
   memberFilter: string;
@@ -29,18 +30,18 @@ export type FilterChartValues = {
 };
 
 const stepOptions = [
-  { label: "APPLICATION INFORMATION", value: "request" },
-  { label: "HR PHONE INTERVIEW", value: "hr_phone_interview" },
-  { label: "TECHNICAL INTERVIEW 1", value: "technical_interview_1" },
-  { label: "TECHNICAL INTERVIEW 2", value: "technical_interview_2" },
-  { label: "TRADE TEST", value: "trade_test" },
-  { label: "BACKGROUND CHECK", value: "background_check" },
-  { label: "JOB OFFER", value: "job_offer" },
+  { label: "Application Information", value: "request" },
+  { label: "Phone Interview", value: "hr_phone_interview" },
+  { label: "Department Interview", value: "technical_interview_1" },
+  { label: "Requestor Interview", value: "technical_interview_2" },
+  { label: "Practical Test", value: "trade_test" },
+  { label: "Background Check", value: "background_check" },
+  { label: "Job Offer", value: "job_offer" },
 ];
 
-const memberOptions = [{ label: "ALL", value: "All" }];
+const memberOptions = [{ label: "All", value: "All" }];
 
-const ResponseAnalytics = () => {
+const Analytics = () => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
 
@@ -97,8 +98,8 @@ const ResponseAnalytics = () => {
       ) => ({
         label,
         data: rawData.map((item) => parseInt(item as string, 10)),
-        backgroundColor: [getStatusToColorForCharts(status) || "blue"],
-        borderColor: [getStatusToColorForCharts(status) || "blue"],
+        backgroundColor: [getHRAnalyticsStatusToColor(status) || "blue"],
+        borderColor: [getHRAnalyticsStatusToColor(status) || "blue"],
         borderWidth: 2,
       });
 
@@ -128,15 +129,21 @@ const ResponseAnalytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Rejected",
-        rawData?.rejected_counts,
-        "rejected"
-      );
-      addDatasetIfAvailable(
-        datasetChartResponse,
         "Qualified",
         rawData?.qualified_counts,
         "qualified"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Accepted",
+        rawData?.accepted_counts,
+        "accepted"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Rejected",
+        rawData?.rejected_counts,
+        "rejected"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
@@ -146,9 +153,9 @@ const ResponseAnalytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Cancelled",
-        rawData?.cancelled_counts,
-        "cancelled"
+        "Waiting For Schedule",
+        rawData?.waiting_for_schedule_counts,
+        "waiting for schedule"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
@@ -158,22 +165,27 @@ const ResponseAnalytics = () => {
       );
       addDatasetIfAvailable(
         datasetChartResponse,
+        "Cancelled",
+        rawData?.cancelled_counts,
+        "cancelled"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
+        "Waiting For Offer",
+        rawData?.waiting_for_offer_counts,
+        "waiting for offer"
+      );
+      addDatasetIfAvailable(
+        datasetChartResponse,
         "For Pooling",
         rawData?.for_pooling_counts,
         "for pooling"
       );
       addDatasetIfAvailable(
         datasetChartResponse,
-        "Waiting For Schedule",
-        rawData?.waiting_for_schedule_counts,
-        "waiting for schedule"
-      );
-
-      addDatasetIfAvailable(
-        datasetChartResponse,
-        "Waiting For Offer",
-        rawData?.waiting_for_offer_counts,
-        "waiting for offer"
+        "Missed",
+        rawData?.missed_counts,
+        "missed"
       );
 
       setDataChart(datasetChartResponse);
@@ -195,7 +207,9 @@ const ResponseAnalytics = () => {
       });
 
       const teamMemberList = data.map((member) => ({
-        label: `${member.team_member_user.user_first_name.toUpperCase()} ${member.team_member_user.user_last_name.toUpperCase()}`,
+        label: capitalizeEachWord(
+          `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`
+        ),
         value: member.team_member_id,
       }));
       setMemberOptions([...memberOptions, ...teamMemberList]);
@@ -248,15 +262,16 @@ const ResponseAnalytics = () => {
         </Title>
         <Alert title="Note!" icon={<IconNote size={16} />}>
           <Text>
-            To access the date range, click submit. Make sure you have selected
-            the appropriate filters before proceeding. If you encounter any
-            issues, please refresh the page or contact support for assistance.
+            To access the date range, click the &quot;Fetch Data&quot; button.
+            Make sure you have selected the appropriate filters before
+            proceeding. If you encounter any issues, please refresh the page or
+            contact support for assistance.
           </Text>
         </Alert>
 
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitFilter)}>
-            <ResponseTableFilter
+            <AnalyticsTableFilter
               handleFetchResponseTable={handleFetchResponseTable}
               memberOptions={groupMemberOptions}
               stepOptions={stepOptions}
@@ -264,7 +279,7 @@ const ResponseAnalytics = () => {
             />
           </form>
         </FormProvider>
-        <ResponseTable
+        <AnalyticsTable
           frequency={selectedFrequency}
           xLabel={selectedMemberLabel}
           yLabel={selectedStepLabel}
@@ -277,4 +292,4 @@ const ResponseAnalytics = () => {
   );
 };
 
-export default ResponseAnalytics;
+export default Analytics;

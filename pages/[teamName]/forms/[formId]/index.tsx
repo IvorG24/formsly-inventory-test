@@ -10,12 +10,12 @@ import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import TechnicalAssessmentFormPage from "@/components/TechnicalAssessmentFormPage/TechnicalAssessmentFormPage";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
   InitialFormType,
   TeamGroupTableRow,
-  TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -53,7 +53,6 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 
 type Props = {
   form: InitialFormType;
-  teamMemberList: TeamMemberWithUserType[];
   teamGroupList: TeamGroupTableRow[];
   teamProjectList?: TeamProjectTableRow[];
   teamProjectListCount?: number;
@@ -61,11 +60,11 @@ type Props = {
 
 const Page = ({
   form,
-  teamMemberList = [],
   teamGroupList = [],
   teamProjectList = [],
   teamProjectListCount = 0,
 }: Props) => {
+  const teamMemberList = useTeamMemberList("OWNER & APPROVER");
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":

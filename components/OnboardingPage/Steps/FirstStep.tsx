@@ -196,27 +196,7 @@ const FirstStep = ({
                 required
                 {...defaultInputProps}
               />
-              <TextInput
-                label="Middle Name"
-                {...register("user_id_middle_name", {
-                  onChange: (e) => {
-                    const format = toTitleCase(
-                      removeMultipleSpaces(e.currentTarget.value)
-                    );
-                    setValue("user_id_middle_name", format);
-                  },
-                  minLength: {
-                    value: 2,
-                    message: "Middle name must have at least 2 characters",
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: "Middle name must be shorter than 100 characters",
-                  },
-                })}
-                placeholder="Rizal"
-                error={errors.user_id_middle_name?.message}
-              />
+
               <TextInput
                 label="Last Name"
                 placeholder="Dela Cruz"

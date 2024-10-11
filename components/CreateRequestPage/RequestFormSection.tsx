@@ -109,7 +109,6 @@ type RequestFormSectionProps = {
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
-    onDepartmentChange: (value: string | null) => void;
     onPayeeVatBooleanChange: (
       value: boolean,
       fieldIndex: number,
@@ -163,6 +162,10 @@ type RequestFormSectionProps = {
     onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
     onTypeOfRequestChange: (value: string | null) => void;
     onQuantityOrUnitCostChange: (sectionIndex: number) => void;
+    onParticularTypeChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;

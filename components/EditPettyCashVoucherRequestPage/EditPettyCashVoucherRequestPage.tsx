@@ -2,6 +2,7 @@ import {
   getEmployeeName,
   getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
+  getSectionInRequestPage,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -10,6 +11,8 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { CSI_HIDDEN_FIELDS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -19,6 +22,7 @@ import {
   OptionTableRow,
   RequestResponseTableRow,
   RequestTableRow,
+  RequestWithResponseType,
 } from "@/utils/types";
 import {
   Box,
@@ -34,6 +38,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -65,6 +70,7 @@ const EditPettyCashVoucherRequestPage = ({
   bankListOptions,
   uomOptions,
   equipmentCodeOptions,
+  duplicatableSectionIdList,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -248,7 +254,7 @@ const EditPettyCashVoucherRequestPage = ({
             (field) => field.field_order !== 11
           ),
         });
-        if (chargeToProjectSectionIndex) {
+        if (chargeToProjectSectionIndex > 0) {
           removeSection(chargeToProjectSectionIndex);
         }
       }
@@ -415,11 +421,11 @@ const EditPettyCashVoucherRequestPage = ({
 
   const handleChargeToProjectBooleanChange = (value: boolean) => {
     try {
-      const chargeToProjectSectionExists =
-        getValues(`sections`).findIndex(
-          (section) => section.section_name === "Charge to Project Details"
-        ) > 0;
-      if (value && !chargeToProjectSectionExists) {
+      const chargeToProjectSectionExists = getValues(`sections`).findIndex(
+        (section) => section.section_name === "Charge to Project Details"
+      );
+
+      if (Boolean(value) && chargeToProjectSectionExists < 0) {
         const chargeToProjectSection = form.form_section[2];
         const sectionWithProjectOptions = {
           ...chargeToProjectSection,
@@ -433,10 +439,10 @@ const EditPettyCashVoucherRequestPage = ({
         };
 
         insertSection(2, sectionWithProjectOptions, { focusIndex: 0 });
-      } else if (!value) {
-        const requestDetailsSectionExists = getValues(`sections.2`);
+      } else if (!value && chargeToProjectSectionExists > 0) {
+        const requestDetailsSectionExists = getValues(`sections.1`);
         if (requestDetailsSectionExists) {
-          removeSection(2);
+          removeSection(chargeToProjectSectionExists);
         }
       }
     } catch (e) {
@@ -472,6 +478,9 @@ const EditPettyCashVoucherRequestPage = ({
         ...form.form_section[3].section_field[1],
         field_option: bankListOptions,
       };
+      const paymentOptionFieldExists = currentSectionField.some(
+        (field) => field.field_id === paymentOptionField.field_id
+      );
 
       const conditionalFields = form.form_section[3].section_field.filter(
         (field) => ["Account Name", "Account Number"].includes(field.field_name)
@@ -489,6 +498,7 @@ const EditPettyCashVoucherRequestPage = ({
         ));
 
       if (isBankTransfer) {
+        if (paymentOptionFieldExists) return;
         if (fieldExists("Account Name")) {
           addFields([paymentOptionField]);
         } else {
@@ -503,7 +513,6 @@ const EditPettyCashVoucherRequestPage = ({
       }
 
       currentSectionField.sort((a, b) => a.field_order - b.field_order);
-
       removeSection(sectionIndex);
       insertSection(
         sectionIndex,
@@ -529,16 +538,15 @@ const EditPettyCashVoucherRequestPage = ({
 
       if (value && !particularSectionExists) {
         const particularSection = form.form_section[5];
+        const sectionFieldWithOptions = particularSection.section_field.map(
+          (field) =>
+            field.field_name === "Unit of Measure"
+              ? { ...field, field_option: uomOptions }
+              : field
+        );
         const sectionWithProjectOptions = {
           ...particularSection,
-          section_field: [
-            ...particularSection.section_field.slice(0, 2),
-            {
-              ...particularSection.section_field[2],
-              field_option: uomOptions,
-            },
-            ...particularSection.section_field.slice(3, 5),
-          ],
+          section_field: sectionFieldWithOptions,
         };
 
         insertSection(
@@ -571,7 +579,7 @@ const EditPettyCashVoucherRequestPage = ({
 
   const handleUpdateConditionalSectionAndField = (sections: Section[]) => {
     handleProjectOrDepartmentNameChange();
-    // update conditional sections and fields
+
     const isChargedToProject = sections[1].section_field.find(
       (field) => field.field_name === "Is this request charged to the project?"
     )?.field_response;
@@ -683,15 +691,28 @@ const EditPettyCashVoucherRequestPage = ({
         `sections.${sectionIndex}`
       ).section_field;
 
-      const quantityField =
-        (currentSectionFieldList[1].field_response as number) ?? 0;
-      const unitCostField =
-        (currentSectionFieldList[3].field_response as number) ?? 0;
+      const quantityField = currentSectionFieldList.find(
+        (field) => field.field_name === "Quantity"
+      );
+      const quantityFieldResponse = Number(quantityField?.field_response) || 0;
 
-      const amount = quantityField * unitCostField;
+      const unitCostFieldResponse =
+        Number(
+          currentSectionFieldList.find(
+            (field) => field.field_name === "Unit Cost"
+          )?.field_response
+        ) || 0;
+
+      const amountFieldIndex = currentSectionFieldList.findIndex(
+        (field) => field.field_name === "Amount"
+      );
+
+      const amount = quantityField
+        ? quantityFieldResponse * unitCostFieldResponse
+        : unitCostFieldResponse;
 
       setValue(
-        `sections.${sectionIndex}.section_field.4.field_response`,
+        `sections.${sectionIndex}.section_field.${amountFieldIndex}.field_response`,
         amount
       );
     } catch (e) {
@@ -702,76 +723,300 @@ const EditPettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleParticularTypeChange = (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+
+      const currentSection = getValues(`sections.${sectionIndex}`);
+      const currentSectionFieldList = currentSection.section_field;
+      const conditionalFieldsNameList = [
+        "Unit of Measure",
+        "Quantity",
+        "Particular Request ID",
+      ];
+      const conditionalFieldsExists = currentSectionFieldList.some((field) =>
+        conditionalFieldsNameList.includes(field.field_name)
+      );
+
+      if (value === "Item") {
+        if (conditionalFieldsExists) return;
+
+        const conditionalFieldList = form.form_section[5].section_field
+          .filter((field) =>
+            conditionalFieldsNameList.includes(field.field_name)
+          )
+          .map((field) =>
+            field.field_name === "Unit of Measure"
+              ? { ...field, field_option: uomOptions }
+              : field
+          );
+
+        const updatedSectionFieldList = [
+          ...currentSectionFieldList,
+          ...conditionalFieldList,
+        ].sort((a, b) => a.field_order - b.field_order);
+
+        removeSection(sectionIndex);
+        insertSection(sectionIndex, {
+          ...currentSection,
+          section_field: updatedSectionFieldList,
+        });
+      } else if (value === "Non Item") {
+        if (!conditionalFieldsExists) return;
+        removeSection(sectionIndex);
+        insertSection(sectionIndex, {
+          ...currentSection,
+          section_field: currentSectionFieldList.filter(
+            (field) => !conditionalFieldsNameList.includes(field.field_name)
+          ),
+        });
+      }
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleDuplicateSection = (sectionId: string) => {
+    const sectionLastIndex = formSections
+      .map((sectionItem) => sectionItem.section_id)
+      .lastIndexOf(sectionId);
+    const sectionMatch = form.form_section.find(
+      (section) => section.section_id === sectionId
+    );
+    if (sectionMatch) {
+      const sectionDuplicatableId = uuidv4();
+      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
+        (field) => {
+          if (field.field_name === "Unit of Measure") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: uomOptions,
+            };
+          } else {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+            };
+          }
+        }
+      );
+
+      const newSection = {
+        ...sectionMatch,
+        section_order: sectionLastIndex + 1,
+        section_field: duplicatedFieldsWithDuplicatableId,
+      };
+
+      insertSection(sectionLastIndex + 1, newSection);
+      return;
+    }
+  };
+
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
     try {
+      const duplicatableSection = form.form_section[5];
       const fetchRequestDetails = async () => {
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        let index = 0;
+        while (1) {
+          setIsLoading(true);
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
+
+          const data = await getSectionInRequestPage(supabaseClient, {
+            index,
+            requestId: requestId,
+            sectionId: duplicatableSection.section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
+          });
+          newFields.push(...data);
+          index += 5;
+
+          if (index > duplicatableSectionIdList.length) break;
+        }
+
+        const newFieldsWithOptions = newFields.map((field) => {
+          const fieldOption = duplicatableSection.section_field.find(
+            (formField) => formField.field_id === field.field_id
+          )?.field_option;
+          if (field.field_name === "Particular Type") {
+            field.field_option = fieldOption || [];
+          }
+
+          return field;
+        });
+
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFieldsWithOptions.forEach((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
+
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...form.form_section[5],
+            section_field: combinedFieldList,
+          },
+        ]).map((section) => {
+          return {
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
+            ),
+          };
+        });
+
+        const formattedSection = newSection.map((section) => {
+          const fieldList: Section["section_field"] = [];
+          section.section_field.forEach((field) => {
+            const response = field.field_response?.request_response
+              ? safeParse(field.field_response?.request_response)
+              : "";
+            let option: OptionTableRow[] = field.field_option ?? [];
+
+            switch (field.field_name) {
+              case "Unit of Measure":
+                option = uomOptions;
+                break;
+            }
+
+            if (response) {
+              fieldList.push({
+                ...field,
+                field_response: response,
+                field_option: option,
+              });
+            }
+          });
+
+          return {
+            ...section,
+            section_field: fieldList,
+          };
+        });
+
+        // Add duplicatable section id
+        const sectionWithDuplicatableId = formattedSection.map(
+          (section, index) => {
+            const dupId = index ? uuidv4() : undefined;
+            return {
+              ...section,
+              section_field: section.section_field.map((field) => {
+                return {
+                  ...field,
+                  field_section_duplicatable_id: dupId,
+                };
+              }),
+            };
+          }
+        );
+
+        const nonDuplicatableSectionList = form.form_section.slice(0, 5);
+
         const formSectionResponseList = await getNonDuplictableSectionResponse(
           supabaseClient,
           {
             requestId,
-            fieldIdList: form.form_section.flatMap((section) =>
+            fieldIdList: nonDuplicatableSectionList.flatMap((section) =>
               section.section_field.map((field) => field.field_id)
             ),
           }
         );
 
-        let formSectionWithResponse = form.form_section.map((section) => {
-          let fieldWithResponseList = section.section_field.map((field) => {
-            const response = formSectionResponseList.find(
-              (response) =>
-                response.request_response_field_id === field.field_id
-            );
-            let field_option = field.field_option ?? [];
+        let formSectionWithResponse = nonDuplicatableSectionList.map(
+          (section) => {
+            let fieldWithResponseList = section.section_field.map((field) => {
+              const response = formSectionResponseList.find(
+                (response) =>
+                  response.request_response_field_id === field.field_id
+              );
+              let field_option = field.field_option ?? [];
 
-            switch (field.field_name) {
-              case "Requesting Project":
-              case "Project":
-                field_option = projectOptions;
-                break;
-              case "Department":
-                field_option = departmentOptions;
-                break;
-              case "Payment Option":
-                field_option = bankListOptions;
-                break;
-              case "Unit of Measure":
-                field_option = uomOptions;
-                break;
-              case "Equipment Code":
-                field_option = equipmentCodeOptions;
-                break;
-              default:
-                break;
+              switch (field.field_name) {
+                case "Requesting Project":
+                case "Project":
+                  field_option = projectOptions;
+                  break;
+                case "Department":
+                  field_option = departmentOptions;
+                  break;
+                case "Payment Option":
+                  field_option = bankListOptions;
+                  break;
+                case "Unit of Measure":
+                  field_option = uomOptions;
+                  break;
+                case "Equipment Code":
+                  field_option = equipmentCodeOptions;
+                  break;
+                default:
+                  break;
+              }
+
+              return {
+                ...field,
+                field_response: response
+                  ? safeParse(response.request_response)
+                  : "",
+                field_option,
+              };
+            });
+
+            if (section.section_name === "Request Details") {
+              const isForOfficialBusiness = fieldWithResponseList.find(
+                (field) => field.field_name === "Is this for Official Business?"
+              )?.field_response;
+
+              if (!Boolean(isForOfficialBusiness)) {
+                fieldWithResponseList = fieldWithResponseList.filter(
+                  (field) => field.field_name !== "Approved Official Business"
+                );
+              }
             }
 
             return {
-              ...field,
-              field_response: response
-                ? safeParse(response.request_response)
-                : "",
-              field_option,
+              ...section,
+              section_field: fieldWithResponseList,
             };
-          });
-
-          if (section.section_name === "Request Details") {
-            const isForOfficialBusiness = fieldWithResponseList.find(
-              (field) => field.field_name === "Is this for Official Business?"
-            )?.field_response;
-
-            if (!Boolean(isForOfficialBusiness)) {
-              fieldWithResponseList = fieldWithResponseList.filter(
-                (field) => field.field_name !== "Approved Official Business"
-              );
-            }
           }
-
-          return {
-            ...section,
-            section_field: fieldWithResponseList,
-          };
-        });
+        );
 
         const isChargedToProject =
           formSectionWithResponse[1].section_field.find(
@@ -785,9 +1030,13 @@ const EditPettyCashVoucherRequestPage = ({
           );
         }
 
-        replaceSection(formSectionWithResponse);
-        setInitialRequestDetails({ sections: formSectionWithResponse });
-        handleUpdateConditionalSectionAndField(formSectionWithResponse);
+        const formSection = [
+          ...formSectionWithResponse,
+          ...sectionWithDuplicatableId,
+        ];
+        replaceSection(formSection);
+        setInitialRequestDetails({ sections: formSection });
+        handleUpdateConditionalSectionAndField(formSection);
       };
       fetchRequestDetails();
     } catch (e) {
@@ -811,12 +1060,18 @@ const EditPettyCashVoucherRequestPage = ({
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
+              const sectionIdToFind = section.section_id;
+              const sectionLastIndex = getValues("sections")
+                .map((sectionItem) => sectionItem.section_id)
+                .lastIndexOf(sectionIdToFind);
+
               return (
                 <Box key={section.id}>
                   <RequestFormSection
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
+                    onRemoveSection={handleRemoveSection}
                     pettyCashVoucherFormMethods={{
                       onProjectOrDepartmentNameChange:
                         handleProjectOrDepartmentNameChange,
@@ -833,11 +1088,25 @@ const EditPettyCashVoucherRequestPage = ({
                       onTypeOfRequestChange: handleTypeOfRequestChange,
                       onQuantityOrUnitCostChange:
                         handleQuantityOrUnitCostChange,
+                      onParticularTypeChange: handleParticularTypeChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}
                     loadingFieldList={loadingFieldList}
                   />
+                  {section.section_is_duplicatable &&
+                    idx === sectionLastIndex && (
+                      <Button
+                        mt="md"
+                        variant="default"
+                        onClick={() =>
+                          handleDuplicateSection(section.section_id)
+                        }
+                        fullWidth
+                      >
+                        {section.section_name} +
+                      </Button>
+                    )}
                 </Box>
               );
             })}

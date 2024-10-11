@@ -1,4 +1,5 @@
 import { getTicketList } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -11,7 +12,6 @@ import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import {
-  TeamMemberWithUserType,
   TicketApproverUserType,
   TicketCategoryTableRow,
   TicketListType,
@@ -70,7 +70,6 @@ export type TicketListLocalFilter = {
 type Props = {
   ticketList: TicketListType;
   ticketListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   ticketCategoryList: TicketCategoryTableRow[];
 };
 
@@ -96,12 +95,12 @@ const getTicketStatusColor = (status: string) => {
 const TicketListPage = ({
   ticketList: inititalTicketList,
   ticketListCount: inititalTicketListCount,
-  teamMemberList,
   ticketCategoryList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const teamMemberList = useTeamMemberList();
   const router = useRouter();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingTicketList, setIsFetchingTicketList] = useState(false);

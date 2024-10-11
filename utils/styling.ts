@@ -312,3 +312,28 @@ export const useStyles = createStyles((theme) => ({
     },
   },
 }));
+
+export const getHRAnalyticsStatusToColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "pending":
+      return "#339af0";
+    case "approved":
+    case "qualified":
+    case "accepted":
+      return "#51cf66";
+    case "rejected":
+    case "not qualified":
+      return "#ff6b6b";
+    case "cancelled":
+      return "#2C2E33";
+    case "not responsive":
+      return "#adb5bd";
+    case "waiting for schedule":
+    case "waiting for offer":
+      return "#ff922b";
+    case "for pooling":
+      return "#fcc419";
+    case "missed":
+      return "#cc5de8";
+  }
+};

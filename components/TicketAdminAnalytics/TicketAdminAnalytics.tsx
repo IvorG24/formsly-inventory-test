@@ -1,4 +1,5 @@
 import { getAdminTicketAnalytics, getCurrentDate } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   INTERVAL_OPTIONS,
@@ -85,14 +86,13 @@ type AnalyticsReturnType = {
 type IntervalType = { startDate: string; endDate: string };
 
 type Props = {
-  teamAdminList: TeamMemberType[];
   ticketCategoryList: TicketCategoryTableRow[];
 };
 
-const TicketAdminAnalytics = ({ teamAdminList, ticketCategoryList }: Props) => {
+const TicketAdminAnalytics = ({ ticketCategoryList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const teamAdminList = useTeamMemberList("ADMIN");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<TeamMemberType | null>(
     null

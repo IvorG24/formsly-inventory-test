@@ -1,12 +1,14 @@
 import {
   getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
+  getPropertyNumberOptions,
   getSectionInRequestPage,
 } from "@/backend/api/get";
 import { createComment, createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
+import useEquipmentCodeOptionListStore from "@/stores/useEquipmentCodeOptionListStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -87,6 +89,8 @@ const EditLiquidReimbursementRequestPage = ({
   const [isUpdatedByAccountant, setIsUpdatedByAccountant] = useState(false);
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
+  const { equipmentCodeOptionList, setEquipmentCodeOptionList } =
+    useEquipmentCodeOptionListStore();
 
   const initialFormSectionList = [
     {
@@ -375,45 +379,6 @@ const EditLiquidReimbursementRequestPage = ({
     }
   };
 
-  const handleDepartmentChange = async (value: string | null) => {
-    try {
-      const currentRequestDetails = getValues(`sections.${0}`);
-      const sectionFields = currentRequestDetails.section_field;
-      const conditionalFieldExists = sectionFields.some(
-        (field) => field.field_name === "Equipment Code"
-      );
-      const valueIsPED = value?.toLowerCase().includes("plants and equipment");
-
-      const addConditionalFields = valueIsPED && !conditionalFieldExists;
-      const removeConditionalFields = !valueIsPED && conditionalFieldExists;
-
-      if (addConditionalFields) {
-        const equipmentCodeField = initialFormSectionList[0].section_field[7];
-        updateSection(0, {
-          ...currentRequestDetails,
-          section_field: [...sectionFields, equipmentCodeField],
-        });
-      } else if (removeConditionalFields) {
-        const updatedSectionFields = sectionFields.filter(
-          (field) => field.field_name !== "Equipment Code"
-        );
-
-        const requestDetailsSection = {
-          ...currentRequestDetails,
-          section_field: updatedSectionFields,
-        };
-
-        updateSection(0, requestDetailsSection);
-      }
-    } catch (e) {
-      setValue(`sections.0.section_field.2.field_response`, "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
   const handleInvoiceAmountChange = (value: number, sectionIndex: number) => {
     try {
       const currentPayeeSection = getValues(`sections.${sectionIndex}`);
@@ -637,10 +602,36 @@ const EditLiquidReimbursementRequestPage = ({
         if (isPureLiquidation) {
           addField(8);
         }
+
+        // add equipment code field
+        const requestDetailsSection = getValues(`sections`)[0];
+        const isPED =
+          requestDetailsSection.section_field[2].field_response ===
+          "Plants and Equipment";
+
+        if (isPED) {
+          const equipmentCodeField =
+            initialFormSectionList[1].section_field.find(
+              (field) => field.field_name === "Equipment Code"
+            );
+          const equipmentCodeFieldDoesNotExistInSection =
+            !currentPayeeSectionFieldList.some(
+              (field) => field.field_name === "Equipment Code"
+            );
+          if (equipmentCodeField && equipmentCodeFieldDoesNotExistInSection) {
+            currentPayeeSectionFieldList = [
+              ...currentPayeeSectionFieldList,
+              { ...equipmentCodeField, field_option: equipmentCodeOptionList },
+            ];
+          }
+        }
       }
 
       if (value !== "Materials") {
+        // RIR number
         removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
+        // Equipment Code
+        removeFieldById("8cd26ce7-0a5e-4199-b4c9-baaf32541b3a");
       }
 
       removeSection(sectionIndex);
@@ -689,11 +680,88 @@ const EditLiquidReimbursementRequestPage = ({
     }
   };
 
+  const handleFetchEquipmentCodeOptionList = async (fieldId: string) => {
+    try {
+      if (equipmentCodeOptionList.length > 0) return;
+
+      const fetchedEquipmentCodeList: {
+        equipment_description_id: string;
+        equipment_description_property_number_with_prefix: string;
+      }[] = [];
+
+      let continueFetchingEquipmentCodeList = true;
+      let index = 0;
+      const limit = 500;
+
+      while (continueFetchingEquipmentCodeList) {
+        const currentBatch = await getPropertyNumberOptions(supabaseClient, {
+          teamId: team.team_id,
+          index,
+          limit,
+        });
+
+        if (currentBatch.length > 0) {
+          fetchedEquipmentCodeList.push(...currentBatch);
+          index += limit;
+        }
+
+        continueFetchingEquipmentCodeList = currentBatch.length === limit;
+      }
+
+      const distinctEquipmentCodeList = fetchedEquipmentCodeList.reduce(
+        (acc, current) => {
+          const prefix =
+            current.equipment_description_property_number_with_prefix;
+          if (
+            !acc.some(
+              (item) =>
+                item.equipment_description_property_number_with_prefix ===
+                prefix
+            )
+          ) {
+            acc.push(current);
+          }
+          return acc;
+        },
+        [] as {
+          equipment_description_id: string;
+          equipment_description_property_number_with_prefix: string;
+        }[]
+      );
+
+      const equipmentCodeOptions = distinctEquipmentCodeList.map(
+        (equipmentCode, index) => {
+          return {
+            option_field_id: fieldId,
+            option_id: equipmentCode.equipment_description_id,
+            option_order: index,
+            option_value:
+              equipmentCode.equipment_description_property_number_with_prefix,
+          };
+        }
+      );
+      setEquipmentCodeOptionList(equipmentCodeOptions);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to fetch equipment code list. Please contact IT",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
     try {
       const fetchRequestDetails = async () => {
+        // fetch equipment code list
+        const equipmentCodeField = form.form_section[1].section_field.find(
+          (field) => field.field_name === "Equipment Code"
+        );
+        await handleFetchEquipmentCodeOptionList(
+          `${equipmentCodeField?.field_id}`
+        );
         // Fetch response
         // Request Details Section
         const requestDetailsSectionResponse =
@@ -815,6 +883,10 @@ const EditLiquidReimbursementRequestPage = ({
 
             if (field.field_name === "Payment Option") {
               option = bankListOptions;
+            }
+
+            if (field.field_name === "Equipment Code") {
+              option = equipmentCodeOptionList;
             }
 
             if (canEditVatField) {
@@ -981,7 +1053,6 @@ const EditLiquidReimbursementRequestPage = ({
                     liquidationReimbursementFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
-                      onDepartmentChange: handleDepartmentChange,
                       onTypeOfRequestChange: handleTypeOfRequestChange,
                       onPayeeVatBooleanChange: handlePayeeVatBooleanChange,
                       onInvoiceAmountChange: handleInvoiceAmountChange,

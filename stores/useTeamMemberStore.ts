@@ -20,7 +20,22 @@ export const useTeamMemberStore = create<Store>((set) => ({
   },
 }));
 
-export const useTeamMemberList = () =>
-  useTeamMemberStore((state) => state.teamMemberList);
+export const useTeamMemberList = (withRole?: "OWNER & APPROVER" | "ADMIN") =>
+  useTeamMemberStore((state) => {
+    if (withRole === "OWNER & APPROVER") {
+      return state.teamMemberList.filter(
+        (member) =>
+          member.team_member_role === "APPROVER" ||
+          member.team_member_role === "OWNER"
+      );
+    } else if (withRole === "ADMIN") {
+      return state.teamMemberList.filter(
+        (member) => member.team_member_role === "ADMIN"
+      );
+    } else {
+      return state.teamMemberList;
+    }
+  });
+
 export const useTeamMemberListActions = () =>
   useTeamMemberStore((state) => state.actions);

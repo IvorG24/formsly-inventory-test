@@ -52,6 +52,7 @@ const RequestResponse = ({
     variant: "filled",
     readOnly: true,
   };
+  const fieldWithIdLookup = ["Ticket ID", "Particular Request ID"];
   const supabaseClient = useSupabaseClient();
   const team = useActiveTeam();
   const [linkDisplayValue, setLinkDisplayValue] = useState(
@@ -82,7 +83,7 @@ const RequestResponse = ({
     const fetchRequestFormslyId = async () => {
       if (
         validate(linkDisplayValue.toString()) ||
-        response.label === "Ticket ID"
+        fieldWithIdLookup.includes(response.label)
       ) {
         const requestFormslyId = await getRequestFormslyId(supabaseClient, {
           requestId: linkDisplayValue.trim(),

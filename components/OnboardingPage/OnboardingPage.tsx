@@ -1,34 +1,18 @@
-import {
-  fetchBarangay,
-  fetchCity,
-  fetchProvince,
-  fetchRegion,
-  getEmployeeName,
-  getUserPendingInvitation,
-} from "@/backend/api/get";
+import { getEmployeeName, getUserPendingInvitation } from "@/backend/api/get";
 import {
   createTeamMemberReturnTeamName,
-  createUser,
-  createValidID,
+  createUserWithSSSID,
   uploadImage,
 } from "@/backend/api/post";
 import { escapeQuotes, formatTeamNameToUrlKey, isUUID } from "@/utils/string";
-import supabaseClientAddress from "@/utils/supabase/address";
-import { OptionType } from "@/utils/types";
 import { Container, Flex, LoadingOverlay, Paper } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import {
-  SupabaseClient,
-  User,
-  useSupabaseClient,
-} from "@supabase/auth-helpers-react";
+import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { Database as OneOfficeDatabase } from "oneoffice-api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import FirstStep from "./Steps/FirstStep";
 import SecondStep from "./Steps/SecondStep";
-import ThirdStep from "./Steps/ThirdStep";
 
 export type OnboardUserParams = {
   user_id: string;
@@ -40,21 +24,9 @@ export type OnboardUserParams = {
   user_phone_number: string;
   user_job_title: string;
   user_employee_number: string;
-  user_id_type: string;
-  user_id_number: string;
-  user_id_first_name: string;
-  user_id_middle_name: string;
-  user_id_last_name: string;
-  user_id_gender: string;
-  user_id_nationality: string;
-  user_id_region: string;
-  user_id_province: string;
-  user_id_city: string;
-  user_id_barangay: string;
-  user_id_street: string;
-  user_id_zip_code: string;
-  user_id_front_image: File | null;
-  user_id_back_image: File | null;
+  sss_number: string;
+  sss_front_image: File | null;
+  sss_back_image: File | null;
 };
 
 type Props = {
@@ -64,35 +36,15 @@ type Props = {
 const OnboardingPage = ({ user }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [idType, setIdType] = useState<string | null>(null);
-  const [regionOptions, setRegionOptions] = useState<OptionType[]>([]);
-  const [provinceOptions, setProvinceOptions] = useState<OptionType[]>([]);
-  const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
-  const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
-  const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
   const [activeStep, setActiveStep] = useState(1);
 
-  const totalSections = 3;
-
-  useEffect(() => {
-    try {
-      setIsLoading(true);
-      handleFetchRegionOptions();
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const totalSections = 2;
 
   const submitOnboardingMethods = useForm<OnboardUserParams>({
-    defaultValues: { user_id: user.id, user_email: user.email },
+    defaultValues: { user_id: user.id, user_email: user.email, sss_number: "" },
     reValidateMode: "onBlur",
   });
 
@@ -104,21 +56,6 @@ const OnboardingPage = ({ user }: Props) => {
       const { inviteTeamId } = router.query;
       const isValidTeamId = isUUID(inviteTeamId);
 
-      const region = regionOptions.find(
-        (options) => options.value === data.user_id_region
-      )?.label;
-      const province = provinceOptions.find(
-        (options) => options.value === data.user_id_province
-      )?.label;
-      const city = cityOptions.find(
-        (options) => options.value === data.user_id_city
-      )?.label;
-      const barangay = barangayOptions.find(
-        (options) => options.value === data.user_id_barangay
-      )?.label;
-
-      if (!region || !province || !city || !barangay) throw new Error();
-
       let imageUrl = "";
       if (avatarFile) {
         imageUrl = await uploadImage(supabaseClient, {
@@ -128,7 +65,24 @@ const OnboardingPage = ({ user }: Props) => {
         });
       }
 
-      await createUser(supabaseClient, {
+      let idFrontImage = "";
+      if (data.sss_front_image) {
+        idFrontImage = await uploadImage(supabaseClient, {
+          id: `${data.user_id}-front`,
+          image: data.sss_front_image,
+          bucket: "SSS_ID_ATTACHMENTS",
+        });
+      }
+      let idBackImage = "";
+      if (data.sss_back_image) {
+        idBackImage = await uploadImage(supabaseClient, {
+          id: `${data.user_id}-back`,
+          image: data.sss_back_image,
+          bucket: "SSS_ID_ATTACHMENTS",
+        });
+      }
+
+      await createUserWithSSSID(supabaseClient, {
         user_id: data.user_id,
         user_email: data.user_email.trim(),
         user_first_name: data.user_first_name.trim(),
@@ -139,43 +93,9 @@ const OnboardingPage = ({ user }: Props) => {
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
         user_employee_number: data.user_employee_number,
-      });
-
-      let idFrontImage = "";
-      if (data.user_id_front_image) {
-        idFrontImage = await uploadImage(supabaseClient, {
-          id: `${data.user_id}-front`,
-          image: data.user_id_front_image,
-          bucket: "USER_VALID_IDS",
-        });
-      }
-      let idBackImage = "";
-      if (data.user_id_back_image) {
-        idBackImage = await uploadImage(supabaseClient, {
-          id: `${data.user_id}-back`,
-          image: data.user_id_back_image,
-          bucket: "USER_VALID_IDS",
-        });
-      }
-
-      await createValidID(supabaseClient, {
-        user_valid_id_user_id: data.user_id,
-        user_valid_id_type: escapeQuotes(data.user_id_type),
-        user_valid_id_number: data.user_id_number.trim(),
-        user_valid_id_first_name: data.user_first_name.trim(),
-        user_valid_id_middle_name: data.user_id_middle_name.trim(),
-        user_valid_id_last_name: data.user_last_name.trim(),
-        user_valid_id_gender: data.user_id_gender.trim(),
-        user_valid_id_nationality: data.user_id_nationality.trim(),
-        user_valid_id_status: "PENDING",
-        user_valid_id_front_image_url: idFrontImage,
-        user_valid_id_back_image_url: idBackImage,
-        address_region: escapeQuotes(region),
-        address_province: escapeQuotes(province),
-        address_city: escapeQuotes(city),
-        address_barangay: escapeQuotes(barangay),
-        address_street: escapeQuotes(data.user_id_street),
-        address_zip_code: data.user_id_zip_code,
+        sss_number: data.sss_number.replace(/\D/g, ""),
+        sss_front_image_url: idFrontImage,
+        sss_back_image_url: idBackImage,
       });
 
       const pendingInvitation = await getUserPendingInvitation(supabaseClient, {
@@ -211,158 +131,6 @@ const OnboardingPage = ({ user }: Props) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const idLabel = idType === "Company ID" ? "Employee Number" : "ID Number";
-
-  const handleFetchRegionOptions = async () => {
-    const data = await fetchRegion(
-      supabaseClientAddress as unknown as SupabaseClient<
-        OneOfficeDatabase["address_schema"]
-      >
-    );
-
-    setRegionOptions(
-      data?.map((region) => {
-        return {
-          label: region.region,
-          value: region.region_id,
-        };
-      }) ?? []
-    );
-  };
-
-  const handleFetchProvinceOptions = async (value: string | null) => {
-    try {
-      setProvinceOptions([]);
-      setCityOptions([]);
-      setBarangayOptions([]);
-      setValue("user_id_province", "");
-      setValue("user_id_city", "");
-      setValue("user_id_barangay", "");
-      setValue("user_id_street", "");
-      setValue("user_id_zip_code", "");
-      if (!value) {
-        return;
-      }
-
-      const data = await fetchProvince(
-        supabaseClientAddress as unknown as SupabaseClient<
-          OneOfficeDatabase["address_schema"]
-        >,
-        { regionId: value }
-      );
-
-      setProvinceOptions(
-        data?.map((province) => {
-          return {
-            label: province.province,
-            value: province.province_id,
-          };
-        }) ?? []
-      );
-    } catch (e) {
-      setValue("user_id_region", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
-  const handleFetchCityOptions = async (value: string | null) => {
-    try {
-      setCityOptions([]);
-      setBarangayOptions([]);
-      setValue("user_id_city", "");
-      setValue("user_id_barangay", "");
-      setValue("user_id_street", "");
-      setValue("user_id_zip_code", "");
-      if (!value) return;
-
-      const data = await fetchCity(
-        supabaseClientAddress as unknown as SupabaseClient<
-          OneOfficeDatabase["address_schema"]
-        >,
-        { provinceId: value }
-      );
-      setCityOptions(
-        data?.map((city) => {
-          return {
-            label: city.city,
-            value: city.city_id,
-          };
-        }) ?? []
-      );
-    } catch (e) {
-      setValue("user_id_province", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
-  const handleFetchBarangayOptions = async (value: string | null) => {
-    try {
-      setBarangayOptions([]);
-      setValue("user_id_barangay", "");
-      setValue("user_id_street", "");
-      setValue("user_id_zip_code", "");
-      if (!value) return;
-
-      const data = await fetchBarangay(
-        supabaseClientAddress as unknown as SupabaseClient<
-          OneOfficeDatabase["address_schema"]
-        >,
-        { cityId: value }
-      );
-      setBarangayOptions(
-        data?.map((barangay) => {
-          return {
-            label: barangay.barangay,
-            value: barangay.barangay_id,
-          };
-        }) ?? []
-      );
-      setZipCodeOptions(
-        data?.map((barangay) => {
-          return {
-            label: barangay.barangay_zip_code,
-            value: barangay.barangay_id,
-          };
-        }) ?? []
-      );
-    } catch (e) {
-      setValue("user_id_city", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
-  const handleFetchZipCode = async (value: string | null) => {
-    try {
-      if (!value) {
-        setValue("user_id_zip_code", "");
-        return;
-      }
-
-      const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
-      if (!zipCode) {
-        setValue("user_id_zip_code", "");
-        return;
-      }
-
-      setValue("user_id_zip_code", zipCode.label);
-    } catch (e) {
-      setValue("user_id_zip_code", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
     }
   };
 
@@ -424,25 +192,6 @@ const OnboardingPage = ({ user }: Props) => {
           <SecondStep
             activeStep={step}
             totalSections={totalSections}
-            idLabel={idLabel}
-            regionOptions={regionOptions}
-            provinceOptions={provinceOptions}
-            setIdType={setIdType}
-            handleFetchProvinceOptions={handleFetchProvinceOptions}
-            handleFetchCityOptions={handleFetchCityOptions}
-            handleChangeStep={handleChangeStep}
-          />
-        );
-
-      case 3:
-        return (
-          <ThirdStep
-            activeStep={step}
-            totalSections={totalSections}
-            cityOptions={cityOptions}
-            barangayOptions={barangayOptions}
-            handleFetchZipCode={handleFetchZipCode}
-            handleFetchBarangayOptions={handleFetchBarangayOptions}
             handleChangeStep={handleChangeStep}
           />
         );

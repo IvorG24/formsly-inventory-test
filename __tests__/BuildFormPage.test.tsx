@@ -92,7 +92,6 @@ describe("BuildFormPage", () => {
   it("renders new field", async () => {
     render(
       <BuildFormPage
-        teamMemberList={mockTeamMemberList}
         formId={mockFormId}
         groupList={mockGroupList}
       />

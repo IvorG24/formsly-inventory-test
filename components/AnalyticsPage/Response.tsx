@@ -27,7 +27,7 @@ type Props = {
   data: HRAnalyticsData;
 };
 
-const HRAnalytics = ({ data: initialData }: Props) => {
+const Response = ({ data: initialData }: Props) => {
   const supabaseClient = useSupabaseClient();
   const [data, setData] = useState(initialData);
   const [isFetching, setIsFetching] = useState(false);
@@ -232,4 +232,4 @@ const HRAnalytics = ({ data: initialData }: Props) => {
   );
 };
 
-export default HRAnalytics;
+export default Response;

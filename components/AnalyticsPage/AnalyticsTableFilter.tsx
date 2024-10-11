@@ -9,7 +9,7 @@ import {
 import { IconDatabase } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { Controller, useFormContext } from "react-hook-form";
-import { FilterChartValues } from "./ResponseAnalytics";
+import { FilterChartValues } from "./Analytics";
 
 type Props = {
   stepOptions: OptionType[];
@@ -18,7 +18,7 @@ type Props = {
   isLoading: boolean;
 };
 
-const ResponseTableFilter = ({
+const AnalyticsTableFilter = ({
   stepOptions,
   memberOptions,
   handleFetchResponseTable,
@@ -76,7 +76,6 @@ const ResponseTableFilter = ({
               <Select
                 label="Step"
                 placeholder="Select Step"
-                searchable
                 data={stepOptions}
                 {...field}
                 onChange={(value) => {
@@ -96,7 +95,6 @@ const ResponseTableFilter = ({
             render={({ field }) => (
               <Select
                 label="Range"
-                searchable
                 placeholder="Select Frequency"
                 data={frequencyOptions}
                 {...field}
@@ -204,4 +202,4 @@ const ResponseTableFilter = ({
   );
 };
 
-export default ResponseTableFilter;
+export default AnalyticsTableFilter;

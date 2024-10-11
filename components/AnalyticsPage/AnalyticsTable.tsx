@@ -1,5 +1,5 @@
 import { startCase } from "@/utils/string";
-import { getStatusToColorForCharts } from "@/utils/styling";
+import { getHRAnalyticsStatusToColor } from "@/utils/styling";
 import { DatasetChartResponse } from "@/utils/types";
 import {
   Box,
@@ -24,7 +24,7 @@ type RequestStatisticsProps = {
   dataChartResponse: DatasetChartResponse[];
 };
 
-const ResponseTable = ({
+const AnalyticsTable = ({
   stepFilter,
   monthLabel,
   yLabel,
@@ -34,25 +34,20 @@ const ResponseTable = ({
 }: RequestStatisticsProps) => {
   const statusList =
     stepFilter === "request"
-      ? ["approved", "rejected", "pending"]
+      ? ["pending", "approved", "rejected"]
       : stepFilter === "job_offer"
-        ? [
-            "accepted",
-            "rejected",
-            "pending",
-            "waiting for offer",
-            "for pooling",
-          ]
-        : stepFilter === "background_check"
-          ? ["pending", "qualified", "not qualified"]
-          : [
-              "qualified",
-              "pending",
-              "not qualified",
-              "not responsive",
-              "waiting for schedule",
-              "cancelled",
-            ];
+      ? ["pending", "accepted", "rejected", "waiting for offer", "for pooling"]
+      : stepFilter === "background_check"
+      ? ["pending", "qualified", "not qualified"]
+      : [
+          "pending",
+          "qualified",
+          "not qualified",
+          "waiting for schedule",
+          "not responsive",
+          "cancelled",
+          "missed",
+        ];
 
   const [selectedFilter, setSelectedFilter] = useState<string[]>([]);
   const [filteredDatasets, setFilteredDatasets] =
@@ -108,7 +103,7 @@ const ResponseTable = ({
                 onClick={() => filterChart(status.toLowerCase())}
                 sx={{ cursor: "pointer" }}
               >
-                <Box c={getStatusToColorForCharts(status)}>
+                <Box c={getHRAnalyticsStatusToColor(status)}>
                   <IconSquareRoundedFilled />
                 </Box>
                 <Text
@@ -127,6 +122,7 @@ const ResponseTable = ({
             datasets={filteredDatasets as DatasetChartResponse[]}
             xAxisLabel={`Filter ${frequency} ( ${xLabel} )`}
             yAxisLabel={yLabel}
+            isWithTotal={true}
           />
         </Box>
       </Stack>
@@ -134,4 +130,4 @@ const ResponseTable = ({
   );
 };
 
-export default ResponseTable;
+export default AnalyticsTable;

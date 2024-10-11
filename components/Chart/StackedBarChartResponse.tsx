@@ -2,6 +2,8 @@ import { DatasetChartResponse } from "@/utils/types";
 import {
   BarElement,
   CategoryScale,
+  Chart,
+  ChartDataset,
   Chart as ChartJs,
   FontSpec,
   Legend,
@@ -9,8 +11,16 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import React from "react";
 import { Bar } from "react-chartjs-2";
+
+type ChartDataLabelsContext = {
+  chart: Chart;
+  dataIndex: number;
+  dataset: ChartDataset;
+  datasetIndex: number;
+};
 
 ChartJs.register(
   CategoryScale,
@@ -26,6 +36,7 @@ export type StackedBarChartProps = {
   datasets: DatasetChartResponse[];
   xAxisLabel?: string;
   yAxisLabel?: string;
+  isWithTotal?: boolean;
 };
 
 const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
@@ -33,6 +44,7 @@ const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
   datasets,
   xAxisLabel,
   yAxisLabel,
+  isWithTotal = false,
 }) => {
   const chartData = {
     labels: label,
@@ -55,7 +67,6 @@ const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
 
   const chartOptions = {
     responsive: true,
-
     scales: {
       x: {
         stacked: true,
@@ -78,16 +89,46 @@ const StackedBarChartResponse: React.FC<StackedBarChartProps> = ({
             weight: "bold" as FontSpec["weight"],
           },
         },
+        ticks: {
+          padding: 10,
+        },
       },
     },
     plugins: {
       legend: {
         display: false,
       },
+      datalabels: isWithTotal
+        ? {
+            display: true,
+            align: "end" as unknown as "end",
+            anchor: "end" as unknown as "end",
+            color: "#000",
+            font: {
+              weight: "bold" as unknown as "bold",
+            },
+            offset: 0,
+            formatter: (_: number, context: ChartDataLabelsContext) => {
+              const dataIndex = context.dataIndex;
+              const datasetIndex = context.datasetIndex;
+              const totalDatasets = context.chart.data.datasets?.length || 0;
+
+              if (datasetIndex === totalDatasets - 1) {
+                const total = context.chart.data.datasets
+                  ?.map((dataset) => dataset.data[dataIndex] as number)
+                  .reduce((acc, curr) => acc + curr, 0);
+                return total ? `Total: ${total}` : "";
+              }
+              return null;
+            },
+          }
+        : {},
     },
   };
 
-  return <Bar data={chartData} options={chartOptions} />;
+  return (
+    <Bar data={chartData} options={chartOptions} plugins={[ChartDataLabels]} />
+  );
 };
 
 export default StackedBarChartResponse;

@@ -1,6 +1,4 @@
-import { FilterChartValues } from "@/components/AnalyticsPage/ResponseAnalytics";
-import { InventoryFormValues } from "@/components/AssetInventory/CreateAssetPage/CreateAssetPage";
-import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
+import { FilterChartValues } from "@/components/AnalyticsPage/Analytics";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -280,7 +278,14 @@ export const getRequestList = async (
 
   const approverList = approver?.map((approver) => `'${approver}'`).join(",");
   const approverCondition = approver
-    ? `EXISTS (SELECT 1 FROM form_schema.signer_table WHERE signer_team_member_id IN (${approverList}))`
+    ? `EXISTS (
+        SELECT 1
+        FROM request_schema.request_signer_table
+        INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id
+        WHERE
+            request_signer_request_id = request_view.request_id
+            AND signer.signer_team_member_id IN (${approverList})
+    )`
     : "";
 
   const searchCondition = search
@@ -2289,7 +2294,6 @@ export const getUserPendingInvitation = async (
     .eq("invitation_to_email", userEmail)
     .eq("invitation_status", "PENDING")
     .maybeSingle();
-
   if (error) throw error;
 
   return data;
@@ -5373,21 +5377,6 @@ export const getRequestTypeFieldResponse = async (
   return data;
 };
 
-// Get team admin list
-export const getTeamAdminList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("get_team_admin_list", { input_data: params })
-    .select("*");
-  if (error) throw error;
-
-  return data;
-};
-
 export const getAdminTicketAnalytics = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6310,6 +6299,23 @@ export const checkUserIdNumber = async (
     .from("user_valid_id_table")
     .select("user_valid_id_number", { count: "exact", head: true })
     .eq("user_valid_id_number", idNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};
+
+export const checkUserSSSIDNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    idNumber: string;
+  }
+) => {
+  const { idNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .select("user_sss_number", { count: "exact", head: true })
+    .eq("user_sss_number", idNumber);
 
   if (error) throw error;
   return !Boolean(count);
@@ -7440,6 +7446,23 @@ export const getTeamGroupMember = async (
   if (error) throw error;
 
   return data as TeamMemberType[];
+};
+
+export const checkIfUserHaveSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .select("*", { count: "exact", head: true })
+    .eq("user_sss_user_id", userId);
+  if (error) throw error;
+
+  return Boolean(count);
 };
 
 export const getInventoryFormDetails = async (

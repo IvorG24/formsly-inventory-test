@@ -1,7 +1,7 @@
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
-import { TeamGroupTableRow, TeamMemberWithUserType } from "@/utils/types";
+import { TeamGroupTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
@@ -32,20 +32,15 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 );
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   formId: string;
   groupList: TeamGroupTableRow[];
 };
 
-const Page = ({ teamMemberList, formId, groupList }: Props) => {
+const Page = ({ formId, groupList }: Props) => {
   return (
     <>
       <Meta description="Build Request Page" url="/teamName/forms/build" />
-      <BuildRequestFormPage
-        teamMemberList={teamMemberList}
-        formId={formId}
-        groupList={groupList}
-      />
+      <BuildRequestFormPage formId={formId} groupList={groupList} />
     </>
   );
 };

@@ -28,7 +28,7 @@ const JobOfferFilterMenu = ({
   handleReset,
   positionOptionList,
   hrOptionList,
-  isLoading
+  isLoading,
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
@@ -257,11 +257,15 @@ const JobOfferFilterMenu = ({
                     label="Job Offer Status"
                     data={[
                       { value: "PENDING", label: "Pending" },
-                      { value: "APPROVED", label: "Approved" },
+                      { value: "ACCEPTED", label: "Accepted" },
                       { value: "REJECTED", label: "Rejected" },
                       {
                         value: "WAITING FOR OFFER",
                         label: "Waiting for Offer",
+                      },
+                      {
+                        value: "FOR POOLING",
+                        label: "For Pooling",
                       },
                     ]}
                     value={newValue as string[]}

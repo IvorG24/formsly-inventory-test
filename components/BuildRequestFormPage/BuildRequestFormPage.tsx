@@ -1,15 +1,12 @@
 import { createRequestForm } from "@/backend/api/post";
 import { useFormActions } from "@/stores/useFormStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { defaultRequestFormBuilderSection } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  AppType,
-  TeamGroupTableRow,
-  TeamMemberWithUserType,
-} from "@/utils/types";
+import { AppType, TeamGroupTableRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -48,14 +45,14 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   formId: string;
   groupList: TeamGroupTableRow[];
 };
 
-const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
+const BuildFormPage = ({ formId, groupList }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMemberList = useTeamMemberList("OWNER & APPROVER");
   const teamMember = useUserTeamMember();
   const formType: AppType = "REQUEST";
   const team = useActiveTeam();

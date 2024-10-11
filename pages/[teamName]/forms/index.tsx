@@ -7,7 +7,7 @@ import {
   UNHIDEABLE_FORMLY_FORMS,
 } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
-import { FormWithOwnerType, TeamMemberWithUserType } from "@/utils/types";
+import { FormWithOwnerType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
@@ -52,18 +52,16 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 type Props = {
   formList: FormWithOwnerType[];
   formListCount: number;
-  teamMemberList: TeamMemberWithUserType[];
   teamId: string;
 };
 
-const Page = ({ formList, formListCount, teamMemberList, teamId }: Props) => {
+const Page = ({ formList, formListCount, teamId }: Props) => {
   return (
     <>
       <Meta description="Form List Page" url="/teamName/forms/" />
       <RequestFormListPage
         formList={formList}
         formListCount={formListCount}
-        teamMemberList={teamMemberList}
         teamId={teamId}
       />
     </>

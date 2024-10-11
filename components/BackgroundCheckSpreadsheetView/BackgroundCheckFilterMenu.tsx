@@ -259,22 +259,6 @@ const BackgroundCheckFilterMenu = ({
                       { value: "PENDING", label: "Pending" },
                       { value: "QUALIFIED", label: "Qualified" },
                       { value: "NOT QUALIFIED", label: "Not Qualified" },
-                      {
-                        value: "WAITING FOR SCHEDULE",
-                        label: "Waiting for Schedule",
-                      },
-                      {
-                        value: "NOT RESPONSIVE",
-                        label: "Not Responsive",
-                      },
-                      {
-                        value: "CANCELLED",
-                        label: "Cancelled",
-                      },
-                      {
-                        value: "MISSED",
-                        label: "Missed",
-                      },
                     ]}
                     value={newValue as string[]}
                     onChange={onChange}

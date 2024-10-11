@@ -28,7 +28,7 @@ const SubmitSection = ({
           Go Back
         </Button>
       )}
-      {activeStep < 3 ? (
+      {activeStep < 2 ? (
         <Button
           w={{ base: "100%", sm: 120 }}
           sx={{ fontSize: 16 }}

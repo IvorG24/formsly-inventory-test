@@ -151,7 +151,6 @@ type RequestFormFieldsProps = {
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
-    onDepartmentChange: (value: string | null) => void;
     onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
     onPayeeVatBooleanChange: (
       value: boolean,
@@ -205,6 +204,10 @@ type RequestFormFieldsProps = {
     onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
     onTypeOfRequestChange: (value: string | null) => void;
     onQuantityOrUnitCostChange: (sectionIndex: number) => void;
+    onParticularTypeChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -1023,9 +1026,6 @@ const RequestFormFields = ({
                       );
                       break;
                     case "Department":
-                      liquidationReimbursementFormMethods?.onDepartmentChange(
-                        value
-                      );
                       requestForPaymentFormMethods?.onDepartmentChange(
                         value,
                         prevValue as string | null
@@ -1166,6 +1166,12 @@ const RequestFormFields = ({
                     case "Field of Study":
                       applicationInformationFormMethods?.onFieldOfStudyChange(
                         value
+                      );
+
+                    case "Particular Type":
+                      pettyCashVoucherFormMethods?.onParticularTypeChange(
+                        value,
+                        sectionIndex
                       );
                       break;
                   }

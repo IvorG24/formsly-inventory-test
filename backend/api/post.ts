@@ -72,6 +72,7 @@ import {
   TicketCommentTableInsert,
   TicketResponseTableInsert,
   TicketTableRow,
+  UserSSSTableInsert,
   UserTableInsert,
   UserTableRow,
   UserValidIDTableInsert,
@@ -2413,6 +2414,44 @@ export const getQuestionFieldOrder = async (
   if (error) throw error;
 
   return data as unknown as number;
+};
+
+export const createUserWithSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserTableInsert & {
+    user_employee_number: string;
+    sss_number: string;
+    sss_front_image_url: string;
+    sss_back_image_url: string;
+  }
+) => {
+  const { user_phone_number } = params;
+
+  const { error } = await supabaseClient
+    .rpc("create_user_with_sss_id", {
+      input_data: {
+        ...params,
+        user_phone_number: user_phone_number || "",
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+};
+
+export const createSSSID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sssData: UserSSSTableInsert;
+  }
+) => {
+  const { sssData } = params;
+
+  const { error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_sss_table")
+    .insert(sssData);
+  if (error) throw error;
 };
 
 export const createAssetRequest = async (

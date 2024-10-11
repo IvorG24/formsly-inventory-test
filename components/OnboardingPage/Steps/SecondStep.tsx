@@ -1,19 +1,17 @@
-import { checkUserIdNumber } from "@/backend/api/get";
-import { ID_OPTIONS } from "@/utils/constant";
-import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
-import { OptionType } from "@/utils/types";
+import { checkUserSSSIDNumber } from "@/backend/api/get";
+import { removeMultipleSpaces } from "@/utils/string";
 import {
   Box,
+  Checkbox,
   Flex,
   Group,
-  Select,
   SimpleGrid,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Dispatch, SetStateAction } from "react";
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { OnboardUserParams } from "../OnboardingPage";
 import SubmitSection from "../SubmitSection";
@@ -22,39 +20,35 @@ import UploadId from "../UploadId";
 type Props = {
   activeStep: number;
   totalSections: number;
-  idLabel: string;
-  regionOptions: OptionType[];
-  provinceOptions: OptionType[];
   handleChangeStep: (action: "PREVIOUS" | "NEXT") => Promise<void>;
-  setIdType: Dispatch<SetStateAction<string | null>>;
-  handleFetchProvinceOptions: (value: string | null) => Promise<void>;
-  handleFetchCityOptions: (value: string | null) => Promise<void>;
 };
 
-const SecondStep = ({
-  activeStep,
-  totalSections,
-  idLabel,
-  regionOptions,
-  provinceOptions,
-  handleChangeStep,
-  setIdType,
-  handleFetchProvinceOptions,
-  handleFetchCityOptions,
-}: Props) => {
+const SecondStep = ({ activeStep, totalSections, handleChangeStep }: Props) => {
   const supabaseClient = useSupabaseClient();
 
+  const [isDataConfirmed, setIsDataConfirmed] = useState(false);
+
   const {
-    register,
     control,
     formState: { errors },
-    setValue,
     setError,
+    register,
+    setValue,
   } = useFormContext<OnboardUserParams>();
 
   const defaultInputProps = {
     styles: { required: { color: "red" } },
     h: { sm: 80 },
+  };
+
+  const sssIDFormatter = (value: string) => {
+    if (!value) return "";
+    const cleaned = ("" + value).replace(/\D/g, "");
+    const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    return value;
   };
 
   return (
@@ -80,10 +74,7 @@ const SecondStep = ({
           >
             <Controller
               control={control}
-              name={"user_id_front_image"}
-              rules={{
-                required: "Front ID image is required",
-              }}
+              name="sss_front_image"
               render={({
                 field: { value, onChange },
                 fieldState: { error },
@@ -92,7 +83,7 @@ const SecondStep = ({
                   value={value}
                   onChange={onChange}
                   onError={(error: string) =>
-                    setError("user_id_front_image", { message: error })
+                    setError("sss_front_image", { message: error })
                   }
                   fieldError={error?.message}
                   size={90}
@@ -119,10 +110,7 @@ const SecondStep = ({
           >
             <Controller
               control={control}
-              name={"user_id_back_image"}
-              rules={{
-                required: "Back ID image is required",
-              }}
+              name="sss_back_image"
               render={({
                 field: { value, onChange },
                 fieldState: { error },
@@ -131,7 +119,7 @@ const SecondStep = ({
                   value={value}
                   onChange={onChange}
                   onError={(error: string) =>
-                    setError("user_id_back_image", { message: error })
+                    setError("sss_back_image", { message: error })
                   }
                   fieldError={error?.message}
                   size={90}
@@ -157,158 +145,86 @@ const SecondStep = ({
             >
               <Controller
                 control={control}
-                name={"user_id_type"}
-                rules={{ required: "ID Type is required" }}
-                render={({ field: { value, onChange } }) => (
-                  <Select
-                    label="ID type"
-                    placeholder="Select ID type"
-                    value={value}
-                    onChange={(value) => {
-                      onChange(value);
-                      setIdType(value);
-                    }}
-                    data={ID_OPTIONS}
-                    error={errors.user_id_type?.message}
-                    required
-                    {...defaultInputProps}
-                  />
-                )}
-              />
-              <TextInput
-                label={idLabel}
-                placeholder="00000111-111"
-                {...register("user_id_number", {
-                  required: `${idLabel} is required`,
-                  minLength: {
-                    value: 3,
-                    message: `${idLabel} must have at least 3 characters`,
-                  },
-                  maxLength: {
-                    value: 16,
-                    message: `${idLabel} must be shorter than 16 characters`,
-                  },
+                name="sss_number"
+                rules={{
+                  required: "SSS ID Number is required",
                   validate: {
+                    checkNumberOfCharacter: (value) => {
+                      const stringifiedValue = value ? `${value}` : "";
+
+                      if (stringifiedValue.length !== 12) {
+                        return "Invalid SSS ID Number";
+                      }
+                      return true;
+                    },
                     isUnique: async (value) => {
-                      const result = await checkUserIdNumber(supabaseClient, {
-                        idNumber: value.trim(),
-                      });
-                      return result ? result : "ID Number already used";
+                      if (!value) return;
+                      const numberOnly = value.replace(/\D/g, "");
+                      const result = await checkUserSSSIDNumber(
+                        supabaseClient,
+                        {
+                          idNumber: numberOnly.trim(),
+                        }
+                      );
+                      return result ? result : "SSS ID Number is already used";
                     },
                   },
-                })}
-                error={errors.user_id_number?.message}
-                required
-                {...defaultInputProps}
-              />
-              <Controller
-                control={control}
-                name={"user_id_gender"}
-                rules={{ required: "Gender is required" }}
+                }}
                 render={({ field: { value, onChange } }) => (
-                  <Select
-                    label="Gender"
-                    placeholder="Select a gender"
-                    value={value}
-                    onChange={onChange}
-                    data={[
-                      {
-                        value: "Male",
-                        label: "Male",
-                      },
-                      {
-                        value: "Female",
-                        label: "Female",
-                      },
-                    ]}
-                    error={errors.user_id_type?.message}
+                  <TextInput
+                    label="SSS ID Number"
+                    placeholder="XX-XXXXXXX-X"
                     required
+                    maxLength={10}
+                    value={value}
+                    onChange={(e) => {
+                      const value = e.currentTarget.value;
+                      const numberOnly = value.replace(/\D/g, "");
+                      const newValue = sssIDFormatter(numberOnly);
+                      if (newValue.length === 12) {
+                        onChange(newValue);
+                        return;
+                      } else {
+                        onChange(numberOnly);
+                        return;
+                      }
+                    }}
+                    error={errors.sss_number?.message}
                     {...defaultInputProps}
                   />
                 )}
               />
               <TextInput
-                label="Nationality"
-                placeholder="Filipino"
-                {...register("user_id_nationality", {
+                label="Job Title"
+                placeholder="Office Staff"
+                {...register("user_job_title", {
                   onChange: (e) => {
-                    const format = toTitleCase(
-                      removeMultipleSpaces(e.currentTarget.value)
-                    );
-                    setValue("user_id_nationality", format);
+                    const format = removeMultipleSpaces(e.currentTarget.value);
+                    setValue("user_job_title", format);
                   },
-                  required: "Nationality is required",
                   minLength: {
                     value: 2,
-                    message: "Nationality must have at least 2 characters",
+                    message: "Job title must have at least 2 characters",
                   },
                   maxLength: {
                     value: 100,
-                    message: "Nationality must be shorter than 100 characters",
+                    message: "Job title must be shorter than 100 characters",
                   },
                 })}
-                error={errors.user_id_nationality?.message}
-                required
+                error={errors.user_job_title?.message}
                 {...defaultInputProps}
               />
-              <Controller
-                control={control}
-                name="user_id_region"
-                render={({ field: { onChange, value } }) => (
-                  <Select
-                    label="Region"
-                    placeholder="Select a region"
-                    data={regionOptions}
-                    required
-                    clearable
-                    searchable
-                    onChange={async (value) => {
-                      await handleFetchProvinceOptions(value);
-                      onChange(value);
-                    }}
-                    value={value}
-                    error={errors.user_id_region?.message}
-                    {...defaultInputProps}
-                  />
-                )}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Region is required",
-                  },
-                }}
-              />
-              <Controller
-                control={control}
-                name="user_id_province"
-                render={({ field: { onChange, value } }) => (
-                  <Select
-                    label="Province"
-                    data={provinceOptions}
-                    required
-                    clearable
-                    searchable
-                    onChange={async (value) => {
-                      await handleFetchCityOptions(value);
-                      onChange(value);
-                    }}
-                    value={value}
-                    error={errors.user_id_province?.message}
-                    disabled={provinceOptions.length === 0}
-                    {...defaultInputProps}
-                  />
-                )}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Province is required",
-                  },
-                }}
-              />
             </SimpleGrid>
+            <Checkbox
+              label="I confirm that all data is correct and truthful to the best of my knowledge."
+              checked={isDataConfirmed}
+              onChange={(e) => setIsDataConfirmed(e.currentTarget.checked)}
+              required
+            />
             <SubmitSection
               activeStep={activeStep}
               handleChangeStep={handleChangeStep}
+              disableSubmit={!isDataConfirmed}
             />
           </Stack>
         </Box>
