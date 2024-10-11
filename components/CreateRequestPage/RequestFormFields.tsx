@@ -1358,6 +1358,14 @@ const RequestFormFields = ({
                   />
                 );
               } else {
+                const minDate =
+                  liquidationReimbursementFormMethods &&
+                  field.field_name === "Date"
+                    ? new Date("January 1, 2001")
+                    : formslyFormName
+                    ? new Date()
+                    : undefined;
+
                 return (
                   <DateInput
                     value={dateValue}
@@ -1366,7 +1374,7 @@ const RequestFormFields = ({
                     {...inputProps}
                     icon={<IconCalendar size={16} />}
                     error={fieldError}
-                    minDate={formslyFormName ? new Date() : undefined}
+                    minDate={minDate}
                     valueFormat="YYYY-MM-DD"
                     readOnly={field.field_is_read_only}
                     clearable
