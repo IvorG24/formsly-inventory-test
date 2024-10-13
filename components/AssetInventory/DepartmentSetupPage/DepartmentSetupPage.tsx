@@ -1,4 +1,4 @@
-import { getDepartmentList } from "@/backend/api/get";
+import { checkUniqueValue, getDepartmentList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -95,17 +95,28 @@ const DepartmentSetupPage = () => {
     }
   };
 
-//   const handleEdit = (site_id: string) => {
-//     console.log("Edit site with ID:", site_id);
-//   };
+  //   const handleEdit = (site_id: string) => {
+  //     console.log("Edit site with ID:", site_id);
+  //   };
 
-//   const handleDelete = (site_id: string) => {
-//     console.log("Delete site with ID:", site_id);
-//   };
+  //   const handleDelete = (site_id: string) => {
+  //     console.log("Delete site with ID:", site_id);
+  //   };
 
   const handleDepartmentSubmit = async (data: InventoryAssetFormValues) => {
     try {
       if (!activeTeam.team_id) return;
+      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+        type: "team_department",
+        typeValue: data.site_name?.trim() || "",
+      });
+      if (checkIfUniqueValue) {
+        notifications.show({
+          message: "Site already exist",
+          color: "red",
+        });
+        return;
+      }
       const result = await createDataDrawer(supabaseClient, {
         type: "department",
         InventoryFormValues: data,

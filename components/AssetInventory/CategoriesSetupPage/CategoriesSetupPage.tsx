@@ -1,4 +1,4 @@
-import { getCategoryOptions } from "@/backend/api/get";
+import { checkUniqueValue, getCategoryOptions } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -21,6 +21,7 @@ import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import DisableModal from "../DisableModal";
 import CategoryDrawer from "./CategoryDrawer";
 
 type FormValues = {
@@ -35,6 +36,8 @@ const CategoriesSetupPage = () => {
   const [currentCategoryList, setCurrentCategoryList] = useState<
     CategoryTableRow[]
   >([]);
+  const [categoryToDelete, setCategoryToDelete] = useState<string>("");
+  const [modalOpened, setModalOpened] = useState(false);
   const [categoryCount, setCategoryCount] = useState(0);
   const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
@@ -95,12 +98,24 @@ const CategoriesSetupPage = () => {
   };
 
   const handleDelete = (category_id: string) => {
-    console.log("Delete category with ID:", category_id);
+    setCategoryToDelete(category_id);
+    setModalOpened(true);
   };
 
   const handleCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
       const { category_name } = data;
+      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+        type: "category",
+        typeValue: category_name?.trim() || "",
+      });
+      if (checkIfUniqueValue) {
+        notifications.show({
+          message: "Category already exist",
+          color: "red",
+        });
+        return;
+      }
       const result = await createDataDrawer(supabaseClient, {
         type: "category",
         InventoryFormValues: data,
@@ -133,6 +148,13 @@ const CategoriesSetupPage = () => {
   }, [activePage, activeTeam.team_id]);
   return (
     <Container fluid>
+      <DisableModal
+        setCurrentCategoryList={setCurrentCategoryList}
+        typeId={categoryToDelete}
+        close={() => setModalOpened(false)}
+        opened={modalOpened}
+        type="category"
+      />
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Categories</Title>
         <Text>

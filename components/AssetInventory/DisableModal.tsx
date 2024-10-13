@@ -1,22 +1,96 @@
+import { updateDrawerData } from "@/backend/api/update";
+import {
+  CategoryTableRow,
+  LocationTableRow,
+  SiteTableRow,
+  SubCategory,
+} from "@/utils/types";
 import { Button, Group, Modal } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 type DisableModalProps = {
   opened: boolean;
   close: () => void;
+  setCurrentSiteList?: React.Dispatch<React.SetStateAction<SiteTableRow[]>>;
+  setCurrentLocationList?: React.Dispatch<
+    React.SetStateAction<LocationTableRow[]>
+  >;
+  setCurrentCategoryList?: React.Dispatch<
+    React.SetStateAction<CategoryTableRow[]>
+  >;
+  setCurrentSubCategoryList?: React.Dispatch<
+    React.SetStateAction<SubCategory[]>
+  >;
+  typeId: string;
   type: string;
-  request_id: string | null;
 };
 
 const DisableModal = ({
   opened,
   close,
   type,
-  request_id,
+  typeId,
+  setCurrentSiteList,
+  setCurrentLocationList,
+  setCurrentCategoryList,
+  setCurrentSubCategoryList,
 }: DisableModalProps) => {
+  const supabaseClient = useSupabaseClient();
   const handleConfirm = async () => {
-    request_id;
-
-    close(); // Close the modal after confirming
+    try {
+      switch (type) {
+        case "site":
+          if (!setCurrentSiteList) return;
+          await updateDrawerData(supabaseClient, {
+            type: "site",
+            typeId: typeId,
+          });
+          setCurrentSiteList((prev) =>
+            prev.filter((site) => site.site_id !== typeId)
+          );
+          break;
+        case "location":
+          if (!setCurrentLocationList) return;
+          await updateDrawerData(supabaseClient, {
+            type: "location",
+            typeId: typeId,
+          });
+          setCurrentLocationList((prev) =>
+            prev.filter((location) => location.location_id !== typeId)
+          );
+        case "category":
+          if (!setCurrentCategoryList) return;
+          await updateDrawerData(supabaseClient, {
+            type: "category",
+            typeId: typeId,
+          });
+          setCurrentCategoryList((prev) =>
+            prev.filter((location) => location.category_id !== typeId)
+          );
+        case "Sub Category":
+          if (!setCurrentSubCategoryList) return;
+          await updateDrawerData(supabaseClient, {
+            type: "field",
+            typeId: typeId,
+          });
+          setCurrentSubCategoryList((prev) =>
+            prev.filter((location) => location.sub_category_id !== typeId)
+          );
+        default:
+          break;
+      }
+      close();
+      notifications.show({
+        message: `${type} is deleted`,
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: `Something went wrong`,
+        color: "red",
+      });
+    }
   };
 
   return (

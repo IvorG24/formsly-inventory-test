@@ -1,4 +1,4 @@
-import { getLocationList } from "@/backend/api/get";
+import { checkUniqueValue, getLocationList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -26,6 +26,7 @@ import { IconLocation, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import DisableModal from "../DisableModal";
 import LocationDrawer from "./LocationDrawer";
 
 type FormValues = {
@@ -44,6 +45,8 @@ const LocationSetupPage = ({ siteListData }: Props) => {
   const [locationCount, setLocationCount] = useState(0);
   const supabaseClient = createPagesBrowserClient<Database>();
   const [isFetchingLocationList, setIsFetchingLocationList] = useState(false);
+  const [locationIdToDelete, setLocationIdToDelete] = useState<string>("");
+  const [modalOpened, setModalOpened] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const siteOptionList = siteListData.map((option) => ({
     label: option.site_name,
@@ -117,12 +120,24 @@ const LocationSetupPage = ({ siteListData }: Props) => {
   };
 
   const handleDelete = (location_id: string) => {
-    console.log("Delete location with ID:", location_id);
+    setLocationIdToDelete(location_id);
+    setModalOpened(true);
   };
 
   const handleLocationSubmit = async (data: InventoryAssetFormValues) => {
     try {
       if (!activeTeam.team_id) return;
+      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+        type: "location",
+        typeValue: data.location_name?.trim() || "",
+      });
+      if (checkIfUniqueValue) {
+        notifications.show({
+          message: "Location already exist",
+          color: "red",
+        });
+        return;
+      }
       const result = await createDataDrawer(supabaseClient, {
         type: "location",
         InventoryFormValues: data,
@@ -153,6 +168,13 @@ const LocationSetupPage = ({ siteListData }: Props) => {
 
   return (
     <Container fluid>
+      <DisableModal
+        setCurrentLocationList={setCurrentLocationList}
+        typeId={locationIdToDelete}
+        close={() => setModalOpened(false)}
+        opened={modalOpened}
+        type="location"
+      />
       <LoadingOverlay visible={isFetchingLocationList} />
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Locations</Title>

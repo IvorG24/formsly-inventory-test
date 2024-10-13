@@ -1794,3 +1794,21 @@ export const updateEvent = async (
 
   return data;
 };
+
+export const updateDrawerData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    typeId: string;
+    type: "site" | "location" | "field" | "category";
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("disable_drawer_data", {
+    input_data: params,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};

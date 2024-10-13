@@ -1,4 +1,4 @@
-import { getSubCategoryList } from "@/backend/api/get";
+import { checkUniqueValue, getSubCategoryList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -25,6 +25,8 @@ import { IconCategory, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import DisableModal from "../DisableModal";
+import UpdateModal from "../UpdateModal";
 import SubCategoryDrawer from "./SubCategoriesDrawer";
 type FormValues = {
   category_id: string;
@@ -40,6 +42,8 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   const [activePage, setActivePage] = useState(1);
   const [subCategory, setSubCategory] = useState<SubCategory[]>([]);
   const [subCategoryCount, setSubCategoryCount] = useState(0);
+  const [subCategoryToDelete, setSubCategoryToDelete] = useState<string>("");
+  const [modalOpened, setModalOpened] = useState(false);
   const categoryOptionList = categoryOptions.map((option) => ({
     label: option.category_name,
     value: option.category_id,
@@ -102,17 +106,29 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
     }
   };
 
-  const handleEdit = (category_id: string) => {
-    console.log("Edit category with ID:", category_id);
+  const handleEdit = (subCategory_id: string) => {
+    console.log("Edit category with ID:", subCategory_id);
   };
 
-  const handleDelete = (category_id: string) => {
-    console.log("Delete category with ID:", category_id);
+  const handleDelete = (subCategory_id: string) => {
+    setSubCategoryToDelete(subCategory_id);
+    setModalOpened(true);
   };
 
   const handleSubCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
       if (!activeTeam.team_id) return;
+      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+        type: "field",
+        typeValue: data.sub_category?.trim() || "",
+      });
+      if (checkIfUniqueValue) {
+        notifications.show({
+          message: "Sub Category already exist",
+          color: "red",
+        });
+        return;
+      }
       const result = await createDataDrawer(supabaseClient, {
         type: "sub-category",
         InventoryFormValues: data,
@@ -145,6 +161,14 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   }, [activePage]);
   return (
     <Container fluid>
+      <DisableModal
+        setCurrentSubCategoryList={setSubCategory}
+        typeId={subCategoryToDelete}
+        close={() => setModalOpened(false)}
+        opened={modalOpened}
+        type="Sub Category"
+      />
+
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Sub Categories</Title>
         <Text>

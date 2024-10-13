@@ -1,4 +1,4 @@
-import { getSiteList } from "@/backend/api/get";
+import { checkUniqueValue, getSiteList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -22,6 +22,7 @@ import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DisableModal from "../DisableModal";
+import UpdateModal from "../UpdateModal";
 import SiteDrawer from "./SiteDrawer";
 
 type FormValues = {
@@ -36,16 +37,23 @@ const SiteSetupPage = () => {
   const [activePage, setActivePage] = useState(1);
   const [currentSiteList, setCurrentSiteList] = useState<SiteTableRow[]>([]);
   const [siteListCount, setSiteListCount] = useState(0);
-  const [isFetchingSiteList, setIsFetchingSiteList] = useState(false); // Loading state
+  const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const [modalOpened, setModalOpened] = useState(false);
+  const [updateModalOpened, setUpdatedModalOpened] = useState(false);
+  const [siteId, setSiteId] = useState<string>("");
+  const [initialSiteData, setInitialSiteData] = useState<{
+    site_name: string;
+  }>({
+    site_name: "",
+  });
   const formMethods = useForm<FormValues>({
     defaultValues: {
       site_name: "",
       site_description: "",
     },
   });
-  let siteIdToDelete: string | null = null;
+
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
@@ -83,7 +91,7 @@ const SiteSetupPage = () => {
         color: "red",
       });
     } finally {
-      setIsFetchingSiteList(false); // Hide loading state
+      setIsFetchingSiteList(false);
     }
   };
 
@@ -103,19 +111,36 @@ const SiteSetupPage = () => {
   };
 
   const handleEdit = (site_id: string) => {
-    console.log("Edit site with ID:", site_id);
+    const site = currentSiteList.find((site) => site.site_id === site_id);
+
+    if (site) {
+      setSiteId(site_id);
+      setInitialSiteData({
+        site_name: site.site_name,
+      });
+      setUpdatedModalOpened(true);
+    }
   };
 
-  const handleDelete = (site_id: string) => {
+  const handleDelete = async (site_id: string) => {
+    setSiteId(site_id);
     setModalOpened(true);
-    siteIdToDelete = site_id;
-
-    console.log("Delete site with ID:", site_id);
   };
 
   const handleSiteSubmit = async (data: InventoryAssetFormValues) => {
     try {
       if (!activeTeam.team_id) return;
+      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+        type: "site",
+        typeValue: data.site_name?.trim() || "",
+      });
+      if (checkIfUniqueValue) {
+        notifications.show({
+          message: "Site already exist",
+          color: "red",
+        });
+        return;
+      }
       const result = await createDataDrawer(supabaseClient, {
         type: "site",
         InventoryFormValues: data,
@@ -148,9 +173,17 @@ const SiteSetupPage = () => {
   return (
     <Container fluid>
       <DisableModal
-        request_id={siteIdToDelete}
+        setCurrentSiteList={setCurrentSiteList}
+        typeId={siteId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
+        type="site"
+      />
+      <UpdateModal
+        typeId={siteId}
+        initialData={initialSiteData.site_name}
+        close={() => setUpdatedModalOpened(false)}
+        opened={updateModalOpened}
         type="site"
       />
       <Flex direction="column" gap="sm">

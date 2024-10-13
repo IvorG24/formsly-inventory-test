@@ -7778,3 +7778,19 @@ export const getAssetDetails = async (
     asset_history: InventoryHistory[];
   };
 };
+
+export const checkUniqueValue = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    type: "site" | "location" | "team_department" | "category" | "field";
+    typeValue: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("check_unique_drawer_data", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as unknown as boolean;
+};
