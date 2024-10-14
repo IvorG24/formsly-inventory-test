@@ -42,13 +42,21 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   const [activePage, setActivePage] = useState(1);
   const [subCategory, setSubCategory] = useState<SubCategory[]>([]);
   const [subCategoryCount, setSubCategoryCount] = useState(0);
-  const [subCategoryToDelete, setSubCategoryToDelete] = useState<string>("");
+  const [subCategoryId, setSubCategoryId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const categoryOptionList = categoryOptions.map((option) => ({
     label: option.category_name,
     value: option.category_id,
   }));
-  const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
+  const [initialData, setInitialData] = useState<{
+    subCategory_name: string;
+    category_id?: string;
+  }>({
+    subCategory_name: "",
+    category_id: "",
+  });
+  const [updateModalOpened, setUpdatedModalOpened] = useState(false);
+  const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
 
   const formMethods = useForm<FormValues>({
@@ -107,11 +115,24 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   };
 
   const handleEdit = (subCategory_id: string) => {
-    console.log("Edit category with ID:", subCategory_id);
+    const subCategoryData = subCategory.find(
+      (subCategory) => subCategory.sub_category_id === subCategory_id
+    );
+    const categoryData = categoryOptionList.find(
+      (category) => category.label === subCategoryData?.category_name
+    );
+    if (subCategoryData) {
+      setSubCategoryId(subCategory_id);
+      setInitialData({
+        subCategory_name: subCategoryData.sub_category_name,
+        category_id: categoryData?.value || "",
+      });
+      setUpdatedModalOpened(true);
+    }
   };
 
   const handleDelete = (subCategory_id: string) => {
-    setSubCategoryToDelete(subCategory_id);
+    setSubCategoryId(subCategory_id);
     setModalOpened(true);
   };
 
@@ -163,12 +184,21 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
     <Container fluid>
       <DisableModal
         setCurrentSubCategoryList={setSubCategory}
-        typeId={subCategoryToDelete}
+        typeId={subCategoryId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
         type="Sub Category"
       />
-
+      <UpdateModal
+        typeId={subCategoryId}
+        setCurrentSubCategoryList={setSubCategory}
+        typeOption={categoryOptionList}
+        initialtypeId={initialData.category_id}
+        initialData={initialData.subCategory_name}
+        close={() => setUpdatedModalOpened(false)}
+        opened={updateModalOpened}
+        type="field"
+      />
       <Flex direction="column" gap="sm">
         <Title order={2}>List of Sub Categories</Title>
         <Text>

@@ -1,4 +1,4 @@
-import { updateDrawerData } from "@/backend/api/update";
+import { disableDrawerData } from "@/backend/api/update";
 import {
   CategoryTableRow,
   LocationTableRow,
@@ -42,7 +42,7 @@ const DisableModal = ({
       switch (type) {
         case "site":
           if (!setCurrentSiteList) return;
-          await updateDrawerData(supabaseClient, {
+          await disableDrawerData(supabaseClient, {
             type: "site",
             typeId: typeId,
           });
@@ -52,7 +52,7 @@ const DisableModal = ({
           break;
         case "location":
           if (!setCurrentLocationList) return;
-          await updateDrawerData(supabaseClient, {
+          await disableDrawerData(supabaseClient, {
             type: "location",
             typeId: typeId,
           });
@@ -61,7 +61,7 @@ const DisableModal = ({
           );
         case "category":
           if (!setCurrentCategoryList) return;
-          await updateDrawerData(supabaseClient, {
+          await disableDrawerData(supabaseClient, {
             type: "category",
             typeId: typeId,
           });
@@ -70,7 +70,7 @@ const DisableModal = ({
           );
         case "Sub Category":
           if (!setCurrentSubCategoryList) return;
-          await updateDrawerData(supabaseClient, {
+          await disableDrawerData(supabaseClient, {
             type: "field",
             typeId: typeId,
           });

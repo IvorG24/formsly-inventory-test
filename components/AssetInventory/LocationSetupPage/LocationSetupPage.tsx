@@ -27,6 +27,7 @@ import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import DisableModal from "../DisableModal";
+import UpdateModal from "../UpdateModal";
 import LocationDrawer from "./LocationDrawer";
 
 type FormValues = {
@@ -45,9 +46,17 @@ const LocationSetupPage = ({ siteListData }: Props) => {
   const [locationCount, setLocationCount] = useState(0);
   const supabaseClient = createPagesBrowserClient<Database>();
   const [isFetchingLocationList, setIsFetchingLocationList] = useState(false);
-  const [locationIdToDelete, setLocationIdToDelete] = useState<string>("");
+  const [locationId, setLocationId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
+  const [initialLocationData, setinitialLocationData] = useState<{
+    location_name?: string;
+    site_id: string;
+  }>({
+    location_name: "",
+    site_id: "",
+  });
+  const [updateModalOpened, setUpdatedModalOpened] = useState(false);
   const siteOptionList = siteListData.map((option) => ({
     label: option.site_name,
     value: option.site_id,
@@ -116,11 +125,22 @@ const LocationSetupPage = ({ siteListData }: Props) => {
   };
 
   const handleEdit = (location_id: string) => {
-    console.log("Edit location with ID:", location_id);
+    const locationData = currentLocationList.find(
+      (location) => location.location_id === location_id
+    );
+
+    if (location_id) {
+      setLocationId(location_id);
+      setinitialLocationData({
+        location_name: locationData?.location_name || "",
+        site_id: locationData?.location_site_id || "",
+      });
+      setUpdatedModalOpened(true);
+    }
   };
 
   const handleDelete = (location_id: string) => {
-    setLocationIdToDelete(location_id);
+    setLocationId(location_id);
     setModalOpened(true);
   };
 
@@ -170,9 +190,19 @@ const LocationSetupPage = ({ siteListData }: Props) => {
     <Container fluid>
       <DisableModal
         setCurrentLocationList={setCurrentLocationList}
-        typeId={locationIdToDelete}
+        typeId={locationId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
+        type="location"
+      />
+      <UpdateModal
+        typeOption={siteOptionList}
+        typeId={locationId}
+        setCurrentLocationList={setCurrentLocationList}
+        initialtypeId={initialLocationData.site_id}
+        initialData={initialLocationData.location_name}
+        close={() => setUpdatedModalOpened(false)}
+        opened={updateModalOpened}
         type="location"
       />
       <LoadingOverlay visible={isFetchingLocationList} />

@@ -42,6 +42,7 @@ import {
   TicketTableRow,
   TicketType,
   TradeTestSpreadsheetData,
+  updateTypeDate,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -1795,7 +1796,7 @@ export const updateEvent = async (
   return data;
 };
 
-export const updateDrawerData = async (
+export const disableDrawerData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     typeId: string;
@@ -1811,4 +1812,28 @@ export const updateDrawerData = async (
   }
 
   return data;
+};
+
+export const updateDrawerData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    typeId: string;
+    typeData: {
+      typeName: string;
+      typeDescriotion?: string;
+    };
+    type: "site" | "location" | "field" | "category";
+  }
+) => {
+  console.log(params);
+
+  const { data, error } = await supabaseClient.rpc("update_drawer_data", {
+    input_data: params,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data as unknown as updateTypeDate;
 };

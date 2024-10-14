@@ -2756,3 +2756,8 @@ export type InventoryHistory = {
   user_last_name: string;
   team_member_id: string;
 };
+
+export type updateTypeDate = {
+  type_name: string;
+  type_description?: string;
+};

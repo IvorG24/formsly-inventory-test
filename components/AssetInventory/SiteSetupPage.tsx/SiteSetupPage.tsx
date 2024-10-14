@@ -44,8 +44,10 @@ const SiteSetupPage = () => {
   const [siteId, setSiteId] = useState<string>("");
   const [initialSiteData, setInitialSiteData] = useState<{
     site_name: string;
+    site_description: string;
   }>({
     site_name: "",
+    site_description: "",
   });
   const formMethods = useForm<FormValues>({
     defaultValues: {
@@ -117,6 +119,7 @@ const SiteSetupPage = () => {
       setSiteId(site_id);
       setInitialSiteData({
         site_name: site.site_name,
+        site_description: site.site_description,
       });
       setUpdatedModalOpened(true);
     }
@@ -181,7 +184,9 @@ const SiteSetupPage = () => {
       />
       <UpdateModal
         typeId={siteId}
+        setCurrentSiteList={setCurrentSiteList}
         initialData={initialSiteData.site_name}
+        initialDescription={initialSiteData.site_description}
         close={() => setUpdatedModalOpened(false)}
         opened={updateModalOpened}
         type="site"

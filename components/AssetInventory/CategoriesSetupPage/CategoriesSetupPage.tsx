@@ -22,6 +22,7 @@ import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DisableModal from "../DisableModal";
+import UpdateModal from "../UpdateModal";
 import CategoryDrawer from "./CategoryDrawer";
 
 type FormValues = {
@@ -36,12 +37,17 @@ const CategoriesSetupPage = () => {
   const [currentCategoryList, setCurrentCategoryList] = useState<
     CategoryTableRow[]
   >([]);
-  const [categoryToDelete, setCategoryToDelete] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [categoryCount, setCategoryCount] = useState(0);
   const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false); // Loading state
   const [opened, { open, close }] = useDisclosure(false);
-
+  const [initialCategorydata, setinitialCategoryData] = useState<{
+    category_name?: string;
+  }>({
+    category_name: "",
+  });
+  const [updateModalOpened, setUpdatedModalOpened] = useState(false);
   const formMethods = useForm<FormValues>({
     defaultValues: {
       category_name: "",
@@ -94,11 +100,21 @@ const CategoriesSetupPage = () => {
   };
 
   const handleEdit = (category_id: string) => {
-    console.log("Edit category with ID:", category_id);
+    const categoryData = currentCategoryList.find(
+      (category) => category.category_id === category_id
+    );
+
+    if (category_id) {
+      setCategoryId(category_id);
+      setinitialCategoryData({
+        category_name: categoryData?.category_name || "",
+      });
+      setUpdatedModalOpened(true);
+    }
   };
 
   const handleDelete = (category_id: string) => {
-    setCategoryToDelete(category_id);
+    setCategoryId(category_id);
     setModalOpened(true);
   };
 
@@ -150,9 +166,17 @@ const CategoriesSetupPage = () => {
     <Container fluid>
       <DisableModal
         setCurrentCategoryList={setCurrentCategoryList}
-        typeId={categoryToDelete}
+        typeId={categoryId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
+        type="category"
+      />
+      <UpdateModal
+        typeId={categoryId}
+        setCurrentCategoryList={setCurrentCategoryList}
+        initialData={initialCategorydata.category_name}
+        close={() => setUpdatedModalOpened(false)}
+        opened={updateModalOpened}
         type="category"
       />
       <Flex direction="column" gap="sm">
