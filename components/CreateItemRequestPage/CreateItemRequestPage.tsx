@@ -59,6 +59,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+  const requestorProfile = useUserProfile();
 
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
@@ -78,7 +79,6 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
     (ItemCategoryType["item_category"] | null)[]
   >([null]);
 
-  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -191,9 +191,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
     }
 
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
-
+      if (!requestorProfile || !teamMember) return;
       setIsLoading(true);
 
       const toBeCheckedSections = data.sections.slice(1);
@@ -276,6 +274,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

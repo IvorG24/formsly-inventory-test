@@ -1,5 +1,4 @@
 import { getMemberUser } from "@/backend/api/get";
-import { createTicketFilePlaceholder } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isUUID, parseJSONIfValid } from "@/utils/string";
 import {
@@ -84,8 +83,7 @@ const TicketResponseValue = ({ category, field }: Props) => {
         }
 
       case "FILE":
-        const file = createTicketFilePlaceholder(parsedValue);
-        const fileName = `${file.name}` || "";
+        const fileName = parsedValue;
 
         return (
           <Button

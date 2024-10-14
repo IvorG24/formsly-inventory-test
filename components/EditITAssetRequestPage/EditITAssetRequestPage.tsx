@@ -428,8 +428,7 @@ const EditITAssetRequestPage = ({
     }
 
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -472,6 +471,7 @@ const EditITAssetRequestPage = ({
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -482,6 +482,7 @@ const EditITAssetRequestPage = ({
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       }
 

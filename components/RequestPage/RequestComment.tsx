@@ -253,7 +253,12 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                     ({moment(comment.comment_date_created).fromNow()})
                   </Text>
                   {isUserOwner && (
-                    <Menu shadow="md" width={200} position="bottom-end">
+                    <Menu
+                      shadow="md"
+                      width={200}
+                      position="bottom-end"
+                      withinPortal
+                    >
                       <Menu.Target>
                         <ActionIcon ml="auto">
                           <IconDots />

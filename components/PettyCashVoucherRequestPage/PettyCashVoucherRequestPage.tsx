@@ -3,6 +3,7 @@ import {
   getExistingConnectedRequest,
   getRequestComment,
 } from "@/backend/api/get";
+import { insertError } from "@/backend/api/post";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -19,6 +20,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -192,6 +194,15 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleUpdateRequest",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

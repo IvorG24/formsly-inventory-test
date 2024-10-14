@@ -73,8 +73,7 @@ const RequestCommentList = ({
   const addCommentFormMethods = useForm<CommentFormProps>();
 
   const handleAddComment = async (data: CommentFormProps) => {
-    if (!userProfile) return;
-    if (!teamMember) return;
+    if (!userProfile || !teamMember || !user) return;
     const commenterFullName = `${userProfile.user_first_name} ${userProfile.user_last_name}`;
 
     try {
@@ -89,8 +88,10 @@ const RequestCommentList = ({
             attachmentData: {
               attachment_bucket: "COMMENT_ATTACHMENTS",
               attachment_name: attachment.name,
-              attachment_value: `${newCommentId}-${attachment.name}`,
+              attachment_value: "",
             },
+            fileType: newCommentId,
+            userId: user.user_id,
           });
           commentAttachmentList.push({ ...data, attachment_public_url: url });
         }

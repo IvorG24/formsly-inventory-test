@@ -61,6 +61,7 @@ const CreatePEDEquipmentRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+  const requestorProfile = useUserProfile();
 
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
@@ -73,7 +74,6 @@ const CreatePEDEquipmentRequestPage = ({
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
 
-  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -109,8 +109,7 @@ const CreatePEDEquipmentRequestPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -132,6 +131,7 @@ const CreatePEDEquipmentRequestPage = ({
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

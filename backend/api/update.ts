@@ -741,10 +741,15 @@ export const approveOrRejectMemo = async (
 // update memo
 export const updateMemo = async (
   supabaseClient: SupabaseClient<Database>,
-  params: EditMemoType
+  params: EditMemoType,
+  userId: string
 ) => {
   const updatedLineItemData: EditMemoType["memo_line_item_list"] =
-    await processAllMemoLineItems(params.memo_line_item_list, supabaseClient);
+    await processAllMemoLineItems(
+      params.memo_line_item_list,
+      supabaseClient,
+      userId
+    );
 
   const memoSignerTableValues = params.memo_signer_list
     .map(
@@ -801,7 +806,8 @@ export const updateMemo = async (
 
 const processAllMemoLineItems = async (
   lineItemData: EditMemoType["memo_line_item_list"],
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  userId: string
 ) => {
   const processedLineItems = await Promise.all(
     lineItemData.map(async (lineItem) => {
@@ -811,11 +817,14 @@ const processAllMemoLineItems = async (
 
       if (file) {
         const bucket = "MEMO_ATTACHMENTS";
-        const attachmentPublicUrl = await uploadImage(supabaseClient, {
-          id: `${lineItem.memo_line_item_id}-${file.name}`,
-          image: file,
-          bucket,
-        });
+        const attachmentPublicUrl = (
+          await uploadImage(supabaseClient, {
+            image: file,
+            bucket,
+            fileType: "m",
+            userId,
+          })
+        ).publicUrl;
 
         return {
           memo_line_item_id: lineItem.memo_line_item_id,
@@ -1042,12 +1051,11 @@ export const updateJiraItemCategory = async (
 
   const formattedData = {
     ...data,
-    assigned_jira_user:
-      {
-        ...assignedUser[0],
-        ...assignedUser[0]?.jira_item_user_account_id,
-        ...assignedUser[0]?.jira_item_user_role_id,
-      } ?? null,
+    assigned_jira_user: {
+      ...assignedUser[0],
+      ...assignedUser[0]?.jira_item_user_account_id,
+      ...assignedUser[0]?.jira_item_user_role_id,
+    },
   };
 
   return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;

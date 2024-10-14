@@ -359,27 +359,29 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   return (
     <Container>
-      <JoyRideNoSSR
-        steps={[
-          {
-            target: ".next-step",
-            content: (
-              <Text>
-                You can now continue with the general assessment since your
-                application information has been approved. To continue, simply
-                click the &ldquo;Next Step&ldquo; button.
-              </Text>
-            ),
-            disableBeacon: true,
-          },
-        ]}
-        run={true}
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        hideBackButton
-        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
-      />
+      {nextStep && (
+        <JoyRideNoSSR
+          steps={[
+            {
+              target: ".next-step",
+              content: (
+                <Text>
+                  You can now continue with the general assessment since your
+                  application information has been approved. To continue, simply
+                  click the &ldquo;Next Step&ldquo; button.
+                </Text>
+              ),
+              disableBeacon: true,
+            },
+          ]}
+          run={true}
+          hideCloseButton
+          disableCloseOnEsc
+          disableOverlayClose
+          hideBackButton
+          styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+        />
+      )}
       {!isNoteClosed && router.pathname.includes("public-request") && (
         <Alert
           mb="xl"

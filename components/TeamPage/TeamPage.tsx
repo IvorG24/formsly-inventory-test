@@ -31,6 +31,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -80,6 +81,7 @@ const TeamPage = ({
   const router = useRouter();
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
+  const user = useUser();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
@@ -109,15 +111,19 @@ const TeamPage = ({
   const handleUpdateTeam = async (data: UpdateTeamInfoForm) => {
     const { teamName } = data;
     try {
+      if (!user) return;
       setIsUpdatingTeam(true);
 
       let imageUrl = "";
       if (teamLogo) {
-        imageUrl = await uploadImage(supabaseClient, {
-          id: team.team_id,
-          image: teamLogo,
-          bucket: "TEAM_LOGOS",
-        });
+        imageUrl = (
+          await uploadImage(supabaseClient, {
+            image: teamLogo,
+            bucket: "TEAM_LOGOS",
+            fileType: "l",
+            userId: user.id,
+          })
+        ).publicUrl;
 
         await updateTeam(supabaseClient, {
           team_id: team.team_id,

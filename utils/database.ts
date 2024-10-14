@@ -4804,6 +4804,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_storage_upload_details: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_team_admin_list: {
         Args: {
           input_data: Json

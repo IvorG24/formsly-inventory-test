@@ -162,6 +162,32 @@ const ApplicationInformationSpreadsheetView = ({
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      setOptionList((prev) => {
+        const seniorityOptions = {
+          field_name: "Seniority",
+          field_option: [
+            {
+              option_id: uuidv4(),
+              option_value: "JUNIOR",
+              option_order: 1,
+              option_field_id: "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
+            },
+            {
+              option_id: uuidv4(),
+              option_value: "MID",
+              option_order: 2,
+              option_field_id: "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
+            },
+            {
+              option_id: uuidv4(),
+              option_value: "SENIOR",
+              option_order: 3,
+              option_field_id: "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
+            },
+          ],
+        };
+        return [...prev, seniorityOptions];
+      });
       const regionData = await fetchRegion(
         supabaseClientAddress as unknown as SupabaseClient<
           OneOfficeDatabase["address_schema"]

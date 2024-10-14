@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -34,6 +34,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const laptopView = useMediaQuery("(min-width: 1024px)");
+  const user = useUser();
 
   const [updatedMemo, setUpdatedMemo] = useState<EditMemoType>(memo);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,8 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
   const handleUpdateMemo = async (data: EditMemoFormValues) => {
     try {
+      if (!user) return;
+
       setIsLoading(true);
       setUpdatedMemo(data);
 
@@ -119,7 +122,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
         memo_line_item_list: updateLineItem,
       };
 
-      await updateMemo(supabaseClient, editMemoParams as EditMemoType);
+      await updateMemo(supabaseClient, editMemoParams as EditMemoType, user.id);
 
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${data.memo_id}`

@@ -354,7 +354,7 @@ const RequestResponse = ({
             <TextInput
               {...inputProps}
               label={response.label}
-              value={parsedValue ? parsedValue : undefined}
+              value={`${response.label} File`}
               icon={<IconFile size={16} />}
               multiple={false}
               style={{ flex: 1 }}

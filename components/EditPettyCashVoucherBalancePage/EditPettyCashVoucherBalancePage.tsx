@@ -3,7 +3,12 @@ import {
   getNonDuplictableSectionResponse,
   getRequestFieldResponse,
 } from "@/backend/api/get";
-import { createComment, createRequest, editRequest } from "@/backend/api/post";
+import {
+  createComment,
+  createRequest,
+  editRequest,
+  insertError,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -15,7 +20,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -94,8 +99,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
 
   const onSubmit = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -121,6 +125,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -131,6 +136,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         // add comment
@@ -166,6 +172,15 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onSubmit",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

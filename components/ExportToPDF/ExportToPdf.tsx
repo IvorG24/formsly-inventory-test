@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import ITAssetPdfDocumentTableVersion from "./ITAssetPdfDocumentTableVersion";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
+import LiquidationReimbursementTableVersion from "./LiquidationReimbursementTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
 import PEDItemBulkPdfDocumentTableVersion from "./PEDItemBulkPdfDocumentTableVersion";
@@ -243,6 +244,16 @@ const ExportToPdf = ({
       case "IT Asset":
         return (
           <ITAssetPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "Liquidation Reimbursement":
+        return (
+          <LiquidationReimbursementTableVersion
             requestDetails={requestDetails}
             requestorDetails={requestorDetails}
             requestIDs={requestIDs}

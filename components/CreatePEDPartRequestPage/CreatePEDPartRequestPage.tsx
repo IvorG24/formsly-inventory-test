@@ -114,8 +114,7 @@ const CreatePEDPartRequestPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -137,6 +136,7 @@ const CreatePEDPartRequestPage = ({
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

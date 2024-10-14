@@ -138,8 +138,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -161,6 +160,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
       isSubmitting.current = true;
       removeLocalState();

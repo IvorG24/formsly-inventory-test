@@ -119,8 +119,7 @@ const CreateReceivingInspectingReportPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
       setIsLoading(true);
       let isValid = true;
       for (const section of data.sections.slice(2)) {
@@ -210,6 +209,7 @@ const CreateReceivingInspectingReportPage = ({
           isFormslyForm: true,
           projectId: requestProjectId,
           teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         notifications.show({

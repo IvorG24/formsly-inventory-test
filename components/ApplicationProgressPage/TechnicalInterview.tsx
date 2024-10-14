@@ -76,7 +76,11 @@ const TechnicalInterview = ({
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <LoadingOverlay visible={isLoading} />
       <Title order={3}>
-        {technicalInterviewNumber === 1 ? "Department" : "Requestor"} Interview
+        {technicalInterviewNumber === 1 ||
+        technicalInterviewNumber === undefined
+          ? "Department"
+          : "Requestor"}{" "}
+        Interview
       </Title>
       <Stack>
         <Group>

@@ -14,6 +14,7 @@ import {
 import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -37,6 +38,7 @@ type Props = {
 const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const user = useUser();
 
   const { setIsLoading } = useLoadingActions();
 
@@ -206,6 +208,9 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
         status,
         requestScore,
         rootFormslyRequestId,
+        userId: user?.id ?? "",
+        applicationInformationFormslyId: data.sections[0].section_field[0]
+          .field_response as string,
       });
       notifications.show({
         message: "Request created.",

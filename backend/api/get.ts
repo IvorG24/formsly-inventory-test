@@ -5999,13 +5999,28 @@ export const getApplicationInformationSummaryData = async (
   const offset = (page - 1) * limit;
 
   const responseFilterCondition = [];
-  Boolean(responseFilter.position) && responseFilter?.position?.length
-    ? responseFilterCondition.push(
+  if (Boolean(responseFilter.position) && responseFilter?.position?.length) {
+    if (
+      ["JUNIOR", "MID", "SENIOR"].some((element) =>
+        responseFilter.position?.includes(element)
+      )
+    ) {
+      responseFilterCondition.push(
+        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND (${responseFilter.position
+          .map((value) => {
+            if (value !== "MID") return `request_response LIKE '"${value} %'`;
+            return `(request_response NOT LIKE '"JUNIOR %' AND request_response NOT LIKE '"SENIOR %')`;
+          })
+          .join(" OR ")}))`
+      );
+    } else {
+      responseFilterCondition.push(
         `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
           .map((value) => `'"${value}"'`)
           .join(", ")}))`
-      )
-    : null;
+      );
+    }
+  }
   responseFilter.firstName
     ? responseFilterCondition.push(
         `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`

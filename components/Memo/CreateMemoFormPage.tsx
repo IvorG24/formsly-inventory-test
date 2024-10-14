@@ -79,6 +79,7 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
 
   const handleCreateMemo = async (data: MemoFormValues) => {
     try {
+      if (!user) return;
       setIsLoading(true);
       if (data.signerList.length <= 0) {
         return notifications.show({
@@ -150,6 +151,7 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
         },
         signerData,
         lineItemData,
+        userId: user.user_id,
       };
 
       const newMemo = await createTeamMemo(supabaseClient, createMemoParams);

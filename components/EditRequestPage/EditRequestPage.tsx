@@ -105,8 +105,7 @@ const EditRequestPage = ({
 
   const onSubmit = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -123,6 +122,7 @@ const EditRequestPage = ({
           isFormslyForm: false,
           projectId: requestProjectId || "",
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -133,6 +133,7 @@ const EditRequestPage = ({
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       }
 

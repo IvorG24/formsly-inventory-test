@@ -4,7 +4,12 @@ import {
   getPropertyNumberOptions,
   getSectionInRequestPage,
 } from "@/backend/api/get";
-import { createComment, createRequest, editRequest } from "@/backend/api/post";
+import {
+  createComment,
+  createRequest,
+  editRequest,
+  insertError,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -15,7 +20,11 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { ALLOWED_USER_TO_EDIT_LRF_REQUESTS } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { calculateInvoiceAmountWithVAT, safeParse } from "@/utils/functions";
+import {
+  calculateInvoiceAmountWithVAT,
+  isError,
+  safeParse,
+} from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -131,8 +140,7 @@ const EditLiquidReimbursementRequestPage = ({
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -157,6 +165,7 @@ const EditLiquidReimbursementRequestPage = ({
           isFormslyForm: true,
           projectId,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
       } else {
         request = await editRequest(supabaseClient, {
@@ -167,6 +176,7 @@ const EditLiquidReimbursementRequestPage = ({
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         if (isUpdatedByAccountant) {
@@ -195,6 +205,15 @@ const EditLiquidReimbursementRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onSubmit",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -355,17 +374,24 @@ const EditLiquidReimbursementRequestPage = ({
       }
       // remove payment if pure liquidation type
       const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
+      const liquidationWithPR =
+        value?.toLowerCase() === "liquidation with provisional receipt";
       const paymentSectionIsRemoved =
         getValues(`sections`).some(
           (section) => section.section_name === "Payment"
         ) === false;
 
-      if (valueIsPureLiquidation) {
+      if (valueIsPureLiquidation || liquidationWithPR) {
         const paymentSectionIndex = getValues(`sections`).findIndex(
           (section) => section.section_name === "Payment"
         );
-        removeSection(paymentSectionIndex);
-      } else if (!valueIsPureLiquidation && paymentSectionIsRemoved) {
+        if (paymentSectionIndex > 0) {
+          removeSection(paymentSectionIndex);
+        }
+      } else if (
+        !(valueIsPureLiquidation || liquidationWithPR) &&
+        paymentSectionIsRemoved
+      ) {
         insertSection(formSections.length, form.form_section[2], {
           shouldFocus: false,
         });
@@ -741,8 +767,7 @@ const EditLiquidReimbursementRequestPage = ({
         }
       );
       setEquipmentCodeOptionList(equipmentCodeOptions);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch equipment code list. Please contact IT",
         color: "red",

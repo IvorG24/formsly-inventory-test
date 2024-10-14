@@ -71,6 +71,8 @@ const TicketRequestItemOptionForm = ({
 
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
+      if (!user) return;
+
       setIsLoading(true);
       // option check if exists
       const optionExists = await itemDescriptionOptionsCheck(data);
@@ -80,6 +82,7 @@ const TicketRequestItemOptionForm = ({
         category,
         teamMemberId: memberId,
         ticketFormValues: data,
+        userId: user.user_id,
       });
 
       notifications.show({
@@ -110,9 +113,12 @@ const TicketRequestItemOptionForm = ({
       if (optionExists) return;
 
       if (!category && !ticketId && user) return;
+      if (!user) return;
+
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,
+        userId: user.user_id,
       });
       if (!edited) return;
 

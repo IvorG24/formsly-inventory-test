@@ -55,6 +55,7 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import RequestCommentList from "../RequestPage/RequestCommentList";
 import LiquidationReimbursementSummary from "../SummarySection/LiquidationReimbursementSummary";
 
@@ -446,10 +447,12 @@ const LiquidationReimbursementRequestPage = ({
         return { success: false, data: null };
       }
 
+      const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
+
       const jiraTicketPayload = formatJiraLRFRequisitionPayload({
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestor: `${user.user_first_name} ${user.user_last_name}`,
+        requestor: requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
         department: selectedDepartment,
@@ -653,7 +656,13 @@ const LiquidationReimbursementRequestPage = ({
         {canCreateBOQ && (
           <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
         )}
+        <ExportToPdfMenu
+          isFormslyForm={request.request_form.form_is_formsly_form}
+          formName={request.request_form.form_name}
+          requestId={request.request_formsly_id ?? request.request_id}
+        />
       </Flex>
+
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
           request={request}

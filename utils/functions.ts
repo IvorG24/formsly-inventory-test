@@ -442,3 +442,7 @@ export const extractInventoryData = (
 
   return inventoryData;
 };
+
+export const shortId = () => {
+  return Math.random().toString(36).substring(2, 6);
+};

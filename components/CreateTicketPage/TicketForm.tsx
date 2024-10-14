@@ -58,11 +58,12 @@ const TicketForm = ({
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
-      if (!category) return;
+      if (!category || !user) return;
       const ticket = await createTicket(supabaseClient, {
         category,
         teamMemberId: memberId,
         ticketFormValues: data,
+        userId: user.user_id,
       });
 
       notifications.show({
@@ -89,10 +90,12 @@ const TicketForm = ({
     try {
       setIsLoading(true);
       if (!category && !ticketId && user) return;
+      if (!user) return;
 
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,
+        userId: user.user_id,
       });
       if (!edited) return;
 

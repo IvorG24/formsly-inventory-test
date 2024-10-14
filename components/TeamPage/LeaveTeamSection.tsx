@@ -47,7 +47,7 @@ const LeaveTeamSection = ({ onLeaveTeam }: Props) => {
   const handleUploadSignature = async (signature: File | null) => {
     try {
       setIsUpdatingSignature(true);
-      if (signature === null) return;
+      if (signature === null || !user) return;
 
       // compress image
       let compressedImage: File | null = null;
@@ -71,12 +71,14 @@ const LeaveTeamSection = ({ onLeaveTeam }: Props) => {
           attachmentData: {
             attachment_name: signature.name,
             attachment_bucket: "USER_SIGNATURES",
-            attachment_value: `${user?.user_id}`,
+            attachment_value: "",
             attachment_id: user?.user_signature_attachment_id
               ? user.user_signature_attachment_id
               : undefined,
           },
           file: compressedImage || signature,
+          fileType: "s",
+          userId: user.user_id,
         }
       );
 

@@ -85,8 +85,8 @@ const TicketCommentSection = ({
 
   const handleAddComment = async (data: { comment: string }) => {
     try {
-      if (!userProfile) return;
-      if (!teamMember) return;
+      if (!userProfile || !teamMember) return;
+
       setIsSubmittingForm(true);
       const newCommentId = uuidv4();
       const commentAttachmentList: CommentAttachmentWithPublicUrl = [];
@@ -98,8 +98,10 @@ const TicketCommentSection = ({
             attachmentData: {
               attachment_bucket: "COMMENT_ATTACHMENTS",
               attachment_name: attachment.name,
-              attachment_value: `${newCommentId}-${attachment.name}`,
+              attachment_value: "",
             },
+            fileType: newCommentId,
+            userId: userProfile.user_id,
           });
           commentAttachmentList.push({ ...data, attachment_public_url: url });
         }

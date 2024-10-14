@@ -58,19 +58,27 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
     try {
       let idFrontImage = "";
       if (data.sss_front_image) {
-        idFrontImage = await uploadImage(supabaseClient, {
-          id: `${userId}-front`,
-          image: data.sss_front_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idFrontImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_front_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sf",
+            userId,
+            sssId: data.sss_number,
+          })
+        ).publicUrl;
       }
       let idBackImage = "";
       if (data.sss_back_image) {
-        idBackImage = await uploadImage(supabaseClient, {
-          id: `${userId}-back`,
-          image: data.sss_back_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idBackImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_back_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sb",
+            userId,
+            sssId: data.sss_number,
+          })
+        ).publicUrl;
       }
 
       await createSSSID(supabaseClient, {
@@ -88,10 +96,6 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
       });
       modals.closeAll();
     } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
     } finally {
       setIsLoading(false);
     }

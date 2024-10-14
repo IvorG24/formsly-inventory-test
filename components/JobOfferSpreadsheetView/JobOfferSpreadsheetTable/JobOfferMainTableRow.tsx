@@ -10,7 +10,11 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
-import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
+import {
+  capitalizeEachWord,
+  formatTeamNameToUrlKey,
+  getInitials,
+} from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import {
   HRProjectType,
@@ -59,7 +63,6 @@ import {
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -189,9 +192,13 @@ const JobOfferMainTableRow = ({
           attachmentData: {
             attachment_name: data.attachment.name,
             attachment_bucket: "JOB_OFFER_ATTACHMENTS",
-            attachment_value: uuidv4(),
+            attachment_value: "",
           },
           file: data.attachment,
+          fileType: getInitials(item.position).toLocaleLowerCase(),
+          userId: "",
+          applicationInformationFormslyId:
+            item.application_information_request_id,
         }
       );
 
@@ -209,8 +216,17 @@ const JobOfferMainTableRow = ({
         prev.map((prevItem) => {
           if (prevItem.hr_request_reference_id !== item.hr_request_reference_id)
             return prevItem;
+
           return {
             ...prevItem,
+            job_offer_attachment: {
+              attachment_bucket: attachmentData.attachment_bucket,
+              attachment_date_created: attachmentData.attachment_date_created,
+              attachment_id: attachmentData.attachment_id,
+              attachment_is_disabled: attachmentData.attachment_is_disabled,
+              attachment_name: attachmentData.attachment_name,
+              attachment_value: attachmentData.attachment_value,
+            },
             job_offer_title: data.title,
             job_offer_attachment_url: url,
             job_offer_status: "PENDING",

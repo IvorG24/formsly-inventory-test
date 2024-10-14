@@ -13915,7 +13915,7 @@ plv8.subtransaction(function() {
         team_member_team_id = '${teamId}'
         AND user_email IN (${emailListCondition})
     `
-  ).map(data => user_email);
+  ).map(data => data.user_email);
 });
 return returnData;
 $$ LANGUAGE plv8;
@@ -19883,6 +19883,58 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_storage_upload_details(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function() {
+    const {
+      userId,
+      sssId,
+      applicationInformationFormslyId,
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+    let sssIDNumber = "";
+
+    if (sssId) {
+      sssIDNumber = sssId;
+    } else if (applicationInformationFormslyId) {
+      const sssData = plv8.execute(`
+        SELECT request_response
+        FROM public.request_view 
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
+          AND request_response_field_id = 'ab7bf673-c22d-4290-b858-7cba2c4d2474'
+        WHERE request_formsly_id = '${applicationInformationFormslyId}'
+      `);
+      if(!sssData.length) throw new Error();
+      sssIDNumber = JSON.parse(sssData[0].request_response);
+    } else if (userId) {
+      const userData = plv8.execute(
+        `
+          SELECT user_sss_number
+          FROM user_schema.user_table
+          INNER JOIN user_schema.user_sss_table ON user_id = user_sss_user_id
+          WHERE user_id = '${userId}'
+        `
+      );
+      if(!userData.length) throw new Error("The user has not yet uploaded an SSS ID.");
+      sssIDNumber = userData[0].user_sss_number;
+    } else {
+      throw new Error();
+    }
+
+    returnData = {
+      sssIDNumber,
+      currentDate
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -23507,8 +23559,8 @@ SELECT
     $$
     SELECT
       net.http_post(
-        url:='https://zlerahmorhbuqtryccxt.supabase.co/functions/v1/handle-missed-schedule',
-        headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXJhaG1vcmhidXF0cnljY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTcwOTQyMjEsImV4cCI6MjAxMjY3MDIyMX0.kUtimbpMLQnLfzohwcPX4rKRTKeSx2hIt03nAhdD5wc"}'::jsonb,
+        url:='https://xwsbaxmttvxkvorpabim.supabase.co/functions/v1/handle-missed-schedule',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3c2JheG10dHZ4a3ZvcnBhYmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODk2NjMzNTcsImV4cCI6MjAwNTIzOTM1N30.jzWunPK46SRY8r7CaqMIDD22AljvOqRwLP6CCrzAbtA"}'::jsonb,
         body:=concat('{"time": "', NOW(), '"}')::jsonb
       ) AS request_id;
     $$

@@ -63,7 +63,6 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-
   const requestorProfile = useUserProfile();
 
   const { setIsLoading } = useLoadingActions();
@@ -121,8 +120,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
     }
 
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -163,6 +161,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

@@ -7,6 +7,7 @@ import {
 } from "@/backend/api/get";
 import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserProfile } from "@/stores/useUserStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { escapeQuotes } from "@/utils/string";
@@ -32,7 +33,6 @@ import { IconFile } from "@tabler/icons-react";
 import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 
 type ProjectForm = {
   projectName: string;
@@ -54,6 +54,7 @@ type Props = {
 const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+  const user = useUserProfile();
 
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
   const [regionOptions, setRegionOptions] = useState<OptionType[]>([]);
@@ -92,6 +93,7 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
 
   const onSubmit = async (data: ProjectForm) => {
     try {
+      if (!user) return;
       const projectName = data.projectName.trim().toUpperCase();
       const projectInitials = generateProjectInitials(projectName);
       if (
@@ -116,8 +118,10 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
           attachmentData: {
             attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
             attachment_name: data.boq.name,
-            attachment_value: uuidv4(),
+            attachment_value: "",
           },
+          fileType: "boq",
+          userId: user.user_id,
         });
         boqAttachmentId = boqData.attachment_id;
       }
@@ -128,8 +132,10 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
           attachmentData: {
             attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
             attachment_name: data.site_map.name,
-            attachment_value: uuidv4(),
+            attachment_value: "",
           },
+          fileType: "sm",
+          userId: user.user_id,
         });
         siteMapAttachmentId = siteMapData.attachment_id;
       }

@@ -85,7 +85,11 @@ export const isUUID = (str: string | string[] | undefined) => {
 };
 
 export const getInitials = (fullname: string) => {
-  const words = fullname.trim().split(" ");
+  const words = fullname
+    .trim()
+    .replace(/[^a-zA-Z\s]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .split(" ");
   const initials = words.map((word) => word[0].toUpperCase()).join("");
   return initials;
 };
@@ -206,4 +210,20 @@ export const escapeQuotesForObject = (input: Record<string, string>) => {
 
 export const capitalize = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+};
+
+const isOneWordAllCaps = (string: string) => {
+  return /^[A-Z]+$/.test(string);
+};
+
+export const getFileType = (string: string) => {
+  if (isOneWordAllCaps(string)) return string.toLocaleLowerCase();
+
+  return string
+    .trim()
+    .replace(/[^a-zA-Z\s]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .split(" ")
+    .map((word) => word[0].toLowerCase())
+    .join("");
 };

@@ -5,6 +5,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { MemoType } from "@/utils/types";
@@ -310,7 +311,7 @@ const MemoPage = ({ memo }: Props) => {
       ];
       setCurrentSignedSignerList(updatedSignedSignerList);
 
-      if (newAgreementData) {
+      if (!isEmpty(newAgreementData)) {
         const { user_data } = newAgreementData.memo_agreement_by_team_member;
         const employeeNumber = user_data.user_employee_number[0]
           ? user_data.user_employee_number[0].user_employee_number

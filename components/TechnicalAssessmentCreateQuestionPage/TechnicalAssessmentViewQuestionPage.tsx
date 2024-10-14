@@ -161,8 +161,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
 
   const handleUpdateQuestion = async (data: Section, questionIndex: number) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
       if (!teamGroup.includes("HUMAN RESOURCES")) return;
 
       const trimmedQuestion = data.question.trim().toLowerCase();

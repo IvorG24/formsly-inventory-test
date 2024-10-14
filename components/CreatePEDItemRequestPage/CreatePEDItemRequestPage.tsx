@@ -59,6 +59,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+  const requestorProfile = useUserProfile();
 
   const optionalFields = form.form_section[1].section_field
     .slice(0, 4)
@@ -84,7 +85,6 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
 
-  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -195,8 +195,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -218,6 +217,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

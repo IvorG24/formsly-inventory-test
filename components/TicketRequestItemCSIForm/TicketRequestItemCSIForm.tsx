@@ -58,6 +58,7 @@ const TicketRequestItemCSIForm = ({
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+      if (!user) return;
 
       // check if csi exists
       const itemName =
@@ -72,6 +73,7 @@ const TicketRequestItemCSIForm = ({
         category,
         teamMemberId: memberId,
         ticketFormValues: data,
+        userId: user.user_id,
       });
 
       notifications.show({
@@ -108,10 +110,12 @@ const TicketRequestItemCSIForm = ({
       if (csiExists) return;
 
       if (!category && !ticketId && user) return;
+      if (!user) return;
 
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,
+        userId: user.user_id,
       });
       if (!edited) return;
       if (onOverrideResponseComment) await onOverrideResponseComment(data);

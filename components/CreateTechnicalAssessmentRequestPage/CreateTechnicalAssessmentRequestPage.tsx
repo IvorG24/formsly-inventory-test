@@ -23,6 +23,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
@@ -47,6 +48,7 @@ type Props = {
 const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const user = useUser();
 
   const { setIsLoading } = useLoadingActions();
 
@@ -249,6 +251,9 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
         status,
         requestScore,
         rootFormslyRequestId,
+        userId: user?.id ?? "",
+        applicationInformationFormslyId: data.sections[0].section_field[0]
+          .field_response as string,
       });
 
       notifications.show({

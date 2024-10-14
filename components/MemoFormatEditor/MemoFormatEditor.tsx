@@ -28,6 +28,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { IconPhotoUp, IconTrashFilled } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import {
@@ -67,6 +68,7 @@ const sectionColorList = ["blue", "green", "gray"];
 
 const MemoFormatEditor = ({ opened, close }: Props) => {
   const supabaseClient = createPagesBrowserClient();
+  const user = useUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] =
@@ -88,6 +90,7 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
     });
 
   const handleSaveFormat = async (data: MemoFormatFormValues) => {
+    if (!user) return;
     try {
       setIsLoading(true);
       // upload image attachments
@@ -101,14 +104,14 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                     async (attachment, attachmentIndex) => {
                       if (attachment.memo_format_attachment_file) {
                         const bucket = "MEMO_ATTACHMENTS";
-                        const attachmentPublicUrl = await uploadImage(
-                          supabaseClient,
-                          {
-                            id: uuidv4(),
+                        const attachmentPublicUrl = (
+                          await uploadImage(supabaseClient, {
                             image: attachment.memo_format_attachment_file,
                             bucket,
-                          }
-                        );
+                            fileType: "m",
+                            userId: user.id,
+                          })
+                        ).publicUrl;
 
                         return {
                           ...attachment,

@@ -144,8 +144,7 @@ const CreateRequestForPaymentPage = ({
       return;
     }
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -167,6 +166,7 @@ const CreateRequestForPaymentPage = ({
         isFormslyForm: true,
         projectId,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

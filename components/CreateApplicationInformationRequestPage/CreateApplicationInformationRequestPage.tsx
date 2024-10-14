@@ -32,6 +32,7 @@ import {
   createPagesBrowserClient,
   SupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { Database, Database as OneOfficeDatabase } from "oneoffice-api";
 import { useEffect, useState } from "react";
@@ -56,6 +57,7 @@ type Props = {
 const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const user = useUser();
 
   const [regionOptionList, setRegionOptionsList] = useState<
     { region_id: string; region: string }[]
@@ -217,7 +219,6 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
-
       let requestScore = 0;
       let workInformationIndex = 4;
       if (
@@ -261,6 +262,10 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         ),
         requestScore,
         recruiter: router.query.recruiter as string | undefined,
+        userId: user?.id ?? "",
+        sssId: (
+          data.sections[3].section_field[0].field_response as string
+        ).replace(/\D/g, ""),
       });
 
       const adOwnerId = router.query["ad-owner"] as string;

@@ -116,8 +116,7 @@ const CreateQuotationRequestPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
       setIsLoading(true);
 
       const itemID = JSON.stringify(
@@ -190,6 +189,7 @@ const CreateQuotationRequestPage = ({
           isFormslyForm: true,
           projectId: requestProjectId,
           teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+          userId: requestorProfile.user_id,
         });
 
         notifications.show({

@@ -55,6 +55,7 @@ type Props = {
 const UserSettingsPage = ({ user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+  const userData = useUser();
 
   const teamMember = useUserTeamMember();
   const { setUserAvatar, setUserInitials } = useUserActions();
@@ -68,7 +69,6 @@ const UserSettingsPage = ({ user }: Props) => {
   const [signatureUrl, setSignatureUrl] = useState("");
   const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
 
-  const userData = useUser();
   const userMetadata = userData?.app_metadata;
   const isUserEmailProviderOnly =
     userMetadata?.provider === "email" &&
@@ -123,11 +123,14 @@ const UserSettingsPage = ({ user }: Props) => {
 
       let imageUrl = "";
       if (avatarFile) {
-        imageUrl = await uploadImage(supabaseClient, {
-          id: data.user_id,
-          image: avatarFile,
-          bucket: "USER_AVATARS",
-        });
+        imageUrl = (
+          await uploadImage(supabaseClient, {
+            image: avatarFile,
+            bucket: "USER_AVATARS",
+            fileType: "a",
+            userId: user.user_id,
+          })
+        ).publicUrl;
         setUserAvatar(imageUrl);
       }
 
@@ -229,12 +232,14 @@ const UserSettingsPage = ({ user }: Props) => {
           attachmentData: {
             attachment_name: signature.name,
             attachment_bucket: "USER_SIGNATURES",
-            attachment_value: uuidv4(),
+            attachment_value: "",
             attachment_id: user.user_signature_attachment_id
               ? user.user_signature_attachment_id
               : undefined,
           },
           file: compressedImage || signature,
+          fileType: "s",
+          userId: user.user_id,
         }
       );
 

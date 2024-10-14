@@ -1,6 +1,7 @@
 import { getRequestFieldResponse } from "@/backend/api/get";
 import {
   createRequest,
+  insertError,
   sendNotificationToCostEngineer,
 } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -14,7 +15,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestFormProps,
@@ -103,6 +104,7 @@ const CreatePettyCashVoucherBalancePage = ({
         isFormslyForm: true,
         projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       const redirectUrl = `/${formatTeamNameToUrlKey(
@@ -131,6 +133,15 @@ const CreatePettyCashVoucherBalancePage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCreateRequest",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

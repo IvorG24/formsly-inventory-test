@@ -90,6 +90,7 @@ const CreateRequestForPaymentCodePage = ({ form, connectedRequest }: Props) => {
         isFormslyForm: true,
         projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
 
       notifications.show({

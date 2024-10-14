@@ -88,8 +88,7 @@ const CreateRequestPage = ({
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
 
@@ -104,6 +103,7 @@ const CreateRequestPage = ({
         isFormslyForm: false,
         projectId: requestProjectId || "",
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
+        userId: requestorProfile.user_id,
       });
       removeLocalFormState();
       notifications.show({

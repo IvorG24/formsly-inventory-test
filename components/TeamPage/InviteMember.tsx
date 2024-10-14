@@ -73,6 +73,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
       const filteredEmailList = emailList.filter(
         (email) => !alreadyMemberEmailList.includes(email)
       );
+      if (!filteredEmailList.length) return;
 
       await createTeamInvitation(supabaseClient, {
         emailList: filteredEmailList,

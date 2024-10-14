@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -32,6 +32,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const laptopView = useMediaQuery("(min-width: 1024px)");
+  const user = useUser();
 
   const [updatedMemo, setUpdatedMemo] = useState<ReferenceMemoType>(memo);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +46,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
   const handleCreateMemo = async (data: ReferenceMemoType) => {
     try {
+      if (!user?.id) return;
       setIsLoading(true);
       setUpdatedMemo(data);
 
@@ -122,7 +124,8 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
       const newMemo = await createReferenceMemo(
         supabaseClient,
-        referenceMemoParams as ReferenceMemoType
+        referenceMemoParams as ReferenceMemoType,
+        user.id
       );
 
       await router.push(

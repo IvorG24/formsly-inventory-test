@@ -36,6 +36,7 @@ type Props = {
 const OnboardingPage = ({ user }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -58,28 +59,40 @@ const OnboardingPage = ({ user }: Props) => {
 
       let imageUrl = "";
       if (avatarFile) {
-        imageUrl = await uploadImage(supabaseClient, {
-          id: data.user_id,
-          image: avatarFile,
-          bucket: "USER_AVATARS",
-        });
+        imageUrl = (
+          await uploadImage(supabaseClient, {
+            image: avatarFile,
+            bucket: "USER_AVATARS",
+            fileType: "a",
+            userId: user.id,
+            sssId: data.sss_number,
+          })
+        ).publicUrl;
       }
 
       let idFrontImage = "";
       if (data.sss_front_image) {
-        idFrontImage = await uploadImage(supabaseClient, {
-          id: `${data.user_id}-front`,
-          image: data.sss_front_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idFrontImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_front_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sf",
+            userId: user.id,
+            sssId: data.sss_number,
+          })
+        ).publicUrl;
       }
       let idBackImage = "";
       if (data.sss_back_image) {
-        idBackImage = await uploadImage(supabaseClient, {
-          id: `${data.user_id}-back`,
-          image: data.sss_back_image,
-          bucket: "SSS_ID_ATTACHMENTS",
-        });
+        idBackImage = (
+          await uploadImage(supabaseClient, {
+            image: data.sss_back_image,
+            bucket: "SSS_ID_ATTACHMENTS",
+            fileType: "sb",
+            userId: user.id,
+            sssId: data.sss_number,
+          })
+        ).publicUrl;
       }
 
       await createUserWithSSSID(supabaseClient, {

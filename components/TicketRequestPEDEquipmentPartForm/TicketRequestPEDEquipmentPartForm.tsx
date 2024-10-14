@@ -52,6 +52,8 @@ const TicketRequestPEDEquipmentPartForm = ({
 
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
+      if (!user) return;
+
       setIsLoading(true);
 
       const pedPartExists = await pedPartCheck(supabaseClient, {
@@ -94,6 +96,7 @@ const TicketRequestPEDEquipmentPartForm = ({
         category,
         teamMemberId: memberId,
         ticketFormValues: data,
+        userId: user.user_id,
       });
 
       notifications.show({
@@ -157,10 +160,12 @@ const TicketRequestPEDEquipmentPartForm = ({
       }
 
       if (!category && !ticketId && user) return;
+      if (!user) return;
 
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,
+        userId: user.user_id,
       });
       if (!edited) return;
       if (onOverrideResponseComment) await onOverrideResponseComment(data);
