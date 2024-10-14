@@ -1,5 +1,5 @@
 // Imports
-import { getAssetListFilterOptions } from "@/backend/api/get";
+import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
 import CheckinListPage from "@/components/AssetInventory/CheckinListPage/CheckinListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
@@ -17,10 +17,12 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
+      const fields = await getColumnList(supabaseClient);
 
       return {
         props: {
           ...data,
+          fields,
           userId: user.id,
         },
       };
@@ -41,6 +43,10 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  fields: {
+    value: string;
+    label: string;
+  }[];
 };
 
 const Page = ({
@@ -49,6 +55,7 @@ const Page = ({
   siteList,
   departmentList,
   categoryList,
+  fields,
 }: Props) => {
   return (
     <>
@@ -57,6 +64,7 @@ const Page = ({
         url="/teamName/inventory/check-in"
       />
       <CheckinListPage
+        tableColumnList={fields}
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}

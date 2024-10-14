@@ -107,8 +107,27 @@ const AssetListPage = ({
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
-    key: "request-list-table-column-filter",
-    defaultValue: [],
+    key: "inventory-list-table-column-filter",
+    defaultValue: tableColumnList
+      .filter(
+        (column) =>
+          ![
+            "Asset Tag Id",
+            "Asset Name",
+            "Status",
+            "Date Created",
+            "Item Code",
+            "Brand",
+            "Model",
+            "Serial No.",
+            "Site",
+            "Location",
+            "Department",
+            "Old Asset Number",
+            "IT Equipment Type",
+          ].includes(column.label)
+      )
+      .map((column) => column.value),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -215,6 +234,7 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              inventoryList={inventoryList}
               selectedRow={selectedRows}
               userId={userId}
               eventOptions={optionsEvent}

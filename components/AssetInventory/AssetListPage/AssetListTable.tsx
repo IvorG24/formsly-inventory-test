@@ -151,22 +151,18 @@ const AssetListTable = ({
           title: "",
           width: 40,
           render: (record) => {
-            const { assignee_team_member_id, inventory_request_id } =
-              record as {
-                inventory_request_id: string;
-                assignee_team_member_id: string;
-              };
+            const { inventory_request_id } = record as {
+              inventory_request_id: string;
+              assignee_team_member_id: string;
+            };
 
             const isChecked = selectedRow.includes(
               String(inventory_request_id)
             );
-            const isDisabled =
-              assignee_team_member_id === teamMember?.team_member_id;
 
             return (
               <Checkbox
                 checked={isChecked}
-                disabled={isDisabled}
                 onChange={(e) =>
                   handleRowSelect(
                     String(inventory_request_id),

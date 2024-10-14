@@ -14,7 +14,6 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ user, userActiveTeam, supabaseClient }) => {
     try {
-      // Await the result of getColumnList to ensure it's not undefined
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });

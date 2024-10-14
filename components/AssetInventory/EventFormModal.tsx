@@ -32,7 +32,7 @@ type Props = {
   userId: string;
   selectedRow: string[];
   teamMemberList: TeamMemberWithUserType[];
-  handleFilterForms: () => void;
+  handleFilterForms?: () => void;
 };
 
 const EventFormModal = ({

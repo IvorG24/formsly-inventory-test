@@ -1,5 +1,6 @@
 import {
   CategoryTableRow,
+  InventoryListType,
   OptionType,
   SiteTableRow,
   TeamMemberWithUserType,
@@ -28,6 +29,7 @@ type RequestListFilterProps = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  inventoryList: InventoryListType[];
   userId: string;
   handleFilterForms: () => void;
   localFilter: FilterSelectedValuesType;
@@ -53,6 +55,7 @@ export type FilterSelectedValuesType = {
 
 const AssetListFilter = ({
   eventOptions,
+  inventoryList,
   teamMemberList,
   departmentList,
   siteList,
@@ -225,10 +228,33 @@ const AssetListFilter = ({
           </Flex>
         </Group>
         <Group>
-          {selectedRow.length > 0 && (
+          {selectedRow.length > 0 && inventoryList && (
             <Select
               placeholder="More Actions"
-              data={eventOptions}
+              data={eventOptions.filter((option) => {
+                const selectedItems = inventoryList.filter((row) =>
+                  selectedRow.includes(row.inventory_request_id)
+                );
+
+                if (selectedItems.length === 0) return true;
+
+                const hasCheckedOutItem = selectedItems.some(
+                  (item) => item.inventory_request_status === "CHECKED OUT"
+                );
+                const hasAvailableItem = selectedItems.some(
+                  (item) => item.inventory_request_status === "AVAILABLE"
+                );
+
+                if (hasCheckedOutItem && option.label === "Check Out") {
+                  return false;
+                }
+
+                if (hasAvailableItem && option.label === "Check In") {
+                  return false;
+                }
+
+                return true;
+              })}
               onChange={(value) => {
                 handleSelectChange(value);
               }}

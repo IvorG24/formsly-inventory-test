@@ -601,6 +601,9 @@ export type LocationTableRow =
 export type CategoryTableRow =
   Database["inventory_schema"]["Tables"]["category_table"]["Row"];
 
+export type InventoryEventRow =
+  Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
+
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 

@@ -4,6 +4,7 @@ import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetail
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   InventoryFormResponseType,
@@ -23,6 +24,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "./InventoryFormSection";
@@ -47,6 +49,7 @@ type Props = {
 const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
   const requestorProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +79,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       setIsLoading(true);
 
-      await createAssetRequest(supabaseClient, {
+      const dataId = await createAssetRequest(supabaseClient, {
         InventoryFormValues: data,
         formId: form.form_id,
         teamId: activeTeam.team_id,
@@ -89,6 +92,9 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         message: "Asset created.",
         color: "green",
       });
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${dataId}`
+      );
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -220,7 +226,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: item.item_id,
               option_order: index,
-              option_value: item.item_general_name,
+              option_value: item.value,
             };
           });
           itemOptionList.push(...itemOptions);
@@ -236,7 +242,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                 ...form.form_section[0].section_field[0],
                 field_option: itemOptionList,
               },
-              ...form.form_section[0].section_field.slice(1, 6),
+              ...form.form_section[0].section_field.slice(1, 7),
             ],
           },
           form.form_section[1],

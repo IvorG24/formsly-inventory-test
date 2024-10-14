@@ -2548,15 +2548,12 @@ export const getItemOption = async (
     teamId: string;
   }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("item_schema")
-    .from("item_table")
-    .select("*")
-    .eq("item_team_id", params.teamId);
-
+  const { data, error } = await supabaseClient.rpc("get_item_option", {
+    input_data: params,
+  });
   if (error) throw error;
 
-  return data;
+  return data as { item_id: string; value: string }[];
 };
 
 export const createDataDrawer = async (
@@ -2574,4 +2571,29 @@ export const createDataDrawer = async (
   if (error) throw error;
 
   return data as InventoryResponseValues;
+};
+
+export const createAssetLinking = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    linkedAssets: string[];
+    assetId: string;
+  }
+) => {
+  const { linkedAssets, assetId } = params;
+
+  const createLink = linkedAssets.map((linkedAssetId) => {
+    return supabaseClient
+      .schema("inventory_request_schema")
+      .from("inventory_relationship_table")
+      .insert({
+        parent_asset_id: assetId,
+        child_asset_id: linkedAssetId,
+      })
+      .select();
+  });
+
+  const results = await Promise.all(createLink);
+
+  return results;
 };

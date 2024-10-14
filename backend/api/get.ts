@@ -59,9 +59,11 @@ import {
     HRProjectType,
     InitialFormType,
     InterviewOnlineMeetingTableRow,
+    InventoryEventRow,
     InventoryFormType,
     InventoryHistory,
     InventoryListType,
+    InventoryRequestRow,
     ItemCategoryType,
     ItemCategoryWithSigner,
     ItemDescriptionFieldWithUoM,
@@ -7776,6 +7778,7 @@ export const getAssetDetails = async (
   return data as {
     asset_details: InventoryListType;
     asset_history: InventoryHistory[];
+    asset_event: InventoryEventRow[];
   };
 };
 
@@ -7793,4 +7796,35 @@ export const checkUniqueValue = async (
   if (error) throw error;
 
   return data as unknown as boolean;
+};
+
+export const getChildAssetData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    assetId?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_child_asset", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as { inventory_request_id: string; inventory_request_name:string }[];
+};
+
+export const getChildAssetOptionLinking = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    assetId:string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_child_asset_option", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as InventoryRequestRow[];
 };

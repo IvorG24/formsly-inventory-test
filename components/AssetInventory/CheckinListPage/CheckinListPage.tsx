@@ -29,28 +29,12 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  tableColumnList: {
+    label: string;
+    value: string;
+  }[];
   userId: string;
 };
-
-const tableColumnList = [
-  { label: "Asset Tag Id", value: "inventory_request_id" },
-  { label: "Asset Name", value: "inventory_request_name" },
-  { label: "Status", value: "inventory_request_status" },
-  { label: "Date Created", value: "inventory_request_created" },
-  { label: "Date Submitted", value: "inventory_request_date_updated" },
-  { label: "Item Code", value: "inventory_request_item_code" },
-  { label: "Brand", value: "inventory_request_brand" },
-  { label: "Model", value: "inventory_request_model" },
-  { label: "Serial No.", value: "inventory_request_serial_number" },
-  { label: "Site", value: "inventory_request_site" },
-  { label: "Location", value: "inventory_request_location" },
-  { label: "Department", value: "inventory_request_department" },
-  { label: "Purchase Order", value: "inventory_request_purchase_order" },
-  { label: "Purchase Date", value: "inventory_request_purchase_date" },
-  { label: "Purchase From", value: "inventory_request_purchase_from" },
-  { label: "Cost", value: "inventory_request_cost" },
-  { label: "SI No.", value: "inventory_request_si_number" },
-];
 
 type FilterSelectedValuesType = {
   search?: string;
@@ -69,6 +53,7 @@ const AssetListPage = ({
   userId,
   siteList,
   departmentList,
+  tableColumnList,
   categoryList,
 }: Props) => {
   const activeTeam = useActiveTeam();
@@ -122,8 +107,25 @@ const AssetListPage = ({
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
-    key: "request-list-table-column-filter",
-    defaultValue: [],
+    key: "inventory-list-checkin--table-column-filter",
+    defaultValue: tableColumnList
+      .filter(
+        (column) =>
+          ![
+            "Asset Tag Id",
+            "Asset Name",
+            "Status",
+            "Date Created",
+            "Item Code",
+            "Brand",
+            "Model",
+            "Serial No.",
+            "Site",
+            "Location",
+            "Department",
+          ].includes(column.label)
+      )
+      .map((column) => column.value),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -229,6 +231,7 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              inventoryList={inventoryList}
               type={"check in"}
               selectedRow={selectedRows}
               userId={userId}
