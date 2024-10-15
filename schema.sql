@@ -19911,7 +19911,7 @@ AS $$
         WHERE request_formsly_id = '${applicationInformationFormslyId}'
       `);
       if(!sssData.length) throw new Error();
-      sssIDNumber = JSON.parse(sssData[0].request_response);
+      sssIDNumber = JSON.parse(sssData[0].request_response).replace(/\D/g, "");
     } else if (userId) {
       const userData = plv8.execute(
         `

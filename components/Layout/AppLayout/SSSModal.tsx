@@ -64,7 +64,7 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sf",
             userId,
-            sssId: data.sss_number,
+            sssId: data.sss_number.replace(/\D/g, ""),
           })
         ).publicUrl;
       }
@@ -76,7 +76,7 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
             bucket: "SSS_ID_ATTACHMENTS",
             fileType: "sb",
             userId,
-            sssId: data.sss_number,
+            sssId: data.sss_number.replace(/\D/g, ""),
           })
         ).publicUrl;
       }

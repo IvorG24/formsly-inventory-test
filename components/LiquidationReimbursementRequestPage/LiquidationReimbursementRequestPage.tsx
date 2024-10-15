@@ -151,8 +151,10 @@ const LiquidationReimbursementRequestPage = ({
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
+  const requestProjectName = request.request_project.team_project_name;
   const isBOQNotRequired =
-    request.request_project.team_project_name.includes("CENTRAL OFFICE") ||
+    requestProjectName.includes("CENTRAL OFFICE") ||
+    requestProjectName.includes("YARD") ||
     selectedDepartment === "Plants and Equipment";
 
   const [canCreateBOQ, setCanCreateBOQ] = useState(false);
@@ -367,6 +369,24 @@ const LiquidationReimbursementRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
+  const getTotalInvoiceAmount = () => {
+    const payeeSectionList = formSection.filter(
+      (section) => section.section_name === "Payee"
+    );
+    let total = 0;
+
+    payeeSectionList.forEach((section) => {
+      const invoiceAmountField = section.section_field.find(
+        (field) => field.field_name === "Invoice Amount"
+      );
+      if (invoiceAmountField?.field_response) {
+        total += Number(invoiceAmountField.field_response.request_response);
+      }
+    });
+
+    return total;
+  };
+
   const onCreateJiraTicket = async () => {
     try {
       if (!isBOQNotRequired) {
@@ -401,6 +421,7 @@ const LiquidationReimbursementRequestPage = ({
       if (!fields) {
         throw new Error("Jira form is not defined.");
       }
+      const departmentList = fields["469"].choices;
       const typeList = fields["442"].choices;
       const workingAdvanceList = fields["445"].choices;
 
@@ -438,16 +459,21 @@ const LiquidationReimbursementRequestPage = ({
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
+      const departmentId = departmentList.find(
+        (departmentItem: { id: string; name: string }) =>
+          departmentItem.name.toLowerCase() === selectedDepartment.toLowerCase()
+      );
 
-      if (!typeOfRequestId) {
+      if (!typeOfRequestId || !departmentId) {
         notifications.show({
-          message: "Jira type of request is undefined.",
+          message: "Department or type of request is undefined.",
           color: "red",
         });
         return { success: false, data: null };
       }
 
       const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
+      const amount = getTotalInvoiceAmount();
 
       const jiraTicketPayload = formatJiraLRFRequisitionPayload({
         requestId: request.request_formsly_id,
@@ -455,12 +481,13 @@ const LiquidationReimbursementRequestPage = ({
         requestor: requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: selectedDepartment,
+        department: departmentId.id,
         purpose,
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,
         ticketId,
+        amount,
       });
 
       const jiraTicket = await createJiraTicket({

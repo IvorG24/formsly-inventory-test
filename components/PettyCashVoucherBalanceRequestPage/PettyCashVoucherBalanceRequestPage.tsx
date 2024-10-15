@@ -348,9 +348,11 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         );
       }
 
+      const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
       const jiraTicketPayload = formatJiraWAVPayload({
         requestId: wavRequest.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${wavRequest.request_formsly_id}`,
+        requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
         amount,

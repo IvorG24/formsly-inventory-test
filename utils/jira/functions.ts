@@ -404,6 +404,7 @@ export const formatJiraLRFRequisitionPayload = ({
   workingAdvances,
   ticketId,
   requestor,
+  amount,
 }: JiraLRFTicketPayloadProps) => {
   // if department = plants and equipment, use PED jira form
   const isPEDDepartment = department === "Plants and Equipment";
@@ -433,6 +434,9 @@ export const formatJiraLRFRequisitionPayload = ({
         },
         "472": {
           text: requestUrl, // Formsly URL
+        },
+        "477": {
+          text: `${amount}`,
         },
       },
     },
@@ -531,6 +535,7 @@ export const formatJiraPTRFPayload = ({
 export const formatJiraWAVPayload = ({
   requestId,
   requestUrl,
+  requestor,
   jiraProjectSiteId,
   amount,
   isForOfficialBusiness,
@@ -559,6 +564,9 @@ export const formatJiraWAVPayload = ({
         },
         "21": {
           text: requestUrl,
+        },
+        "37": {
+          text: requestor,
         },
       },
     },

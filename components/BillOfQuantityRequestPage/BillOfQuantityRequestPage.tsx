@@ -290,6 +290,24 @@ const BillOfQuantityRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
+  const getTotalInvoiceAmount = () => {
+    const payeeSectionList = formSection.filter(
+      (section) => section.section_name === "Payee"
+    );
+    let total = 0;
+
+    payeeSectionList.forEach((section) => {
+      const invoiceAmountField = section.section_field.find(
+        (field) => field.field_name === "Invoice Amount"
+      );
+      if (invoiceAmountField?.field_response) {
+        total += Number(invoiceAmountField.field_response.request_response);
+      }
+    });
+
+    return total;
+  };
+
   const onCreateJiraTicket = async () => {
     try {
       if (!user) throw new Error("User is not defined.");
@@ -389,10 +407,13 @@ const BillOfQuantityRequestPage = ({
         return { success: false, data: null };
       }
 
+      const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
+      const amount = getTotalInvoiceAmount();
+
       const jiraTicketPayload = formatJiraLRFRequisitionPayload({
         requestId: lrfRequest.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${lrfRequest.request_formsly_id}`,
-        requestor: `${user.user_first_name} ${user.user_last_name}`,
+        requestor: requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
         department: departmentId.id,
@@ -401,6 +422,7 @@ const BillOfQuantityRequestPage = ({
         requestFormType: "BOQ",
         workingAdvances,
         ticketId,
+        amount,
       });
 
       const jiraTicket = await createJiraTicket({
