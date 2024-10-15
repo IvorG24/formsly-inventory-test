@@ -102,6 +102,7 @@ import {
   SiteTableRow,
   SSOTOnLoad,
   SubCategoryData,
+  TeamGroupTableRow,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
@@ -7590,6 +7591,40 @@ export const getDepartmentList = async (
   };
 };
 
+export const getGroupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }
+) => {
+  const { search, page, limit } = params;
+  const start = page && limit ? (page - 1) * limit : undefined;
+  const end = start !== undefined && limit ? start + limit - 1 : undefined;
+
+  let query = supabaseClient
+    .schema("team_schema")
+    .from("team_group_table")
+    .select("*", { count: "exact" })
+    .eq("team_group_is_disabled", false);
+
+  if (start !== undefined && end !== undefined) {
+    query = query.range(start, end);
+  }
+  if (search) {
+    query = query.ilike("team_group_name", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data: data as TeamGroupTableRow[],
+    totalCount: count ?? 0,
+  };
+};
 export const getSiteList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

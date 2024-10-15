@@ -121,12 +121,14 @@ const AssetListTable = ({
         ];
 
         if (fieldsWithPesoSign.includes(column.value)) {
-          return <Flex>{value ? `₱ ${value}` : ""}</Flex>;
+          const formattedValue = value
+            ? `₱ ${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : "";
+          return <Flex>{formattedValue}</Flex>;
         } else if (fieldWithDate.includes(column.value)) {
           return <Text>{value ? formatDate(new Date(value)) : ""}</Text>;
         }
-
-        return <Text>{value}</Text>;
+        return <Text>{value !== null ? String(value) : ""}</Text>;
       },
     }));
 
@@ -227,58 +229,7 @@ const AssetListTable = ({
             return <Text>{String(inventory_request_name)}</Text>;
           },
         },
-        {
-          accessor: "request_creator_user_id",
-          title: "Created By",
-          sortable: true,
-          hidden: checkIfColumnIsHidden("request_creator_user_id"),
-          render: (record) => {
-            const {
-              request_creator_user_id,
-              request_creator_first_name,
-              request_creator_last_name,
-              request_creator_team_member_id,
-            } = record as {
-              request_creator_user_id: string;
-              request_creator_first_name: string;
-              request_creator_last_name: string;
-              request_creator_team_member_id: string;
-            };
 
-            return (
-              <Flex px={0} gap={8} align="center">
-                <Avatar
-                  color={
-                    request_creator_user_id
-                      ? getAvatarColor(
-                          Number(`${request_creator_user_id.charCodeAt(0)}`)
-                        )
-                      : undefined
-                  }
-                  className={classes.requestor}
-                  onClick={() =>
-                    request_creator_team_member_id
-                      ? window.open(`/member/${request_creator_team_member_id}`)
-                      : null
-                  }
-                >
-                  {request_creator_user_id
-                    ? `${request_creator_first_name[0] + request_creator_last_name[0]}`
-                    : ""}
-                </Avatar>
-                {request_creator_user_id && (
-                  <Anchor
-                    href={`/member/${request_creator_team_member_id}`}
-                    target="_blank"
-                  >
-                    <Text>{`${request_creator_first_name} ${request_creator_last_name}`}</Text>
-                  </Anchor>
-                )}
-                {!request_creator_user_id && <Text>Public User</Text>}
-              </Flex>
-            );
-          },
-        },
         {
           accessor: "assignee_first_name",
           title: "Assigned To",
@@ -341,6 +292,58 @@ const AssetListTable = ({
           },
         },
         ...dynamicColumns,
+        {
+          accessor: "request_creator_user_id",
+          title: "Created By",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("request_creator_user_id"),
+          render: (record) => {
+            const {
+              request_creator_user_id,
+              request_creator_first_name,
+              request_creator_last_name,
+              request_creator_team_member_id,
+            } = record as {
+              request_creator_user_id: string;
+              request_creator_first_name: string;
+              request_creator_last_name: string;
+              request_creator_team_member_id: string;
+            };
+
+            return (
+              <Flex px={0} gap={8} align="center">
+                <Avatar
+                  color={
+                    request_creator_user_id
+                      ? getAvatarColor(
+                          Number(`${request_creator_user_id.charCodeAt(0)}`)
+                        )
+                      : undefined
+                  }
+                  className={classes.requestor}
+                  onClick={() =>
+                    request_creator_team_member_id
+                      ? window.open(`/member/${request_creator_team_member_id}`)
+                      : null
+                  }
+                >
+                  {request_creator_user_id
+                    ? `${request_creator_first_name[0] + request_creator_last_name[0]}`
+                    : ""}
+                </Avatar>
+                {request_creator_user_id && (
+                  <Anchor
+                    href={`/member/${request_creator_team_member_id}`}
+                    target="_blank"
+                  >
+                    <Text>{`${request_creator_first_name} ${request_creator_last_name}`}</Text>
+                  </Anchor>
+                )}
+                {!request_creator_user_id && <Text>Public User</Text>}
+              </Flex>
+            );
+          },
+        },
         {
           accessor: "view",
           title: "View",

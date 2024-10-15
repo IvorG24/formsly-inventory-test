@@ -29,9 +29,6 @@ const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
         inner: {
           justifyContent: "flex-start",
         },
-        icon: {
-          marginRight: "6px !important",
-        },
       }}
     >
       {isCollapsed ? null : label}

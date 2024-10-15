@@ -65,18 +65,6 @@ const Navbar = () => {
       icon: IconBriefcaseOff,
       label: "Advanced",
       subLinks: [
-        // {
-        //   id: "customers",
-        //   label: "Customer",
-        //   icon: IconPuzzle,
-        //   href: `/${formattedTeamName}/inventory/customer`,
-        // },
-        // {
-        //   id: "users",
-        //   label: "Users",
-        //   icon: IconUserPlus,
-        //   href: `/${formattedTeamName}/inventory/users`,
-        // },
         {
           id: "security-groups",
           label: "Security Group",
@@ -90,12 +78,6 @@ const Navbar = () => {
       icon: IconSettings,
       label: "Setup",
       subLinks: [
-        // {
-        //   id: "team-info",
-        //   label: "Team info",
-        //   icon: IconBriefcase,
-        //   href: `/${formattedTeamName}/inventory/setup/team-info`,
-        // },
         {
           id: "sites",
           label: "Sites",
@@ -131,11 +113,6 @@ const Navbar = () => {
           label: "Databases",
           icon: IconDatabase,
         },
-        // {
-        //   id: "manage-forms",
-        //   label: "Manage Forms",
-        //   icon: IconEditCircle,
-        // },
       ],
     },
   ];
@@ -148,8 +125,8 @@ const Navbar = () => {
     if (link.subLinks) {
       return (
         <Accordion.Item
-          style={{ width: "100%" }}
           sx={(theme) => ({
+            width: "100%",
             "&:hover": {
               backgroundColor:
                 theme.colorScheme === "dark"
@@ -164,9 +141,8 @@ const Navbar = () => {
           value={link.id}
         >
           <Accordion.Control
-            icon={<link.icon fontWeight={100} size={20} />}
+            icon={<link.icon size={20} />}
             style={{
-              fontSize: ".9rem",
               justifyContent: isCollapsed ? "flex-end" : "flex-start",
             }}
             styles={(theme) => ({
@@ -199,7 +175,6 @@ const Navbar = () => {
                   label={subLink.label}
                   onClick={() => handleNavlinkClick(subLink.href || "")}
                   icon={<subLink.icon size={20} />}
-                  // Removed 'link' prop as it does not exist on NavLink
                   styles={(theme) => ({
                     root: {
                       color:
@@ -221,6 +196,7 @@ const Navbar = () => {
         </Accordion.Item>
       );
     }
+    return null;
   });
 
   return (
