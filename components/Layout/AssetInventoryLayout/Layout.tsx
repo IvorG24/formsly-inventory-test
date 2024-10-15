@@ -1,15 +1,14 @@
 import {
-  getAllNotification,
   getAllTeamOfUser,
+  getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
-import { useNotificationActions } from "@/stores/useNotificationStore";
 
+import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
-import { TeamTableRow } from "@/utils/types";
+import { TeamMemberType, TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -26,16 +25,35 @@ type LayoutProps = {
 const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
   const currentUser = useUser();
+
   const userId = currentUser?.id;
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const { setTeamMemberStore } = useTeamMemberListActions();
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
     useUserActions();
-  const { setNotificationList, setUnreadNotification } =
-    useNotificationActions();
 
+  const fetchAllTeamMembers = async (teamId: string) => {
+    const allTeamMembers: TeamMemberType[] = [];
+    let offset = 0;
+    const limit = 500;
+    let moreMembers = true;
+
+    while (moreMembers) {
+      const currentBatch = await getTeamMemberList(supabaseClient, {
+        teamId: teamId,
+        offset: offset,
+        limit: limit,
+      });
+      if (currentBatch.length > 0) {
+        allTeamMembers.push(...currentBatch);
+        offset += limit;
+      }
+      moreMembers = currentBatch.length === limit;
+    }
+    return allTeamMembers;
+  };
   useEffect(() => {
     const fetchInitialData = async () => {
       if (!userId) return;
@@ -85,19 +103,10 @@ const Layout = ({ children }: LayoutProps) => {
           (user.user_first_name[0] + user.user_last_name[0]).toUpperCase()
         );
 
-        // fetch notification list
-        const { data: notificationList, count: unreadNotificationCount } =
-          await getAllNotification(supabaseClient, {
-            userId: user.user_id,
-            app: "REQUEST",
-            page: 1,
-            limit: NOTIFICATION_LIST_LIMIT,
-            teamId: activeTeamId,
-          });
-
-        // set notification
-        setNotificationList(notificationList);
-        setUnreadNotification(unreadNotificationCount || 0);
+        if (activeTeamId) {
+          const teamMemberList = await fetchAllTeamMembers(activeTeamId);
+          setTeamMemberStore(teamMemberList);
+        }
       } catch (e) {
         console.error(e);
         notifications.show({

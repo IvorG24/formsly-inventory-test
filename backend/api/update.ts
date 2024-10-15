@@ -1768,6 +1768,8 @@ export const updateEvent = async (
       const fieldName = field.field_name;
 
       const allowedFields = new Set([
+        "Check in from",
+        "Check out to",
         "Site",
         "Location",
         "Department",
@@ -1833,7 +1835,6 @@ export const updateDrawerData = async (
     type: "site" | "location" | "field" | "category";
   }
 ) => {
-  console.log(params);
 
   const { data, error } = await supabaseClient.rpc("update_drawer_data", {
     input_data: params,

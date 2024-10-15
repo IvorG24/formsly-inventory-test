@@ -77,7 +77,7 @@ const InventoryFormSection = ({
     );
   }
   return (
-    <Paper p="xl" shadow="sm">
+    <Paper p="xl">
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}

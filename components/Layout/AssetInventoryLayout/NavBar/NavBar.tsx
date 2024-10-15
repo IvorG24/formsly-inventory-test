@@ -2,23 +2,20 @@ import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
-  Box,
   Button,
   Group,
   Navbar as MantineNavbar,
+  NavLink,
   Stack,
 } from "@mantine/core";
 import {
-  IconBriefcase,
   IconBriefcaseOff,
   IconBuilding,
   IconCategory,
   IconCategory2,
   IconChevronDown,
   IconCirclePlus,
-  IconDashboard,
   IconDatabase,
-  IconEditCircle,
   IconGps,
   IconListDetails,
   IconLocation,
@@ -29,7 +26,6 @@ import {
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import Navlink from "./NavLink";
 import SelectTeam from "./SelectTeam";
 
 const Navbar = () => {
@@ -39,12 +35,6 @@ const Navbar = () => {
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navlinkData = [
-    {
-      id: "dashboard",
-      icon: IconDashboard,
-      label: "Dashboard",
-      href: `/${formattedTeamName}/inventory/dashboard`,
-    },
     {
       id: "asset",
       icon: IconListDetails,
@@ -75,18 +65,18 @@ const Navbar = () => {
       icon: IconBriefcaseOff,
       label: "Advanced",
       subLinks: [
-        {
-          id: "customers",
-          label: "Customer",
-          icon: IconPuzzle,
-          href: `/${formattedTeamName}/inventory/customer`,
-        },
-        {
-          id: "users",
-          label: "Users",
-          icon: IconUserPlus,
-          href: `/${formattedTeamName}/inventory/users`,
-        },
+        // {
+        //   id: "customers",
+        //   label: "Customer",
+        //   icon: IconPuzzle,
+        //   href: `/${formattedTeamName}/inventory/customer`,
+        // },
+        // {
+        //   id: "users",
+        //   label: "Users",
+        //   icon: IconUserPlus,
+        //   href: `/${formattedTeamName}/inventory/users`,
+        // },
         {
           id: "security-groups",
           label: "Security Group",
@@ -100,12 +90,12 @@ const Navbar = () => {
       icon: IconSettings,
       label: "Setup",
       subLinks: [
-        {
-          id: "team-info",
-          label: "Team info",
-          icon: IconBriefcase,
-          href: `/${formattedTeamName}/inventory/setup/team-info`,
-        },
+        // {
+        //   id: "team-info",
+        //   label: "Team info",
+        //   icon: IconBriefcase,
+        //   href: `/${formattedTeamName}/inventory/setup/team-info`,
+        // },
         {
           id: "sites",
           label: "Sites",
@@ -141,12 +131,11 @@ const Navbar = () => {
           label: "Databases",
           icon: IconDatabase,
         },
-
-        {
-          id: "manage-forms",
-          label: "Manage Forms",
-          icon: IconEditCircle,
-        },
+        // {
+        //   id: "manage-forms",
+        //   label: "Manage Forms",
+        //   icon: IconEditCircle,
+        // },
       ],
     },
   ];
@@ -205,12 +194,26 @@ const Navbar = () => {
           <Accordion.Panel>
             <Stack spacing={4} pl={4}>
               {link.subLinks.map((subLink) => (
-                <Navlink
+                <NavLink
                   key={subLink.id}
                   label={subLink.label}
                   onClick={() => handleNavlinkClick(subLink.href || "")}
-                  icon={<subLink.icon size={20} />} // Slightly smaller icon for sublinks
-                  link={subLink.href || ""}
+                  icon={<subLink.icon size={20} />}
+                  // Removed 'link' prop as it does not exist on NavLink
+                  styles={(theme) => ({
+                    root: {
+                      color:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.gray[0]
+                          : theme.colors.blue[6],
+                      "&:hover": {
+                        backgroundColor:
+                          theme.colorScheme === "dark"
+                            ? theme.colors.dark[5]
+                            : theme.colors.blue[1],
+                      },
+                    },
+                  })}
                 />
               ))}
             </Stack>
@@ -218,16 +221,6 @@ const Navbar = () => {
         </Accordion.Item>
       );
     }
-
-    return (
-      <Navlink
-        key={link.id}
-        label={link.label}
-        icon={<link.icon fontWeight={100} size={24} />}
-        onClick={() => handleNavlinkClick(link.href)}
-        link={link.href}
-      />
-    );
   });
 
   return (
@@ -251,8 +244,9 @@ const Navbar = () => {
             <SelectTeam isCollapsed={isCollapsed} />
           </Group>
         ) : null}
-        <Box>
+        <Group>
           <Button
+            ml={4}
             onClick={() => {
               router.push(
                 `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
@@ -263,7 +257,7 @@ const Navbar = () => {
           >
             {isCollapsed ? null : "Add Asset"}
           </Button>
-        </Box>
+        </Group>
         <Accordion
           chevron={isCollapsed ? null : <IconChevronDown size={14} />}
           value={isCollapsed ? null : undefined}

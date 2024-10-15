@@ -5,9 +5,11 @@ import {
 import { createAssetLinking } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { OptionType } from "@/utils/types";
 import {
   ActionIcon,
+  Anchor,
   Button,
   Flex,
   Group,
@@ -212,7 +214,18 @@ const AssetLinkPanel = () => {
             {
               accessor: "inventory_request_id",
               title: "Asset Tag Id",
-              render: (event) => <Text>{event.inventory_request_id}</Text>,
+              render: (event) => (
+                <Text>
+                  <Anchor
+                    href={`/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/inventory/${event.inventory_request_id}`}
+                    target="_blank"
+                  >
+                    {String(event.inventory_request_id)}
+                  </Anchor>
+                </Text>
+              ),
             },
             {
               accessor: "inventory_request_name",

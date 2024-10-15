@@ -1,6 +1,5 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
@@ -77,7 +76,6 @@ const AssetListTable = ({
   tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
-  const teamMember = useUserTeamMember();
 
   const { classes } = useStyles();
   const router = useRouter();

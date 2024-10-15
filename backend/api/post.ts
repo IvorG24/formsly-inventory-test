@@ -2663,7 +2663,96 @@ export const createAssetRequest = async (
 
   return requestId;
 };
+export const updateAssetRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    InventoryFormValues: InventoryFormValues;
+    formId: string;
+    teamMemberId?: string;
+    teamId: string;
+    formName: string;
+    teamName: string;
+    requestId: string;
+  }
+) => {
+  const { InventoryFormValues, formId, teamMemberId, requestId } = params;
 
+  const {
+    item_code,
+    asset_name,
+    brand,
+    model,
+    serial_number,
+    equipment_type,
+    old_asset_number,
+    category,
+    site,
+    location,
+    department,
+    purchase_order,
+    purchase_date,
+    purchase_form,
+    cost,
+    si_number,
+  } = extractInventoryData(InventoryFormValues);
+
+  const fieldResponse: InventoryRequestResponseInsert[] = [];
+
+  for (const section of InventoryFormValues.sections) {
+    for (const field of section.section_field) {
+      if (field.field_is_sub_category || field.field_is_custom_field) {
+        fieldResponse.push({
+          inventory_response_field_id: field.field_id,
+          inventory_response_value: field.field_response as string,
+          inventory_response_asset_request_id: requestId,
+        });
+      }
+    }
+  }
+
+  const formattedResponseValues = fieldResponse
+    .filter((response) => response.inventory_response_value !== null)
+    .map((response) => {
+      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
+    });
+
+  const responseValues =
+    formattedResponseValues.length > 0 ? formattedResponseValues.join(",") : [];
+
+  const requestData = {
+    requestId,
+    formId,
+    teamMemberId,
+    asset_name,
+    item_code,
+    brand,
+    model,
+    serial_number,
+    old_asset_number,
+    equipment_type,
+    category,
+    site,
+    location,
+    department,
+    purchase_order,
+    purchase_date,
+    purchase_form,
+    cost,
+    si_number,
+    responseValues,
+  };
+
+    const { error } = await supabaseClient
+      .rpc("update_asset", {
+        input_data: requestData,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return requestId;
+};
 export const getItemOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

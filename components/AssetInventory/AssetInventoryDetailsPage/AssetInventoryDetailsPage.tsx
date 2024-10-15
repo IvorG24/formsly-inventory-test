@@ -1,6 +1,9 @@
-import { getEventDetails } from "@/backend/api/get";
+import { getAssetDetails, getEventDetails } from "@/backend/api/get";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   InventoryEventRow,
   InventoryHistory,
@@ -18,12 +21,14 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconDotsVertical } from "@tabler/icons-react";
+import { IconDotsVertical, IconEdit } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import EventFormModal from "../EventFormModal";
 import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
 import AssetLinkPanel from "./AssetLinkPanel";
-import EventFormModal from "./EventFormModal"; // Import EventFormModal
 import EventPanel from "./EventPanel";
 import HistoryPanel from "./HistoryPanel";
 
@@ -34,7 +39,27 @@ type Props = {
 };
 
 const excludedKeys = [
-  // Excluded keys list...
+  "inventory_request_name",
+  "request_creator_first_name",
+  "request_creator_last_name",
+  "site_name",
+  "inventory_assignee_team_member_id",
+  "request_creator_team_member_id",
+  "request_creator_user_id",
+  "assignee_user_id",
+  "inventory_assignee_asset_request_id",
+  "request_creator_avatar",
+  "assignee_team_member_id",
+  "assignee_first_name",
+  "assignee_last_name",
+  "inventory_request_purchase_date",
+  "inventory_request_purchase_from",
+  "inventory_request_purchase_order",
+  "inventory_request_created_by",
+  "inventory_request_created",
+  "inventory_request_cost",
+  "inventory_assignee_site_id",
+  "inventory_request_form_id",
 ];
 
 const formatLabel = (key: string) => {
@@ -48,15 +73,20 @@ const formatLabel = (key: string) => {
 };
 
 const AssetInventoryDetailsPage = ({
-  asset_details,
+  asset_details: initialDetails,
   asset_history,
   asset_event,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
-
+  const user = useUserProfile();
+  const router = useRouter();
+  const assetId = router.query.assetId as string;
+  const teamMemberList = useTeamMemberList();
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null); // Track selected event
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [assetDetails, setAssetDetails] =
+    useState<InventoryListType[]>(initialDetails);
 
   useEffect(() => {
     const getEventOptions = async () => {
@@ -65,45 +95,81 @@ const AssetInventoryDetailsPage = ({
         supabaseClient,
         activeTeam.team_id
       );
+      const assetStatus = assetDetails[0]?.inventory_request_status;
 
-      const initialEventOptions: OptionType[] = eventOptions.map((event) => ({
-        label: event.event_name,
-        value: event.event_id,
-      }));
+      const filteredEventOptions = eventOptions.filter((event) => {
+        if (assetStatus === "CHECKED OUT" && event.event_name === "Check Out") {
+          return false;
+        }
+        if (assetStatus === "AVAILABLE" && event.event_name === "Check In") {
+          return false;
+        }
+        return true;
+      });
+      const initialEventOptions: OptionType[] = filteredEventOptions.map(
+        (event) => ({
+          label: event.event_name,
+          value: event.event_id,
+        })
+      );
 
       setOptionsEvent(initialEventOptions);
     };
 
     getEventOptions();
-  }, [activeTeam.team_id]);
+  }, [activeTeam.team_id, assetDetails]);
 
   const handleMenuClick = (eventId: string) => {
-    setSelectedEventId(eventId); // Set selected event and open the modal
+    setSelectedEventId(eventId);
   };
 
-  const handleModalClose = () => {
-    setSelectedEventId(null); // Reset selected event when modal is closed
+  const fetchAssetDetails = async () => {
+    try {
+      const assetData = await getAssetDetails(supabaseClient, {
+        asset_request_id: router.query.assetId as string,
+      });
+      setAssetDetails(assetData.asset_details);
+      setSelectedEventId(null);
+    } catch {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   return (
     <Container size="lg">
-      {/* Display EventFormModal when an event is selected */}
       {selectedEventId && (
         <EventFormModal
-          eventId={selectedEventId} // Pass selected event ID
-          onClose={handleModalClose} // Close modal handler
+          setSelectedEventId={setSelectedEventId}
+          eventId={selectedEventId}
+          teamMemberList={teamMemberList}
+          selectedRow={[assetId]}
+          userId={user?.user_id || ""}
+          handleFilterForms={fetchAssetDetails}
         />
       )}
 
       <Paper shadow="lg" p="lg">
-        {asset_details.map((detail, idx) => (
+        {assetDetails.map((detail, idx) => (
           <div key={idx}>
             <Group position="apart" mb="md">
               <Title order={3}>
                 {detail.inventory_request_name || "Unknown Asset Name"}
               </Title>
               <Group>
-                <Menu shadow="md" width={200}>
+                <Button
+                  onClick={() => {
+                    router.push(
+                      `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_id}/edit`
+                    );
+                  }}
+                  rightIcon={<IconEdit size={16} />}
+                >
+                  Edit Asset
+                </Button>
+                <Menu>
                   <Menu.Target>
                     <Button rightIcon={<IconDotsVertical size={16} />}>
                       More Actions
@@ -115,7 +181,7 @@ const AssetInventoryDetailsPage = ({
                     {optionsEvent.map((event) => (
                       <Menu.Item
                         key={event.value}
-                        onClick={() => handleMenuClick(event.value)} // Handle menu item click
+                        onClick={() => handleMenuClick(event.value)}
                       >
                         {event.label}
                       </Menu.Item>

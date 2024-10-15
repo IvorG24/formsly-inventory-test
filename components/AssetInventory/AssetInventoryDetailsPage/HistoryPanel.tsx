@@ -43,17 +43,32 @@ const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
             ),
           },
           {
-            accessor: "inventory_history_changed_from", // Updated accessor
-            title: "Changed From",
+            accessor: "inventory_history_event",
+            title: "Event",
             render: (record) => (
-              <Text>{String(record.inventory_history_changed_from)}</Text>
+              <Text>{String(record.inventory_history_event)}</Text>
             ),
           },
           {
-            accessor: "inventory_history_changed_to", // Updated accessor
+            accessor: "inventory_history_changed_from", // Updated accessor
+            title: "Changed From",
+            render: (record) => (
+              <Text>
+                {record.inventory_history_changed_from
+                  ? String(record.inventory_history_changed_from)
+                  : ""}
+              </Text>
+            ),
+          },
+          {
+            accessor: "inventory_history_changed_to",
             title: "Changed To",
             render: (record) => (
-              <Text>{String(record.inventory_history_changed_to)}</Text>
+              <Text>
+                {record.inventory_history_changed_to
+                  ? String(record.inventory_history_changed_to)
+                  : ""}
+              </Text>
             ),
           },
           {

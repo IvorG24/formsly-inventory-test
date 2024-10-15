@@ -12,7 +12,7 @@ import {
 import { Box, Button, Group, Modal, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "./CreateAssetPage/InventoryFormSection";
 
@@ -31,8 +31,9 @@ type Props = {
   eventId: string;
   userId: string;
   selectedRow: string[];
+  setSelectedEventId?: Dispatch<SetStateAction<string | null>>;
   teamMemberList: TeamMemberWithUserType[];
-  handleFilterForms?: () => void;
+  handleFilterForms: () => void;
 };
 
 const EventFormModal = ({
@@ -41,6 +42,7 @@ const EventFormModal = ({
   selectedRow,
   teamMemberList,
   handleFilterForms,
+  setSelectedEventId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
@@ -73,8 +75,6 @@ const EventFormModal = ({
         color: "green",
       });
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -220,7 +220,12 @@ const EventFormModal = ({
     <>
       <Modal
         opened={formisEmpty ? opened : false}
-        onClose={() => setOpened(false)}
+        onClose={() => {
+          setOpened(false);
+          if (setSelectedEventId) {
+            setSelectedEventId(null);
+          }
+        }}
         size="xl"
       >
         <Title order={3}>Event Form</Title>

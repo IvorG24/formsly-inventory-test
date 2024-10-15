@@ -1696,8 +1696,8 @@ export type Database = {
         Row: {
           inventory_history_action_by: string
           inventory_history_assigneed_to: string | null
-          inventory_history_changed_from: string
-          inventory_history_changed_to: string
+          inventory_history_changed_from: string | null
+          inventory_history_changed_to: string | null
           inventory_history_date_created: string | null
           inventory_history_event: string
           inventory_history_id: string
@@ -1707,8 +1707,8 @@ export type Database = {
         Insert: {
           inventory_history_action_by: string
           inventory_history_assigneed_to?: string | null
-          inventory_history_changed_from: string
-          inventory_history_changed_to: string
+          inventory_history_changed_from?: string | null
+          inventory_history_changed_to?: string | null
           inventory_history_date_created?: string | null
           inventory_history_event: string
           inventory_history_id?: string
@@ -1718,8 +1718,8 @@ export type Database = {
         Update: {
           inventory_history_action_by?: string
           inventory_history_assigneed_to?: string | null
-          inventory_history_changed_from?: string
-          inventory_history_changed_to?: string
+          inventory_history_changed_from?: string | null
+          inventory_history_changed_to?: string | null
           inventory_history_date_created?: string | null
           inventory_history_event?: string
           inventory_history_id?: string
@@ -4792,6 +4792,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_storage_upload_details: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_sub_field_options: {
         Args: {
           input_data: Json
@@ -4799,12 +4805,6 @@ export type Database = {
         Returns: Json
       }
       get_sub_or_custom_field: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_storage_upload_details: {
         Args: {
           input_data: Json
         }
@@ -4994,6 +4994,12 @@ export type Database = {
         }
         Returns: Json
       }
+      inventory_request_page_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       leave_team: {
         Args: {
           team_id: string
@@ -5049,6 +5055,12 @@ export type Database = {
           member_id: string
         }
         Returns: undefined
+      }
+      update_asset: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
       }
       update_background_check_status: {
         Args: {
