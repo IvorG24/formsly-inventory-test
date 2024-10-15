@@ -19,7 +19,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import AssetListFilter from "../AssetListPage/AssetListFilter";
 import AssetListTable from "../AssetListPage/AssetListTable";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
@@ -36,16 +36,16 @@ type Props = {
   userId: string;
 };
 
-type FilterSelectedValuesType = {
+export type FilterSelectedValuesType = {
   search?: string;
-  sites?: string;
+  sites?: string[];
   locations?: string;
-  category?: string;
-  department?: string;
+  category?: string[];
+  department?: string[];
   status?: string;
-  isAscendingSort?: boolean;
   assignedToPerson?: string[];
   assignedToSite?: string[];
+  isAscendingSort?: boolean;
 };
 
 const CheckoutListPage = ({
@@ -71,10 +71,10 @@ const CheckoutListPage = ({
       key: "request-list-filter",
       defaultValue: {
         search: "",
-        sites: "",
+        sites: [],
         locations: "",
-        department: "",
-        category: "",
+        department: [],
+        category: [],
         status: "",
         assignedToPerson: [],
         assignedToSite: [],
@@ -96,9 +96,7 @@ const CheckoutListPage = ({
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const { handleSubmit, getValues, control, setValue } = filterFormMethods;
-
-  const selectedFormFilter = useWatch({ name: "sites", control });
+  const { handleSubmit, getValues, setValue } = filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "request_date_created",
@@ -153,22 +151,25 @@ const CheckoutListPage = ({
         isAscendingSort,
       } = getValues();
 
-      const newData = await getAssetSpreadsheetView(supabaseClient, {
-        page: page,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        sort: isAscendingSort,
-        search,
-        status: "CHECKED OUT",
-        assignedToPerson,
-        assignedToSite,
-        department,
-        locations,
-        sites,
-        category,
-      });
+      const { data, totalCount } = await getAssetSpreadsheetView(
+        supabaseClient,
+        {
+          page: page,
+          limit: DEFAULT_REQUEST_LIST_LIMIT,
+          sort: isAscendingSort,
+          search,
+          status: "CHECKED OUT",
+          assignedToPerson,
+          assignedToSite,
+          department,
+          locations,
+          sites,
+          category,
+        }
+      );
 
-      setInventoryList(newData);
-      setInventoryListCount(newData.length);
+      setInventoryList(data);
+      setInventoryListCount(totalCount);
     } catch (e) {
       notifications.show({
         message: "Failed to fetch request list.",
@@ -258,7 +259,6 @@ const CheckoutListPage = ({
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}
-            selectedFormFilter={selectedFormFilter}
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}

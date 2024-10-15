@@ -6,12 +6,13 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   InventoryListType,
   OptionType,
+  SecurityGroupData,
   SiteTableRow,
-  TeamMemberWithUserType,
 } from "@/utils/types";
 import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -19,13 +20,12 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 import AssetListFilter from "./AssetListFilter";
 import AssetListTable from "./AssetListTable";
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
@@ -34,14 +34,15 @@ type Props = {
     label: string;
     value: string;
   }[];
+  securityGroupData: SecurityGroupData;
 };
 
 type FilterSelectedValuesType = {
   search?: string;
-  sites?: string;
+  sites?: string[];
   locations?: string;
-  category?: string;
-  department?: string;
+  category?: string[];
+  department?: string[];
   status?: string;
   isAscendingSort?: boolean;
   assignedToPerson?: string[];
@@ -49,13 +50,14 @@ type FilterSelectedValuesType = {
 };
 
 const AssetListPage = ({
-  teamMemberList,
   userId,
   siteList,
   departmentList,
   categoryList,
   tableColumnList,
+  securityGroupData,
 }: Props) => {
+  const teamMemberList = useTeamMemberList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -68,13 +70,13 @@ const AssetListPage = ({
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<FilterSelectedValuesType>({
-      key: "request-list-filter",
+      key: "inventory-request-list-filter",
       defaultValue: {
         search: "",
-        sites: "",
+        sites: securityGroupData.asset.filter.site || [],
         locations: "",
-        department: "",
-        category: "",
+        department: securityGroupData.asset.filter.department || [],
+        category: securityGroupData.asset.filter.categories || [],
         status: "",
         assignedToPerson: [],
         assignedToSite: [],
@@ -96,9 +98,7 @@ const AssetListPage = ({
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const { handleSubmit, getValues, control, setValue } = filterFormMethods;
-
-  const selectedFormFilter = useWatch({ name: "sites", control });
+  const { handleSubmit, getValues, setValue } = filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "request_date_created",
@@ -156,22 +156,25 @@ const AssetListPage = ({
         isAscendingSort,
       } = getValues();
 
-      const newData = await getAssetSpreadsheetView(supabaseClient, {
-        page: page,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        sort: isAscendingSort,
-        search,
-        status,
-        assignedToPerson,
-        assignedToSite,
-        department,
-        locations,
-        sites,
-        category,
-      });
+      const { data, totalCount } = await getAssetSpreadsheetView(
+        supabaseClient,
+        {
+          page: page,
+          limit: DEFAULT_REQUEST_LIST_LIMIT,
+          sort: isAscendingSort,
+          search,
+          status,
+          assignedToPerson,
+          assignedToSite,
+          department,
+          locations,
+          sites,
+          category,
+        }
+      );
 
-      setInventoryList(newData);
-      setInventoryListCount(newData.length);
+      setInventoryList(data);
+      setInventoryListCount(totalCount);
     } catch (e) {
       notifications.show({
         message: "Failed to fetch request list.",
@@ -260,7 +263,6 @@ const AssetListPage = ({
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}
-            selectedFormFilter={selectedFormFilter}
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}

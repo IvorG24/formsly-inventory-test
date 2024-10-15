@@ -1,6 +1,7 @@
 import {
   checkIfOwner,
   checkIfOwnerOrAdmin,
+  getActiveGroup,
   getRequestTeamId,
   getTeam,
   getUserActiveTeamId,
@@ -18,7 +19,7 @@ import rateLimit from "express-rate-limit";
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
 import { formatTeamNameToUrlKey, isUUID } from "./string";
-import { TeamTableRow } from "./types";
+import { TeamGroupTableRow, TeamTableRow } from "./types";
 
 export const withAuth = <P extends { [key: string]: any }>(
   getServerSidePropsFunc: (params: {
@@ -188,7 +189,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
 };
 
 export const withAuthAndOnboardingRequestPage = <
-  P extends { [key: string]: any }
+  P extends { [key: string]: any },
 >(
   getServerSidePropsFunc: (params: {
     context: GetServerSidePropsContext;
@@ -390,6 +391,124 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
         context,
         supabaseClient,
         user,
+        userActiveTeam,
+      });
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
+  };
+};
+
+export const withActiveGroup = <P extends { [key: string]: any }>(
+  getServerSidePropsFunc: (params: {
+    context: GetServerSidePropsContext;
+    supabaseClient: SupabaseClient<Database>;
+    user: User;
+    group: TeamGroupTableRow;
+    userActiveTeam: TeamTableRow;
+  }) => Promise<GetServerSidePropsResult<P>>
+): GetServerSideProps<P> => {
+  return async (
+    context: GetServerSidePropsContext
+  ): Promise<GetServerSidePropsResult<P>> => {
+    const supabaseClient = createPagesServerClient(context);
+
+    try {
+      // * 1. Check if user is authenticated
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        return {
+          redirect: {
+            destination: SIGN_IN_PAGE_PATH,
+            permanent: false,
+          },
+        };
+      }
+      if (!session?.user?.email) throw new Error("No email in session");
+
+      // * 2. Check if user is onboarded
+      if (
+        !(await checkIfEmailExists(supabaseClient, {
+          email: session.user.email,
+        }))
+      ) {
+        return {
+          redirect: {
+            destination: "/onboarding",
+            permanent: false,
+          },
+        };
+      }
+
+      const user = session.user;
+
+      // * 3. Check if user has active team
+
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+
+      if (!teamId) {
+        return {
+          redirect: {
+            destination: "/user/requests",
+            permanent: false,
+          },
+        };
+      }
+
+      // * 4. Check if user active team match router active team
+
+      const userActiveTeam = await getTeam(supabaseClient, { teamId });
+
+      if (!userActiveTeam) {
+        return {
+          redirect: {
+            destination: "/user/requests",
+            permanent: false,
+          },
+        };
+      }
+
+      const userWithGroup = await getActiveGroup(supabaseClient, {
+        userId: user.id,
+      });
+      if (!userWithGroup) {
+        return {
+          redirect: {
+            destination: "/user/requests",
+            permanent: false,
+          },
+        };
+      }
+      const isUserMember =
+        context.query.teamName ===
+        formatTeamNameToUrlKey(userActiveTeam.team_name);
+
+      if (!isUserMember) {
+        return {
+          redirect: {
+            destination: `/${formatTeamNameToUrlKey(
+              userActiveTeam.team_name
+            )}/requests`,
+            permanent: false,
+          },
+        };
+      }
+
+      return getServerSidePropsFunc({
+        context,
+        supabaseClient,
+        user,
+        group: userWithGroup,
         userActiveTeam,
       });
     } catch (e) {

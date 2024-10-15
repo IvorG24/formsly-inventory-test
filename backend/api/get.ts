@@ -7,131 +7,133 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  APP_SOURCE_ID,
-  DEFAULT_NUMBER_SSOT_ROWS,
-  FETCH_OPTION_LIMIT,
-  formatDate,
-  FORMSLY_FORM_ORDER,
-  IT_ASSET_FIELD_ID_LIST,
-  ITEM_FIELD_ID_LIST,
-  PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT,
-  TECHNICAL_ASSESSMENT_FIELD_LIST,
+    APP_SOURCE_ID,
+    DEFAULT_NUMBER_SSOT_ROWS,
+    FETCH_OPTION_LIMIT,
+    formatDate,
+    FORMSLY_FORM_ORDER,
+    IT_ASSET_FIELD_ID_LIST,
+    ITEM_FIELD_ID_LIST,
+    PED_ITEM_FIELD_ID_LIST,
+    SELECT_OPTION_LIMIT,
+    TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
-  addAmpersandBetweenWords,
-  escapeQuotes,
-  escapeQuotesForObject,
-  parseJSONIfValid,
-  startCase,
+    addAmpersandBetweenWords,
+    escapeQuotes,
+    escapeQuotesForObject,
+    parseJSONIfValid,
+    startCase,
 } from "@/utils/string";
 import {
-  AddressTableRow,
-  ApplicationInformationFilterFormValues,
-  ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType,
-  AppType,
-  AttachmentBucketType,
-  AttachmentTableRow,
-  BackgroundCheckFilterFormValues,
-  BackgroundCheckSpreadsheetData,
-  CategoryTableRow,
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  CSICodeTableRow,
-  Dataset,
-  DirectorInterviewFilterFormValues,
-  DirectorInterviewSpreadsheetData,
-  EquipmentDescriptionTableRow,
-  EquipmentPartTableInsert,
-  EquipmentPartType,
-  EquipmentTableRow,
-  FetchRequestListParams,
-  FetchUserRequestListParams,
-  FieldTableRow,
-  FormTableRow,
-  FormType,
-  HRAnalyticsData,
-  HRPhoneInterviewFilterFormValues,
-  HRPhoneInterviewSpreadsheetData,
-  HRProjectType,
-  InitialFormType,
-  InterviewOnlineMeetingTableRow,
-  InventoryEventRow,
-  InventoryFormType,
-  InventoryHistory,
-  InventoryListType,
-  InventoryRequestRow,
-  ItemCategoryType,
-  ItemCategoryWithSigner,
-  ItemDescriptionFieldWithUoM,
-  ItemDescriptionTableRow,
-  ItemWithDescriptionAndField,
-  ItemWithDescriptionType,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraFormslyProjectType,
-  JiraItemCategoryDataType,
-  JiraOrganizationTableRow,
-  JiraProjectDataType,
-  JobOfferFilterFormValues,
-  JobOfferHistoryType,
-  JobOfferSpreadsheetData,
-  LocationTableRow,
-  LRFSpreadsheetData,
-  MemoListItemType,
-  MemoType,
-  NotificationOnLoad,
-  NotificationTableRow,
-  OptionTableRow,
-  OtherExpensesTypeTableRow,
-  PendingInviteType,
-  QuestionnaireData,
-  ReferenceMemoType,
-  RequestListItemType,
-  RequestListOnLoad,
-  RequestResponseTableRow,
-  RequestTableRow,
-  RequestWithResponseType,
-  SectionWithFieldType,
-  ServiceWithScopeAndChoice,
-  SignatureHistoryTableRow,
-  SignerRequestSLA,
-  SignerWithProfile,
-  SiteTableRow,
-  SSOTOnLoad,
-  SubCategoryData,
-  TeamGroupTableRow,
-  TeamMemberOnLoad,
-  TeamMemberType,
-  TeamMemberWithUser,
-  TeamMemberWithUserDetails,
-  TeamOnLoad,
-  TeamProjectTableRow,
-  TeamTableRow,
-  TechnicalAssessmentTableRow,
-  TechnicalInterviewFilterFormValues,
-  TechnicalInterviewSpreadsheetData,
-  TicketListOnLoad,
-  TicketListType,
-  TicketPageOnLoad,
-  TicketStatusType,
-  TradeTestFilterFormValues,
-  TradeTestSpreadsheetData,
-  TransactionTableRow,
-  UnformattedRequestListItemRequestSigner,
-  UserIssuedItem,
+    AddressTableRow,
+    ApplicationInformationFilterFormValues,
+    ApplicationInformationSpreadsheetData,
+    ApproverUnresolvedRequestCountType,
+    AppType,
+    AttachmentBucketType,
+    AttachmentTableRow,
+    BackgroundCheckFilterFormValues,
+    BackgroundCheckSpreadsheetData,
+    CategoryTableRow,
+    CreateTicketFormValues,
+    CreateTicketPageOnLoad,
+    CSICodeTableRow,
+    Dataset,
+    DirectorInterviewFilterFormValues,
+    DirectorInterviewSpreadsheetData,
+    EquipmentDescriptionTableRow,
+    EquipmentPartTableInsert,
+    EquipmentPartType,
+    EquipmentTableRow,
+    EventTableRow,
+    FetchRequestListParams,
+    FetchUserRequestListParams,
+    FieldTableRow,
+    FormTableRow,
+    FormType,
+    HRAnalyticsData,
+    HRPhoneInterviewFilterFormValues,
+    HRPhoneInterviewSpreadsheetData,
+    HRProjectType,
+    InitialFormType,
+    InterviewOnlineMeetingTableRow,
+    InventoryEventRow,
+    InventoryFormType,
+    InventoryHistory,
+    InventoryListType,
+    InventoryRequestRow,
+    ItemCategoryType,
+    ItemCategoryWithSigner,
+    ItemDescriptionFieldWithUoM,
+    ItemDescriptionTableRow,
+    ItemWithDescriptionAndField,
+    ItemWithDescriptionType,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraFormslyProjectType,
+    JiraItemCategoryDataType,
+    JiraOrganizationTableRow,
+    JiraProjectDataType,
+    JobOfferFilterFormValues,
+    JobOfferHistoryType,
+    JobOfferSpreadsheetData,
+    LocationTableRow,
+    LRFSpreadsheetData,
+    MemoListItemType,
+    MemoType,
+    NotificationOnLoad,
+    NotificationTableRow,
+    OptionTableRow,
+    OtherExpensesTypeTableRow,
+    PendingInviteType,
+    QuestionnaireData,
+    ReferenceMemoType,
+    RequestListItemType,
+    RequestListOnLoad,
+    RequestResponseTableRow,
+    RequestTableRow,
+    RequestWithResponseType,
+    SectionWithFieldType,
+    SecurityGroupData,
+    ServiceWithScopeAndChoice,
+    SignatureHistoryTableRow,
+    SignerRequestSLA,
+    SignerWithProfile,
+    SiteTableRow,
+    SSOTOnLoad,
+    SubCategoryData,
+    TeamGroupTableRow,
+    TeamMemberOnLoad,
+    TeamMemberType,
+    TeamMemberWithUser,
+    TeamMemberWithUserDetails,
+    TeamOnLoad,
+    TeamProjectTableRow,
+    TeamTableRow,
+    TechnicalAssessmentTableRow,
+    TechnicalInterviewFilterFormValues,
+    TechnicalInterviewSpreadsheetData,
+    TicketListOnLoad,
+    TicketListType,
+    TicketPageOnLoad,
+    TicketStatusType,
+    TradeTestFilterFormValues,
+    TradeTestSpreadsheetData,
+    TransactionTableRow,
+    UnformattedRequestListItemRequestSigner,
+    UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -7512,7 +7514,7 @@ export const getEventDetails = async (
     .eq("event_team_id", teamId);
   if (error) throw error;
 
-  return data;
+  return data as EventTableRow[];
 };
 
 export const getCategoryOptions = async (
@@ -7750,10 +7752,10 @@ export const getAssetSpreadsheetView = async (
     page?: number;
     sort?: boolean;
     search?: string;
-    sites?: string;
+    sites?: string[];
     locations?: string;
-    department?: string;
-    category?: string;
+    department?: string[];
+    category?: string[];
     status?: string;
     assignedToPerson?: string[];
     assignedToSite?: string[];
@@ -7768,7 +7770,7 @@ export const getAssetSpreadsheetView = async (
 
   if (error) throw error;
 
-  return data as unknown as InventoryListType[];
+  return data as unknown as { data: InventoryListType[]; totalCount: 0 };
 };
 
 export const getColumnList = async (
@@ -7789,10 +7791,6 @@ export const getAssetListFilterOptions = async (
 ) => {
   const { teamId } = params;
 
-  const teamMemberList = await getTeamMemberList(supabaseClient, {
-    teamId: teamId,
-  });
-
   const { data: siteList } = await getSiteList(supabaseClient, {
     teamid: teamId,
   });
@@ -7803,11 +7801,13 @@ export const getAssetListFilterOptions = async (
     teamId: teamId,
   });
 
+  const eventList = await getEventDetails(supabaseClient, teamId);
+
   return {
-    teamMemberList,
     siteList,
     departmentList,
     categoryList,
+    eventList,
   };
 };
 
@@ -7881,4 +7881,34 @@ export const getChildAssetOptionLinking = async (
   if (error) throw error;
 
   return data as InventoryRequestRow[];
+};
+
+export const getActiveGroup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_active_group", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as TeamGroupTableRow;
+};
+
+export const getSecurityGroups = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_security_group", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as SecurityGroupData;
 };

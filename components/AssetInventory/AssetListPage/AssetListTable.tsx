@@ -32,7 +32,6 @@ type Props = {
   requestListCount: number;
   activePage: number;
   isFetchingRequestList: boolean;
-  selectedFormFilter: string | undefined;
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;

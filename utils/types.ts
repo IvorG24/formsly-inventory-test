@@ -607,6 +607,9 @@ export type InventoryEventRow =
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 
+export type EventTableRow =
+  Database["inventory_schema"]["Tables"]["inventory_event_table"]["Row"];
+
 export type InventoryRequestResponseInsert =
   Database["inventory_request_schema"]["Tables"]["inventory_custom_response_table"]["Insert"];
 // End: Database Table Types
@@ -2764,4 +2767,16 @@ export type InventoryHistory = {
 export type updateTypeDate = {
   type_name: string;
   type_description?: string;
+};
+
+export type SecurityGroupData = {
+  asset: {
+    permissions: { key: string; value: boolean }[];
+    filter: {
+      site: string[];
+      department: string[];
+      categories: string[];
+      events: string[];
+    };
+  };
 };

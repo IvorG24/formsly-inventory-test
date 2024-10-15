@@ -1,18 +1,22 @@
 // Imports
-import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
+import {
+  getAssetListFilterOptions,
+  getColumnList,
+  getSecurityGroups,
+} from "@/backend/api/get";
 import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
-import { withActiveTeam } from "@/utils/server-side-protections";
+import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
+  SecurityGroupData,
   SiteTableRow,
-  TeamMemberWithUserType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, userActiveTeam, supabaseClient }) => {
+export const getServerSideProps: GetServerSideProps = withActiveGroup(
+  async ({ user, userActiveTeam, supabaseClient, group }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
@@ -20,10 +24,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
       const fields = await getColumnList(supabaseClient);
 
+      const securityGroupData = await getSecurityGroups(supabaseClient, {
+        groupId: group.team_group_id,
+      });
       return {
         props: {
           ...data,
           fields,
+          securityGroupData,
           userId: user.id,
         },
       };
@@ -39,7 +47,6 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   userId: string;
   siteList: SiteTableRow[];
   departmentList: Department[];
@@ -48,24 +55,25 @@ type Props = {
     value: string;
     label: string;
   }[];
+  securityGroupData: SecurityGroupData;
 };
 
 const Page = ({
   userId,
-  teamMemberList,
   siteList,
   departmentList,
   categoryList,
   fields,
+  securityGroupData,
 }: Props) => {
   return (
     <>
       <Meta description="Asset List Page" url="/teamName/inventory" />
       <AssetListPage
+        securityGroupData={securityGroupData}
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
-        teamMemberList={teamMemberList}
         userId={userId}
         tableColumnList={fields}
       />

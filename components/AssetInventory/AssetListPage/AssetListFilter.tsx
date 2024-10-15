@@ -43,10 +43,10 @@ type RequestListFilterProps = {
 
 export type FilterSelectedValuesType = {
   search?: string;
-  sites?: string;
+  sites?: string[];
   locations?: string;
-  category?: string;
-  department?: string;
+  category?: string[];
+  department?: string[];
   status?: string;
   assignedToPerson?: string[];
   assignedToSite?: string[];
@@ -100,10 +100,10 @@ const AssetListFilter = ({
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       search: "",
-      sites: "",
+      sites: [],
       locations: "",
-      department: "",
-      category: "",
+      department: [],
+      category: [],
       status: "",
       assignedToPerson: [],
       assignedToSite: [],
@@ -271,19 +271,16 @@ const AssetListFilter = ({
             name="sites"
             defaultValue={localFilter.sites}
             render={({ field: { value, onChange } }) => (
-              <Select
+              <MultiSelect
                 data={siteListchoices}
                 placeholder="Sites"
                 ref={siteRef}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!siteRefFocused)
-                    handleFilterChange("sites", value as string | undefined);
+                  if (!siteRefFocused) handleFilterChange("sites", value);
                 }}
-                onDropdownClose={() =>
-                  handleFilterChange("sites", value as string | undefined)
-                }
+                onDropdownClose={() => handleFilterChange("sites", value)}
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
@@ -322,19 +319,16 @@ const AssetListFilter = ({
             control={control}
             name="category"
             render={({ field: { value, onChange } }) => (
-              <Select
+              <MultiSelect
                 data={categoryListChoices}
                 placeholder="category"
                 ref={categoryref}
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (categoryRefFocused)
-                    handleFilterChange("category", value as string | undefined);
+                  if (categoryRefFocused) handleFilterChange("category", value);
                 }}
-                onDropdownClose={() =>
-                  handleFilterChange("category", value as string | undefined)
-                }
+                onDropdownClose={() => handleFilterChange("category", value)}
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}
@@ -347,7 +341,7 @@ const AssetListFilter = ({
             control={control}
             name="department"
             render={({ field: { value, onChange } }) => (
-              <Select
+              <MultiSelect
                 placeholder="Department"
                 ref={departmentRef}
                 data={departmentListChoices}
@@ -355,10 +349,7 @@ const AssetListFilter = ({
                 onChange={(value) => {
                   onChange(value);
                   if (departmentRefFocused)
-                    handleFilterChange(
-                      "department",
-                      value as string | undefined
-                    );
+                    handleFilterChange("department", value);
                 }}
                 onDropdownClose={() => handleFilterChange("department", value)}
                 {...inputFilterProps}
