@@ -272,7 +272,7 @@ const AssetListFilter = ({
 
       {isFilter && (
         <Flex gap="sm" wrap="wrap" mb="sm">
-          {securityGroup.asset.filter.site.length < 0 && (
+          {securityGroup.asset.filter.site.length === 0 && (
             <Controller
               control={control}
               name="sites"
@@ -323,7 +323,7 @@ const AssetListFilter = ({
               )}
             />
           )}
-          {securityGroup.asset.filter.category.length < 0 && (
+          {securityGroup.asset.filter.category.length === 0 && (
             <Controller
               control={control}
               name="category"
@@ -347,7 +347,7 @@ const AssetListFilter = ({
               )}
             />
           )}
-          {securityGroup.asset.filter.department.length < 0 && (
+          {securityGroup.asset.filter.department.length === 0 && (
             <Controller
               control={control}
               name="department"
@@ -378,7 +378,7 @@ const AssetListFilter = ({
             name="assignedToPerson"
             render={({ field: { value, onChange } }) => (
               <MultiSelect
-                placeholder="Assigned To Site"
+                placeholder="Assigned To Person"
                 ref={assignedToRef}
                 data={memberList}
                 value={value}

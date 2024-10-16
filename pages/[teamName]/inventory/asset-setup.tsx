@@ -1,40 +1,24 @@
 // Imports
-import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
-import CheckoutListPage from "@/components/AssetInventory/CheckoutListPage/CheckoutListPage";
-import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
+import { getCategoryOptions } from "@/backend/api/get";
+import AssetSetupPage from "@/components/AssetInventory/AssetSetupPage/AssetSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
-import { CategoryTableRow, SiteTableRow } from "@/utils/types";
+import { CategoryTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ user, userActiveTeam, supabaseClient, securityGroupData }) => {
+  async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const data = await getAssetListFilterOptions(supabaseClient, {
-        teamId: userActiveTeam.team_id,
-      });
-
-      const fields = await getColumnList(supabaseClient);
-
-      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
-        (permission) =>
-          permission.key === "viewOnly" && permission.value === true
+      const { data: categoryOptions } = await getCategoryOptions(
+        supabaseClient,
+        {
+          teamId: userActiveTeam.team_id,
+        }
       );
 
-      if (!hasViewOnlyPermission) {
-        return {
-          redirect: {
-            destination: "/500",
-            permanent: false,
-          },
-        };
-      }
       return {
         props: {
-          ...data,
-          fields,
-          securityGroupData,
-          userId: user.id,
+          categoryOptions,
         },
       };
     } catch (e) {
@@ -47,38 +31,17 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
     }
   }
 );
-
 type Props = {
-  userId: string;
-  siteList: SiteTableRow[];
-  departmentList: Department[];
-  categoryList: CategoryTableRow[];
-  fields: {
-    value: string;
-    label: string;
-  }[];
+  categoryOptions: CategoryTableRow[];
 };
-
-const Page = ({
-  userId,
-  siteList,
-  departmentList,
-  categoryList,
-  fields,
-}: Props) => {
+const Page = ({ categoryOptions }: Props) => {
   return (
     <>
       <Meta
-        description="Check in List Page"
-        url="/teamName/inventory/check-out"
+        description="Asset Setup Page"
+        url="/teamName/inventory/asset-setup"
       />
-      <CheckoutListPage
-        tableColumnList={fields}
-        siteList={siteList}
-        departmentList={departmentList}
-        categoryList={categoryList}
-        userId={userId}
-      />
+      <AssetSetupPage categoryOptions={categoryOptions} />
     </>
   );
 };

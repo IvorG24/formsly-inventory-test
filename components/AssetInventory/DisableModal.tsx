@@ -1,6 +1,7 @@
 import { disableDrawerData } from "@/backend/api/update";
 import {
   CategoryTableRow,
+  InventoryFieldRow,
   LocationTableRow,
   SiteTableRow,
   SubCategory,
@@ -22,6 +23,9 @@ type DisableModalProps = {
   setCurrentSubCategoryList?: React.Dispatch<
     React.SetStateAction<SubCategory[]>
   >;
+  setCurrentCustomFieldList?: React.Dispatch<
+    React.SetStateAction<InventoryFieldRow[]>
+  >;
   typeId: string;
   type: string;
 };
@@ -35,6 +39,7 @@ const DisableModal = ({
   setCurrentLocationList,
   setCurrentCategoryList,
   setCurrentSubCategoryList,
+  setCurrentCustomFieldList,
 }: DisableModalProps) => {
   const supabaseClient = useSupabaseClient();
   const handleConfirm = async () => {
@@ -74,8 +79,20 @@ const DisableModal = ({
             type: "field",
             typeId: typeId,
           });
+
           setCurrentSubCategoryList((prev) =>
             prev.filter((location) => location.sub_category_id !== typeId)
+          );
+
+        case "Custom Field":
+          if (!setCurrentCustomFieldList) return;
+          await disableDrawerData(supabaseClient, {
+            type: "field",
+            typeId: typeId,
+          });
+
+          setCurrentCustomFieldList((prev) =>
+            prev.filter((location) => location.field_id !== typeId)
           );
         default:
           break;

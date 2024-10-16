@@ -601,6 +601,9 @@ export type LocationTableRow =
 export type CategoryTableRow =
   Database["inventory_schema"]["Tables"]["category_table"]["Row"];
 
+export type InventoryFieldRow =
+  Database["inventory_schema"]["Tables"]["field_table"]["Row"];
+
 export type InventoryEventRow =
   Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
 
@@ -2722,6 +2725,8 @@ export type SubCategoryData = {
 
 export type InventoryListType = InventoryRequestRow & {
   site_name?: string;
+  inventory_request_status_color: string;
+  inventory_request_due_date: string;
   request_creator_team_member_id?: string;
   request_creator_user_id?: string;
   request_creator_first_name?: string;
@@ -2791,4 +2796,13 @@ export type securityGroupsFormValues = {
   department: string[];
   category: string[];
   event: string[];
+};
+
+export type customFieldFormValues = {
+  fieldId?: string;
+  fieldName: string;
+  fieldType: string;
+  fieldIsRequired: boolean;
+  fieldOption: string[];
+  fieldCategory: string[];
 };

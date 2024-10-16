@@ -27,6 +27,7 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   CreateTicketFormValues,
+  customFieldFormValues,
   EquipmentDescriptionTableInsert,
   EquipmentPartTableInsert,
   EquipmentTableInsert,
@@ -38,6 +39,7 @@ import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InventoryAssetFormValues,
+  InventoryFieldRow,
   InventoryRequestResponseInsert,
   InventoryResponseValues,
   InvitationTableRow,
@@ -2824,4 +2826,59 @@ export const updateSecurityGroup = async (
   if (error) throw error;
 
   return data;
+};
+
+export const createCustomFields = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    customFieldFormValues: customFieldFormValues;
+  }
+) => {
+  const { customFieldFormValues } = params;
+  const fieldId = uuidv4();
+
+  const { data: fieldData, error: fieldError } = await supabaseClient
+    .schema("inventory_schema")
+    .from("field_table")
+    .select("field_order")
+    .order("field_order", { ascending: false })
+    .limit(1);
+
+  if (fieldError) throw new Error();
+
+  const fieldValue = `
+  '${fieldId}', '${customFieldFormValues.fieldName}',
+  '${customFieldFormValues.fieldIsRequired}', '${customFieldFormValues.fieldType}',
+  ${fieldData[0].field_order + 1}, TRUE, '80aedd40-a682-4390-9e82-0e9592f7f912'
+`;
+
+  const optionsValues = customFieldFormValues.fieldOption
+    ? customFieldFormValues.fieldOption
+        .map((option, index) => {
+          return `('${option}', ${index + 1}, '${fieldId}')`;
+        })
+        .join(", ")
+    : [];
+
+  const categoriesValues =
+    customFieldFormValues.fieldCategory.length > 0
+      ? customFieldFormValues.fieldCategory
+          .map((categoryId) => {
+            return `('${fieldId}', '${categoryId}')`;
+          })
+          .join(", ")
+      : null;
+
+  const input_data = {
+    fieldValue,
+    optionsValues,
+    categoriesValues,
+  };
+  const { data, error } = await supabaseClient.rpc("create_custom_field", {
+    input_data: input_data,
+  });
+
+  if (error) throw error;
+
+  return data as unknown as InventoryFieldRow;
 };

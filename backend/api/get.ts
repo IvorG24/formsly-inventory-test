@@ -7,133 +7,135 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  APP_SOURCE_ID,
-  DEFAULT_NUMBER_SSOT_ROWS,
-  FETCH_OPTION_LIMIT,
-  formatDate,
-  FORMSLY_FORM_ORDER,
-  IT_ASSET_FIELD_ID_LIST,
-  ITEM_FIELD_ID_LIST,
-  PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT,
-  TECHNICAL_ASSESSMENT_FIELD_LIST,
+    APP_SOURCE_ID,
+    DEFAULT_NUMBER_SSOT_ROWS,
+    FETCH_OPTION_LIMIT,
+    formatDate,
+    FORMSLY_FORM_ORDER,
+    IT_ASSET_FIELD_ID_LIST,
+    ITEM_FIELD_ID_LIST,
+    PED_ITEM_FIELD_ID_LIST,
+    SELECT_OPTION_LIMIT,
+    TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
-  addAmpersandBetweenWords,
-  escapeQuotes,
-  escapeQuotesForObject,
-  parseJSONIfValid,
-  startCase,
+    addAmpersandBetweenWords,
+    escapeQuotes,
+    escapeQuotesForObject,
+    parseJSONIfValid,
+    startCase,
 } from "@/utils/string";
 import {
-  AddressTableRow,
-  ApplicationInformationFilterFormValues,
-  ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType,
-  AppType,
-  AttachmentBucketType,
-  AttachmentTableRow,
-  BackgroundCheckFilterFormValues,
-  BackgroundCheckSpreadsheetData,
-  CategoryTableRow,
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  CSICodeTableRow,
-  Dataset,
-  DirectorInterviewFilterFormValues,
-  DirectorInterviewSpreadsheetData,
-  EquipmentDescriptionTableRow,
-  EquipmentPartTableInsert,
-  EquipmentPartType,
-  EquipmentTableRow,
-  EventTableRow,
-  FetchRequestListParams,
-  FetchUserRequestListParams,
-  FieldTableRow,
-  FormTableRow,
-  FormType,
-  HRAnalyticsData,
-  HRPhoneInterviewFilterFormValues,
-  HRPhoneInterviewSpreadsheetData,
-  HRProjectType,
-  InitialFormType,
-  InterviewOnlineMeetingTableRow,
-  InventoryEventRow,
-  InventoryFormType,
-  InventoryHistory,
-  InventoryListType,
-  InventoryRequestRow,
-  ItemCategoryType,
-  ItemCategoryWithSigner,
-  ItemDescriptionFieldWithUoM,
-  ItemDescriptionTableRow,
-  ItemWithDescriptionAndField,
-  ItemWithDescriptionType,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraFormslyProjectType,
-  JiraItemCategoryDataType,
-  JiraOrganizationTableRow,
-  JiraProjectDataType,
-  JobOfferFilterFormValues,
-  JobOfferHistoryType,
-  JobOfferSpreadsheetData,
-  LocationTableRow,
-  LRFSpreadsheetData,
-  MemoListItemType,
-  MemoType,
-  NotificationOnLoad,
-  NotificationTableRow,
-  OptionTableRow,
-  OtherExpensesTypeTableRow,
-  PendingInviteType,
-  QuestionnaireData,
-  ReferenceMemoType,
-  RequestListItemType,
-  RequestListOnLoad,
-  RequestResponseTableRow,
-  RequestTableRow,
-  RequestWithResponseType,
-  SectionWithFieldType,
-  SecurityGroupData,
-  ServiceWithScopeAndChoice,
-  SignatureHistoryTableRow,
-  SignerRequestSLA,
-  SignerWithProfile,
-  SiteTableRow,
-  SSOTOnLoad,
-  SubCategoryData,
-  TeamGroupTableRow,
-  TeamMemberOnLoad,
-  TeamMemberType,
-  TeamMemberWithUser,
-  TeamMemberWithUserDetails,
-  TeamOnLoad,
-  TeamProjectTableRow,
-  TeamTableRow,
-  TechnicalAssessmentTableRow,
-  TechnicalInterviewFilterFormValues,
-  TechnicalInterviewSpreadsheetData,
-  TicketListOnLoad,
-  TicketListType,
-  TicketPageOnLoad,
-  TicketStatusType,
-  TradeTestFilterFormValues,
-  TradeTestSpreadsheetData,
-  TransactionTableRow,
-  UnformattedRequestListItemRequestSigner,
-  UserIssuedItem,
+    AddressTableRow,
+    ApplicationInformationFilterFormValues,
+    ApplicationInformationSpreadsheetData,
+    ApproverUnresolvedRequestCountType,
+    AppType,
+    AttachmentBucketType,
+    AttachmentTableRow,
+    BackgroundCheckFilterFormValues,
+    BackgroundCheckSpreadsheetData,
+    CategoryTableRow,
+    CreateTicketFormValues,
+    CreateTicketPageOnLoad,
+    CSICodeTableRow,
+    customFieldFormValues,
+    Dataset,
+    DirectorInterviewFilterFormValues,
+    DirectorInterviewSpreadsheetData,
+    EquipmentDescriptionTableRow,
+    EquipmentPartTableInsert,
+    EquipmentPartType,
+    EquipmentTableRow,
+    EventTableRow,
+    FetchRequestListParams,
+    FetchUserRequestListParams,
+    FieldTableRow,
+    FormTableRow,
+    FormType,
+    HRAnalyticsData,
+    HRPhoneInterviewFilterFormValues,
+    HRPhoneInterviewSpreadsheetData,
+    HRProjectType,
+    InitialFormType,
+    InterviewOnlineMeetingTableRow,
+    InventoryEventRow,
+    InventoryFieldRow,
+    InventoryFormType,
+    InventoryHistory,
+    InventoryListType,
+    InventoryRequestRow,
+    ItemCategoryType,
+    ItemCategoryWithSigner,
+    ItemDescriptionFieldWithUoM,
+    ItemDescriptionTableRow,
+    ItemWithDescriptionAndField,
+    ItemWithDescriptionType,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraFormslyProjectType,
+    JiraItemCategoryDataType,
+    JiraOrganizationTableRow,
+    JiraProjectDataType,
+    JobOfferFilterFormValues,
+    JobOfferHistoryType,
+    JobOfferSpreadsheetData,
+    LocationTableRow,
+    LRFSpreadsheetData,
+    MemoListItemType,
+    MemoType,
+    NotificationOnLoad,
+    NotificationTableRow,
+    OptionTableRow,
+    OtherExpensesTypeTableRow,
+    PendingInviteType,
+    QuestionnaireData,
+    ReferenceMemoType,
+    RequestListItemType,
+    RequestListOnLoad,
+    RequestResponseTableRow,
+    RequestTableRow,
+    RequestWithResponseType,
+    SectionWithFieldType,
+    SecurityGroupData,
+    ServiceWithScopeAndChoice,
+    SignatureHistoryTableRow,
+    SignerRequestSLA,
+    SignerWithProfile,
+    SiteTableRow,
+    SSOTOnLoad,
+    SubCategoryData,
+    TeamGroupTableRow,
+    TeamMemberOnLoad,
+    TeamMemberType,
+    TeamMemberWithUser,
+    TeamMemberWithUserDetails,
+    TeamOnLoad,
+    TeamProjectTableRow,
+    TeamTableRow,
+    TechnicalAssessmentTableRow,
+    TechnicalInterviewFilterFormValues,
+    TechnicalInterviewSpreadsheetData,
+    TicketListOnLoad,
+    TicketListType,
+    TicketPageOnLoad,
+    TicketStatusType,
+    TradeTestFilterFormValues,
+    TradeTestSpreadsheetData,
+    TransactionTableRow,
+    UnformattedRequestListItemRequestSigner,
+    UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -7914,3 +7916,72 @@ export const getSecurityGroups = async (
 
   return data as SecurityGroupData;
 };
+
+export const checkUniqueField = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldName: string;
+  }
+) => {
+  const { fieldName } = params;
+  let returnData = false;
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("field_table")
+    .select("field_name")
+    .ilike("field_name", fieldName.toLocaleLowerCase())
+    .eq("field_is_custom_field", true)
+    .eq("field_is_disabled", false)
+    .limit(1);
+  if (error) throw error;
+
+  if (data.length > 0) {
+    returnData = true;
+  }
+
+  return returnData;
+};
+
+export const getCustomFieldData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page?: number; limit?: number; search?: string }
+) => {
+  const { page, limit, search } = params;
+  let query = supabaseClient
+    .schema("inventory_schema")
+    .from("field_table")
+    .select("*", { count: "exact" })
+    .eq("field_is_disabled", false)
+    .eq("field_is_custom_field", true);
+
+  if (search) {
+    query = query.ilike("field_name", `%${search}%`);
+  }
+
+  if (limit && limit > 0 && page && page > 0) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    query = query.range(start, end);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data: data as InventoryFieldRow[], totalCount: count ?? 0 };
+};
+
+export const getCustomFieldDetails = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      fieldId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient.rpc("get_custom_field_details_on_load", {
+      input_data: params,
+    });
+
+    if (error) throw error;
+
+    return data as customFieldFormValues;
+  };

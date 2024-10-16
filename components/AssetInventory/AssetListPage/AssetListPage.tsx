@@ -124,6 +124,7 @@ const AssetListPage = ({
             "Department",
             "Old Asset Number",
             "IT Equipment Type",
+            "Due Date",
           ].includes(column.label)
       )
       .map((column) => column.value),

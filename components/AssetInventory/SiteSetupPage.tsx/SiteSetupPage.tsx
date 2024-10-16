@@ -182,7 +182,7 @@ const SiteSetupPage = () => {
           setModalOpened(false);
         }}
         opened={modalOpened}
-        type="site"
+        type="sub "
       />
       <UpdateModal
         typeId={siteId}

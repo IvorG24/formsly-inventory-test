@@ -9,6 +9,8 @@ type Props = {
 };
 
 const EventPanel = ({ asset_event }: Props) => {
+  console.log(asset_event);
+
   const [page, setPage] = useState(1);
   return (
     <>
@@ -49,8 +51,10 @@ const EventPanel = ({ asset_event }: Props) => {
             accessor: "dueDate",
             title: "Due Date",
             render: (event) =>
-              event.inventory_event === "Check Out Form" ? (
-                <Text>{event.inventory_event_due_date}</Text>
+              event.inventory_event === "Check Out" ? (
+                <Text>
+                  {formatDate(new Date(event.inventory_event_due_date || ""))}
+                </Text>
               ) : (
                 <Text>-</Text>
               ),

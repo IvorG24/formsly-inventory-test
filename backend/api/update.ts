@@ -8,6 +8,7 @@ import {
   ApiKeyData,
   AppType,
   BackgroundCheckSpreadsheetData,
+  customFieldFormValues,
   DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
@@ -18,6 +19,7 @@ import {
   HRPhoneInterviewSpreadsheetData,
   InterviewOnlineMeetingTableRow,
   InterviewOnlineMeetingTableUpdate,
+  InventoryFieldRow,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
@@ -1835,7 +1837,6 @@ export const updateDrawerData = async (
     type: "site" | "location" | "field" | "category";
   }
 ) => {
-
   const { data, error } = await supabaseClient.rpc("update_drawer_data", {
     input_data: params,
   });
@@ -1845,4 +1846,51 @@ export const updateDrawerData = async (
   }
 
   return data as unknown as updateTypeDate;
+};
+
+export const updateCustomFields = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    customFieldFormValues: customFieldFormValues;
+    fieldId: string;
+  }
+) => {
+  const { customFieldFormValues, fieldId } = params;
+
+  const fieldValue = [
+    customFieldFormValues.fieldName,
+    customFieldFormValues.fieldIsRequired,
+    customFieldFormValues.fieldType,
+  ];
+
+  const optionsValues = customFieldFormValues.fieldOption
+    ? customFieldFormValues.fieldOption
+        .map((option, index) => {
+          return `('${option}', ${index + 1}, '${fieldId}')`;
+        })
+        .join(", ")
+    : [];
+
+  const categoriesValues =
+    customFieldFormValues.fieldCategory.length > 0
+      ? customFieldFormValues.fieldCategory
+          .map((categoryId) => {
+            return `('${fieldId}', '${categoryId}')`;
+          })
+          .join(", ")
+      : null;
+
+  const input_data = {
+    fieldValue,
+    optionsValues,
+    categoriesValues,
+    fieldId,
+  };
+  const { data, error } = await supabaseClient.rpc("update_custom_field", {
+    input_data: input_data,
+  });
+
+  if (error) throw error;
+
+  return data as unknown as InventoryFieldRow;
 };

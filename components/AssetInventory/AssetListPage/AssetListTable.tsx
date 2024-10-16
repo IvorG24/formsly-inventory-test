@@ -117,6 +117,7 @@ const AssetListTable = ({
           "inventory_request_purchase_date",
           "inventory_request_created",
           "inventory_request_date_updated",
+          "inventory_request_due_date",
         ];
 
         if (fieldsWithPesoSign.includes(column.value)) {
@@ -215,8 +216,20 @@ const AssetListTable = ({
           title: "Status",
           width: 180,
           hidden: checkIfColumnIsHidden("inventory_request_status"),
-          render: ({ inventory_request_status }) => {
-            return <Badge>{String(inventory_request_status)}</Badge>;
+          render: ({
+            inventory_request_status,
+            inventory_request_status_color,
+          }) => {
+            return (
+              <Badge
+                sx={{
+                  backgroundColor: inventory_request_status_color as string,
+                  color: "#fff",
+                }}
+              >
+                {String(inventory_request_status)}
+              </Badge>
+            );
           },
         },
         {
@@ -228,7 +241,6 @@ const AssetListTable = ({
             return <Text>{String(inventory_request_name)}</Text>;
           },
         },
-
         {
           accessor: "assignee_first_name",
           title: "Assigned To",

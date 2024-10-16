@@ -12,6 +12,7 @@ import {
   OptionType,
 } from "@/utils/types";
 import {
+  Badge,
   Box,
   Button,
   Container,
@@ -62,11 +63,14 @@ const excludedKeys = [
   "inventory_request_cost",
   "inventory_assignee_site_id",
   "inventory_request_form_id",
+  "inventory_request_status_color",
 ];
 
 const formatLabel = (key: string) => {
   if (key === "inventory_request_id") {
-    return "Asset Tag Id";
+    return "Asset Tag ID";
+  } else if (key === "inventory_request_si_number") {
+    return "SI number";
   }
   const formattedKey = key.replace(/^inventory_request_/, "");
   return formattedKey
@@ -94,6 +98,7 @@ const AssetInventoryDetailsPage = ({
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
     )?.value === true;
+
   useEffect(() => {
     const getEventOptions = async () => {
       if (!activeTeam.team_id) return;
@@ -129,7 +134,7 @@ const AssetInventoryDetailsPage = ({
     };
 
     getEventOptions();
-  }, [activeTeam.team_id, assetDetails]);
+  }, [activeTeam.team_id, assetDetails, securityGroup]);
 
   const handleMenuClick = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -207,9 +212,13 @@ const AssetInventoryDetailsPage = ({
             <Table striped highlightOnHover withBorder withColumnBorders>
               <tbody>
                 {Object.entries(detail)
-                  .filter(([key]) => !excludedKeys.includes(key))
+                  .filter(
+                    ([key, value]) => !excludedKeys.includes(key) && value
+                  )
                   .reduce<JSX.Element[]>((acc, [key, value], index, array) => {
                     if (index % 2 === 0) {
+                      console.log(key);
+
                       const nextEntry = array[index + 1];
                       acc.push(
                         <tr key={key}>
@@ -217,11 +226,25 @@ const AssetInventoryDetailsPage = ({
                             <Text weight={500}>{formatLabel(key)}</Text>
                           </td>
                           <td>
-                            {key === "purchase_date"
-                              ? formatDate(new Date(String(value)))
-                              : value || "N/A"}
+                            {key === "inventory_request_status" ? (
+                              <Badge
+                                sx={{
+                                  backgroundColor:
+                                    detail.inventory_request_status_color as string,
+                                  color: "#fff",
+                                }}
+                              >
+                                {value}
+                              </Badge>
+                            ) : key === "purchase_date" ? (
+                              formatDate(new Date(String(value)))
+                            ) : key === "inventory_request_due_date" ? (
+                              formatDate(new Date(String(value)))
+                            ) : (
+                              value || "N/A"
+                            )}
                           </td>
-                          {nextEntry ? (
+                          {nextEntry && nextEntry[1] ? (
                             <>
                               <td>
                                 <Text weight={500}>
@@ -229,9 +252,26 @@ const AssetInventoryDetailsPage = ({
                                 </Text>
                               </td>
                               <td>
-                                {nextEntry[0] === "purchase_date"
-                                  ? formatDate(new Date(String(nextEntry[1])))
-                                  : nextEntry[1] || "N/A"}
+                                {nextEntry[0] === "purchase_date" ||
+                                nextEntry[0] === "inventory_request_due_date" ||
+                                nextEntry[0] === "inventory_request_status" ? (
+                                  nextEntry[0] ===
+                                  "inventory_request_status" ? (
+                                    <Badge
+                                      sx={{
+                                        backgroundColor:
+                                          detail.inventory_request_status_color as string,
+                                        color: "#fff",
+                                      }}
+                                    >
+                                      {nextEntry[1] || "N/A"}
+                                    </Badge>
+                                  ) : (
+                                    formatDate(new Date(String(nextEntry[1])))
+                                  )
+                                ) : (
+                                  nextEntry[1] || "N/A"
+                                )}
                               </td>
                             </>
                           ) : (
