@@ -2775,8 +2775,19 @@ export type SecurityGroupData = {
     filter: {
       site: string[];
       department: string[];
-      categories: string[];
-      events: string[];
+      category: string[];
+      event: string[];
     };
   };
+};
+
+export type securityGroupsFormValues = {
+  viewOnly: boolean;
+  addAssets: boolean;
+  editAssets: boolean;
+  deleteAssets: boolean;
+  site: string[];
+  department: string[];
+  category: string[];
+  event: string[];
 };

@@ -1,7 +1,9 @@
+import { updateSecurityGroup } from "@/backend/api/post";
 import {
   CategoryTableRow,
   EventTableRow,
   SecurityGroupData,
+  securityGroupsFormValues,
   SiteTableRow,
 } from "@/utils/types";
 import {
@@ -11,6 +13,7 @@ import {
   Flex,
   Grid,
   Group,
+  LoadingOverlay,
   Paper,
   ScrollArea,
   SimpleGrid,
@@ -18,6 +21,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Department } from "./SecurityGroupPage";
 
@@ -28,16 +35,7 @@ type Props = {
   eventList: EventTableRow[];
   securityGroupData: SecurityGroupData["asset"];
 };
-type securityGroupsFormValues = {
-  viewOnly: boolean;
-  addAssets: boolean;
-  editAssets: boolean;
-  deleteAssets: boolean;
-  site: string[];
-  department: string[];
-  categories: string[];
-  events: string[];
-};
+
 const AssetsSecurityPanel = ({
   siteList,
   departmentList,
@@ -45,6 +43,10 @@ const AssetsSecurityPanel = ({
   eventList,
   securityGroupData,
 }: Props) => {
+  const router = useRouter();
+  const groupId = router.query.groupId as string;
+  const supabaseClient = useSupabaseClient();
+  const [isLoading, setIsloading] = useState(false);
   const transformSecurityGroupData = (
     securityGroupData: SecurityGroupData["asset"]
   ) => {
@@ -60,22 +62,40 @@ const AssetsSecurityPanel = ({
       ...permissions,
       site: securityGroupData.filter.site || [],
       department: securityGroupData.filter.department || [],
-      categories: securityGroupData.filter.categories || [],
-      events: securityGroupData.filter.events || [],
+      category: securityGroupData.filter.category || [],
+      event: securityGroupData.filter.event || [],
     };
   };
-  // Then use it in the useForm hook:
+
   const { handleSubmit, control } = useForm<securityGroupsFormValues>({
     defaultValues: transformSecurityGroupData(securityGroupData),
   });
 
-  const onSubmit = (data: securityGroupsFormValues) => {
-    console.log(data);
+  const onSubmit = async (data: securityGroupsFormValues) => {
+    try {
+      setIsloading(true);
+
+      await updateSecurityGroup(supabaseClient, {
+        groupId,
+        securityGroupsFormValues: data,
+      });
+      notifications.show({
+        message: "Asset Security Group Updated",
+        color: "green",
+      });
+      setIsloading(false);
+    } catch (e) {
+      setIsloading(false);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      {/* Assets Permissions Section */}
+      <LoadingOverlay visible={isLoading} />
       <Paper shadow="xs" p="md" withBorder>
         <Stack>
           <Title order={3} size="h4">
@@ -103,7 +123,7 @@ const AssetsSecurityPanel = ({
               control={control}
               render={({ field }) => (
                 <Checkbox
-                  label="User can view and create new assets."
+                  label="User can create new assets."
                   {...field}
                   value={field.value ? "true" : "false"} // Ensure value is a string
                   checked={field.value}
@@ -115,7 +135,7 @@ const AssetsSecurityPanel = ({
               control={control}
               render={({ field }) => (
                 <Checkbox
-                  label="User can view and edit ANY asset."
+                  label="User can edit ANY asset."
                   {...field}
                   value={field.value ? "true" : "false"} // Ensure value is a string
                   checked={field.value}
@@ -127,7 +147,9 @@ const AssetsSecurityPanel = ({
           <Title order={3} size="h4">
             Filter Assets
           </Title>
-          <Text>Allow access of assets by site, department or category :</Text>
+          <Text size="sm">
+            Allow access of assets by site, department or category :
+          </Text>
           <Grid>
             <Grid.Col span={4}>
               <Title order={4} size="h6" mb="sm">
@@ -251,7 +273,7 @@ const AssetsSecurityPanel = ({
               <ScrollArea h={400}>
                 <Stack>
                   <Controller
-                    name="categories"
+                    name="category"
                     control={control}
                     render={({ field }) => (
                       <>
@@ -278,7 +300,10 @@ const AssetsSecurityPanel = ({
                             onChange={(e) => {
                               const checked = e.currentTarget.checked;
                               if (checked) {
-                                field.onChange([...field.value, category]); // Add category
+                                field.onChange([
+                                  ...field.value,
+                                  category.category_name,
+                                ]); // Add category
                               } else {
                                 field.onChange(
                                   field.value.filter(
@@ -303,7 +328,7 @@ const AssetsSecurityPanel = ({
           <Title order={3} size="h4">
             Assets Events
           </Title>
-          <Text>Allowed actions of assets :</Text>
+          <Text size="sm">Allowed actions of assets :</Text>
 
           <Flex direction="column">
             <Title order={4} size="h6" mb="sm">
@@ -311,7 +336,7 @@ const AssetsSecurityPanel = ({
             </Title>
             <SimpleGrid cols={3} spacing="md">
               <Controller
-                name="events"
+                name="event"
                 control={control}
                 render={({ field }) => (
                   <>

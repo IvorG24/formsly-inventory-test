@@ -3,6 +3,7 @@ import {
   checkIfOwnerOrAdmin,
   getActiveGroup,
   getRequestTeamId,
+  getSecurityGroups,
   getTeam,
   getUserActiveTeamId,
 } from "@/backend/api/get";
@@ -19,7 +20,7 @@ import rateLimit from "express-rate-limit";
 import { SIGN_IN_PAGE_PATH } from "./constant";
 import { Database } from "./database";
 import { formatTeamNameToUrlKey, isUUID } from "./string";
-import { TeamGroupTableRow, TeamTableRow } from "./types";
+import { SecurityGroupData, TeamGroupTableRow, TeamTableRow } from "./types";
 
 export const withAuth = <P extends { [key: string]: any }>(
   getServerSidePropsFunc: (params: {
@@ -409,6 +410,7 @@ export const withActiveGroup = <P extends { [key: string]: any }>(
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
     user: User;
+    securityGroupData: SecurityGroupData;
     group: TeamGroupTableRow;
     userActiveTeam: TeamTableRow;
   }) => Promise<GetServerSidePropsResult<P>>
@@ -503,12 +505,18 @@ export const withActiveGroup = <P extends { [key: string]: any }>(
           },
         };
       }
+      const securityGroupData = await getSecurityGroups(supabaseClient, {
+        groupId: context.query.groupId
+          ? (context.query.groupId as string)
+          : userWithGroup.team_group_id,
+      });
 
       return getServerSidePropsFunc({
         context,
         supabaseClient,
         user,
         group: userWithGroup,
+        securityGroupData: securityGroupData,
         userActiveTeam,
       });
     } catch (e) {

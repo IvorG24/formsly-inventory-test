@@ -45,6 +45,7 @@ const EventFormModal = ({
   setSelectedEventId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  //   const securityGroup = useSecurityGroup();
   const teamMember = useUserTeamMember();
   const requestFormMethods = useForm<InventoryFormValues>();
   const [opened, setOpened] = useState(true);

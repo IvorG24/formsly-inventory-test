@@ -28,9 +28,10 @@ const SubCategoryDrawer = ({
     <Drawer
       title="Create New Sub Category"
       position="right"
-      overlayProps={{ opacity: 0.5, blur: 4 }}
       opened={isOpen}
-      onClose={close}
+      onClose={() => {
+        reset(), close();
+      }}
     >
       <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
         <Stack spacing={8}>

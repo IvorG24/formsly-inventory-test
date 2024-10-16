@@ -106,6 +106,13 @@ const AssetLinkPanel = () => {
 
   const handleAssetLinking = async () => {
     try {
+      if (linkedAssets.length === 0) {
+        notifications.show({
+          message: "Please choose a child asset",
+          color: "orange",
+        });
+        return;
+      }
       await createAssetLinking(supabaseClient, {
         linkedAssets: linkedAssets.map((asset) => asset.value),
         assetId: assetId,
@@ -152,7 +159,7 @@ const AssetLinkPanel = () => {
                   {...field}
                   placeholder="Search for an asset..."
                   data={childAssetOption}
-                  onChange={(value) => handleAddAsset(value || "")} // Add the selected asset to the linked list
+                  onChange={(value) => handleAddAsset(value || "")}
                 />
               )}
             />

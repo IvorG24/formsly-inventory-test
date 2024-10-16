@@ -1,7 +1,7 @@
 // Imports
 import {
+  checkIfOwnerOrAdmin,
   getAssetListFilterOptions,
-  getSecurityGroups,
 } from "@/backend/api/get";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import SecurityGroupDetailsPage from "@/components/AssetInventory/SecurityGroupPage/SecurityGroupDetailsPage";
@@ -12,23 +12,39 @@ import {
   EventTableRow,
   SecurityGroupData,
   SiteTableRow,
+  TeamGroupTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ userActiveTeam, supabaseClient, group }) => {
+  async ({
+    userActiveTeam,
+    supabaseClient,
+    securityGroupData,
+    user,
+    group,
+  }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
-
-      const securityGroupData = await getSecurityGroups(supabaseClient, {
-        groupId: group.team_group_id,
+      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
       });
 
+      if (!isOwnerOrAdmin) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
           ...data,
+          group,
           securityGroupData,
         },
       };
@@ -48,6 +64,7 @@ type Props = {
   categoryList: CategoryTableRow[];
   eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
+  group: TeamGroupTableRow;
 };
 const Page = ({
   siteList,
@@ -55,6 +72,7 @@ const Page = ({
   categoryList,
   eventList,
   securityGroupData,
+  group,
 }: Props) => {
   return (
     <>
@@ -63,6 +81,7 @@ const Page = ({
         url="/teamName/security-groups/[groupId]"
       />
       <SecurityGroupDetailsPage
+        group={group}
         securityGroupData={securityGroupData}
         siteList={siteList}
         departmentList={departmentList}

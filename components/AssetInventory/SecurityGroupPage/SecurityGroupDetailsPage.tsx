@@ -3,6 +3,7 @@ import {
   EventTableRow,
   SecurityGroupData,
   SiteTableRow,
+  TeamGroupTableRow,
 } from "@/utils/types";
 import { Container, Tabs, Text, Title } from "@mantine/core";
 import AssetsSecurityPanel from "./AssetsSecurityPanel";
@@ -13,6 +14,7 @@ type Props = {
   categoryList: CategoryTableRow[];
   eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
+  group: TeamGroupTableRow;
 };
 const SecurityGroupDetailsPage = ({
   siteList,
@@ -20,18 +22,16 @@ const SecurityGroupDetailsPage = ({
   categoryList,
   eventList,
   securityGroupData,
+  group,
 }: Props) => {
   return (
     <Container>
-      <Title order={2}>Edit Group: Viewer Group</Title>
+      <Title order={2}>{group.team_group_name} GROUP </Title>
 
       <Tabs defaultValue="assets">
         <Tabs.List>
           <Tabs.Tab value="assets">Assets</Tabs.Tab>
-          <Tabs.Tab value="inventory">Inventory</Tabs.Tab>
           <Tabs.Tab value="privileges">Privileges</Tabs.Tab>
-          <Tabs.Tab value="reports">Reports</Tabs.Tab>
-          <Tabs.Tab value="dashboard">Dashboard</Tabs.Tab>
           <Tabs.Tab value="admin_rights">Admin Rights</Tabs.Tab>
         </Tabs.List>
 
@@ -46,14 +46,9 @@ const SecurityGroupDetailsPage = ({
         </Tabs.Panel>
 
         {/* Placeholder Panels for Other Tabs */}
-        <Tabs.Panel value="inventory">
-          <Text>Inventory permissions will be here</Text>
-        </Tabs.Panel>
+
         <Tabs.Panel value="privileges">
           <Text>Privileges permissions will be here</Text>
-        </Tabs.Panel>
-        <Tabs.Panel value="reports">
-          <Text>Reports permissions will be here</Text>
         </Tabs.Panel>
         <Tabs.Panel value="dashboard">
           <Text>Dashboard permissions will be here</Text>

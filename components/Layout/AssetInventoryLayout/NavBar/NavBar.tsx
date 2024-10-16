@@ -1,3 +1,4 @@
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -5,9 +6,9 @@ import {
   Button,
   Group,
   Navbar as MantineNavbar,
-  NavLink,
   Stack,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks"; // Import Mantine's media query hook
 import {
   IconBriefcaseOff,
   IconBuilding,
@@ -25,17 +26,39 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { Dispatch, useState } from "react";
+import Navlink from "./NavLink";
 import SelectTeam from "./SelectTeam";
-
-const Navbar = () => {
+type Props = {
+  openNavbar: boolean;
+  setOpenNavbar: Dispatch<boolean>;
+};
+const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   const teamList = useTeamList();
   const router = useRouter();
   const activeTeam = useActiveTeam();
+  //   const teamMember = useUserTeamMember();
+
+  const securityGroup = useSecurityGroup();
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isSmallScreen = useMediaQuery("(max-width: 768px)");
+  const canAddAsset =
+    securityGroup?.asset?.permissions.find(
+      (permission) => permission.key === "addAssets"
+    )?.value ?? false;
+
+  const canView =
+    securityGroup?.asset?.permissions.find(
+      (permission) => permission.key === "viewOnly"
+    )?.value ?? false;
+
+  //   const isAdminOrOwner = ["OWNER", "ADMIN"].some((role) =>
+  //     teamMember?.team_member_role.includes(role)
+  //   );
+
   const navlinkData = [
-    {
+    canView && {
       id: "asset",
       icon: IconListDetails,
       label: "Asset",
@@ -122,7 +145,7 @@ const Navbar = () => {
   };
 
   const renderNavlinkData = navlinkData.map((link) => {
-    if (link.subLinks) {
+    if (link) {
       return (
         <Accordion.Item
           sx={(theme) => ({
@@ -170,25 +193,12 @@ const Navbar = () => {
           <Accordion.Panel>
             <Stack spacing={4} pl={4}>
               {link.subLinks.map((subLink) => (
-                <NavLink
+                <Navlink
                   key={subLink.id}
                   label={subLink.label}
                   onClick={() => handleNavlinkClick(subLink.href || "")}
                   icon={<subLink.icon size={20} />}
-                  styles={(theme) => ({
-                    root: {
-                      color:
-                        theme.colorScheme === "dark"
-                          ? theme.colors.gray[0]
-                          : theme.colors.blue[6],
-                      "&:hover": {
-                        backgroundColor:
-                          theme.colorScheme === "dark"
-                            ? theme.colors.dark[5]
-                            : theme.colors.blue[1],
-                      },
-                    },
-                  })}
+                  link={subLink.href || ""}
                 />
               ))}
             </Stack>
@@ -198,6 +208,10 @@ const Navbar = () => {
     }
     return null;
   });
+
+  if (isSmallScreen && !openNavbar) {
+    return null;
+  }
 
   return (
     <MantineNavbar
@@ -221,18 +235,25 @@ const Navbar = () => {
           </Group>
         ) : null}
         <Group>
-          <Button
-            ml={4}
-            onClick={() => {
-              router.push(
-                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
-              );
-            }}
-            leftIcon={<IconCirclePlus size={26} />}
-            variant="subtle"
-          >
-            {isCollapsed ? null : "Add Asset"}
-          </Button>
+          {canAddAsset && (
+            <Button
+              ml={4}
+              onClick={() => {
+                router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name
+                  )}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
+                );
+                if (isSmallScreen) {
+                  setOpenNavbar(false);
+                }
+              }}
+              leftIcon={<IconCirclePlus size={26} />}
+              variant="subtle"
+            >
+              {isCollapsed ? null : "Add Asset"}
+            </Button>
+          )}
         </Group>
         <Accordion
           chevron={isCollapsed ? null : <IconChevronDown size={14} />}

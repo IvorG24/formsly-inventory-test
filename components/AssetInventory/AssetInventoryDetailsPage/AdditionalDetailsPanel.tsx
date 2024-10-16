@@ -33,7 +33,14 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
             <td>
               <Text weight={500}>Cost</Text>
             </td>
-            <td>₱ {detail.inventory_request_cost || ""}</td>
+
+            <td>
+              ₱
+              {Number(detail.inventory_request_cost).toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </td>
           </tr>
         </tbody>
       </Table>

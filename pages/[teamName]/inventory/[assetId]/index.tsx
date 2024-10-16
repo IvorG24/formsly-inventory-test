@@ -2,7 +2,7 @@
 import { getAssetDetails } from "@/backend/api/get";
 import AssetInventoryDetailsPage from "@/components/AssetInventory/AssetInventoryDetailsPage/AssetInventoryDetailsPage";
 import Meta from "@/components/Meta/Meta";
-import { withActiveTeam } from "@/utils/server-side-protections";
+import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   InventoryEventRow,
   InventoryHistory,
@@ -10,13 +10,24 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, context }) => {
+export const getServerSideProps: GetServerSideProps = withActiveGroup(
+  async ({ supabaseClient, context, securityGroupData }) => {
     try {
       const assetData = await getAssetDetails(supabaseClient, {
         asset_request_id: context.query.assetId as string,
       });
-
+      const hasViewOnlyPersmissions = securityGroupData.asset.permissions.some(
+        (permission) =>
+          permission.key === "viewOnly" && permission.value === true
+      );
+      if (!hasViewOnlyPersmissions) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
           asset_details: assetData.asset_details,

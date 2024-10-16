@@ -2,12 +2,14 @@ import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryEventRow } from "@/utils/types";
 import { Text } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
+import { useState } from "react";
 
 type Props = {
   asset_event: InventoryEventRow[];
 };
 
 const EventPanel = ({ asset_event }: Props) => {
+  const [page, setPage] = useState(1);
   return (
     <>
       <DataTable
@@ -18,12 +20,14 @@ const EventPanel = ({ asset_event }: Props) => {
         }}
         withBorder
         idAccessor="inventory_event_id"
-        page={1}
+        page={page}
         totalRecords={asset_event.length}
         recordsPerPage={ROW_PER_PAGE}
-        records={asset_event}
-        fetching={false}
-        onPageChange={(page) => console.log(`Page changed to: ${page}`)} // Added
+        records={asset_event.slice(
+          (page - 1) * ROW_PER_PAGE,
+          page * ROW_PER_PAGE
+        )}
+        onPageChange={setPage}
         columns={[
           {
             accessor: "returnDate",

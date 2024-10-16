@@ -1,5 +1,6 @@
 import { getGroupList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { TeamGroupTableRow } from "@/utils/types";
@@ -35,6 +36,10 @@ type FormValues = {
 const SecurityGroupPage = () => {
   const activeTeam = useActiveTeam();
   const router = useRouter();
+  const teamMember = useUserTeamMember();
+  const isAdminOrOwner = ["OWNER", "ADMIN"].some((role) =>
+    teamMember?.team_member_role.includes(role)
+  );
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [currentTeamGroup, setCurrentTeamGroup] = useState<TeamGroupTableRow[]>(
@@ -115,7 +120,7 @@ const SecurityGroupPage = () => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="center">
             <TextInput
-              placeholder="Search by site name"
+              placeholder="Search by Group Name"
               {...register("search")}
               rightSection={
                 <ActionIcon size="xs" type="submit">
@@ -154,14 +159,15 @@ const SecurityGroupPage = () => {
               accessor: "actions",
               width: "30%",
               title: "Actions",
-              render: (department) => (
-                <Button
-                  variant="light"
-                  onClick={() => handleEditGroup(department.team_group_id)}
-                >
-                  Edit Group
-                </Button>
-              ),
+              render: (department) =>
+                isAdminOrOwner ? ( // Conditionally render the Edit button
+                  <Button
+                    variant="light"
+                    onClick={() => handleEditGroup(department.team_group_id)}
+                  >
+                    Edit Group
+                  </Button>
+                ) : null,
             },
           ]}
         />

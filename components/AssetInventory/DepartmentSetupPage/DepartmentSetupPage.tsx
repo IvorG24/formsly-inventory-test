@@ -148,7 +148,7 @@ const DepartmentSetupPage = () => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="center">
             <TextInput
-              placeholder="Search by site name"
+              placeholder="Search by department name"
               {...register("search")}
               rightSection={
                 <ActionIcon size="xs" type="submit">

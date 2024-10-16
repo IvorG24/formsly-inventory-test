@@ -6,12 +6,12 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   InventoryListType,
   OptionType,
-  SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
 import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
@@ -34,7 +34,6 @@ type Props = {
     label: string;
     value: string;
   }[];
-  securityGroupData: SecurityGroupData;
 };
 
 type FilterSelectedValuesType = {
@@ -55,12 +54,12 @@ const AssetListPage = ({
   departmentList,
   categoryList,
   tableColumnList,
-  securityGroupData,
 }: Props) => {
   const teamMemberList = useTeamMemberList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
+  const securityGroupData = useSecurityGroup();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
@@ -73,10 +72,10 @@ const AssetListPage = ({
       key: "inventory-request-list-filter",
       defaultValue: {
         search: "",
-        sites: securityGroupData.asset.filter.site || [],
+        sites: securityGroupData.asset.filter.site,
         locations: "",
-        department: securityGroupData.asset.filter.department || [],
-        category: securityGroupData.asset.filter.categories || [],
+        department: securityGroupData.asset.filter.department,
+        category: securityGroupData.asset.filter.category,
         status: "",
         assignedToPerson: [],
         assignedToSite: [],
@@ -166,10 +165,10 @@ const AssetListPage = ({
           status,
           assignedToPerson,
           assignedToSite,
-          department,
+          department: securityGroupData.asset.filter.department || department,
           locations,
-          sites,
-          category,
+          sites: securityGroupData.asset.filter.site || sites,
+          category: securityGroupData.asset.filter.category || category,
         }
       );
 

@@ -1,23 +1,25 @@
 import {
+  getActiveGroup,
   getAllTeamOfUser,
+  getSecurityGroups,
   getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
-
+import { useSecurityAction } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
 import { TeamMemberType, TeamTableRow } from "@/utils/types";
-import { AppShell, useMantineTheme } from "@mantine/core";
+import { AppShell, LoadingOverlay, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Header from "../AppLayout/Header/Header";
 import Navbar from "./NavBar/NavBar";
-
 type LayoutProps = {
   children: React.ReactNode;
 };
@@ -33,7 +35,9 @@ const Layout = ({ children }: LayoutProps) => {
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
     useUserActions();
-
+  const { setSecurityGroup } = useSecurityAction();
+  const [openNavbar, setOpenNavbar] = useState(false);
+  const [isLoading, setIsloading] = useState(false);
   const fetchAllTeamMembers = async (teamId: string) => {
     const allTeamMembers: TeamMemberType[] = [];
     let offset = 0;
@@ -58,6 +62,7 @@ const Layout = ({ children }: LayoutProps) => {
     const fetchInitialData = async () => {
       if (!userId) return;
       try {
+        setIsloading(true);
         // fetch all the team where the user is a part of
         const data = await getAllTeamOfUser(supabaseClient, {
           userId: userId,
@@ -95,6 +100,22 @@ const Layout = ({ children }: LayoutProps) => {
           if (teamMember) {
             setUserTeamMember(teamMember);
           }
+          const userWithGroup = await getActiveGroup(supabaseClient, {
+            userId: user.user_id,
+          });
+          if (!userWithGroup) {
+            return {
+              redirect: {
+                destination: "/500",
+                permanent: false,
+              },
+            };
+          }
+
+          const securityGroupData = await getSecurityGroups(supabaseClient, {
+            groupId: userWithGroup.team_group_id,
+          });
+          setSecurityGroup(securityGroupData);
         }
 
         // set user avatar and initials
@@ -107,6 +128,7 @@ const Layout = ({ children }: LayoutProps) => {
           const teamMemberList = await fetchAllTeamMembers(activeTeamId);
           setTeamMemberStore(teamMemberList);
         }
+        setIsloading(false);
       } catch (e) {
         console.error(e);
         notifications.show({
@@ -132,8 +154,15 @@ const Layout = ({ children }: LayoutProps) => {
         },
       }}
       navbarOffsetBreakpoint="sm"
-      navbar={<Navbar />}
+      navbar={<Navbar openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />}
+      header={
+        <Header
+          openNavbar={openNavbar}
+          setOpenNavbar={() => setOpenNavbar((o) => !o)}
+        />
+      }
     >
+      <LoadingOverlay visible={isLoading} />
       {children}
     </AppShell>
   );

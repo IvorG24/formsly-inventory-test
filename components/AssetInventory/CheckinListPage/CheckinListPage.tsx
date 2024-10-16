@@ -6,12 +6,13 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   InventoryListType,
   OptionType,
   SiteTableRow,
-  TeamMemberWithUserType,
 } from "@/utils/types";
 import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -25,7 +26,6 @@ import AssetListTable from "../AssetListPage/AssetListTable";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
@@ -49,7 +49,6 @@ export type FilterSelectedValuesType = {
 };
 
 const AssetListPage = ({
-  teamMemberList,
   userId,
   siteList,
   departmentList,
@@ -59,6 +58,8 @@ const AssetListPage = ({
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
+  const teamMemberList = useTeamMemberList();
+  const securityGroup = useSecurityGroup();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
@@ -68,14 +69,14 @@ const AssetListPage = ({
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<FilterSelectedValuesType>({
-      key: "request-list-filter",
+      key: "check-in-inventory-request-list-filter",
       defaultValue: {
         search: "",
-        sites: [],
+        sites: securityGroup.asset.filter.site,
         locations: "",
-        department: [],
-        category: [],
-        status: "",
+        department: securityGroup.asset.filter.department,
+        category: securityGroup.asset.filter.category,
+        status: "AVAILABLE",
         assignedToPerson: [],
         assignedToSite: [],
         isAscendingSort: false,
@@ -105,7 +106,7 @@ const AssetListPage = ({
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
-    key: "inventory-list-checkin--table-column-filter",
+    key: "inventory-list-checkin-table-column-filter",
     defaultValue: tableColumnList
       .filter(
         (column) =>
@@ -161,10 +162,10 @@ const AssetListPage = ({
           status: "AVAILABLE",
           assignedToPerson,
           assignedToSite,
-          department,
+          department: securityGroup.asset.filter.department || department,
           locations,
-          sites,
-          category,
+          sites: securityGroup.asset.filter.site || sites,
+          category: securityGroup.asset.filter.category || category,
         }
       );
 

@@ -1,3 +1,4 @@
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import {
   CategoryTableRow,
   InventoryListType,
@@ -84,8 +85,8 @@ const AssetListFilter = ({
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null); // State to track selected event ID
-
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const securityGroup = useSecurityGroup();
   const handleSelectChange = (value: string | null) => {
     if (selectedEventId === value) {
       setSelectedEventId(null);
@@ -96,6 +97,11 @@ const AssetListFilter = ({
       setSelectedEventId(value);
     }
   };
+  const eventSecurity = securityGroup.asset.filter.event;
+
+  const filteredEvents = eventOptions.filter((event) =>
+    eventSecurity.includes(event.label)
+  );
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -231,7 +237,7 @@ const AssetListFilter = ({
           {selectedRow.length > 0 && inventoryList && (
             <Select
               placeholder="More Actions"
-              data={eventOptions.filter((option) => {
+              data={filteredEvents.filter((option) => {
                 const selectedItems = inventoryList.filter((row) =>
                   selectedRow.includes(row.inventory_request_id)
                 );
@@ -266,28 +272,31 @@ const AssetListFilter = ({
 
       {isFilter && (
         <Flex gap="sm" wrap="wrap" mb="sm">
-          <Controller
-            control={control}
-            name="sites"
-            defaultValue={localFilter.sites}
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                data={siteListchoices}
-                placeholder="Sites"
-                ref={siteRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (!siteRefFocused) handleFilterChange("sites", value);
-                }}
-                onDropdownClose={() => handleFilterChange("sites", value)}
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
+          {securityGroup.asset.filter.site.length < 0 && (
+            <Controller
+              control={control}
+              name="sites"
+              defaultValue={localFilter.sites}
+              render={({ field: { value, onChange } }) => (
+                <MultiSelect
+                  data={siteListchoices}
+                  placeholder="Sites"
+                  ref={siteRef}
+                  value={value}
+                  onChange={(value) => {
+                    onChange(value);
+                    if (!siteRefFocused) handleFilterChange("sites", value);
+                  }}
+                  onDropdownClose={() => handleFilterChange("sites", value)}
+                  {...inputFilterProps}
+                  sx={{ flex: 1 }}
+                  miw={250}
+                  maw={320}
+                />
+              )}
+            />
+          )}
+
           {type === "asset" && (
             <Controller
               control={control}
@@ -314,52 +323,56 @@ const AssetListFilter = ({
               )}
             />
           )}
-
-          <Controller
-            control={control}
-            name="category"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                data={categoryListChoices}
-                placeholder="category"
-                ref={categoryref}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (categoryRefFocused) handleFilterChange("category", value);
-                }}
-                onDropdownClose={() => handleFilterChange("category", value)}
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="department"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Department"
-                ref={departmentRef}
-                data={departmentListChoices}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (departmentRefFocused)
-                    handleFilterChange("department", value);
-                }}
-                onDropdownClose={() => handleFilterChange("department", value)}
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-
+          {securityGroup.asset.filter.category.length < 0 && (
+            <Controller
+              control={control}
+              name="category"
+              render={({ field: { value, onChange } }) => (
+                <MultiSelect
+                  data={categoryListChoices}
+                  placeholder="category"
+                  ref={categoryref}
+                  value={value}
+                  onChange={(value) => {
+                    onChange(value);
+                    if (categoryRefFocused)
+                      handleFilterChange("category", value);
+                  }}
+                  onDropdownClose={() => handleFilterChange("category", value)}
+                  {...inputFilterProps}
+                  sx={{ flex: 1 }}
+                  miw={250}
+                  maw={320}
+                />
+              )}
+            />
+          )}
+          {securityGroup.asset.filter.department.length < 0 && (
+            <Controller
+              control={control}
+              name="department"
+              render={({ field: { value, onChange } }) => (
+                <MultiSelect
+                  placeholder="Department"
+                  ref={departmentRef}
+                  data={departmentListChoices}
+                  value={value}
+                  onChange={(value) => {
+                    onChange(value);
+                    if (departmentRefFocused)
+                      handleFilterChange("department", value);
+                  }}
+                  onDropdownClose={() =>
+                    handleFilterChange("department", value)
+                  }
+                  {...inputFilterProps}
+                  sx={{ flex: 1 }}
+                  miw={250}
+                  maw={320}
+                />
+              )}
+            />
+          )}
           <Controller
             control={control}
             name="assignedToPerson"

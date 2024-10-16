@@ -1,22 +1,14 @@
 // Imports
-import {
-  getAssetListFilterOptions,
-  getColumnList,
-  getSecurityGroups,
-} from "@/backend/api/get";
+import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
 import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
-import {
-  CategoryTableRow,
-  SecurityGroupData,
-  SiteTableRow,
-} from "@/utils/types";
+import { CategoryTableRow, SiteTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ user, userActiveTeam, supabaseClient, group }) => {
+  async ({ user, userActiveTeam, supabaseClient, securityGroupData }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
@@ -24,9 +16,19 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 
       const fields = await getColumnList(supabaseClient);
 
-      const securityGroupData = await getSecurityGroups(supabaseClient, {
-        groupId: group.team_group_id,
-      });
+      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
+        (permission) =>
+          permission.key === "viewOnly" && permission.value === true
+      );
+
+      if (!hasViewOnlyPermission) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
           ...data,
@@ -55,7 +57,6 @@ type Props = {
     value: string;
     label: string;
   }[];
-  securityGroupData: SecurityGroupData;
 };
 
 const Page = ({
@@ -64,13 +65,11 @@ const Page = ({
   departmentList,
   categoryList,
   fields,
-  securityGroupData,
 }: Props) => {
   return (
     <>
       <Meta description="Asset List Page" url="/teamName/inventory" />
       <AssetListPage
-        securityGroupData={securityGroupData}
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}

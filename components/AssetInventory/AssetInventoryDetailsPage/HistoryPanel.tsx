@@ -22,7 +22,7 @@ const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
         }}
         withBorder
         idAccessor="inventory_history_id"
-        page={page} // Updated to use state
+        page={page}
         totalRecords={historyDetails.length}
         recordsPerPage={ROW_PER_PAGE}
         records={historyDetails.slice(

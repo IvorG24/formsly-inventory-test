@@ -61,8 +61,8 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      category_name: categoryOptionList[0].label,
-      category_id: categoryOptionList[0].value,
+      category_name: "",
+      category_id: "",
     },
   });
 
@@ -74,7 +74,7 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   ) => {
     try {
       const { category_id } = getValues();
-      const categoryId = value ? value : category_id;
+      const categoryId = value ? value : category_id || "";
 
       const data = await getSubCategoryList(supabaseClient, {
         page,

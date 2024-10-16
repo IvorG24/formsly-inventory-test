@@ -22,7 +22,9 @@ const DepartmentDrawer = ({ isOpen, close, handleDepartmentSubmit }: Props) => {
       position="right"
       overlayProps={{ opacity: 0.5, blur: 4 }}
       opened={isOpen}
-      onClose={close}
+      onClose={() => {
+        reset(), close();
+      }}
     >
       <form onSubmit={handleSubmit(handleDepartmentSubmitForm)}>
         <Stack spacing={8}>

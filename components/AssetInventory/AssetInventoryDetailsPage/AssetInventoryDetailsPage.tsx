@@ -1,4 +1,5 @@
 import { getAssetDetails, getEventDetails } from "@/backend/api/get";
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
@@ -11,6 +12,7 @@ import {
   OptionType,
 } from "@/utils/types";
 import {
+  Box,
   Button,
   Container,
   Group,
@@ -87,7 +89,11 @@ const AssetInventoryDetailsPage = ({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assetDetails, setAssetDetails] =
     useState<InventoryListType[]>(initialDetails);
-
+  const securityGroup = useSecurityGroup();
+  const canEdit =
+    securityGroup?.asset?.permissions?.find(
+      (permission) => permission.key === "editAssets"
+    )?.value === true;
   useEffect(() => {
     const getEventOptions = async () => {
       if (!activeTeam.team_id) return;
@@ -95,9 +101,15 @@ const AssetInventoryDetailsPage = ({
         supabaseClient,
         activeTeam.team_id
       );
+      const eventSecurity = securityGroup.asset.filter.event;
+
+      const filteredEvents = eventOptions.filter((event) =>
+        eventSecurity.includes(event.event_name)
+      );
+
       const assetStatus = assetDetails[0]?.inventory_request_status;
 
-      const filteredEventOptions = eventOptions.filter((event) => {
+      const filteredEventOptions = filteredEvents.filter((event) => {
         if (assetStatus === "CHECKED OUT" && event.event_name === "Check Out") {
           return false;
         }
@@ -153,22 +165,23 @@ const AssetInventoryDetailsPage = ({
 
       <Paper shadow="lg" p="lg">
         {assetDetails.map((detail, idx) => (
-          <div key={idx}>
+          <Box key={idx}>
             <Group position="apart" mb="md">
-              <Title order={3}>
-                {detail.inventory_request_name || "Unknown Asset Name"}
-              </Title>
+              <Title order={3}>{detail.inventory_request_name}</Title>
               <Group>
-                <Button
-                  onClick={() => {
-                    router.push(
-                      `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_id}/edit`
-                    );
-                  }}
-                  rightIcon={<IconEdit size={16} />}
-                >
-                  Edit Asset
-                </Button>
+                {canEdit && (
+                  <Button
+                    onClick={() => {
+                      router.push(
+                        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_id}/edit`
+                      );
+                    }}
+                    rightIcon={<IconEdit size={16} />}
+                  >
+                    Edit Asset
+                  </Button>
+                )}
+
                 <Menu>
                   <Menu.Target>
                     <Button rightIcon={<IconDotsVertical size={16} />}>
@@ -272,7 +285,7 @@ const AssetInventoryDetailsPage = ({
                 <HistoryPanel asset_history={asset_history} />
               </Tabs.Panel>
             </Tabs>
-          </div>
+          </Box>
         ))}
       </Paper>
     </Container>

@@ -64,6 +64,7 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
+  securityGroupsFormValues,
   ServiceForm,
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
@@ -2742,16 +2743,16 @@ export const updateAssetRequest = async (
     responseValues,
   };
 
-    const { error } = await supabaseClient
-      .rpc("update_asset", {
-        input_data: requestData,
-      })
-      .select()
-      .single();
+  const { error } = await supabaseClient
+    .rpc("update_asset", {
+      input_data: requestData,
+    })
+    .select()
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return requestId;
+  return requestId;
 };
 export const getItemOption = async (
   supabaseClient: SupabaseClient<Database>,
@@ -2807,4 +2808,20 @@ export const createAssetLinking = async (
   const results = await Promise.all(createLink);
 
   return results;
+};
+
+export const updateSecurityGroup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    securityGroupsFormValues: securityGroupsFormValues;
+    groupId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("update_security_group", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data;
 };

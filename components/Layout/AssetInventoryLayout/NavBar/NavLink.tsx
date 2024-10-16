@@ -23,7 +23,7 @@ const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
       fw={400}
       styles={{
         root: {
-          backgroundColor: `${pathname === link ? "#D0EBFF" : "transparent"}`,
+          backgroundColor: `${pathname === link ? "#D0EBFF" : "D0EBFF"}`,
           color: `${pathname === link ? "#1864AB" : "#212529"}`,
         },
         inner: {

@@ -3,16 +3,12 @@ import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
 import CheckoutListPage from "@/components/AssetInventory/CheckoutListPage/CheckoutListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
-import { withActiveTeam } from "@/utils/server-side-protections";
-import {
-  CategoryTableRow,
-  SiteTableRow,
-  TeamMemberWithUserType,
-} from "@/utils/types";
+import { withActiveGroup } from "@/utils/server-side-protections";
+import { CategoryTableRow, SiteTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, userActiveTeam, supabaseClient }) => {
+export const getServerSideProps: GetServerSideProps = withActiveGroup(
+  async ({ user, userActiveTeam, supabaseClient, securityGroupData }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
@@ -20,10 +16,24 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
       const fields = await getColumnList(supabaseClient);
 
+      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
+        (permission) =>
+          permission.key === "viewOnly" && permission.value === true
+      );
+
+      if (!hasViewOnlyPermission) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
           ...data,
           fields,
+          securityGroupData,
           userId: user.id,
         },
       };
@@ -39,7 +49,6 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  teamMemberList: TeamMemberWithUserType[];
   userId: string;
   siteList: SiteTableRow[];
   departmentList: Department[];
@@ -52,7 +61,6 @@ type Props = {
 
 const Page = ({
   userId,
-  teamMemberList,
   siteList,
   departmentList,
   categoryList,
@@ -69,7 +77,6 @@ const Page = ({
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
-        teamMemberList={teamMemberList}
         userId={userId}
       />
     </>

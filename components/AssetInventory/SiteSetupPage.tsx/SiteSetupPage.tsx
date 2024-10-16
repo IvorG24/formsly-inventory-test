@@ -178,7 +178,9 @@ const SiteSetupPage = () => {
       <DisableModal
         setCurrentSiteList={setCurrentSiteList}
         typeId={siteId}
-        close={() => setModalOpened(false)}
+        close={() => {
+          setModalOpened(false);
+        }}
         opened={modalOpened}
         type="site"
       />
