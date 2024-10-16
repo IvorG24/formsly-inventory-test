@@ -76,7 +76,13 @@ const HeaderMenu = () => {
         </Menu>
       )} */}
 
-      <Menu shadow="md" width={200} position="bottom-end" withArrow>
+      <Menu
+        shadow="md"
+        width={200}
+        position="bottom-end"
+        withArrow
+        withinPortal
+      >
         <Menu.Target data-cy="header-account-button">
           <ActionIcon>
             <Avatar

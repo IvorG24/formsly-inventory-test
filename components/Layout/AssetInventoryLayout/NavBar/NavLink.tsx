@@ -7,11 +7,12 @@ type Props = {
   label: string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   isCollapsed?: boolean;
-  link: string;
+  link?: string;
 };
 
 const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
   const pathname = usePathname();
+
   return (
     <Button
       onClick={onClick}
@@ -21,15 +22,21 @@ const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
       mih={50}
       mah={50}
       fw={400}
-      styles={{
+      styles={(theme) => ({
         root: {
-          backgroundColor: `${pathname === link ? "#D0EBFF" : "D0EBFF"}`,
-          color: `${pathname === link ? "#1864AB" : "#212529"}`,
+          backgroundColor:
+            pathname === link ? theme.colors.blue[1] : "transparent",
+          color:
+            pathname === link
+              ? theme.colors.blue[7]
+              : theme.colorScheme === "dark"
+                ? theme.colors.gray[0]
+                : theme.colors.dark[7],
         },
         inner: {
           justifyContent: "flex-start",
         },
-      }}
+      })}
     >
       {isCollapsed ? null : label}
     </Button>

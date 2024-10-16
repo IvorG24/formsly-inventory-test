@@ -3,9 +3,11 @@ import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
+  Box,
   Button,
   Group,
   Navbar as MantineNavbar,
+  Menu,
   Stack,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks"; // Import Mantine's media query hook
@@ -22,6 +24,7 @@ import {
   IconLocation,
   IconPuzzle,
   IconSettings,
+  IconSettingsUp,
   IconUserCancel,
   IconUserPlus,
 } from "@tabler/icons-react";
@@ -135,6 +138,14 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           id: "databases",
           label: "Databases",
           icon: IconDatabase,
+          subLinks: [
+            {
+              id: "asset-setup",
+              label: "Asset Setup",
+              icon: IconSettingsUp,
+              href: `/${formattedTeamName}/inventory/asset-setup`,
+            },
+          ],
         },
       ],
     },
@@ -191,16 +202,64 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
             {link.label}
           </Accordion.Control>
           <Accordion.Panel>
-            <Stack spacing={4} pl={4}>
-              {link.subLinks.map((subLink) => (
-                <Navlink
-                  key={subLink.id}
-                  label={subLink.label}
-                  onClick={() => handleNavlinkClick(subLink.href || "")}
-                  icon={<subLink.icon size={20} />}
-                  link={subLink.href || ""}
-                />
-              ))}
+            <Stack spacing={4}>
+              {link.subLinks?.map((subLink) => {
+                if (subLink.id === "databases") {
+                  return (
+                    <Box key={subLink.id} h="fit-content">
+                      <Menu withinPortal position="right-start">
+                        <Menu.Target>
+                          <Button
+                            variant="subtle"
+                            leftIcon={<subLink.icon size={20} />}
+                            fw={400}
+                            fullWidth
+                            mih={50}
+                            mah={50}
+                            styles={(theme) => ({
+                              root: {
+                                color:
+                                  theme.colorScheme === "dark"
+                                    ? theme.colors.gray[0]
+                                    : theme.colors.blue[7],
+                              },
+                              inner: {
+                                justifyContent: "flex-start", // Align text and icon to the left
+                              },
+                            })}
+                          >
+                            {subLink.label}
+                          </Button>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <Menu.Label>Database Actions</Menu.Label>
+                          {subLink.subLinks?.map((nestedSubLink) => (
+                            <Menu.Item
+                              key={nestedSubLink.id}
+                              icon={<nestedSubLink.icon size={20} />}
+                              onClick={() =>
+                                handleNavlinkClick(nestedSubLink.href || "")
+                              }
+                            >
+                              {nestedSubLink.label}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Dropdown>
+                      </Menu>
+                    </Box>
+                  );
+                }
+
+                return (
+                  <Navlink
+                    key={subLink.id}
+                    label={subLink.label}
+                    onClick={() => handleNavlinkClick(subLink.href || "")}
+                    icon={<subLink.icon size={20} />}
+                    link={subLink.href || ""}
+                  />
+                );
+              })}
             </Stack>
           </Accordion.Panel>
         </Accordion.Item>
@@ -215,7 +274,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
 
   return (
     <MantineNavbar
-      width={{ base: isCollapsed ? 80 : 280 }}
+      width={{ base: isSmallScreen ? "100%" : isCollapsed ? 80 : 280 }}
       styles={(theme) => ({
         root: {
           background:
@@ -226,18 +285,16 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
         },
       })}
       onMouseEnter={() => setIsCollapsed(false)}
-      onMouseLeave={() => setIsCollapsed(true)}
+      onMouseLeave={() =>
+        isSmallScreen ? setIsCollapsed(false) : setIsCollapsed(true)
+      }
     >
       <Stack p={16} spacing={12}>
-        {teamList.length > 0 ? (
-          <Group>
-            <SelectTeam isCollapsed={isCollapsed} />
-          </Group>
-        ) : null}
+        {teamList.length > 0 ? <SelectTeam isCollapsed={isCollapsed} /> : null}
         <Group>
           {canAddAsset && (
             <Button
-              ml={4}
+              variant="subtle"
               onClick={() => {
                 router.push(
                   `/${formatTeamNameToUrlKey(
@@ -249,7 +306,35 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                 }
               }}
               leftIcon={<IconCirclePlus size={26} />}
-              variant="subtle"
+              fw={400}
+              ml={4}
+              fullWidth
+              mih={50}
+              mah={50}
+              styles={(theme) => ({
+                root: {
+                  "&:hover": {
+                    backgroundColor:
+                      theme.colorScheme === "dark"
+                        ? theme.colors.dark[5]
+                        : theme.colors.blue[0],
+                    color:
+                      theme.colorScheme === "dark"
+                        ? theme.colors.blue[2]
+                        : theme.colors.blue[7], // Set text color on hover
+                  },
+                  "&[data-active]": {
+                    backgroundColor: "transparent",
+                    color:
+                      theme.colorScheme === "dark"
+                        ? theme.colors.gray[5]
+                        : theme.colors.blue[7],
+                  },
+                },
+                inner: {
+                  justifyContent: "flex-start", // Align text and icon to the left
+                },
+              })}
             >
               {isCollapsed ? null : "Add Asset"}
             </Button>

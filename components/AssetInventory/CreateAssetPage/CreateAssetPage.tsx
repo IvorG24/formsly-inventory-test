@@ -13,6 +13,7 @@ import {
   RequestResponseTableRow,
 } from "@/utils/types";
 import {
+  Box,
   Button,
   Container,
   LoadingOverlay,
@@ -265,15 +266,13 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         Create Asset
       </Title>
       <Space h="md" />
-      <RequestFormDetails formDetails={formDetails} />
-      <Space h="md" />
-      <Paper>
         <FormProvider {...requestFormMethods}>
           <form onSubmit={handleSubmit(handleCreateRequest)}>
             <Stack spacing="xl">
+              <RequestFormDetails formDetails={formDetails} />
               {formSections.map((section, idx) => {
                 return (
-                  <Stack key={section.id}>
+                  <Box key={section.id}>
                     <InventoryFormSection
                       key={section.section_id}
                       section={section}
@@ -285,7 +284,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                         onSiteNameChange: handleOnSiteNameChange,
                       }}
                     />
-                  </Stack>
+                  </Box>
                 );
               })}
 
@@ -293,7 +292,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
             </Stack>
           </form>
         </FormProvider>
-      </Paper>
+
     </Container>
   );
 };

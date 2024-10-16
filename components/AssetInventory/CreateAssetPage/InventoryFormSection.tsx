@@ -77,7 +77,7 @@ const InventoryFormSection = ({
     );
   }
   return (
-    <Paper p="xl">
+    <Paper p="xl" shadow="xs">
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}
@@ -98,7 +98,7 @@ const InventoryFormSection = ({
         )}
       </Group>
       <Space />
-      <Stack mt="xl">
+      <Stack mt="xl" spacing="lg">
         {section.section_field.map((field, idx) => {
           const isLoading = Boolean(
             loadingFieldList?.find(

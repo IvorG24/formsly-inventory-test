@@ -174,6 +174,7 @@ const SelectTeam = ({ isCollapsed }: Props) => {
         <Avatar
           maw={46}
           miw={46}
+          ml={4}
           src={activeTeam.team_logo}
           color={getAvatarColor(Number(`${activeTeam.team_id.charCodeAt(0)}`))}
         >
