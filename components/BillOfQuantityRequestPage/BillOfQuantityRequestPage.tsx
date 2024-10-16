@@ -4,6 +4,7 @@ import {
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
+import { insertError } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
   cancelRequest,
@@ -18,7 +19,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraLRFRequisitionPayload,
@@ -447,6 +448,15 @@ const BillOfQuantityRequestPage = ({
         message: `Error: ${errorMessage}`,
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
       return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);

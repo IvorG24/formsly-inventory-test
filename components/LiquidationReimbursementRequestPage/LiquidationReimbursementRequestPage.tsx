@@ -5,6 +5,7 @@ import {
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
+import { insertError } from "@/backend/api/post";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
@@ -23,7 +24,7 @@ import {
   ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
   formatDate,
 } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraLRFRequisitionPayload,
@@ -406,8 +407,12 @@ const LiquidationReimbursementRequestPage = ({
         throw new Error("Error fetching Jira project data.");
       }
 
+      const isPED = selectedDepartment === "Plants and Equipment";
+
       const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=27&requestType=406",
+        `/api/jira/get-form?serviceDeskId=${isPED ? "27" : "23"}&requestType=${
+          isPED ? "406" : "367"
+        }`,
         {
           method: "GET",
           headers: {
@@ -421,9 +426,29 @@ const LiquidationReimbursementRequestPage = ({
       if (!fields) {
         throw new Error("Jira form is not defined.");
       }
-      const departmentList = fields["469"].choices;
+
+      let department = selectedDepartment;
+
       const typeList = fields["442"].choices;
       const workingAdvanceList = fields["445"].choices;
+
+      if (!isPED) {
+        const departmentList = fields["469"].choices;
+        const departmentMatch = departmentList.find(
+          (departmentItem: { id: string; name: string }) =>
+            departmentItem.name.toLowerCase() ===
+            selectedDepartment.toLowerCase()
+        );
+
+        if (!departmentMatch?.id) {
+          notifications.show({
+            message: "Department is undefined.",
+            color: "red",
+          });
+          return { jiraTicketId: "", jiraTicketLink: "" };
+        }
+        department = departmentMatch.id;
+      }
 
       const requestDetails = request.request_form.form_section[0]
         .section_field as SectionField;
@@ -459,17 +484,13 @@ const LiquidationReimbursementRequestPage = ({
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
-      const departmentId = departmentList.find(
-        (departmentItem: { id: string; name: string }) =>
-          departmentItem.name.toLowerCase() === selectedDepartment.toLowerCase()
-      );
 
-      if (!typeOfRequestId || !departmentId) {
+      if (!typeOfRequestId) {
         notifications.show({
-          message: "Department or type of request is undefined.",
+          message: "Type of request is undefined.",
           color: "red",
         });
-        return { success: false, data: null };
+        return { jiraTicketId: "", jiraTicketLink: "" };
       }
 
       const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
@@ -481,7 +502,7 @@ const LiquidationReimbursementRequestPage = ({
         requestor: requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: departmentId.id,
+        department,
         purpose,
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
@@ -489,7 +510,6 @@ const LiquidationReimbursementRequestPage = ({
         ticketId,
         amount,
       });
-
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
@@ -512,6 +532,15 @@ const LiquidationReimbursementRequestPage = ({
         message: `Error: ${errorMessage}`,
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
       return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);

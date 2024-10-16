@@ -327,7 +327,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       } = parentWavRequest;
 
       let approvedOfficialBusiness = "";
-
       const requestSectionFieldList =
         wavRequest.request_form.form_section[1].section_field;
 
@@ -340,6 +339,14 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       );
       const isForOfficialBusiness = Boolean(
         safeParse(requestSectionFieldList[8].field_response[0].request_response)
+      );
+
+      const isChargedToProject = Boolean(
+        safeParse(
+          requestSectionFieldList[10].field_response[0]
+            ? requestSectionFieldList[10].field_response[0].request_response
+            : ""
+        )
       );
 
       if (isForOfficialBusiness) {
@@ -359,6 +366,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         isForOfficialBusiness,
         approvedOfficialBusiness,
         department,
+        isChargedToProject,
       });
 
       const jiraTicket = await createJiraTicket({
@@ -383,6 +391,15 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         message: `Error: ${errorMessage}`,
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
       return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);

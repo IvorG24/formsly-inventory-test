@@ -135,7 +135,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
   ) => {
     try {
       if (!questionnaireId) return;
-      if (!teamGroup.includes("HUMAN RESOURCES")) return;
+      if (
+        !teamGroup.some((group) =>
+          ["HUMAN RESOURCES", "HUMAN RESOURCES VIEWER"].includes(group)
+        )
+      )
+        return;
       if (!teamMember) return;
       setIsLoading(true);
 
@@ -162,7 +167,12 @@ const TechnicalAssessmentCreateQuestionPage = ({
   const handleUpdateQuestion = async (data: Section, questionIndex: number) => {
     try {
       if (!requestorProfile || !teamMember) return;
-      if (!teamGroup.includes("HUMAN RESOURCES")) return;
+      if (
+        !teamGroup.some((group) =>
+          ["HUMAN RESOURCES", "HUMAN RESOURCES VIEWER"].includes(group)
+        )
+      )
+        return;
 
       const trimmedQuestion = data.question.trim().toLowerCase();
       if (trimmedQuestion === "") {
