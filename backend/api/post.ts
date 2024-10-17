@@ -61,6 +61,7 @@ import {
   MemoTableRow,
   NotificationTableInsert,
   OtherExpensesTypeTableInsert,
+  permissionsFormValues,
   QuestionOption,
   ReferenceMemoType,
   RequestResponseTableInsert,
@@ -2815,7 +2816,8 @@ export const createAssetLinking = async (
 export const updateSecurityGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    securityGroupsFormValues: securityGroupsFormValues;
+    securityGroupsFormValues?: securityGroupsFormValues;
+    permissionsFormValues?: permissionsFormValues;
     groupId: string;
   }
 ) => {

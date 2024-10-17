@@ -2775,7 +2775,7 @@ export type updateTypeDate = {
   type_description?: string;
 };
 
-export type SecurityGroupData = {
+export type SecurityGroupData = permissionsFormValues & {
   asset: {
     permissions: { key: string; value: boolean }[];
     filter: {
@@ -2796,6 +2796,22 @@ export type securityGroupsFormValues = {
   department: string[];
   category: string[];
   event: string[];
+};
+export type permissions = {
+  view: boolean;
+  add: boolean;
+  edit: boolean;
+  delete: boolean;
+};
+export type permissionsFormValues = {
+  privileges: {
+    site: permissions;
+    location: permissions;
+    category: permissions;
+    subCategory: permissions;
+    department: permissions;
+    customField: permissions;
+  };
 };
 
 export type customFieldFormValues = {

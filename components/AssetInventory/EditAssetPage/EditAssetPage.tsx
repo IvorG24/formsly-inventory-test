@@ -15,7 +15,6 @@ import {
   Button,
   Container,
   LoadingOverlay,
-  Paper,
   Space,
   Stack,
   Title,
@@ -245,33 +244,32 @@ const EditAssetPage = ({ form, formslyFormName = "" }: Props) => {
       <Space h="md" />
       <RequestFormDetails formDetails={formDetails} />
       <Space h="md" />
-      <Paper>
-        <FormProvider {...requestFormMethods}>
-          <form onSubmit={handleSubmit(handleUpdateRequest)}>
-            <Stack spacing="xl">
-              {formSections.map((section, idx) => {
-                return (
-                  <Box key={section.id}>
-                    <InventoryFormSection
-                      key={section.section_id}
-                      section={section}
-                      sectionIndex={idx}
-                      onRemoveSection={handleRemoveSection}
-                      formslyFormName={formslyFormName}
-                      assetFormMethods={{
-                        onCategoryNameChange: handleOnCategoryNameChange,
-                        onSiteNameChange: handleOnSiteNameChange,
-                      }}
-                    />
-                  </Box>
-                );
-              })}
 
-              <Button type="submit">Submit</Button>
-            </Stack>
-          </form>
-        </FormProvider>
-      </Paper>
+      <FormProvider {...requestFormMethods}>
+        <form onSubmit={handleSubmit(handleUpdateRequest)}>
+          <Stack spacing="xl">
+            {formSections.map((section, idx) => {
+              return (
+                <Box key={section.id}>
+                  <InventoryFormSection
+                    key={section.section_id}
+                    section={section}
+                    sectionIndex={idx}
+                    onRemoveSection={handleRemoveSection}
+                    formslyFormName={formslyFormName}
+                    assetFormMethods={{
+                      onCategoryNameChange: handleOnCategoryNameChange,
+                      onSiteNameChange: handleOnSiteNameChange,
+                    }}
+                  />
+                </Box>
+              );
+            })}
+
+            <Button type="submit">Submit</Button>
+          </Stack>
+        </form>
+      </FormProvider>
     </Container>
   );
 };

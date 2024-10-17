@@ -1,5 +1,6 @@
 import { getInventoryFormDetails, getLocationOption } from "@/backend/api/get";
 import { updateEvent } from "@/backend/api/update";
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -45,7 +46,7 @@ const EventFormModal = ({
   setSelectedEventId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  //   const securityGroup = useSecurityGroup();
+  const securityGroup = useSecurityGroup();
   const teamMember = useUserTeamMember();
   const requestFormMethods = useForm<InventoryFormValues>();
   const [opened, setOpened] = useState(true);
@@ -61,8 +62,19 @@ const EventFormModal = ({
     name: "sections",
   });
 
-  const onSubmit = async (data: InventoryFormValues) => {
+  const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
+      const formValidation = securityGroup.asset.filter.event.includes(
+        `${formData?.form_name}`
+      );
+
+      if (!formValidation) {
+        notifications.show({
+          message: "Action not allowed",
+          color: "red",
+        });
+      }
+
       await updateEvent(supabaseClient, {
         updateResponse: data,
         selectedRow,
@@ -91,7 +103,16 @@ const EventFormModal = ({
         const params = { eventId, userId };
 
         const form = await getInventoryFormDetails(supabaseClient, params);
+        const formValidation = securityGroup.asset.filter.event.includes(
+          `${form.form_name}`
+        );
 
+        if (!formValidation) {
+          notifications.show({
+            message: "Action not allowed",
+            color: "red",
+          });
+        }
         replaceSection([
           {
             ...form.form_section[0],
@@ -217,6 +238,7 @@ const EventFormModal = ({
     }
   };
   const formisEmpty = formData && formData.form_section.length > 0;
+
   return (
     <>
       <Modal
@@ -231,7 +253,7 @@ const EventFormModal = ({
       >
         <Title order={3}>Event Form</Title>
         <FormProvider {...requestFormMethods}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
             {formSections.map((section, idx) => {
               const sectionFields = section.section_field || [];
 

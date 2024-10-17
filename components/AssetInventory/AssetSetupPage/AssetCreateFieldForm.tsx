@@ -104,7 +104,7 @@ const AssetCreateFieldForm = ({
         </ActionIcon>
       </Group>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing="sm">
+        <Stack spacing="md">
           <Text weight={500} size="lg" mb="md">
             Create Custom Field
           </Text>
@@ -188,16 +188,16 @@ const AssetCreateFieldForm = ({
 
                     {field.value.length > 0 && (
                       <Stack>
-                        <Text>List of options</Text>
+                        <Text fw={500}>List of Options</Text>
                         {field.value.map((option: string, index: number) => (
                           <Group position="apart" key={index}>
                             <Group>
-                              <IconPlus size={16} />
+                              <IconPlus color="#228be6" size={16} />
                               <Text>{option}</Text>
                             </Group>
 
                             <ActionIcon
-                              variant="default"
+                              variant="filled"
                               color="red"
                               onClick={() => {
                                 field.onChange(
@@ -219,8 +219,8 @@ const AssetCreateFieldForm = ({
             </>
           )}
           <Divider />
-          <Text size="sm">Choose a category </Text>
-          <ScrollArea h={200}>
+          <Text fw={500}>Choose a Category</Text>
+          <ScrollArea mih={100} mah={400}>
             <Group position="center">
               <Controller
                 name="fieldCategory"
@@ -262,7 +262,7 @@ const AssetCreateFieldForm = ({
               />
             </Group>
           </ScrollArea>
-
+          <Divider />
           <Group position="center">
             <Button fullWidth type="submit">
               Create Custom Field

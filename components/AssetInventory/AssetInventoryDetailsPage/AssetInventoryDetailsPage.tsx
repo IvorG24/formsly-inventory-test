@@ -217,8 +217,6 @@ const AssetInventoryDetailsPage = ({
                   )
                   .reduce<JSX.Element[]>((acc, [key, value], index, array) => {
                     if (index % 2 === 0) {
-                      console.log(key);
-
                       const nextEntry = array[index + 1];
                       acc.push(
                         <tr key={key}>

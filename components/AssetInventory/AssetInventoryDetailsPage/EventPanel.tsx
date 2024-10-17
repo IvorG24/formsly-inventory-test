@@ -9,8 +9,6 @@ type Props = {
 };
 
 const EventPanel = ({ asset_event }: Props) => {
-  console.log(asset_event);
-
   const [page, setPage] = useState(1);
   return (
     <>

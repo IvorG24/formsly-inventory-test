@@ -5,8 +5,9 @@ import {
   SiteTableRow,
   TeamGroupTableRow,
 } from "@/utils/types";
-import { Container, Tabs, Text, Title } from "@mantine/core";
+import { Container, Tabs, Title } from "@mantine/core";
 import AssetsSecurityPanel from "./AssetsSecurityPanel";
+import PrivilegesSecurityPanel from "./PrivilegesSecurityPanel";
 import { Department } from "./SecurityGroupPage";
 type Props = {
   siteList: SiteTableRow[];
@@ -32,7 +33,6 @@ const SecurityGroupDetailsPage = ({
         <Tabs.List>
           <Tabs.Tab value="assets">Assets</Tabs.Tab>
           <Tabs.Tab value="privileges">Privileges</Tabs.Tab>
-          <Tabs.Tab value="admin_rights">Admin Rights</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="assets">
@@ -45,16 +45,10 @@ const SecurityGroupDetailsPage = ({
           />
         </Tabs.Panel>
 
-        {/* Placeholder Panels for Other Tabs */}
-
         <Tabs.Panel value="privileges">
-          <Text>Privileges permissions will be here</Text>
-        </Tabs.Panel>
-        <Tabs.Panel value="dashboard">
-          <Text>Dashboard permissions will be here</Text>
-        </Tabs.Panel>
-        <Tabs.Panel value="admin_rights">
-          <Text>Admin Rights will be here</Text>
+          <PrivilegesSecurityPanel
+            privilegesGroupdata={securityGroupData.privileges}
+          />
         </Tabs.Panel>
       </Tabs>
     </Container>

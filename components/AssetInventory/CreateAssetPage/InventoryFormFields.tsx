@@ -420,6 +420,21 @@ const InventoryFormFields = ({
                     clearable
                   />
                 );
+              } else if (field.field_name === "Return Date" || "Due Date") {
+                return (
+                  <DateInput
+                    value={dateValue}
+                    onChange={onChange}
+                    withAsterisk={field.field_is_required}
+                    {...inputProps}
+                    icon={<IconCalendar size={16} />}
+                    error={fieldError}
+                    minDate={new Date()}
+                    valueFormat="YYYY-MM-DD"
+                    readOnly={field.field_is_read_only}
+                    clearable
+                  />
+                );
               } else {
                 return (
                   <DateInput

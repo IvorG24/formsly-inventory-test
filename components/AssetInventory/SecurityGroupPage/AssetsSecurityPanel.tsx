@@ -10,7 +10,6 @@ import {
   Button,
   Checkbox,
   Divider,
-  Flex,
   Grid,
   Group,
   LoadingOverlay,
@@ -105,7 +104,16 @@ const AssetsSecurityPanel = ({
             Set user permission to add / edit / delete / view assets:
           </Text>
 
-          <SimpleGrid cols={3} spacing="md">
+     
+          <SimpleGrid
+            cols={3}
+            spacing="md"
+            breakpoints={[
+              { maxWidth: "lg", cols: 3 },
+              { maxWidth: "md", cols: 2 },
+              { maxWidth: "sm", cols: 1 },
+            ]}
+          >
             <Controller
               name="viewOnly"
               control={control}
@@ -125,7 +133,7 @@ const AssetsSecurityPanel = ({
                 <Checkbox
                   label="User can create new assets."
                   {...field}
-                  value={field.value ? "true" : "false"} // Ensure value is a string
+                  value={field.value ? "true" : "false"}
                   checked={field.value}
                 />
               )}
@@ -137,25 +145,28 @@ const AssetsSecurityPanel = ({
                 <Checkbox
                   label="User can edit ANY asset."
                   {...field}
-                  value={field.value ? "true" : "false"} // Ensure value is a string
+                  value={field.value ? "true" : "false"}
                   checked={field.value}
                 />
               )}
             />
           </SimpleGrid>
+
           <Divider />
+
           <Title order={3} size="h4">
             Filter Assets
           </Title>
           <Text size="sm">
             Allow access of assets by site, department or category :
           </Text>
+
           <Grid>
-            <Grid.Col span={4}>
+            <Grid.Col xs={12} sm={6} md={4}>
               <Title order={4} size="h6" mb="sm">
                 Sites
               </Title>
-              <ScrollArea h={400}>
+              <ScrollArea mih={100} mah={400}>
                 <Stack>
                   <Controller
                     name="site"
@@ -207,11 +218,11 @@ const AssetsSecurityPanel = ({
               </ScrollArea>
             </Grid.Col>
 
-            <Grid.Col span={4}>
+            <Grid.Col xs={12} sm={6} md={4}>
               <Title order={4} size="h6" mb="sm">
                 Departments
               </Title>
-              <ScrollArea h={400}>
+              <ScrollArea mih={100} mah={400}>
                 <Stack>
                   <Controller
                     name="department"
@@ -266,11 +277,11 @@ const AssetsSecurityPanel = ({
               </ScrollArea>
             </Grid.Col>
 
-            <Grid.Col span={4}>
+            <Grid.Col xs={12} sm={6} md={4}>
               <Title order={4} size="h6" mb="sm">
                 Categories
               </Title>
-              <ScrollArea h={400}>
+              <ScrollArea mih={100} mah={400}>
                 <Stack>
                   <Controller
                     name="category"
@@ -324,55 +335,60 @@ const AssetsSecurityPanel = ({
               </ScrollArea>
             </Grid.Col>
           </Grid>
+
           <Divider />
+
           <Title order={3} size="h4">
             Assets Events
           </Title>
           <Text size="sm">Allowed actions of assets :</Text>
 
-          <Flex direction="column">
-            <Title order={4} size="h6" mb="sm">
-              Events
-            </Title>
-            <SimpleGrid cols={3} spacing="md">
-              <Controller
-                name="event"
-                control={control}
-                render={({ field }) => (
-                  <>
-                    {eventList.map((events) => (
-                      <Checkbox
-                        key={events.event_id}
-                        label={events.event_name}
-                        value={events.event_name}
-                        onChange={(e) => {
-                          const checked = e.currentTarget.checked;
-                          if (checked) {
-                            field.onChange([...field.value, events.event_name]); // Add site
-                          } else {
-                            field.onChange(
-                              field.value.filter((s) => s !== events.event_name)
-                            ); // Remove site
-                          }
-                        }}
-                        checked={
-                          field.value.includes(events.event_name) || false
-                        } // Ensure checked is a boolean
-                      />
-                    ))}
-                  </>
-                )}
-              />
-            </SimpleGrid>
-          </Flex>
+          <SimpleGrid
+            cols={3}
+            spacing="md"
+            breakpoints={[
+              { maxWidth: "lg", cols: 3 },
+              { maxWidth: "md", cols: 2 },
+              { maxWidth: "sm", cols: 1 }
+            ]}
+          >
+            <Controller
+              name="event"
+              control={control}
+              render={({ field }) => (
+                <>
+                  {eventList.map((events) => (
+                    <Checkbox
+                      key={events.event_id}
+                      label={events.event_name}
+                      value={events.event_name}
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+                        if (checked) {
+                          field.onChange([...field.value, events.event_name]); // Add event
+                        } else {
+                          field.onChange(
+                            field.value.filter((s) => s !== events.event_name)
+                          ); // Remove event
+                        }
+                      }}
+                      checked={field.value.includes(events.event_name) || false}
+                    />
+                  ))}
+                </>
+              )}
+            />
+          </SimpleGrid>
+
+          <Divider />
+
+          <Group>
+            <Button fullWidth type="submit">
+              Save Asset Security
+            </Button>
+          </Group>
         </Stack>
       </Paper>
-
-      <Group position="right" mt="md">
-        <Button fullWidth type="submit">
-          Submit
-        </Button>
-      </Group>
     </form>
   );
 };

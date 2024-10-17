@@ -56,10 +56,25 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       (permission) => permission.key === "viewOnly"
     )?.value ?? false;
 
+  const canViewSublink = (label: string) =>
+    securityGroup.asset.filter.event.includes(label);
   //   const isAdminOrOwner = ["OWNER", "ADMIN"].some((role) =>
   //     teamMember?.team_member_role.includes(role)
   //   );
-
+  const subLinksForAsset = [
+    {
+      id: "check-in",
+      label: "Check In",
+      icon: IconUserPlus,
+      href: `/${formattedTeamName}/inventory/check-in`,
+    },
+    {
+      id: "check-out",
+      label: "Check Out",
+      icon: IconUserCancel,
+      href: `/${formattedTeamName}/inventory/check-out`,
+    },
+  ].filter((sublink) => canViewSublink(sublink.label));
   const navlinkData = [
     canView && {
       id: "asset",
@@ -72,18 +87,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconPuzzle,
           href: `/${formattedTeamName}/inventory`,
         },
-        {
-          id: "check-in",
-          label: "Check In",
-          icon: IconUserPlus,
-          href: `/${formattedTeamName}/inventory/check-in`,
-        },
-        {
-          id: "check-out",
-          label: "Check Out",
-          icon: IconUserCancel,
-          href: `/${formattedTeamName}/inventory/check-out`,
-        },
+        ...subLinksForAsset,
       ],
     },
     {
