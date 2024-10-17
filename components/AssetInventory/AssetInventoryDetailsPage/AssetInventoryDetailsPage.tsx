@@ -8,7 +8,7 @@ import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
-import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   InventoryEventRow,
@@ -21,6 +21,7 @@ import {
   Box,
   Button,
   Container,
+  Grid,
   Group,
   LoadingOverlay,
   Menu,
@@ -68,6 +69,9 @@ const excludedKeys = [
   "inventory_assignee_site_id",
   "inventory_request_form_id",
   "inventory_request_status_color",
+  "inventory_request_item_code",
+  "inventory_request_serial_number",
+  "inventory_request_si_number",
 ];
 
 const formatLabel = (key: string) => {
@@ -75,6 +79,8 @@ const formatLabel = (key: string) => {
     return "Asset Tag ID";
   } else if (key === "inventory_request_si_number") {
     return "SI number";
+  } else if (key === "inventory_request_item_code") {
+    return "Item NAV Code";
   }
   const formattedKey = key.replace(/^inventory_request_/, "");
   return formattedKey
@@ -266,96 +272,171 @@ const AssetInventoryDetailsPage = ({
               </Group>
             </Group>
 
-            <Table striped highlightOnHover withBorder withColumnBorders>
-              <tbody>
-                {Object.entries(detail)
-                  .filter(
-                    ([key, value]) => !excludedKeys.includes(key) && value
-                  )
-                  .reduce<JSX.Element[]>((acc, [key, value], index, array) => {
-                    if (index % 2 === 0) {
-                      const nextEntry = array[index + 1];
-                      acc.push(
-                        <tr key={key}>
-                          <td>
-                            <Text weight={500}>{formatLabel(key)}</Text>
-                          </td>
-                          <td>
-                            {key === "inventory_request_status" ? (
-                              <Badge
-                                sx={{
-                                  backgroundColor:
-                                    detail.inventory_request_status_color as string,
-                                  color: "#fff",
-                                }}
-                              >
-                                {value}
-                              </Badge>
-                            ) : key === "purchase_date" ? (
-                              formatDate(new Date(String(value)))
-                            ) : key === "inventory_request_due_date" ? (
-                              formatDate(new Date(String(value)))
-                            ) : (
-                              value || "N/A"
-                            )}
-                          </td>
-                          {nextEntry && nextEntry[1] ? (
-                            <>
+            <Grid>
+              <Grid.Col span={12} xs={6}>
+                <Box
+                  style={{
+                    width: "100%",
+                    height: "300px", // Adjust the height as needed
+                    backgroundColor: "gray",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    border: "1px solid #ccc",
+                  }}
+                >
+                  <Text color="dimmed" size="xl">
+                    Not Available
+                  </Text>
+                </Box>
+              </Grid.Col>
+
+              <Grid.Col span={12} xs={6}>
+                <Table striped highlightOnHover withBorder withColumnBorders>
+                  <tbody>
+                    {/* Asset Information Section */}
+                    <tr>
+                      <td colSpan={2}>
+                        <Text weight={600} align="center">
+                          Asset Information
+                        </Text>
+                      </td>
+                    </tr>
+                    {Object.entries(detail)
+                      .filter(
+                        ([key, value]) => !excludedKeys.includes(key) && value
+                      )
+                      .reduce<JSX.Element[]>((acc, [key, value]) => {
+                        if (
+                          [
+                            "inventory_request_id",
+                            "inventory_request_brand",
+                            "inventory_request_model",
+                            "inventory_request_site",
+                            "inventory_request_location",
+                            "inventory_request_department",
+                          ].includes(key)
+                        ) {
+                          acc.push(
+                            <tr key={key}>
                               <td>
-                                <Text weight={500}>
-                                  {formatLabel(nextEntry[0])}
-                                </Text>
+                                <Text weight={500}>{formatLabel(key)}</Text>
+                              </td>
+                              <td>{value || "N/A"}</td>
+                            </tr>
+                          );
+                        }
+                        return acc;
+                      }, [])}
+                  </tbody>
+                </Table>
+              </Grid.Col>
+
+              <Grid.Col span={12} xs={6}>
+                <Table striped highlightOnHover withBorder withColumnBorders>
+                  <tbody>
+                    {/* Category Information Section */}
+                    <tr>
+                      <td colSpan={2}>
+                        <Text weight={600} align="center">
+                          Category Information
+                        </Text>
+                      </td>
+                    </tr>
+                    {Object.entries(detail)
+                      .filter(
+                        ([key, value]) => !excludedKeys.includes(key) && value
+                      )
+                      .reduce<JSX.Element[]>((acc, [key, value]) => {
+                        if (
+                          ["inventory_request_category"].includes(key) ||
+                          !key.startsWith("inventory_request_")
+                        ) {
+                          acc.push(
+                            <tr key={key}>
+                              <td>
+                                <Text weight={500}>{formatLabel(key)}</Text>
+                              </td>
+                              <td>{value || "N/A"}</td>
+                            </tr>
+                          );
+                        }
+                        return acc;
+                      }, [])}
+                  </tbody>
+                </Table>
+              </Grid.Col>
+
+              <Grid.Col span={12} xs={6}>
+                <Table striped highlightOnHover withBorder withColumnBorders>
+                  <tbody>
+                    <tr>
+                      <td colSpan={2}>
+                        <Text weight={600} align="center">
+                          Status Information
+                        </Text>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <Text weight={500}>Created By</Text>
+                      </td>
+                      <td>
+                        {detail.request_creator_first_name || "N/A"}{" "}
+                        {detail.request_creator_last_name || "N/A"}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <Text weight={500}>Assigned To</Text>
+                      </td>
+                      <td>
+                        {detail.site_name || ""}
+                        {`${detail.assignee_first_name || ""} ${detail.assignee_last_name || ""}`}
+                      </td>
+                    </tr>
+                    {Object.entries(detail)
+                      .filter(
+                        ([key, value]) => !excludedKeys.includes(key) && value
+                      )
+                      .reduce<JSX.Element[]>((acc, [key, value]) => {
+                        if (
+                          [
+                            "inventory_request_created_by",
+                            "inventory_request_assigned_to",
+                            "inventory_request_status",
+                          ].includes(key)
+                        ) {
+                          acc.push(
+                            <tr key={key}>
+                              <td>
+                                <Text weight={500}>{formatLabel(key)}</Text>
                               </td>
                               <td>
-                                {nextEntry[0] === "purchase_date" ||
-                                nextEntry[0] === "inventory_request_due_date" ||
-                                nextEntry[0] === "inventory_request_status" ? (
-                                  nextEntry[0] ===
-                                  "inventory_request_status" ? (
-                                    <Badge
-                                      sx={{
-                                        backgroundColor:
-                                          detail.inventory_request_status_color as string,
-                                        color: "#fff",
-                                      }}
-                                    >
-                                      {nextEntry[1] || "N/A"}
-                                    </Badge>
-                                  ) : (
-                                    formatDate(new Date(String(nextEntry[1])))
-                                  )
+                                {key === "inventory_request_status" ? (
+                                  <Badge
+                                    sx={{
+                                      backgroundColor:
+                                        detail.inventory_request_status_color ||
+                                        "gray",
+                                      color: "#fff",
+                                    }}
+                                  >
+                                    {value || "N/A"}
+                                  </Badge>
                                 ) : (
-                                  nextEntry[1] || "N/A"
+                                  value || "N/A"
                                 )}
                               </td>
-                            </>
-                          ) : (
-                            <td colSpan={2}></td>
-                          )}
-                        </tr>
-                      );
-                    }
-                    return acc;
-                  }, [])}
-
-                <tr>
-                  <td>
-                    <Text weight={500}>Created By</Text>
-                  </td>
-                  <td>
-                    {detail.request_creator_first_name}{" "}
-                    {detail.request_creator_last_name || "N/A"}
-                  </td>
-                  <td>
-                    <Text weight={500}>Assigned To</Text>
-                  </td>
-                  <td>
-                    {detail.site_name || ""}
-                    {`${detail.assignee_first_name || ""} ${detail.assignee_last_name || ""}`}
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
+                            </tr>
+                          );
+                        }
+                        return acc;
+                      }, [])}
+                  </tbody>
+                </Table>
+              </Grid.Col>
+            </Grid>
 
             <Tabs mt="xl" defaultValue="details">
               <Tabs.List>

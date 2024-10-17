@@ -3,6 +3,7 @@ import {
   getChildAssetOptionLinking,
 } from "@/backend/api/get";
 import { createAssetLinking } from "@/backend/api/post";
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -32,7 +33,7 @@ const AssetLinkPanel = () => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
   const assetId = router.query.assetId as string;
-
+  const securityGroup = useSecurityGroup();
   const [childAsset, setChildAsset] = useState<
     { inventory_request_id: string; inventory_request_name: string }[]
   >([]);
@@ -46,7 +47,9 @@ const AssetLinkPanel = () => {
       searchTerm: "",
     },
   });
-
+  const hasEditOnlyPermission = securityGroup.asset.permissions.some(
+    (permission) => permission.key === "editAssets" && permission.value === true
+  );
   useEffect(() => {
     const fetchChildAsset = async () => {
       try {
@@ -248,9 +251,11 @@ const AssetLinkPanel = () => {
         />
       )}
       <Group position="center">
-        <Button fullWidth onClick={() => setOpened(true)}>
-          Open Asset Link
-        </Button>
+        {hasEditOnlyPermission && (
+          <Button fullWidth onClick={() => setOpened(true)}>
+            Open Asset Link
+          </Button>
+        )}
       </Group>
     </Stack>
   );
