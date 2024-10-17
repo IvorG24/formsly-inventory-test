@@ -81,17 +81,20 @@ const UpdateModal = ({
   const handleUpdate = async (data: FormValues) => {
     try {
       const { typeName } = data;
-      const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
-        type: type,
-        typeValue: typeName.trim() || "",
-      });
-      if (checkIfUniqueValue) {
-        notifications.show({
-          message: `${type} already exist`,
-          color: "red",
+      if (initialData !== typeName) {
+        const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
+          type: type,
+          typeValue: typeName.trim() || "",
         });
-        return;
+        if (checkIfUniqueValue) {
+          notifications.show({
+            message: `${type} already exist`,
+            color: "red",
+          });
+          return;
+        }
       }
+
       close();
       switch (type) {
         case "site":

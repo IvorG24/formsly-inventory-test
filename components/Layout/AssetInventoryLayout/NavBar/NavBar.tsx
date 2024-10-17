@@ -55,26 +55,10 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
     securityGroup?.asset?.permissions.find(
       (permission) => permission.key === "viewOnly"
     )?.value ?? false;
+  const canViewSetupSection = (id: keyof typeof securityGroup.privileges) => {
+    return securityGroup.privileges[id]?.view ?? false;
+  };
 
-  const canViewSublink = (label: string) =>
-    securityGroup.asset.filter.event.includes(label);
-  //   const isAdminOrOwner = ["OWNER", "ADMIN"].some((role) =>
-  //     teamMember?.team_member_role.includes(role)
-  //   );
-  const subLinksForAsset = [
-    {
-      id: "check-in",
-      label: "Check In",
-      icon: IconUserPlus,
-      href: `/${formattedTeamName}/inventory/check-in`,
-    },
-    {
-      id: "check-out",
-      label: "Check Out",
-      icon: IconUserCancel,
-      href: `/${formattedTeamName}/inventory/check-out`,
-    },
-  ].filter((sublink) => canViewSublink(sublink.label));
   const navlinkData = [
     canView && {
       id: "asset",
@@ -87,7 +71,18 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconPuzzle,
           href: `/${formattedTeamName}/inventory`,
         },
-        ...subLinksForAsset,
+        {
+          id: "check-in",
+          label: "Check In",
+          icon: IconUserPlus,
+          href: `/${formattedTeamName}/inventory/check-in`,
+        },
+        {
+          id: "check-out",
+          label: "Check Out",
+          icon: IconUserCancel,
+          href: `/${formattedTeamName}/inventory/check-out`,
+        },
       ],
     },
     {
@@ -108,32 +103,32 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       icon: IconSettings,
       label: "Setup",
       subLinks: [
-        {
-          id: "sites",
+        canViewSetupSection("site") && {
+          id: "site",
           label: "Sites",
           icon: IconGps,
           href: `/${formattedTeamName}/inventory/setup/sites`,
         },
-        {
-          id: "locations",
+        canViewSetupSection("location") && {
+          id: "location",
           label: "Locations",
           icon: IconLocation,
           href: `/${formattedTeamName}/inventory/setup/location`,
         },
-        {
-          id: "categories",
+        canViewSetupSection("category") && {
+          id: "category",
           label: "Categories",
           icon: IconCategory,
           href: `/${formattedTeamName}/inventory/setup/categories`,
         },
-        {
-          id: "sub-categories",
+        canViewSetupSection("subCategory") && {
+          id: "subCategory",
           label: "Sub Categories",
           icon: IconCategory2,
           href: `/${formattedTeamName}/inventory/setup/sub-categories`,
         },
-        {
-          id: "departments",
+        canViewSetupSection("department") && {
+          id: "department",
           label: "Departments",
           icon: IconBuilding,
           href: `/${formattedTeamName}/inventory/setup/department`,
@@ -144,16 +139,16 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconDatabase,
           subLinks: [
             {
-              id: "asset-setup",
+              id: "customField",
               label: "Asset Setup",
               icon: IconSettingsUp,
               href: `/${formattedTeamName}/inventory/asset-setup`,
             },
           ],
         },
-      ],
+      ].filter(Boolean), // Filter out falsy entries
     },
-  ];
+  ].filter(Boolean); // Filter out falsy entries
 
   const handleNavlinkClick = (href: string) => {
     router.push(href);
@@ -208,7 +203,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           <Accordion.Panel>
             <Stack spacing={4}>
               {link.subLinks?.map((subLink) => {
-                if (subLink.id === "databases") {
+                if (subLink && "id" in subLink && subLink.id === "databases") {
                   return (
                     <Box key={subLink.id} h="fit-content">
                       <Menu withinPortal position="right-start">
@@ -235,34 +230,38 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                             {subLink.label}
                           </Button>
                         </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Label>Database Actions</Menu.Label>
-                          {subLink.subLinks?.map((nestedSubLink) => (
-                            <Menu.Item
-                              key={nestedSubLink.id}
-                              icon={<nestedSubLink.icon size={20} />}
-                              onClick={() =>
-                                handleNavlinkClick(nestedSubLink.href || "")
-                              }
-                            >
-                              {nestedSubLink.label}
-                            </Menu.Item>
-                          ))}
-                        </Menu.Dropdown>
+                        {!isCollapsed && (
+                          <Menu.Dropdown>
+                            <Menu.Label>Database Actions</Menu.Label>
+                            {subLink.subLinks?.map((nestedSubLink) => (
+                              <Menu.Item
+                                key={nestedSubLink.id}
+                                icon={<nestedSubLink.icon size={20} />}
+                                onClick={() =>
+                                  handleNavlinkClick(nestedSubLink.href || "")
+                                }
+                              >
+                                {nestedSubLink.label}
+                              </Menu.Item>
+                            ))}
+                          </Menu.Dropdown>
+                        )}
                       </Menu>
                     </Box>
                   );
                 }
 
-                return (
-                  <Navlink
-                    key={subLink.id}
-                    label={subLink.label}
-                    onClick={() => handleNavlinkClick(subLink.href || "")}
-                    icon={<subLink.icon size={20} />}
-                    link={subLink.href || ""}
-                  />
-                );
+                if (subLink && "id" in subLink) {
+                  return (
+                    <Navlink
+                      key={subLink.id}
+                      label={subLink.label}
+                      onClick={() => handleNavlinkClick(subLink.href || "")}
+                      icon={<subLink.icon size={20} />}
+                      link={subLink.href || ""}
+                    />
+                  );
+                }
               })}
             </Stack>
           </Accordion.Panel>

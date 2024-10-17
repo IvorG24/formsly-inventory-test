@@ -2,7 +2,7 @@ import { checkUniqueValue, getDepartmentList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryAssetFormValues } from "@/utils/types";
+import { InventoryAssetFormValues, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -32,8 +32,10 @@ type FormValues = {
   search: string;
   department_name: string;
 };
-
-const DepartmentSetupPage = () => {
+type Props = {
+  securityGroup: SecurityGroupData;
+};
+const DepartmentSetupPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
@@ -41,6 +43,7 @@ const DepartmentSetupPage = () => {
   const [departmentCount, setDepartmentCount] = useState(0);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
+  const canAddData = securityGroup.privileges.department.add === true;
 
   // Initialize React Hook Form with default values for the drawer
   const formMethods = useForm<FormValues>({
@@ -97,7 +100,7 @@ const DepartmentSetupPage = () => {
 
   const handleDepartmentSubmit = async (data: InventoryAssetFormValues) => {
     try {
-      if (!activeTeam.team_id) return;
+      if (!activeTeam.team_id || !canAddData) return;
       const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
         type: "team_department",
         typeValue: data.site_name?.trim() || "",
@@ -158,9 +161,11 @@ const DepartmentSetupPage = () => {
               miw={250}
               maw={320}
             />
-            <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Department
-            </Button>
+            {canAddData && (
+              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                Add New Department
+              </Button>
+            )}
           </Group>
         </form>
 

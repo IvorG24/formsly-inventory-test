@@ -40,6 +40,7 @@ type Props = {
   categoryList: OptionType[];
   customFieldForm: customFieldFormValues;
   handleClickCustomField: (fieldId: string) => void;
+  canEditData: boolean;
 };
 const AssetUpdateFieldForm = ({
   setCustomFields,
@@ -47,6 +48,7 @@ const AssetUpdateFieldForm = ({
   categoryList,
   customFieldForm,
   handleClickCustomField,
+  canEditData,
 }: Props) => {
   const { control, handleSubmit, watch, reset } =
     useForm<customFieldFormValues>({
@@ -58,6 +60,13 @@ const AssetUpdateFieldForm = ({
 
   const onSubmit = async (data: customFieldFormValues) => {
     try {
+      if (!canEditData) {
+        notifications.show({
+          message: "Action not allowed",
+          color: "red",
+        });
+        return;
+      }
       const originalFieldName = customFieldForm.fieldName;
 
       if (data.fieldName !== originalFieldName) {

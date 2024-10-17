@@ -1,8 +1,8 @@
-import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import {
   CategoryTableRow,
   InventoryListType,
   OptionType,
+  SecurityGroupData,
   SiteTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
@@ -12,13 +12,14 @@ import {
   Divider,
   Flex,
   Group,
+  Menu,
   MultiSelect,
   Select,
   Switch,
   TextInput,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
-import { IconReload, IconSearch } from "@tabler/icons-react";
+import { IconDotsVertical, IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
@@ -40,6 +41,7 @@ type RequestListFilterProps = {
   type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
+  securityGroupData: SecurityGroupData;
 };
 
 export type FilterSelectedValuesType = {
@@ -68,6 +70,7 @@ const AssetListFilter = ({
   selectedRow,
   showTableColumnFilter,
   setShowTableColumnFilter,
+  securityGroupData,
   type = "asset",
 }: RequestListFilterProps) => {
   const inputFilterProps = {
@@ -86,7 +89,6 @@ const AssetListFilter = ({
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const securityGroup = useSecurityGroup();
   const handleSelectChange = (value: string | null) => {
     if (selectedEventId === value) {
       setSelectedEventId(null);
@@ -97,7 +99,10 @@ const AssetListFilter = ({
       setSelectedEventId(value);
     }
   };
-  const eventSecurity = securityGroup.asset.filter.event;
+
+  const eventSecurity = securityGroupData.asset.filter.event
+    ? securityGroupData.asset.filter.event
+    : [];
 
   const filteredEvents = eventOptions.filter((event) =>
     eventSecurity.includes(event.label)
@@ -235,36 +240,50 @@ const AssetListFilter = ({
         </Group>
         <Group>
           {selectedRow.length > 0 && inventoryList && (
-            <Select
-              placeholder="More Actions"
-              data={filteredEvents.filter((option) => {
-                const selectedItems = inventoryList.filter((row) =>
-                  selectedRow.includes(row.inventory_request_id)
-                );
+            <Menu>
+              <Menu.Target>
+                <Button rightIcon={<IconDotsVertical size={16} />}>
+                  More Actions
+                </Button>
+              </Menu.Target>
 
-                if (selectedItems.length === 0) return true;
+              <Menu.Dropdown>
+                <Menu.Label>Actions</Menu.Label>
+                {filteredEvents
+                  .filter((option) => {
+                    const selectedItems = inventoryList.filter((row) =>
+                      selectedRow.includes(row.inventory_request_id)
+                    );
 
-                const hasCheckedOutItem = selectedItems.some(
-                  (item) => item.inventory_request_status === "CHECKED OUT"
-                );
-                const hasAvailableItem = selectedItems.some(
-                  (item) => item.inventory_request_status === "AVAILABLE"
-                );
+                    if (selectedItems.length === 0) return true;
 
-                if (hasCheckedOutItem && option.label === "Check Out") {
-                  return false;
-                }
+                    const hasCheckedOutItem = selectedItems.some(
+                      (item) => item.inventory_request_status === "CHECKED OUT"
+                    );
+                    const hasAvailableItem = selectedItems.some(
+                      (item) => item.inventory_request_status === "AVAILABLE"
+                    );
 
-                if (hasAvailableItem && option.label === "Check In") {
-                  return false;
-                }
+                    if (hasCheckedOutItem && option.label === "Check Out") {
+                      return false;
+                    }
 
-                return true;
-              })}
-              onChange={(value) => {
-                handleSelectChange(value);
-              }}
-            />
+                    if (hasAvailableItem && option.label === "Check In") {
+                      return false;
+                    }
+
+                    return true;
+                  })
+                  .map((event) => (
+                    <Menu.Item
+                      key={event.value}
+                      onClick={() => handleSelectChange(event.value)}
+                    >
+                      {event.label}
+                    </Menu.Item>
+                  ))}
+              </Menu.Dropdown>
+            </Menu>
           )}
         </Group>
       </Flex>
@@ -272,7 +291,7 @@ const AssetListFilter = ({
 
       {isFilter && (
         <Flex gap="sm" wrap="wrap" mb="sm">
-          {securityGroup.asset.filter.site.length === 0 && (
+          {securityGroupData.asset.filter.site.length === 0 && (
             <Controller
               control={control}
               name="sites"
@@ -323,7 +342,7 @@ const AssetListFilter = ({
               )}
             />
           )}
-          {securityGroup.asset.filter.category.length === 0 && (
+          {securityGroupData.asset.filter.category.length === 0 && (
             <Controller
               control={control}
               name="category"
@@ -347,7 +366,7 @@ const AssetListFilter = ({
               )}
             />
           )}
-          {securityGroup.asset.filter.department.length === 0 && (
+          {securityGroupData.asset.filter.department.length === 0 && (
             <Controller
               control={control}
               name="department"

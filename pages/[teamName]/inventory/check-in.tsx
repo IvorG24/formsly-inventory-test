@@ -4,7 +4,11 @@ import CheckinListPage from "@/components/AssetInventory/CheckinListPage/Checkin
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
-import { CategoryTableRow, SiteTableRow } from "@/utils/types";
+import {
+  CategoryTableRow,
+  SecurityGroupData,
+  SiteTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
@@ -54,6 +58,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  securityGroupData: SecurityGroupData;
   fields: {
     value: string;
     label: string;
@@ -66,6 +71,7 @@ const Page = ({
   departmentList,
   categoryList,
   fields,
+  securityGroupData,
 }: Props) => {
   return (
     <>
@@ -74,6 +80,7 @@ const Page = ({
         url="/teamName/inventory/check-in"
       />
       <CheckinListPage
+        securityGroup={securityGroupData}
         tableColumnList={fields}
         siteList={siteList}
         departmentList={departmentList}

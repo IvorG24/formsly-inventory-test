@@ -1,20 +1,16 @@
 // Imports
-import { getAssetDetails } from "@/backend/api/get";
+import { getAssetSpreadsheetView } from "@/backend/api/get";
 import AssetInventoryDetailsPage from "@/components/AssetInventory/AssetInventoryDetailsPage/AssetInventoryDetailsPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
-import {
-  InventoryEventRow,
-  InventoryHistory,
-  InventoryListType,
-} from "@/utils/types";
+import { InventoryListType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
   async ({ supabaseClient, context, securityGroupData }) => {
     try {
-      const assetData = await getAssetDetails(supabaseClient, {
-        asset_request_id: context.query.assetId as string,
+      const { data } = await getAssetSpreadsheetView(supabaseClient, {
+        search: context.query.assetId as string,
       });
       const hasViewOnlyPersmissions = securityGroupData.asset.permissions.some(
         (permission) =>
@@ -30,9 +26,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       }
       return {
         props: {
-          asset_details: assetData.asset_details,
-          asset_history: assetData.asset_history,
-          asset_event: assetData.asset_event,
+          data,
         },
       };
     } catch (e) {
@@ -46,18 +40,14 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
   }
 );
 type Props = {
-  asset_details: InventoryListType[];
-  asset_history: InventoryHistory[];
-  asset_event: InventoryEventRow[];
+  data: InventoryListType[];
 };
-const Page = ({ asset_details, asset_history, asset_event }: Props) => {
+const Page = ({ data }: Props) => {
   return (
     <>
       <Meta description="Asset List Page" url="/teamName/inventory[assetId]" />
       <AssetInventoryDetailsPage
-        asset_event={asset_event}
-        asset_details={asset_details}
-        asset_history={asset_history}
+        asset_details={data}
       />
     </>
   );

@@ -3,7 +3,11 @@ import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { CategoryTableRow, InventoryAssetFormValues } from "@/utils/types";
+import {
+  CategoryTableRow,
+  InventoryAssetFormValues,
+  SecurityGroupData,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -29,14 +33,17 @@ type FormValues = {
   search: string;
   category_name: string;
 };
-
-const CategoriesSetupPage = () => {
+type Props = {
+  securityGroup: SecurityGroupData;
+};
+const CategoriesSetupPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
   const [currentCategoryList, setCurrentCategoryList] = useState<
     CategoryTableRow[]
   >([]);
+
   const [categoryId, setCategoryId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [categoryCount, setCategoryCount] = useState(0);
@@ -53,6 +60,10 @@ const CategoriesSetupPage = () => {
       category_name: "",
     },
   });
+
+  const canAddData = securityGroup.privileges.category.add === true;
+  const canDeleteData = securityGroup.privileges.category.delete === true;
+  const canEditData = securityGroup.privileges.category.edit === true;
 
   const { register, handleSubmit, getValues } = formMethods;
 
@@ -100,6 +111,13 @@ const CategoriesSetupPage = () => {
   };
 
   const handleEdit = (category_id: string) => {
+    if (!canEditData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     const categoryData = currentCategoryList.find(
       (category) => category.category_id === category_id
     );
@@ -120,6 +138,13 @@ const CategoriesSetupPage = () => {
 
   const handleCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
+      if (!canAddData) {
+        notifications.show({
+          message: "Action not allowed",
+          color: "red",
+        });
+        return;
+      }
       const { category_name } = data;
       const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
         type: "category",
@@ -199,9 +224,12 @@ const CategoriesSetupPage = () => {
               miw={250}
               maw={320}
             />
-            <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Category
-            </Button>
+
+            {canAddData === true && (
+              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                Add New Category
+              </Button>
+            )}
           </Group>
         </form>
 
@@ -236,21 +264,25 @@ const CategoriesSetupPage = () => {
               title: "Actions",
               render: (category) => (
                 <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleEdit(category.category_id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    color="red"
-                    onClick={() => handleDelete(category.category_id)}
-                  >
-                    Delete
-                  </Button>
+                  {canEditData === true && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleEdit(category.category_id)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      color="red"
+                      onClick={() => handleDelete(category.category_id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Group>
               ),
             },

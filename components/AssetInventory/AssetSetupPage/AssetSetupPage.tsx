@@ -4,6 +4,7 @@ import {
   CategoryTableRow,
   customFieldFormValues,
   InventoryFieldRow,
+  SecurityGroupData,
 } from "@/utils/types";
 import {
   Button,
@@ -26,8 +27,9 @@ import AssetUpdateFieldForm from "./AssetUpdateFieldForm";
 
 type Props = {
   categoryOptions: CategoryTableRow[];
+  securityGroup: SecurityGroupData;
 };
-const AssetSetupPage = ({ categoryOptions }: Props) => {
+const AssetSetupPage = ({ securityGroup, categoryOptions }: Props) => {
   const supabaseClient = useSupabaseClient();
   const [customFields, setCustomFields] = useState<InventoryFieldRow[]>([]);
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
@@ -37,8 +39,12 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [isLoading, setIsloading] = useState(false);
   const [fieldId, setFieldId] = useState<string>("");
-
   const [modalOpened, setModalOpened] = useState(false);
+
+  const canAddData = securityGroup.privileges.customField.add === true;
+  const canDeleteData = securityGroup.privileges.customField.delete === true;
+  const canEditData = securityGroup.privileges.customField.edit === true;
+
   useEffect(() => {
     const fetchCustomCategory = async () => {
       try {
@@ -57,6 +63,7 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
     };
     fetchCustomCategory();
   }, []);
+
   const [activePage, setActivePage] = useState(1);
   const categoryListChoices = categoryOptions.map((category) => ({
     label: category.category_name,
@@ -65,6 +72,14 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
 
   const handleClickCustomField = async (fieldId: string) => {
     try {
+      if (!canEditData) {
+        notifications.show({
+          message: "Action not allowed",
+          color: "red",
+        });
+        return;
+      }
+
       setIsloading(true);
       setShowUpdateForm(true);
       setShowCustomForm(false);
@@ -110,7 +125,7 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
             </Text>
           </Stack>
 
-          {!showCustomForm && (
+          {canAddData && !showCustomForm && (
             <Button
               leftIcon={<IconPlus size={16} />}
               onClick={() => {
@@ -121,11 +136,12 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
             </Button>
           )}
         </Group>
-        {showCustomForm && (
+        {canAddData && showCustomForm && (
           <AssetCreateFieldForm
             setShowCustomForm={setShowCustomForm}
             categoryList={categoryListChoices}
             setCustomFields={setCustomFields}
+            canAddData={canAddData}
           />
         )}
 
@@ -186,14 +202,16 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
                   title: "Actions",
                   render: (field) => (
                     <Group spacing="xs" noWrap>
-                      <Button
-                        onClick={() => handleDelete(field.field_id)}
-                        size="xs"
-                        variant="outline"
-                        color="red"
-                      >
-                        Delete
-                      </Button>
+                      {canDeleteData && (
+                        <Button
+                          onClick={() => handleDelete(field.field_id)}
+                          size="xs"
+                          variant="outline"
+                          color="red"
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </Group>
                   ),
                 },
@@ -202,13 +220,14 @@ const AssetSetupPage = ({ categoryOptions }: Props) => {
           </Paper>
         )}
 
-        {showUpdateForm && customFieldsDefaultValue && (
+        {canEditData && showUpdateForm && customFieldsDefaultValue && (
           <AssetUpdateFieldForm
             handleClickCustomField={handleClickCustomField}
             setShowUpdateForm={setShowUpdateForm}
             categoryList={categoryListChoices}
             setCustomFields={setCustomFields}
             customFieldForm={customFieldsDefaultValue}
+            canEditData={canEditData}
           />
         )}
       </Stack>

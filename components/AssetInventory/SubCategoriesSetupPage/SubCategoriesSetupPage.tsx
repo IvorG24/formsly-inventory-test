@@ -6,6 +6,7 @@ import { Database } from "@/utils/database";
 import {
   CategoryTableRow,
   InventoryAssetFormValues,
+  SecurityGroupData,
   SubCategory,
 } from "@/utils/types";
 import {
@@ -35,8 +36,9 @@ type FormValues = {
 
 type Props = {
   categoryOptions: CategoryTableRow[];
+  securityGroup: SecurityGroupData;
 };
-const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
+const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [activePage, setActivePage] = useState(1);
@@ -58,6 +60,10 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   const [updateModalOpened, setUpdatedModalOpened] = useState(false);
   const [isFetchingCategoryList, setIsFetchingCategoryList] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
+
+  const canAddData = securityGroup.privileges.subCategory.add === true;
+  const canDeleteData = securityGroup.privileges.subCategory.delete === true;
+  const canEditData = securityGroup.privileges.subCategory.edit === true;
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
@@ -115,6 +121,13 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   };
 
   const handleEdit = (subCategory_id: string) => {
+    if (!canEditData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     const subCategoryData = subCategory.find(
       (subCategory) => subCategory.sub_category_id === subCategory_id
     );
@@ -132,13 +145,20 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
   };
 
   const handleDelete = (subCategory_id: string) => {
+    if (!canDeleteData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     setSubCategoryId(subCategory_id);
     setModalOpened(true);
   };
 
   const handleSubCategorySubmit = async (data: InventoryAssetFormValues) => {
     try {
-      if (!activeTeam.team_id) return;
+      if (!activeTeam.team_id || !canAddData) return;
       const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
         type: "field",
         typeValue: data.sub_category?.trim() || "",
@@ -234,10 +254,11 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
                 />
               )}
             />
-
-            <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Sub Category
-            </Button>
+            {canAddData && (
+              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                Add New Sub Category
+              </Button>
+            )}
           </Group>
         </form>
 
@@ -285,21 +306,25 @@ const SubCategoriesSetupPage = ({ categoryOptions }: Props) => {
               title: "Actions",
               render: (subCategory) => (
                 <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleEdit(subCategory.sub_category_id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    color="red"
-                    onClick={() => handleDelete(subCategory.sub_category_id)}
-                  >
-                    Delete
-                  </Button>
+                  {canEditData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleEdit(subCategory.sub_category_id)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      color="red"
+                      onClick={() => handleDelete(subCategory.sub_category_id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Group>
               ),
             },

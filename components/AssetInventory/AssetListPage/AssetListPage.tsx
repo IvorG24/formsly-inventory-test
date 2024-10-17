@@ -6,12 +6,12 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
-import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   InventoryListType,
   OptionType,
+  SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
 import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
@@ -30,6 +30,7 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   userId: string;
+  securityGroupData: SecurityGroupData;
   tableColumnList: {
     label: string;
     value: string;
@@ -54,12 +55,12 @@ const AssetListPage = ({
   departmentList,
   categoryList,
   tableColumnList,
+  securityGroupData,
 }: Props) => {
   const teamMemberList = useTeamMemberList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
-  const securityGroupData = useSecurityGroup();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
@@ -237,6 +238,7 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              securityGroupData={securityGroupData}
               inventoryList={inventoryList}
               selectedRow={selectedRows}
               userId={userId}

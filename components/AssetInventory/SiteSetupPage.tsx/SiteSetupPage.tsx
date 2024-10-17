@@ -2,7 +2,11 @@ import { checkUniqueValue, getSiteList } from "@/backend/api/get";
 import { createDataDrawer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryAssetFormValues, SiteTableRow } from "@/utils/types";
+import {
+  InventoryAssetFormValues,
+  SecurityGroupData,
+  SiteTableRow,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -30,10 +34,13 @@ type FormValues = {
   site_name: string;
   site_description: string;
 };
-
-const SiteSetupPage = () => {
+type Props = {
+  securityGroup: SecurityGroupData;
+};
+const SiteSetupPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
+
   const [activePage, setActivePage] = useState(1);
   const [currentSiteList, setCurrentSiteList] = useState<SiteTableRow[]>([]);
   const [siteListCount, setSiteListCount] = useState(0);
@@ -49,6 +56,9 @@ const SiteSetupPage = () => {
     site_name: "",
     site_description: "",
   });
+  const canAddData = securityGroup.privileges.site.add === true;
+  const canDeleteData = securityGroup.privileges.site.delete === true;
+  const canEditData = securityGroup.privileges.site.edit === true;
   const formMethods = useForm<FormValues>({
     defaultValues: {
       site_name: "",
@@ -113,6 +123,13 @@ const SiteSetupPage = () => {
   };
 
   const handleEdit = (site_id: string) => {
+    if (!canEditData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     const site = currentSiteList.find((site) => site.site_id === site_id);
 
     if (site) {
@@ -126,6 +143,13 @@ const SiteSetupPage = () => {
   };
 
   const handleDelete = async (site_id: string) => {
+    if (!canDeleteData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     setSiteId(site_id);
     setModalOpened(true);
   };
@@ -214,9 +238,11 @@ const SiteSetupPage = () => {
               miw={250}
               maw={320}
             />
-            <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Site
-            </Button>
+            {canAddData && (
+              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                Add New Site
+              </Button>
+            )}
           </Group>
         </form>
 
@@ -260,21 +286,25 @@ const SiteSetupPage = () => {
               title: "Actions",
               render: (site) => (
                 <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleEdit(site.site_id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    color="red"
-                    onClick={() => handleDelete(site.site_id)}
-                  >
-                    Delete
-                  </Button>
+                  {canEditData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleEdit(site.site_id)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      color="red"
+                      onClick={() => handleDelete(site.site_id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Group>
               ),
             },

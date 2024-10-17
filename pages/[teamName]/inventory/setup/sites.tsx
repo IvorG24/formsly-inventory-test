@@ -1,22 +1,27 @@
 // Imports
-import { getRequestListOnLoad } from "@/backend/api/get";
 import SiteSetupPage from "@/components/AssetInventory/SiteSetupPage.tsx/SiteSetupPage";
 import Meta from "@/components/Meta/Meta";
-import { withActiveTeam } from "@/utils/server-side-protections";
+import { withActiveGroup } from "@/utils/server-side-protections";
+import { SecurityGroupData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ user, supabaseClient }) => {
+export const getServerSideProps: GetServerSideProps = withActiveGroup(
+  async ({ securityGroupData }) => {
     try {
-      const requestListData = await getRequestListOnLoad(supabaseClient, {
-        userId: user.id, // Retrieve the user ID
-      });
+      const hasViewOnlyPersmissions =
+        securityGroupData.privileges.site.view === true;
+
+      if (!hasViewOnlyPersmissions) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
 
       return {
-        props: {
-          ...requestListData,
-          userId: user.id, // Pass userId as a prop
-        },
+        props: { securityGroupData },
       };
     } catch (e) {
       return {
@@ -28,15 +33,17 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
     }
   }
 );
-
-const Page = () => {
+type Props = {
+  securityGroupData: SecurityGroupData;
+};
+const Page = ({ securityGroupData }: Props) => {
   return (
     <>
       <Meta
         description="Request List Page"
         url="/teamName/setup/sub-categories"
       />
-      <SiteSetupPage />
+      <SiteSetupPage securityGroup={securityGroupData} />
     </>
   );
 };

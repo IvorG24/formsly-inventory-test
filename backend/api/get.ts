@@ -7813,28 +7813,6 @@ export const getAssetListFilterOptions = async (
   };
 };
 
-export const getAssetDetails = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    asset_request_id: string;
-  }
-) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_asset_details_on_load",
-    {
-      input_data: params,
-    }
-  );
-
-  if (error) throw error;
-
-  return data as {
-    asset_details: InventoryListType[];
-    asset_history: InventoryHistory[];
-    asset_event: InventoryEventRow[];
-  };
-};
-
 export const checkUniqueValue = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7855,6 +7833,8 @@ export const getChildAssetData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     assetId?: string;
+    limit: number;
+    page: number;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_child_asset", {
@@ -7864,9 +7844,9 @@ export const getChildAssetData = async (
   if (error) throw error;
 
   return data as {
-    inventory_request_id: string;
-    inventory_request_name: string;
-  }[];
+    data: { inventory_request_id: string; inventory_request_name: string }[];
+    totalCount: number;
+  };
 };
 
 export const getChildAssetOptionLinking = async (
@@ -7874,6 +7854,8 @@ export const getChildAssetOptionLinking = async (
   params: {
     teamId: string;
     assetId: string;
+    page: number;
+    limit: number;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_child_asset_option", {
@@ -7985,4 +7967,44 @@ export const getCustomFieldDetails = async (
   if (error) throw error;
 
   return data as customFieldFormValues;
+};
+
+export const getEventsHistoryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page?: number; limit?: number; assetId: string }
+) => {
+  const { page, limit, assetId } = params;
+  let query = supabaseClient
+    .schema("inventory_request_schema")
+    .from("inventory_event_table")
+    .select("*", { count: "exact" })
+    .eq("inventory_event_request_id", assetId);
+
+  if (limit && limit > 0 && page && page > 0) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    query = query.range(start, end);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data: data as InventoryEventRow[], totalCount: count ?? 0 };
+};
+
+export const getAssetHistoryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page?: number; limit?: number; assetId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_asset_history", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as {
+    data: InventoryHistory[];
+    totalCount: number;
+  };
 };

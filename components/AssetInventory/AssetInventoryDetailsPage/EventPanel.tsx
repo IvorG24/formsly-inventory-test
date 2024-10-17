@@ -2,14 +2,23 @@ import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryEventRow } from "@/utils/types";
 import { Text } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 type Props = {
-  asset_event: InventoryEventRow[];
+  fetchEventsPanel: (page: number) => void;
+  totalRecords: number;
+  eventHistoryData: InventoryEventRow[] | null;
 };
+const EventPanel = ({
+  totalRecords,
+  eventHistoryData = [],
+  fetchEventsPanel,
+}: Props) => {
+  const [activePage, setActivePage] = useState(1);
 
-const EventPanel = ({ asset_event }: Props) => {
-  const [page, setPage] = useState(1);
+  useEffect(() => {
+    fetchEventsPanel(activePage);
+  }, [activePage]);
+
   return (
     <>
       <DataTable
@@ -20,14 +29,11 @@ const EventPanel = ({ asset_event }: Props) => {
         }}
         withBorder
         idAccessor="inventory_event_id"
-        page={page}
-        totalRecords={asset_event.length}
+        page={activePage}
+        totalRecords={totalRecords}
         recordsPerPage={ROW_PER_PAGE}
-        records={asset_event.slice(
-          (page - 1) * ROW_PER_PAGE,
-          page * ROW_PER_PAGE
-        )}
-        onPageChange={setPage}
+        records={eventHistoryData || []}
+        onPageChange={setActivePage}
         columns={[
           {
             accessor: "returnDate",

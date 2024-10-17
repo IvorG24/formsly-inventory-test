@@ -607,6 +607,10 @@ export type InventoryFieldRow =
 export type InventoryEventRow =
   Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
 
+  export type InventoryHistoryRow =
+  Database["inventory_request_schema"]["Tables"]["inventory_history_table"]["Row"];
+
+
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 

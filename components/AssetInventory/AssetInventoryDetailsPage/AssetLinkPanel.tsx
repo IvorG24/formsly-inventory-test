@@ -36,10 +36,11 @@ const AssetLinkPanel = () => {
   const [childAsset, setChildAsset] = useState<
     { inventory_request_id: string; inventory_request_name: string }[]
   >([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [childAssetOption, setChildAssetOption] = useState<OptionType[]>([]);
   const [linkedAssets, setLinkedAssets] = useState<OptionType[]>([]);
   const [opened, setOpened] = useState(false);
-
+  const [activePage, setActivePage] = useState(1);
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       searchTerm: "",
@@ -50,14 +51,18 @@ const AssetLinkPanel = () => {
     const fetchChildAsset = async () => {
       try {
         if (!assetId || !activeTeam.team_id) return;
-        const data = await getChildAssetData(supabaseClient, {
+        const { data, totalCount } = await getChildAssetData(supabaseClient, {
           assetId: assetId,
+          page: activePage,
+          limit: ROW_PER_PAGE,
         });
         setChildAsset(data);
-
+        setTotalCount(totalCount);
         const option = await getChildAssetOptionLinking(supabaseClient, {
           teamId: activeTeam.team_id,
           assetId,
+          page: activePage,
+          limit: ROW_PER_PAGE,
         });
         const optionData = option.map((option) => ({
           value: option.inventory_request_id,
@@ -211,12 +216,12 @@ const AssetLinkPanel = () => {
           }}
           withBorder
           idAccessor="inventory_request_id"
-          page={1}
-          totalRecords={childAsset.length}
+          page={activePage}
+          totalRecords={totalCount}
           recordsPerPage={ROW_PER_PAGE}
           records={childAsset}
           fetching={false}
-          onPageChange={(page) => console.log(`Page changed to: ${page}`)}
+          onPageChange={setActivePage}
           columns={[
             {
               accessor: "inventory_request_id",

@@ -3,14 +3,24 @@ import { getAvatarColor } from "@/utils/styling";
 import { InventoryHistory } from "@/utils/types";
 import { Avatar, Flex, Text } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
-  asset_history: InventoryHistory[];
+  asset_history: InventoryHistory[] | null;
+  totalRecord: number;
+  fetchHistoryPanel: (page: number) => void;
 };
 
-const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
-  const [page, setPage] = useState(1);
+const HistoryPanel = ({
+  asset_history: historyDetails = [],
+  totalRecord,
+  fetchHistoryPanel,
+}: Props) => {
+  const [activePage, setActivePage] = useState(1);
+
+  useEffect(() => {
+    fetchHistoryPanel(activePage);
+  }, [activePage]);
 
   return (
     <>
@@ -22,14 +32,11 @@ const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
         }}
         withBorder
         idAccessor="inventory_history_id"
-        page={page}
-        totalRecords={historyDetails.length}
+        page={activePage}
+        totalRecords={totalRecord}
         recordsPerPage={ROW_PER_PAGE}
-        records={historyDetails.slice(
-          (page - 1) * ROW_PER_PAGE,
-          page * ROW_PER_PAGE
-        )}
-        onPageChange={setPage}
+        records={historyDetails || []}
+        onPageChange={setActivePage}
         columns={[
           {
             accessor: "inventory_history_date_created",
@@ -50,7 +57,7 @@ const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
             ),
           },
           {
-            accessor: "inventory_history_changed_from", // Updated accessor
+            accessor: "inventory_history_changed_from",
             title: "Changed From",
             render: (record) => (
               <Text>
@@ -75,6 +82,7 @@ const HistoryPanel = ({ asset_history: historyDetails }: Props) => {
             accessor: "request_creator_user_id",
             title: "Action By",
             render: (record) => {
+              if (!record) return;
               const {
                 user_id,
                 user_first_name,

@@ -6,6 +6,7 @@ import { Database } from "@/utils/database";
 import {
   InventoryAssetFormValues,
   LocationTableRow,
+  SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
 import {
@@ -36,8 +37,9 @@ type FormValues = {
 };
 type Props = {
   siteListData: SiteTableRow[];
+  securityGroup: SecurityGroupData;
 };
-const LocationSetupPage = ({ siteListData }: Props) => {
+const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
   const activeTeam = useActiveTeam();
   const [activePage, setActivePage] = useState(1);
   const [currentLocationList, setCurrentLocationList] = useState<
@@ -62,9 +64,13 @@ const LocationSetupPage = ({ siteListData }: Props) => {
     value: option.site_id,
   }));
 
+  const canAddData = securityGroup.privileges.location.add === true;
+  const canDeleteData = securityGroup.privileges.location.delete === true;
+  const canEditData = securityGroup.privileges.location.edit === true;
+
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      site_id: siteOptionList[0].value,
+      site_id: "",
       location_name: "",
     },
   });
@@ -240,9 +246,11 @@ const LocationSetupPage = ({ siteListData }: Props) => {
                 />
               )}
             />
-            <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-              Add New Location
-            </Button>
+            {canAddData && (
+              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                Add New Location
+              </Button>
+            )}
           </Group>
         </form>
 
@@ -282,21 +290,25 @@ const LocationSetupPage = ({ siteListData }: Props) => {
               title: "Actions",
               render: (location) => (
                 <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleEdit(location.location_id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    color="red"
-                    onClick={() => handleDelete(location.location_id)}
-                  >
-                    Delete
-                  </Button>
+                  {canEditData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleEdit(location.location_id)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteData && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      color="red"
+                      onClick={() => handleDelete(location.location_id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </Group>
               ),
             },

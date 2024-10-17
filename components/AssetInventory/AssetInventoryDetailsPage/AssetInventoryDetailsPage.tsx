@@ -1,9 +1,14 @@
-import { getAssetDetails, getEventDetails } from "@/backend/api/get";
+import {
+  getAssetHistoryData,
+  getAssetSpreadsheetView,
+  getEventDetails,
+  getEventsHistoryData,
+} from "@/backend/api/get";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
-import { formatDate } from "@/utils/constant";
+import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   InventoryEventRow,
@@ -17,6 +22,7 @@ import {
   Button,
   Container,
   Group,
+  LoadingOverlay,
   Menu,
   Paper,
   Table,
@@ -37,8 +43,6 @@ import HistoryPanel from "./HistoryPanel";
 
 type Props = {
   asset_details: InventoryListType[];
-  asset_history: InventoryHistory[];
-  asset_event: InventoryEventRow[];
 };
 
 const excludedKeys = [
@@ -80,8 +84,6 @@ const formatLabel = (key: string) => {
 
 const AssetInventoryDetailsPage = ({
   asset_details: initialDetails,
-  asset_history,
-  asset_event,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
@@ -89,11 +91,19 @@ const AssetInventoryDetailsPage = ({
   const router = useRouter();
   const assetId = router.query.assetId as string;
   const teamMemberList = useTeamMemberList();
+  const [isLoading, setIsloading] = useState(false);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assetDetails, setAssetDetails] =
     useState<InventoryListType[]>(initialDetails);
+  const [eventHistoryData, setEventHistoryData] =
+    useState<InventoryEventRow[]>();
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [assetHistoryData, setAssetHistoryData] =
+    useState<InventoryHistory[]>();
+  const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
   const securityGroup = useSecurityGroup();
+
   const canEdit =
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
@@ -142,10 +152,10 @@ const AssetInventoryDetailsPage = ({
 
   const fetchAssetDetails = async () => {
     try {
-      const assetData = await getAssetDetails(supabaseClient, {
-        asset_request_id: router.query.assetId as string,
+      const { data } = await getAssetSpreadsheetView(supabaseClient, {
+        search: router.query.assetId as string,
       });
-      setAssetDetails(assetData.asset_details);
+      setAssetDetails(data);
       setSelectedEventId(null);
     } catch {
       notifications.show({
@@ -153,6 +163,53 @@ const AssetInventoryDetailsPage = ({
         color: "red",
       });
     }
+  };
+
+  const fetchEventsPanel = async (page: number) => {
+    try {
+      if (!assetId) return;
+      setIsloading(true);
+      const { data, totalCount } = await getEventsHistoryData(supabaseClient, {
+        assetId,
+        page: page ? page : 0,
+        limit: ROW_PER_PAGE,
+      });
+      setIsloading(false);
+      setTotalRecords(totalCount);
+      setEventHistoryData(data);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
+  const fetchHistoryPanel = async (page: number) => {
+    try {
+      if (!assetId) return;
+      setIsloading(true);
+      const { data, totalCount } = await getAssetHistoryData(supabaseClient, {
+        assetId,
+        page: page ? page : 0,
+        limit: ROW_PER_PAGE,
+      });
+
+      setIsloading(false);
+      setAssetHistoryRecord(totalCount);
+      setAssetHistoryData(data);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
+  const fetchAllDetails = async () => {
+    fetchAssetDetails();
+    fetchEventsPanel(1);
+    fetchHistoryPanel(1);
   };
 
   return (
@@ -164,10 +221,10 @@ const AssetInventoryDetailsPage = ({
           teamMemberList={teamMemberList}
           selectedRow={[assetId]}
           userId={user?.user_id || ""}
-          handleFilterForms={fetchAssetDetails}
+          handleFilterForms={fetchAllDetails}
         />
       )}
-
+      <LoadingOverlay visible={isLoading} />
       <Paper shadow="lg" p="lg">
         {assetDetails.map((detail, idx) => (
           <Box key={idx}>
@@ -313,14 +370,22 @@ const AssetInventoryDetailsPage = ({
               </Tabs.Panel>
 
               <Tabs.Panel value="events" mt="md">
-                <EventPanel asset_event={asset_event} />
+                <EventPanel
+                  totalRecords={totalRecords}
+                  eventHistoryData={eventHistoryData || []}
+                  fetchEventsPanel={fetchEventsPanel}
+                />
               </Tabs.Panel>
               <Tabs.Panel value="asset-link" mt="md">
                 <AssetLinkPanel />
               </Tabs.Panel>
 
               <Tabs.Panel value="history" mt="md">
-                <HistoryPanel asset_history={asset_history} />
+                <HistoryPanel
+                  fetchHistoryPanel={fetchHistoryPanel}
+                  totalRecord={assetHistoryRecord}
+                  asset_history={assetHistoryData || []}
+                />
               </Tabs.Panel>
             </Tabs>
           </Box>
