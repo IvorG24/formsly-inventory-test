@@ -20,7 +20,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
+import { IconArrowsMaximize, IconCopy, IconEdit } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
@@ -37,6 +37,7 @@ type Props = {
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
   setValue: UseFormSetValue<TechnicalAssessmentFilterValues>;
   checkIfColumnIsHidden: (column: string) => boolean;
+  handleAction: (id: string, name: string) => void;
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
   listTableColumnFilter: string[];
@@ -65,6 +66,7 @@ const TechnicalQuestionnaireTable = ({
   isFetchingRequestList,
   handlePagination,
   sortStatus,
+  handleAction,
   setSortStatus,
   setValue,
   checkIfColumnIsHidden,
@@ -76,6 +78,7 @@ const TechnicalQuestionnaireTable = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const { classes } = useStyles();
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -133,19 +136,29 @@ const TechnicalQuestionnaireTable = ({
             );
           },
         },
-
         {
           accessor: "questionnaire_name",
           title: "Questionnaire Name",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
-          render: ({ questionnaire_name }) => (
-            <Flex justify="left">
+          render: ({ questionnaire_name, questionnaire_id }) => (
+            <Flex justify="space-between">
               <Text>{String(questionnaire_name)}</Text>
+              <ActionIcon
+                onClick={() => {
+                  handleAction(
+                    String(questionnaire_id),
+                    String(questionnaire_name)
+                  );
+                }}
+                maw={120}
+                color="blue"
+              >
+                <IconEdit />
+              </ActionIcon>
             </Flex>
           ),
         },
-
         {
           accessor: "questionnaire_date_created",
           title: "Date Created",

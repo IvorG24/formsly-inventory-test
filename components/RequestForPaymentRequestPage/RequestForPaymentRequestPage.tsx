@@ -205,10 +205,10 @@ const RequestForPaymentRequestPage = ({
   useEffect(() => {
     const fetchRFPCodeRequest = async () => {
       // check if rfp code request exists
-      const rfpCodeRequest = await getExistingConnectedRequest(
-        supabaseClient,
-        request.request_id
-      );
+      const rfpCodeRequest = await getExistingConnectedRequest(supabaseClient, {
+        parentRequestId: request.request_id,
+        fieldId: "44edd3e4-9595-4b7c-a924-98b084346d36",
+      });
 
       if (rfpCodeRequest) {
         const { request_formsly_id_prefix, request_formsly_id_serial } =

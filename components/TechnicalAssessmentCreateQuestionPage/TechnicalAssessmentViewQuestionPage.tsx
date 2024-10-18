@@ -174,7 +174,7 @@ const TechnicalAssessmentCreateQuestionPage = ({
       )
         return;
 
-      const trimmedQuestion = data.question.trim().toLowerCase();
+      const trimmedQuestion = data.question.trim();
       if (trimmedQuestion === "") {
         notifications.show({
           message: "Technical question is required.",

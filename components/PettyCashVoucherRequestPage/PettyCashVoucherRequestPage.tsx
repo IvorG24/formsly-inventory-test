@@ -414,7 +414,10 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
     const fetchPCVBalanceRequest = async () => {
       const pcvBalanceRequest = await getExistingConnectedRequest(
         supabaseClient,
-        request.request_id
+        {
+          parentRequestId: request.request_id,
+          fieldId: "9a112d6f-a34e-4767-b3c1-7f30af858f8f",
+        }
       );
       setCanCreatePCVBalance(
         requestStatus === "APPROVED" && isUserAccountant && !pcvBalanceRequest
@@ -432,13 +435,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
     if (requestStatus === "APPROVED") {
       fetchPCVBalanceRequest();
     }
-  }, [
-    requestStatus,
-    activeTeam.team_name,
-    supabaseClient,
-    request.request_id,
-    isUserAccountant,
-  ]);
+  }, [requestStatus, activeTeam.team_name, isUserAccountant]);
 
   return (
     <Container>

@@ -2487,7 +2487,7 @@ export const checkQuestionnaireName = async (
     .schema("form_schema")
     .from("questionnaire_table")
     .select("*")
-    .eq("questionnaire_name", params.questionnaireName)
+    .ilike("questionnaire_name", params.questionnaireName)
     .limit(1);
 
   if (error) throw error;

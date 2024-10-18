@@ -23,9 +23,20 @@ import {
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Space,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -114,7 +125,7 @@ const CreatePettyCashVoucherBalancePage = ({
       }`;
 
       if (requireCostEngineer) {
-        await sendNotificationToCostEngineer(supabaseClient, {
+        await handleSendNotificationToCostEngineer({
           projectId: connectedRequest.request_project_id,
           requesterName,
           redirectUrl,
@@ -144,6 +155,56 @@ const CreatePettyCashVoucherBalancePage = ({
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSendNotificationToCostEngineer = async ({
+    projectId,
+    requesterName,
+    redirectUrl,
+    teamId,
+  }: {
+    projectId: string;
+    requesterName: string;
+    redirectUrl: string;
+    teamId: string;
+  }) => {
+    try {
+      await sendNotificationToCostEngineer(supabaseClient, {
+        projectId,
+        requesterName,
+        redirectUrl,
+        teamId,
+      });
+    } catch (e) {
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleSendNotificationToCostEngineer",
+          },
+        });
+      }
+      modals.open({
+        title: (
+          <Flex align="center" c="orange" gap="xs">
+            <IconAlertCircle />
+            <Text>Cost engineer not found</Text>
+          </Flex>
+        ),
+        children: (
+          <Stack>
+            <Text size="sm" weight={600}>
+              No cost engineer was assigned to your project. Your request will
+              still proceed, but a cost engineer is required to update the
+              request for approval.
+            </Text>
+            <Button onClick={() => modals.closeAll()}>I understand.</Button>
+          </Stack>
+        ),
+        centered: true,
+      });
     }
   };
 

@@ -1,7 +1,6 @@
 import {
   AttachmentTableRow,
   BackgroundCheckTableRow,
-  DirectorInterviewTableRow,
   HRPhoneInterviewTableRow,
   JobOfferTableRow,
   RequestViewRow,
@@ -33,7 +32,6 @@ import {
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
 import BackgroundCheck from "./BackgroundCheck";
-import DirectorInterview from "./DirectorInterview";
 import GeneralAssessment from "./GeneralAssessment";
 import HRPhoneInterview from "./HRPhoneInterview";
 import JobOffer from "./JobOffer";
@@ -49,7 +47,6 @@ type Props = {
   tradeTestData?: TradeTestTableRow | null;
   technicalInterview1Data?: TechnicalInterviewTableRow | null;
   technicalInterview2Data?: TechnicalInterviewTableRow | null;
-  directorInterviewData?: DirectorInterviewTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
   jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
 };
@@ -62,7 +59,6 @@ const ApplicationProgressPage = (props: Props) => {
     tradeTestData,
     technicalInterview1Data,
     technicalInterview2Data,
-    directorInterviewData,
     backgroundCheckData,
     jobOfferData,
   } = props;
@@ -114,9 +110,6 @@ const ApplicationProgressPage = (props: Props) => {
         technicalInterviewData={technicalInterview2Data}
         technicalInterviewNumber={2}
       />
-    ) : null,
-    directorInterviewData: directorInterviewData ? (
-      <DirectorInterview directorInterviewData={directorInterviewData} />
     ) : null,
     backgroundCheckData: backgroundCheckData ? (
       <BackgroundCheck backgroundCheckData={backgroundCheckData} />
@@ -316,15 +309,6 @@ const ApplicationProgressPage = (props: Props) => {
               disabled={!Boolean(technicalInterview1Data)}
               {...stepperProps(
                 technicalInterview2Data?.technical_interview_status as string
-              )}
-            />
-          )}
-          {directorInterviewData !== null && (
-            <Stepper.Step
-              label="Director Interview"
-              disabled={!Boolean(directorInterviewData)}
-              {...stepperProps(
-                directorInterviewData?.director_interview_status as string
               )}
             />
           )}

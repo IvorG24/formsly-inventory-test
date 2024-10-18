@@ -408,7 +408,7 @@ const BillOfQuantityRequestPage = ({
         return { success: false, data: null };
       }
 
-      const requestor = `${request.request_team_member.team_member_user.user_first_name} ${request.request_team_member.team_member_user.user_last_name}`;
+      const requestor = `${lrfRequest.request_team_member.team_member_user.user_first_name} ${lrfRequest.request_team_member.team_member_user.user_last_name}`;
       const amount = getTotalInvoiceAmount();
 
       const jiraTicketPayload = formatJiraLRFRequisitionPayload({

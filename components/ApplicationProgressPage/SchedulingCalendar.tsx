@@ -47,11 +47,7 @@ import { v4 as uuidv4 } from "uuid";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 type SchedulingType = {
-  meetingType:
-    | "hr_phone_interview"
-    | "trade_test"
-    | "technical_interview"
-    | "director_interview";
+  meetingType: "hr_phone_interview" | "trade_test" | "technical_interview";
   meetingTypeNumber?: number;
   targetId: string;
   intialDate: string | null;
@@ -813,7 +809,6 @@ const SchedulingCalendar = ({
         hr_phone_interview: { breakDuration: 5, slotDuration: 15 },
         trade_test: { breakDuration: 5, slotDuration: 60 },
         technical_interview: { breakDuration: 5, slotDuration: 30 },
-        director_interview: { breakDuration: 5, slotDuration: 30 },
       };
 
       const config = slotConfigurations[meetingType];

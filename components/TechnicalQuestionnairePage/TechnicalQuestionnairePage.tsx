@@ -3,6 +3,7 @@ import {
   checkQuestionnaireName,
   createQuestionnaire,
 } from "@/backend/api/post";
+import { updateQuestionnaireName } from "@/backend/api/update";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -11,8 +12,20 @@ import {
   TechnicalAssessmentFilterValues,
   TechnicalAssessmentTableRow,
 } from "@/utils/types";
-import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
@@ -204,6 +217,83 @@ const TechnicalQuestionnairePage = () => {
     }
   };
 
+  const handleEditQuestionnaireName = async (
+    questionnaireId: string,
+    questionnaireName: string,
+    fieldValue: string
+  ) => {
+    try {
+      if (questionnaireName !== fieldValue) {
+        const checkIfExist = await checkQuestionnaireName(supabaseClient, {
+          questionnaireName: fieldValue.trim(),
+        });
+        if (checkIfExist.length > 0) {
+          notifications.show({
+            message: "Questionnaire name already exists.",
+            color: "orange",
+          });
+          return;
+        }
+      }
+
+      await updateQuestionnaireName(supabaseClient, {
+        questionnaireId,
+        questionnaireName: fieldValue.trim(),
+      });
+
+      setQuestionnnaireList(
+        questionnnaireList.map((q) =>
+          q.questionnaire_id === questionnaireId
+            ? { ...q, questionnaire_name: fieldValue }
+            : q
+        )
+      );
+      notifications.show({
+        message: "Questionnaire updated successfully.",
+        color: "green",
+      });
+      modals.close("changeQuestionnaireName");
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleAction = (id: string, currentName: string) => {
+    let fieldValue = currentName; // Initialize with current name
+    modals.open({
+      modalId: "changeQuestionnaireName",
+      title: <Text>Change Questionnaire Name</Text>,
+      children: (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleEditQuestionnaireName(id, currentName, fieldValue);
+          }}
+        >
+          <Stack>
+            <TextInput
+              label="Enter a new name for the questionnaire"
+              placeholder="New questionnaire name"
+              defaultValue={currentName}
+              onChange={(event) => {
+                fieldValue = event.currentTarget.value; // Update fieldValue with the entered value
+              }}
+            />
+            <Group position="right">
+              <Button type="submit" fullWidth color="blue">
+                Save
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      ),
+      centered: true,
+    });
+  };
+
   useEffect(() => {
     handlePagination(activePage);
   }, [activeTeam.team_id, teamMember]);
@@ -238,6 +328,7 @@ const TechnicalQuestionnairePage = () => {
         </FormProvider>
         <Box h="fit-content">
           <TechnicalQuestionnaireTable
+            handleAction={handleAction}
             setValue={setValue}
             questionnairList={questionnnaireList}
             questionnairListCount={questionnnaireListCount}

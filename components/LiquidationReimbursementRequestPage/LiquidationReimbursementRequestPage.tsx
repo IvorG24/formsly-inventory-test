@@ -649,10 +649,10 @@ const LiquidationReimbursementRequestPage = ({
   useEffect(() => {
     const fetchBOQRequest = async () => {
       // check if boq request exists
-      const boqRequest = await getExistingConnectedRequest(
-        supabaseClient,
-        request.request_id
-      );
+      const boqRequest = await getExistingConnectedRequest(supabaseClient, {
+        parentRequestId: request.request_id,
+        fieldId: "eff42959-8552-4d7e-836f-f89018293ae8",
+      });
       setCanCreateBOQ(
         requestStatus === "APPROVED" &&
           isUserCostEngineer &&
@@ -673,14 +673,7 @@ const LiquidationReimbursementRequestPage = ({
     if (requestStatus === "APPROVED") {
       fetchBOQRequest();
     }
-  }, [
-    requestStatus,
-    activeTeam.team_name,
-    supabaseClient,
-    request.request_id,
-    isUserCostEngineer,
-    selectedDepartment,
-  ]);
+  }, [requestStatus, activeTeam.team_name, isUserCostEngineer]);
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {

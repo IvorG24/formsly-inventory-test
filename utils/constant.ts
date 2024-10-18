@@ -44,10 +44,6 @@ export const MEETING_TYPE_DETAILS: Record<MeetingType, MeetingDetails> = {
     breakDuration: 5,
     duration: 15,
   },
-  director_interview: {
-    breakDuration: 5,
-    duration: 60,
-  },
   technical_interview: {
     breakDuration: 5,
     duration: 30,

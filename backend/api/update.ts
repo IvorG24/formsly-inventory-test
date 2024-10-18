@@ -39,6 +39,7 @@ import {
   SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
+  TechnicalAssessmentTableRow,
   TechnicalInterviewSpreadsheetData,
   TechnicalQuestionFormValues,
   TicketTableRow,
@@ -1438,43 +1439,6 @@ export const updateTechnicalInterviewSchedule = async (
   if (error) throw error;
 };
 
-export const updateDirectorInterviewStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    status: string;
-    teamMemberId: string;
-    data: DirectorInterviewSpreadsheetData;
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_director_interview_status",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-};
-
-export const updateDirectorInterviewSchedule = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-    schedule: string;
-    requestReferenceId: string;
-    userEmail: string;
-    applicationInformationFormslyId: string;
-    notificationMessage: string;
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_director_interview_schedule",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-};
-
 export const updateBackgroundCheckStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1749,6 +1713,26 @@ export const disableApikey = async (
   if (error) throw error;
 
   return data as unknown as ApiKeyData[];
+};
+
+export const updateQuestionnaireName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    questionnaireId: string;
+    questionnaireName: string;
+  }
+) => {
+  const { questionnaireId, questionnaireName } = params;
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("questionnaire_table")
+    .update({ questionnaire_name: questionnaireName })
+    .eq("questionnaire_id", questionnaireId)
+    .select("*");
+
+  if (error) throw error;
+
+  return data as unknown as TechnicalAssessmentTableRow[];
 };
 
 export const updateEvent = async (

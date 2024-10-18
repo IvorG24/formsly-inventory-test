@@ -50,7 +50,7 @@ const Page = ({ questionnaireId, questionnaireData }: Props) => {
   return (
     <>
       <Meta
-        description="Request List Page"
+        description="Technical Question Page"
         url="/teamName/technical-question/[questionnaireId]"
       />
       <TechnicalAssessmentViewQuestionPage

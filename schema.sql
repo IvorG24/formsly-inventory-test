@@ -1040,18 +1040,6 @@ CREATE TABLE hr_schema.technical_interview_table (
   technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
-CREATE TABLE hr_schema.director_interview_table (
-  director_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  director_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  director_interview_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
-  director_interview_status_date_updated TIMESTAMPTZ,
-  director_interview_schedule TIMESTAMPTZ,
-  director_interview_meeting_link VARCHAR(4000),
-
-  director_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  director_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
-);
-
 CREATE TABLE hr_schema.background_check_table (
   background_check_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   background_check_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -1200,7 +1188,6 @@ CREATE TABLE lookup_schema.position_table (
   position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_1 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_2 BOOLEAN DEFAULT false NOT NULL,
-  position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
@@ -15151,18 +15138,7 @@ AS $$
         if(technicalInterviewCount){
           return true;
         }
-        const directorInterviewCount = plv8.execute(
-          `
-            SELECT COUNT(director_interview_id)
-            FROM hr_schema.director_interview_table
-            WHERE
-              director_interview_request_id = '${requestId}'
-              AND director_interview_schedule IS NULL
-          `
-        )[0].count;
-        if(directorInterviewCount){
-          return true;
-        }
+
         const jobOfferData = plv8.execute(
           `
             SELECT job_offer_id, job_offer_status
@@ -15296,7 +15272,6 @@ AS $$
     let tradeTestData
       = technicalInterview1Data
       = technicalInterview2Data
-      = directorInterviewData
       = backgroundCheckData
       = null;
 
@@ -15312,9 +15287,6 @@ AS $$
     }
     if (positionData.position_is_with_technical_interview_2) {
       technicalInterview2Data = undefined;
-    }
-    if (positionData.position_is_with_director_interview) {
-      directorInterviewData = undefined;
     }
     if (positionData.position_is_with_background_check) {
       backgroundCheckData = undefined;
@@ -15348,7 +15320,6 @@ AS $$
         tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
-        directorInterviewData,
         backgroundCheckData,
         jobOfferData
       }
@@ -15402,7 +15373,6 @@ AS $$
         tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
-        directorInterviewData,
         backgroundCheckData,
         jobOfferData
       }
@@ -15420,7 +15390,6 @@ AS $$
         tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
-        directorInterviewData,
         backgroundCheckData,
         jobOfferData
       }
@@ -15439,7 +15408,6 @@ AS $$
           tradeTestData: undefined,
           technicalInterview1Data,
           technicalInterview2Data,
-          directorInterviewData,
           backgroundCheckData,
           jobOfferData
         }
@@ -15459,7 +15427,6 @@ AS $$
           tradeTestData,
           technicalInterview1Data: undefined,
           technicalInterview2Data,
-          directorInterviewData,
           backgroundCheckData,
           jobOfferData
         }
@@ -15479,33 +15446,12 @@ AS $$
           tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data: undefined,
-          directorInterviewData,
           backgroundCheckData,
           jobOfferData
         }
         return;
       }
       technicalInterview2Data = technicalInterview2Data[0];
-    }
-
-    if (positionData.position_is_with_director_interview) {
-      directorInterviewData = plv8.execute(`SELECT * FROM hr_schema.director_interview_table WHERE director_interview_request_id = '${requestUUID}'`);
-       if (!directorInterviewData.length) {
-        returnData = {
-          applicationInformationData,
-          generalAssessmentData,
-          technicalAssessmentData,
-          hrPhoneInterviewData,
-          tradeTestData,
-          technicalInterview1Data,
-          technicalInterview2Data,
-          directorInterviewData: undefined,
-          backgroundCheckData,
-          jobOfferData
-        }
-        return;
-      }
-      directorInterviewData = directorInterviewData[0];
     }
 
     if (positionData.position_is_with_background_check) {
@@ -15519,7 +15465,6 @@ AS $$
           tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data,
-          directorInterviewData,
           backgroundCheckData: undefined,
           jobOfferData
         }
@@ -15549,7 +15494,6 @@ AS $$
         tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
-        directorInterviewData,
         backgroundCheckData,
         jobOfferData: undefined
       }
@@ -15565,7 +15509,6 @@ AS $$
       tradeTestData,
       technicalInterview1Data,
       technicalInterview2Data,
-      directorInterviewData,
       backgroundCheckData,
       jobOfferData
     }
@@ -15777,7 +15720,6 @@ AS $$
       'trade_test',
       'technical_interview_1',
       'technical_interview_2',
-      'director_interview',
       'background_check'
     ];
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${position}' LIMIT 1`)[0];
@@ -15789,9 +15731,7 @@ AS $$
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 1)`);
     } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 2) {
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 2)`);
-    } else if (positionData.position_is_with_director_interview && currentStep <= 3) {
-      plv8.execute(`INSERT INTO hr_schema.director_interview_table (director_interview_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_background_check && currentStep <= 4) {
+    } else if (positionData.position_is_with_background_check && currentStep <= 3) {
       const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
@@ -16232,14 +16172,11 @@ AS $$
          const scheduledList = plv8.execute(`
         SELECT
           iom.interview_meeting_interview_id,
-          COALESCE(p.hr_phone_interview_id, d.director_interview_id, t.trade_test_id, ti.technical_interview_id) AS pending_interview_id
+          COALESCE(p.hr_phone_interview_id, t.trade_test_id, ti.technical_interview_id) AS pending_interview_id
         FROM hr_schema.interview_online_meeting_table iom
         LEFT JOIN hr_schema.hr_phone_interview_table p
           ON p.hr_phone_interview_id = iom.interview_meeting_interview_id
           AND p.hr_phone_interview_status = 'PENDING'
-        LEFT JOIN hr_schema.director_interview_table d
-          ON d.director_interview_id = iom.interview_meeting_interview_id
-          AND d.director_interview_status = 'PENDING'
         LEFT JOIN hr_schema.trade_test_table t
           ON t.trade_test_id = iom.interview_meeting_interview_id
           AND t.trade_test_status = 'PENDING'
@@ -16250,7 +16187,6 @@ AS $$
           AND iom.interview_meeting_schedule = '${validStartTime.toISOString()}'
           AND (
             p.hr_phone_interview_status = 'PENDING'
-            OR d.director_interview_status = 'PENDING'
             OR t.trade_test_status = 'PENDING'
             OR ti.technical_interview_status = 'PENDING'
           )
@@ -16322,15 +16258,12 @@ AS $$
         iom.interview_meeting_schedule,
         COALESCE(
           hpi.hr_phone_interview_team_member_id,
-          di.director_interview_team_member_id,
           ti.technical_interview_team_member_id,
           t.trade_test_team_member_id
         ) AS team_member_id
         FROM hr_schema.interview_online_meeting_table iom
         LEFT JOIN hr_schema.hr_phone_interview_table hpi
         ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
-        LEFT JOIN hr_schema.director_interview_table di
-        ON iom.interview_meeting_interview_id = di.director_interview_id
         LEFT JOIN hr_schema.trade_test_table t
         ON iom.interview_meeting_interview_id = t.trade_test_id
         LEFT JOIN hr_schema.technical_interview_table ti
@@ -16339,13 +16272,11 @@ AS $$
         AND iom.interview_meeting_is_disabled = false
         AND COALESCE(
           hpi.hr_phone_interview_team_member_id,
-          di.director_interview_team_member_id,
           ti.technical_interview_team_member_id,
           t.trade_test_team_member_id
         ) = ANY($2)
         AND (
           hpi.hr_phone_interview_status = 'PENDING'
-          OR di.director_interview_status = 'PENDING'
           OR ti.technical_interview_status = 'PENDING'
           OR t.trade_test_status = 'PENDING'
         )
@@ -16404,8 +16335,6 @@ AS $$
           FROM hr_schema.interview_online_meeting_table iom_total
           LEFT JOIN hr_schema.hr_phone_interview_table hpi
             ON iom_total.interview_meeting_interview_id = hpi.hr_phone_interview_id
-          LEFT JOIN hr_schema.director_interview_table di
-            ON iom_total.interview_meeting_interview_id = di.director_interview_id
           LEFT JOIN hr_schema.technical_interview_table ti
             ON iom_total.interview_meeting_interview_id = ti.technical_interview_id
           LEFT JOIN hr_schema.trade_test_table t
@@ -16413,7 +16342,6 @@ AS $$
           WHERE iom_total.interview_meeting_is_disabled = false
             AND (
             hpi.hr_phone_interview_team_member_id = $3 OR
-            di.director_interview_team_member_id = $3 OR
             ti.technical_interview_team_member_id = $3 OR
             t.trade_test_team_member_id = $3
             )
@@ -16978,199 +16906,6 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_director_interview_summary_table(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = [];
-  plv8.subtransaction(function(){
-    const {
-      userId,
-      limit,
-      page,
-      sort,
-      position,
-      application_information_request_id,
-      application_information_score,
-      general_assessment_request_id,
-      general_assessment_score,
-      technical_assessment_request_id,
-      technical_assessment_score,
-      director_interview_date_created,
-      director_interview_status,
-      director_interview_schedule,
-      assigned_hr
-    } = input_data;
-
-    const offset = (page - 1) * limit;
-
-    let positionCondition = '';
-    if (position && position.length) {
-      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
-    }
-    let applicationInformationRequestIdCondition = '';
-    if (application_information_request_id) {
-      applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
-    }
-    let applicationInformationScoreCondition = '';
-    if (application_information_score) {
-      if (application_information_score.start) {
-        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value >= ${application_information_score.start}`;
-      }
-      if (application_information_score.end) {
-        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value <= ${application_information_score.end}`;
-      }
-    }
-    let generalAssessmentRequestIdCondition = '';
-    if (general_assessment_request_id) {
-      generalAssessmentRequestIdCondition = `AND generalAssessment.request_formsly_id ILIKE '%${general_assessment_request_id}%'`;
-    }
-    let generalAssessmentScoreCondition = '';
-    if (general_assessment_score) {
-      if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
-      }
-      if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
-      }
-    }
-    let technicalAssessmentRequestIdCondition = '';
-    if (technical_assessment_request_id) {
-      technicalAssessmentRequestIdCondition = `AND technicalAssessment.request_formsly_id ILIKE '%${technical_assessment_request_id}%'`;
-    }
-    let technicalAssessmentScoreCondition = '';
-    if (technical_assessment_score) {
-      if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
-      }
-      if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
-      }
-    }
-    let directorInterviewDateCondition = "";
-    if (director_interview_date_created) {
-      if (director_interview_date_created.start) {
-        directorInterviewDateCondition += ` AND director_interview_date_created >= '${new Date(director_interview_date_created.start).toISOString()}'`;
-      }
-      if (director_interview_date_created.end) {
-        directorInterviewDateCondition += ` AND director_interview_date_created <= '${new Date(director_interview_date_created.end).toISOString()}'`;
-      }director_interview_date_created
-    }
-    let directorInterviewCondition = "";
-    if (director_interview_status && director_interview_status.length) {
-      directorInterviewCondition = `AND director_interview_status IN (${director_interview_status.map(status => `'${status}'`).join(", ")})`;
-    }
-    let directorInterviewScheduleCondition = "";
-    if (director_interview_schedule) {
-      if (director_interview_schedule.start) {
-        directorInterviewScheduleCondition += ` AND director_interview_schedule >= '${director_interview_schedule.start}'`;
-      }
-      if (director_interview_schedule.end) {
-        directorInterviewScheduleCondition += ` AND director_interview_schedule <= '${director_interview_schedule.end}'`;
-      }
-    }
-    let assignedHRCondition = '';
-    if (assigned_hr && assigned_hr.length) {
-      assignedHRCondition = `AND director_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
-    }
-
-    const parentRequests = plv8.execute(
-      `
-        SELECT
-          request_response AS position,
-          applicationInformation.request_id AS hr_request_reference_id,
-          applicationInformation.request_formsly_id AS application_information_request_id,
-          applicationInformationScore.request_score_value AS application_information_score,
-          generalAssessment.request_formsly_id AS general_assessment_request_id,
-          generalAssessmentScore.request_score_value AS general_assessment_score,
-          technicalAssessment.request_formsly_id AS technical_assessment_request_id,
-          technicalAssessmentScore.request_score_value AS technical_assessment_score,
-          director_interview_id,
-          director_interview_date_created,
-          director_interview_status,
-          director_interview_schedule,
-          director_interview_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
-        FROM hr_schema.request_connection_table
-        INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
-        INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
-        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
-          AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
-        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.director_interview_table ON director_interview_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = director_interview_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
-          ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
-          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
-          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
-          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
-          ${directorInterviewDateCondition.length ? directorInterviewDateCondition : ""}
-          ${directorInterviewCondition}
-          ${directorInterviewScheduleCondition}
-          ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
-      `
-    );
-
-    returnData = parentRequests.map(request => {
-      const additionalData = plv8.execute(
-        `
-          SELECT
-            request_response,
-            request_response_field_id
-          FROM request_schema.request_response_table
-          WHERE
-            request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('e48e7297-c250-4595-ba61-2945bf559a25', '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce', '9322b870-a0a1-4788-93f0-2895be713f9c', 'b2972102-99b0-4014-8560-caee2fdaf44e', '56438f2d-da70-4fa4-ade6-855f2f29823b')
-        `
-      );
-
-      let firstName = middleName = lastName = contactNumber = email = "";
-      additionalData.forEach(response => {
-        const parsedResponse = response.request_response.replaceAll('"', "");
-        switch(response.request_response_field_id) {
-          case "e48e7297-c250-4595-ba61-2945bf559a25": firstName = parsedResponse; break;
-          case "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce": middleName = parsedResponse; break;
-          case "9322b870-a0a1-4788-93f0-2895be713f9c": lastName = parsedResponse; break;
-          case "b2972102-99b0-4014-8560-caee2fdaf44e": contactNumber = parsedResponse; break;
-          case "56438f2d-da70-4fa4-ade6-855f2f29823b": email = parsedResponse; break;
-        }
-      });
-
-      const meetingLink = plv8.execute(
-        `
-          SELECT * FROM hr_schema.interview_online_meeting_table
-          WHERE interview_meeting_interview_id = '${request.director_interview_id}'
-          LIMIT 1
-        `
-      );
-
-      return {
-        ...request,
-        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
-        application_information_contact_number: contactNumber,
-        application_information_email: email,
-        meeting_link: meetingLink.length ? meetingLink[0].interview_meeting_url : ""
-      }
-    });
-});
-return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION get_background_check_summary_table(
   input_data JSON
 )
@@ -17350,121 +17085,6 @@ AS $$
     });
 });
 return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION update_director_interview_status(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = {};
-  plv8.subtransaction(function(){
-    const {
-      status,
-      teamMemberId,
-      data
-    } = input_data;
-
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-
-    plv8.execute(
-      `
-        UPDATE hr_schema.director_interview_table
-        SET
-          director_interview_status = '${status}',
-          director_interview_status_date_updated = '${currentDate}',
-          director_interview_team_member_id = '${teamMemberId}'
-        WHERE
-          director_interview_request_id = '${data.hr_request_reference_id}'
-      `
-    );
-
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length){
-      plv8.execute(
-        `
-          INSERT INTO public.notification_table
-          (
-            notification_app,
-            notification_type,
-            notification_content,
-            notification_redirect_url,
-            notification_user_id
-          ) VALUES
-          (
-            'REQUEST',
-            '${status}',
-            'Director Interview status is updated to ${status}',
-            '/user/application-progress/${data.application_information_request_id}',
-            '${userId[0].user_id}'
-          )
-        `
-      );
-    }
-
-    if (status === 'QUALIFIED') {
-      const parsedPosition = data.position.replaceAll('"', '');
-      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "director_interview", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
-    }
-  });
-  return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION update_director_interview_schedule(
-  input_data JSON
-)
-RETURNS JSON
-SET search_path TO ''
-AS $$
-  let returnData = {};
-  plv8.subtransaction(function(){
-    const {
-      teamMemberId,
-      schedule,
-      requestReferenceId,
-      userEmail,
-      applicationInformationFormslyId,
-      notificationMessage
-    } = input_data;
-
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-
-    plv8.execute(
-      `
-        UPDATE hr_schema.director_interview_table
-        SET
-          director_interview_status = 'PENDING',
-          director_interview_status_date_updated = '${currentDate}',
-          director_interview_team_member_id = '${teamMemberId}',
-          director_interview_schedule = '${schedule}'
-        WHERE
-          director_interview_request_id = '${requestReferenceId}'
-      `
-    );
-
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail.toLowerCase()}' LIMIT 1`)[0].user_id;
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id
-        ) VALUES
-        (
-          'REQUEST',
-          'REQUEST',
-          '${notificationMessage}',
-          '/user/application-progress/${applicationInformationFormslyId}',
-          '${userId}'
-        )
-      `
-    );
-  });
-  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_background_check_status(
@@ -18776,17 +18396,6 @@ plv8.subtransaction(function(){
         AND technical_interview_schedule <= NOW()
     `
   );
-  plv8.execute(
-    `
-      UPDATE hr_schema.director_interview_table
-      SET
-        director_interview_status = 'MISSED',
-        director_interview_status_date_updated = NOW()
-      WHERE
-        director_interview_status = 'PENDING'
-        AND director_interview_schedule <= NOW()
-    `
-  );
 });
 $$ LANGUAGE plv8;
 
@@ -19060,16 +18669,6 @@ plv8.subtransaction(function(){
     `
   )[0].count;
 
-  const directorInterviewCount = plv8.execute(
-    `
-      SELECT COUNT(director_interview_id)
-      FROM hr_schema.director_interview_table
-      WHERE
-        director_interview_status = 'PENDING'
-        AND director_interview_team_member_id = '${teamMemberId}'
-    `
-  )[0].count;
-
   const backgroundCheckCount = plv8.execute(
     `
       SELECT COUNT(background_check_id)
@@ -19105,7 +18704,6 @@ plv8.subtransaction(function(){
     tradeTest: Number(tradeTestCount),
     technicalInterview1: Number(technicalInterview1Count),
     technicalInterview2: Number(technicalInterview2Count),
-    directorInterview: Number(directorInterviewCount),
     backgroundCheck: Number(backgroundCheckCount),
     jobOffer: Number(jobOfferCount)
   }

@@ -533,13 +533,6 @@ export type TechnicalInterviewTableInsert =
 export type TechnicalInterviewTableUpdate =
   Database["hr_schema"]["Tables"]["technical_interview_table"]["Update"];
 
-export type DirectorInterviewTableRow =
-  Database["hr_schema"]["Tables"]["director_interview_table"]["Row"];
-export type DirectorInterviewTableInsert =
-  Database["hr_schema"]["Tables"]["director_interview_table"]["Insert"];
-export type DirectorInterviewTableUpdate =
-  Database["hr_schema"]["Tables"]["director_interview_table"]["Update"];
-
 export type BackgroundCheckTableRow =
   Database["hr_schema"]["Tables"]["background_check_table"]["Row"];
 export type BackgroundCheckTableInsert =
@@ -2442,27 +2435,6 @@ export type TechnicalInterviewFilterFormValues =
     };
   };
 
-export type DirectorInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
-  director_interview_id: string;
-  director_interview_date_created: string;
-  director_interview_status: string;
-  director_interview_schedule: string;
-  meeting_link: string;
-};
-
-export type DirectorInterviewFilterFormValues =
-  HRSpreadsheetGeneralFilterFormValues & {
-    director_interview_date_created?: {
-      start?: string;
-      end?: string;
-    };
-    director_interview_status?: string;
-    director_interview_schedule?: {
-      start?: string;
-      end?: string;
-    };
-  };
-
 export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
   background_check_id: string;
   background_check_date_created: string;
@@ -2511,8 +2483,7 @@ export type MeetingDetails = {
 export type MeetingType =
   | "hr_phone_interview"
   | "trade_test"
-  | "technical_interview"
-  | "director_interview";
+  | "technical_interview";
 
 export type HRProjectType = HRProjectTableRow & {
   hr_project_address: AddressTableRow;

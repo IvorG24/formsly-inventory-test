@@ -43,8 +43,6 @@ import {
   CSICodeTableRow,
   customFieldFormValues,
   Dataset,
-  DirectorInterviewFilterFormValues,
-  DirectorInterviewSpreadsheetData,
   EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
   EquipmentPartType,
@@ -5797,12 +5795,17 @@ export const getRequestFieldResponse = async (
 
 export const getExistingConnectedRequest = async (
   supabaseClient: SupabaseClient<Database>,
-  parentRequestId: string
+  params: {
+    parentRequestId: string;
+    fieldId: string;
+  }
 ) => {
+  const { parentRequestId, fieldId } = params;
   const { data, error } = await supabaseClient
     .schema("request_schema")
     .from("request_response_table")
     .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response_field_id", fieldId)
     .eq("request_response", JSON.stringify(parentRequestId))
     .in("request.request_status", ["PENDING", "APPROVED"])
     .maybeSingle();
@@ -6528,50 +6531,6 @@ export const getTechnicalInterviewSummaryData = async (
   );
   if (error) throw error;
   return data as TechnicalInterviewSpreadsheetData[];
-};
-
-export const getDirectorInterviewSummaryData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: DirectorInterviewFilterFormValues & {
-    userId: string;
-  }
-) => {
-  const updatedParams = {
-    ...params,
-    director_interview_date_created: {
-      start: params.director_interview_date_created?.start
-        ? new Date(
-            params.director_interview_date_created?.start
-          ).toLocaleDateString()
-        : undefined,
-      end: params.director_interview_date_created?.end
-        ? moment(params.director_interview_date_created?.end)
-            .add(1, "day")
-            .format("MM-DD-YYYY")
-        : undefined,
-    },
-    director_interview_schedule: {
-      start: params.director_interview_schedule?.start
-        ? moment(params.director_interview_schedule?.start)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
-        : undefined,
-      end: params.director_interview_schedule?.end
-        ? moment(params.director_interview_schedule?.end)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
-        : undefined,
-    },
-  };
-
-  const { data, error } = await supabaseClient.rpc(
-    "get_director_interview_summary_table",
-    {
-      input_data: updatedParams,
-    }
-  );
-  if (error) throw error;
-  return data as DirectorInterviewSpreadsheetData[];
 };
 
 export const getBackgroundCheckSummaryData = async (
