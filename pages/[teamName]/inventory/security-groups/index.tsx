@@ -2,10 +2,10 @@
 import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
 import SecurityGroupPage from "@/components/AssetInventory/SecurityGroupPage/SecurityGroupPage";
 import Meta from "@/components/Meta/Meta";
-import { withActiveTeam } from "@/utils/server-side-protections";
+import { withActiveGroup } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
+export const getServerSideProps: GetServerSideProps = withActiveGroup(
   async ({ user, userActiveTeam, supabaseClient }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {

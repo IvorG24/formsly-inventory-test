@@ -146,6 +146,12 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
             },
           ],
         },
+        {
+          id: "events",
+          label: "Events",
+          icon: IconCategory2,
+          href: `/${formattedTeamName}/inventory/events`,
+        },
       ].filter(Boolean), // Filter out falsy entries
     },
   ].filter(Boolean); // Filter out falsy entries

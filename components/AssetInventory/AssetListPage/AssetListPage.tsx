@@ -209,12 +209,11 @@ const AssetListPage = ({
   useEffect(() => {
     const getEventOptions = async () => {
       if (!activeTeam.team_id) return;
-      const eventOptions = await getEventDetails(
-        supabaseClient,
-        activeTeam.team_id
-      );
+      const { data } = await getEventDetails(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
 
-      const initialEventOptions: OptionType[] = eventOptions.map((event) => ({
+      const initialEventOptions: OptionType[] = data.map((event) => ({
         label: event.event_name,
         value: event.event_id,
       }));

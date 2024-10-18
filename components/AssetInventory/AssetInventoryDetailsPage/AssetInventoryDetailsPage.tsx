@@ -119,13 +119,12 @@ const AssetInventoryDetailsPage = ({
   useEffect(() => {
     const getEventOptions = async () => {
       if (!activeTeam.team_id) return;
-      const eventOptions = await getEventDetails(
-        supabaseClient,
-        activeTeam.team_id
-      );
+      const { data } = await getEventDetails(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
       const eventSecurity = securityGroup.asset.filter.event;
 
-      const filteredEvents = eventOptions.filter((event) =>
+      const filteredEvents = data.filter((event) =>
         eventSecurity.includes(event.event_name)
       );
 

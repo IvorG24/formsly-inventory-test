@@ -7466,16 +7466,36 @@ export const getInventoryFormDetails = async (
 
 export const getEventDetails = async (
   supabaseClient: SupabaseClient<Database>,
-  teamId: string
+  params: {
+    search?: string;
+    limit?: number;
+    page?: number;
+    teamId: string;
+  }
 ) => {
-  const { data, error } = await supabaseClient
+  const { search, limit, page, teamId } = params;
+
+  const start = page && limit ? (page - 1) * limit : undefined;
+  const end = start !== undefined && limit ? start + limit - 1 : undefined;
+  let query = supabaseClient
     .schema("inventory_schema")
     .from("inventory_event_table")
-    .select("event_id,event_name")
+    .select("*", { count: "exact" })
     .eq("event_team_id", teamId);
-  if (error) throw error;
 
-  return data as EventTableRow[];
+  if (start !== undefined && end !== undefined) {
+    query = query.range(start, end);
+  }
+  if (search) {
+    query = query.ilike("event_name", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return {
+    data: data as EventTableRow[],
+    totalCount: count ?? 0,
+  };
 };
 
 export const getCategoryOptions = async (
@@ -7762,7 +7782,7 @@ export const getAssetListFilterOptions = async (
     teamId: teamId,
   });
 
-  const eventList = await getEventDetails(supabaseClient, teamId);
+  const { data: eventList } = await getEventDetails(supabaseClient, { teamId });
 
   return {
     siteList,
