@@ -9,7 +9,6 @@ import {
   AppType,
   BackgroundCheckSpreadsheetData,
   customFieldFormValues,
-  DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,

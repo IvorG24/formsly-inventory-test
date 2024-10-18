@@ -78,7 +78,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       setIsLoading(true);
 
-      const dataId = await createAssetRequest(supabaseClient, {
+      const assetData = await createAssetRequest(supabaseClient, {
         InventoryFormValues: data,
         formId: form.form_id,
         teamId: activeTeam.team_id,
@@ -86,13 +86,14 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         formName: form.form_name,
         teamName: activeTeam.team_name,
       });
-
+      console.log(assetData);
+      
       notifications.show({
         message: "Asset created.",
         color: "green",
       });
       router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${dataId}`
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${assetData.inventory_request_tag_id}`
       );
     } catch (e) {
       notifications.show({

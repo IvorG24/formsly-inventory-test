@@ -174,31 +174,36 @@ const AssetListTable = ({
           },
         },
         {
-          accessor: "inventory_request_id",
+          accessor: "inventory_request_tag_id",
           title: "Asset Tag ID",
           width: 180,
-          hidden: checkIfColumnIsHidden("inventory_request_id"),
-          render: ({ inventory_request_id }) => {
+          hidden: checkIfColumnIsHidden("inventory_request_tag_id"),
+          render: ({ inventory_request_tag_id }) => {
             return (
-              <Flex key={String(inventory_request_id)} justify="space-between">
+              <Flex
+                key={String(inventory_request_tag_id)}
+                justify="space-between"
+              >
                 <Text truncate maw={150}>
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/inventory/${inventory_request_id}`}
+                    )}/inventory/${inventory_request_tag_id}`}
                     target="_blank"
                   >
-                    {String(inventory_request_id)}
+                    {String(inventory_request_tag_id)}
                   </Anchor>
                 </Text>
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/inventory/${inventory_request_id}`}
+                  )}/inventory/${inventory_request_tag_id}`}
                 >
                   {({ copied, copy }) => (
                     <Tooltip
-                      label={copied ? "Copied" : `Copy ${inventory_request_id}`}
+                      label={
+                        copied ? "Copied" : `Copy ${inventory_request_tag_id}`
+                      }
                       onClick={copy}
                     >
                       <ActionIcon>

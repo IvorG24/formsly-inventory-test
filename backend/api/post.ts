@@ -41,6 +41,7 @@ import {
   InventoryAssetFormValues,
   InventoryFieldRow,
   InventoryRequestResponseInsert,
+  InventoryRequestRow,
   InventoryResponseValues,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
@@ -2656,7 +2657,7 @@ export const createAssetRequest = async (
     responseValues,
   };
 
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .rpc("create_asset", {
       input_data: requestData,
     })
@@ -2665,7 +2666,7 @@ export const createAssetRequest = async (
 
   if (error) throw error;
 
-  return requestId;
+  return data as InventoryRequestRow;
 };
 export const updateAssetRequest = async (
   supabaseClient: SupabaseClient<Database>,
