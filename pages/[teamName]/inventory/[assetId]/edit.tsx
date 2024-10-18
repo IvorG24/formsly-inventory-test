@@ -24,7 +24,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         (permission) =>
           permission.key === "editAssets" && permission.value === true
       );
-      
+
       if (!hasEditOnlyPermission) {
         return {
           redirect: {

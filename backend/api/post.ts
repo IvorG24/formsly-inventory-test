@@ -91,6 +91,7 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
+import { getAssetId } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -2630,7 +2631,8 @@ export const createAssetRequest = async (
 
   const responseValues = fieldResponse
     .map((response) => {
-      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
+      const responseValue = response.inventory_response_value ?? "";
+      return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
     })
     .join(",");
 
@@ -2701,6 +2703,10 @@ export const updateAssetRequest = async (
     si_number,
   } = extractInventoryData(InventoryFormValues);
 
+  const assetId = await getAssetId(supabaseClient, {
+    tagId: requestId,
+  });
+
   const fieldResponse: InventoryRequestResponseInsert[] = [];
 
   for (const section of InventoryFormValues.sections) {
@@ -2709,7 +2715,7 @@ export const updateAssetRequest = async (
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
           inventory_response_value: field.field_response as string,
-          inventory_response_asset_request_id: requestId,
+          inventory_response_asset_request_id: assetId,
         });
       }
     }
@@ -2725,7 +2731,7 @@ export const updateAssetRequest = async (
     formattedResponseValues.length > 0 ? formattedResponseValues.join(",") : [];
 
   const requestData = {
-    requestId,
+    assetId,
     formId,
     teamMemberId,
     asset_name,
@@ -2794,24 +2800,16 @@ export const createAssetLinking = async (
   params: {
     linkedAssets: string[];
     assetId: string;
+    teamMemberId: string;
   }
 ) => {
-  const { linkedAssets, assetId } = params;
-
-  const createLink = linkedAssets.map((linkedAssetId) => {
-    return supabaseClient
-      .schema("inventory_request_schema")
-      .from("inventory_relationship_table")
-      .insert({
-        parent_asset_id: assetId,
-        child_asset_id: linkedAssetId,
-      })
-      .select();
+  const { data, error } = await supabaseClient.rpc("create_asset_link", {
+    input_data: params,
   });
 
-  const results = await Promise.all(createLink);
+  if (error) throw error;
 
-  return results;
+  return data;
 };
 
 export const updateSecurityGroup = async (

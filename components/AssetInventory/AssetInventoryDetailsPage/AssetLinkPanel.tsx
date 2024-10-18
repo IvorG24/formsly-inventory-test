@@ -5,6 +5,7 @@ import {
 import { createAssetLinking } from "@/backend/api/post";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { OptionType } from "@/utils/types";
@@ -27,16 +28,24 @@ import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-
-const AssetLinkPanel = () => {
+type Props = {
+  fetchHistory: (page: number) => void;
+};
+const AssetLinkPanel = ({ fetchHistory }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
-  const assetId = router.query.assetId as string;
   const securityGroup = useSecurityGroup();
+  const teamMember = useUserTeamMember();
+  const assetId = router.query.assetId as string;
   const [childAsset, setChildAsset] = useState<
-    { inventory_request_id: string; inventory_request_name: string }[]
+    {
+      inventory_request_tag_id: string;
+      inventory_request_name: string;
+      inventory_request_serial_number: string;
+    }[]
   >([]);
+
   const [totalCount, setTotalCount] = useState(0);
   const [childAssetOption, setChildAssetOption] = useState<OptionType[]>([]);
   const [linkedAssets, setLinkedAssets] = useState<OptionType[]>([]);
@@ -59,6 +68,7 @@ const AssetLinkPanel = () => {
           page: activePage,
           limit: ROW_PER_PAGE,
         });
+
         setChildAsset(data);
         setTotalCount(totalCount);
         const option = await getChildAssetOptionLinking(supabaseClient, {
@@ -67,6 +77,7 @@ const AssetLinkPanel = () => {
           page: activePage,
           limit: ROW_PER_PAGE,
         });
+
         const optionData = option.map((option) => ({
           value: option.inventory_request_id,
           label: option.inventory_request_name,
@@ -124,14 +135,16 @@ const AssetLinkPanel = () => {
       await createAssetLinking(supabaseClient, {
         linkedAssets: linkedAssets.map((asset) => asset.value),
         assetId: assetId,
+        teamMemberId: teamMember?.team_member_id || "",
       });
-      linkedAssets.forEach((asset) => {
-        const newData = {
-          inventory_request_id: asset.value,
-          inventory_request_name: asset.label,
-        };
-        setChildAsset((prev) => [...prev, newData]);
+      const { data, totalCount } = await getChildAssetData(supabaseClient, {
+        assetId,
+        page: activePage,
+        limit: ROW_PER_PAGE,
       });
+      setChildAsset(data);
+      setTotalCount(totalCount);
+      fetchHistory(1);
       notifications.show({
         message: "Asset link successfully",
         color: "green",
@@ -234,12 +247,19 @@ const AssetLinkPanel = () => {
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/inventory/${event.inventory_request_id}`}
+                    )}/inventory/${event.inventory_request_tag_id}`}
                     target="_blank"
                   >
-                    {String(event.inventory_request_id)}
+                    {String(event.inventory_request_tag_id)}
                   </Anchor>
                 </Text>
+              ),
+            },
+            {
+              accessor: "inventory_request_serial_number",
+              title: "Serial No",
+              render: (event) => (
+                <Text>{event.inventory_request_serial_number}</Text>
               ),
             },
             {

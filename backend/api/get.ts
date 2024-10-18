@@ -7803,7 +7803,11 @@ export const getChildAssetData = async (
   if (error) throw error;
 
   return data as {
-    data: { inventory_request_id: string; inventory_request_name: string }[];
+    data: {
+      inventory_request_tag_id: string;
+      inventory_request_name: string;
+      inventory_request_serial_number: string;
+    }[];
     totalCount: number;
   };
 };
@@ -7927,19 +7931,42 @@ export const getCustomFieldDetails = async (
 
   return data as customFieldFormValues;
 };
+export const getAssetId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { tagId: string }
+) => {
+  const { tagId } = params;
+
+  const { data: tagData, error: tagError } = await supabaseClient
+    .schema("inventory_request_schema")
+    .from("inventory_request_table")
+    .select("inventory_request_id")
+    .eq("inventory_request_tag_id", tagId);
+
+  if (tagError) throw tagError;
+
+  const assetId = tagData[0].inventory_request_id;
+
+  return assetId as string;
+};
 
 export const getEventsHistoryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: { page?: number; limit?: number; assetId: string }
 ) => {
-  const { page, limit, assetId } = params;
+  const { page = 1, limit = 10, assetId } = params;
+
+  const tagId = await getAssetId(supabaseClient, {
+    tagId: assetId,
+  });
+
   let query = supabaseClient
     .schema("inventory_request_schema")
     .from("inventory_event_table")
     .select("*", { count: "exact" })
-    .eq("inventory_event_request_id", assetId);
+    .eq("inventory_event_request_id", tagId);
 
-  if (limit && limit > 0 && page && page > 0) {
+  if (limit && page) {
     const start = (page - 1) * limit;
     const end = start + limit - 1;
     query = query.range(start, end);

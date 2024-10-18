@@ -75,7 +75,7 @@ const excludedKeys = [
 ];
 
 const formatLabel = (key: string) => {
-  if (key === "inventory_request_id") {
+  if (key === "inventory_request_tag_id") {
     return "Asset Tag ID";
   } else if (key === "inventory_request_si_number") {
     return "SI number";
@@ -95,8 +95,9 @@ const AssetInventoryDetailsPage = ({
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
   const router = useRouter();
-  const assetId = router.query.assetId as string;
   const teamMemberList = useTeamMemberList();
+
+  const assetId = router.query.assetId as string;
   const [isLoading, setIsloading] = useState(false);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -163,7 +164,9 @@ const AssetInventoryDetailsPage = ({
       });
       setAssetDetails(data);
       setSelectedEventId(null);
-    } catch {
+    } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -184,6 +187,8 @@ const AssetInventoryDetailsPage = ({
       setTotalRecords(totalCount);
       setEventHistoryData(data);
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -205,6 +210,8 @@ const AssetInventoryDetailsPage = ({
       setAssetHistoryRecord(totalCount);
       setAssetHistoryData(data);
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -225,7 +232,7 @@ const AssetInventoryDetailsPage = ({
           setSelectedEventId={setSelectedEventId}
           eventId={selectedEventId}
           teamMemberList={teamMemberList}
-          selectedRow={[assetId]}
+          selectedRow={[assetDetails[0].inventory_request_id]}
           userId={user?.user_id || ""}
           handleFilterForms={fetchAllDetails}
         />
@@ -241,7 +248,7 @@ const AssetInventoryDetailsPage = ({
                   <Button
                     onClick={() => {
                       router.push(
-                        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_id}/edit`
+                        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_tag_id}/edit`
                       );
                     }}
                     rightIcon={<IconEdit size={16} />}
@@ -309,7 +316,7 @@ const AssetInventoryDetailsPage = ({
                       .reduce<JSX.Element[]>((acc, [key, value]) => {
                         if (
                           [
-                            "inventory_request_id",
+                            "inventory_request_tag_id",
                             "inventory_request_brand",
                             "inventory_request_model",
                             "inventory_request_site",
@@ -357,7 +364,7 @@ const AssetInventoryDetailsPage = ({
                               <td>
                                 <Text weight={500}>{formatLabel(key)}</Text>
                               </td>
-                              <td>{value || "N/A"}</td>
+                              <td>{value ?? "N/A"}</td>
                             </tr>
                           );
                         }
@@ -458,7 +465,7 @@ const AssetInventoryDetailsPage = ({
                 />
               </Tabs.Panel>
               <Tabs.Panel value="asset-link" mt="md">
-                <AssetLinkPanel />
+                <AssetLinkPanel fetchHistory={fetchHistoryPanel} />
               </Tabs.Panel>
 
               <Tabs.Panel value="history" mt="md">

@@ -92,6 +92,8 @@ const AssetListTable = ({
     }
     setSelectedRow(newSelectedRows);
   };
+  console.log(requestList);
+  console.log(tableColumnList);
 
   const dynamicColumns = tableColumnList
     .filter(
@@ -99,7 +101,8 @@ const AssetListTable = ({
         !checkIfColumnIsHidden(column.value) &&
         column.value !== "inventory_request_id" &&
         column.value !== "inventory_request_status" &&
-        column.value !== "inventory_request_name"
+        column.value !== "inventory_request_name" &&
+        column.value !== "inventory_request_tag_id"
     )
     .map((column) => ({
       accessor: column.value,
@@ -365,7 +368,7 @@ const AssetListTable = ({
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
           textAlignment: "center",
-          render: ({ inventory_request_id }) => (
+          render: ({ inventory_request_tag_id }) => (
             <ActionIcon
               maw={120}
               mx="auto"
@@ -374,7 +377,7 @@ const AssetListTable = ({
                 await router.push(
                   `/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/inventory/${inventory_request_id}`
+                  )}/inventory/${inventory_request_tag_id}`
                 )
               }
             >

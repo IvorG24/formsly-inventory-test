@@ -49,7 +49,7 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
 
       <Card withBorder shadow="sm">
         <Text size="lg" weight={500}>
-          Miscellanious Information
+          Miscellaneous Information
         </Text>
         <Table striped highlightOnHover withBorder withColumnBorders>
           <tbody>
