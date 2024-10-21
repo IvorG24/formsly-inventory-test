@@ -164,8 +164,6 @@ const AssetInventoryDetailsPage = ({
       setAssetDetails(data);
       setSelectedEventId(null);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -186,8 +184,6 @@ const AssetInventoryDetailsPage = ({
       setTotalRecords(totalCount);
       setEventHistoryData(data);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -209,8 +205,6 @@ const AssetInventoryDetailsPage = ({
       setAssetHistoryRecord(totalCount);
       setAssetHistoryData(data);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",

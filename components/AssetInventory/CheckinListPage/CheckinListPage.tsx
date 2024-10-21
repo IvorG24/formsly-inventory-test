@@ -153,25 +153,22 @@ const AssetListPage = ({
         isAscendingSort,
       } = getValues();
 
-      const { data, totalCount } = await getAssetSpreadsheetView(
-        supabaseClient,
-        {
-          page: page,
-          limit: DEFAULT_REQUEST_LIST_LIMIT,
-          sort: isAscendingSort,
-          search,
-          status: "AVAILABLE",
-          assignedToPerson,
-          assignedToSite,
-          department: securityGroup.asset.filter.department || department,
-          locations,
-          sites: securityGroup.asset.filter.site || sites,
-          category: securityGroup.asset.filter.category || category,
-        }
-      );
+      const { data, count } = await getAssetSpreadsheetView(supabaseClient, {
+        page: page,
+        limit: DEFAULT_REQUEST_LIST_LIMIT,
+        sort: isAscendingSort,
+        search,
+        status: "AVAILABLE",
+        assignedToPerson,
+        assignedToSite,
+        department: securityGroup.asset.filter.department || department,
+        locations,
+        sites: securityGroup.asset.filter.site || sites,
+        category: securityGroup.asset.filter.category || category,
+      });
 
       setInventoryList(data);
-      setInventoryListCount(totalCount);
+      setInventoryListCount(count);
     } catch (e) {
       notifications.show({
         message: "Failed to fetch request list.",

@@ -2,7 +2,6 @@
 import EventEditPage from "@/components/AssetInventory/EventListPage/EventEditPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
-import { SecurityGroupData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
@@ -23,10 +22,10 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
     }
   }
 );
-type Props = {
-  securityGroupData: SecurityGroupData;
-};
-const Page = ({ securityGroupData }: Props) => {
+// type Props = {
+//   securityGroupData: SecurityGroupData;
+// };
+const Page = () => {
   return (
     <>
       <Meta description="Event List Page" url="/teamName/inventory/[eventId]" />

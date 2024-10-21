@@ -92,8 +92,6 @@ const AssetListTable = ({
     }
     setSelectedRow(newSelectedRows);
   };
-  console.log(requestList);
-  console.log(tableColumnList);
 
   const dynamicColumns = tableColumnList
     .filter(

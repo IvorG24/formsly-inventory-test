@@ -86,8 +86,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         formName: form.form_name,
         teamName: activeTeam.team_name,
       });
-      console.log(assetData);
-      
+
       notifications.show({
         message: "Asset created.",
         color: "green",
@@ -259,6 +258,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     };
     fetchOptions();
   }, [activeTeam]);
+
   return (
     <Container>
       <LoadingOverlay visible={isLoading} />

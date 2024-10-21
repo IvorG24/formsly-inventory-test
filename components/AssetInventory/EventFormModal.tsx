@@ -103,16 +103,7 @@ const EventFormModal = ({
         const params = { eventId, userId };
 
         const form = await getInventoryFormDetails(supabaseClient, params);
-        const formValidation = securityGroup.asset.filter.event.includes(
-          `${form.form_name}`
-        );
 
-        if (!formValidation) {
-          notifications.show({
-            message: "Action not allowed",
-            color: "red",
-          });
-        }
         replaceSection([
           {
             ...form.form_section[0],
