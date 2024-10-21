@@ -5918,6 +5918,8 @@ export const getApplicationInformationPositionOptions = async (
     .eq("position_team_id", teamId)
     .eq("position_is_disabled", false)
     .eq("position_is_available", true)
+    .not("position_alias", "ilike", "JUNIOR%")
+    .not("position_alias", "ilike", "SENIOR%")
     .limit(limit)
     .range(index, index + limit - 1);
   if (error) throw error;
@@ -6008,28 +6010,44 @@ export const getApplicationInformationSummaryData = async (
   const offset = (page - 1) * limit;
 
   const responseFilterCondition = [];
-  if (Boolean(responseFilter.position) && responseFilter?.position?.length) {
-    if (
-      ["JUNIOR", "MID", "SENIOR"].some((element) =>
-        responseFilter.position?.includes(element)
-      )
-    ) {
+
+  if (
+    Boolean(responseFilter.seniority) &&
+    responseFilter?.seniority?.length &&
+    Boolean(responseFilter.position) &&
+    responseFilter?.position?.length
+  ) {
+    const seniority =
+      responseFilter.seniority === "MID" ? "" : `${responseFilter.seniority} `;
+    responseFilterCondition.push(
+      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
+        .map((value) => `'"${seniority}${value}"'`)
+        .join(", ")}))`
+    );
+  } else if (
+    Boolean(responseFilter.seniority) &&
+    responseFilter?.seniority?.length
+  ) {
+    if (responseFilter.seniority === "MID") {
       responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND (${responseFilter.position
-          .map((value) => {
-            if (value !== "MID") return `request_response LIKE '"${value} %'`;
-            return `(request_response NOT LIKE '"JUNIOR %' AND request_response NOT LIKE '"SENIOR %')`;
-          })
-          .join(" OR ")}))`
+        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response NOT ILIKE '"JUNIOR%' AND request_response NOT ILIKE '"SENIOR%')`
       );
     } else {
       responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
-          .map((value) => `'"${value}"'`)
-          .join(", ")}))`
+        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response ILIKE '"${responseFilter.seniority}%')`
       );
     }
+  } else if (
+    Boolean(responseFilter.position) &&
+    responseFilter?.position?.length
+  ) {
+    responseFilterCondition.push(
+      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
+        .map((value) => `'"${value}"'`)
+        .join(", ")}))`
+    );
   }
+
   responseFilter.firstName
     ? responseFilterCondition.push(
         `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`

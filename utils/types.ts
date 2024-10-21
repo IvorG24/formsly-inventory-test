@@ -2251,6 +2251,7 @@ export type ApplicationInformationFilterFormValues = {
     };
   };
   responseFilter?: {
+    seniority?: string;
     position?: string[];
     certification?: boolean;
     license?: boolean;

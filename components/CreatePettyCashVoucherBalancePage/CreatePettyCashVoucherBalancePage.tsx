@@ -57,6 +57,8 @@ type Props = {
   connectedRequest?: ConnectedRequestFormProps;
 };
 
+const pcvCostCodeProjectExceptionList = ["YARD", "CENTRAL OFFICE"];
+
 const CreatePettyCashVoucherBalancePage = ({
   form,
   connectedRequest,
@@ -208,6 +210,14 @@ const CreatePettyCashVoucherBalancePage = ({
     }
   };
 
+  const checkIfProjectIsExempted = (projectName: string) => {
+    return pcvCostCodeProjectExceptionList
+      .map((project) =>
+        projectName.toLowerCase().includes(project.toLowerCase())
+      )
+      .some(Boolean);
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
@@ -219,28 +229,6 @@ const CreatePettyCashVoucherBalancePage = ({
           );
           return;
         }
-
-        const requestingDepartmentFieldId =
-          "694465de-8aa9-4361-be52-f8c091c13fde";
-        const chargeToBooleanFieldId = "9cde1e79-646d-4a9f-9e76-3a6494bff6e2";
-
-        const fieldResponseList = await getRequestFieldResponse(
-          supabaseClient,
-          {
-            requestId: connectedRequest.request_id,
-            fieldId: [requestingDepartmentFieldId, chargeToBooleanFieldId],
-          }
-        );
-
-        const isPed =
-          safeParse(fieldResponseList[0].request_response) ===
-          "Plants and Equipment";
-
-        const isChargeToProject = safeParse(
-          fieldResponseList[1] ? fieldResponseList[1].request_response : ""
-        );
-
-        setRequireCostEngineer(isPed && isChargeToProject);
 
         const formSectionList = [
           {
@@ -258,18 +246,90 @@ const CreatePettyCashVoucherBalancePage = ({
           },
         ];
 
-        if (isPed && isChargeToProject) {
-          formSectionList.push({
-            ...form.form_section[2],
-            section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
-            section_field: form.form_section[2].section_field.map((field) => ({
-              ...field,
-              field_is_read_only: !isUserCostEngineer,
-              field_response: "TBA",
-            })),
-          });
+        const requestingProjectId = "a1fdfcbb-5a2f-4b9d-8c6a-8c45e64e1d3b";
+        const requestingDepartmentFieldId =
+          "694465de-8aa9-4361-be52-f8c091c13fde";
+        const chargeToBooleanFieldId = "9cde1e79-646d-4a9f-9e76-3a6494bff6e2";
+
+        const fieldResponseList = await getRequestFieldResponse(
+          supabaseClient,
+          {
+            requestId: connectedRequest.request_id,
+            fieldId: [
+              requestingProjectId,
+              requestingDepartmentFieldId,
+              chargeToBooleanFieldId,
+            ],
+          }
+        );
+
+        const requestingProjectField = fieldResponseList.find(
+          (field) => field.request_response_field_id === requestingProjectId
+        );
+        const requestingProjectName = safeParse(
+          requestingProjectField ? requestingProjectField.request_response : ""
+        );
+        const isProjectExempted = checkIfProjectIsExempted(
+          requestingProjectName
+        );
+
+        const departmentField = fieldResponseList.find(
+          (field) =>
+            field.request_response_field_id === requestingDepartmentFieldId
+        );
+        const isPED =
+          safeParse(departmentField ? departmentField.request_response : "") ===
+          "Plants and Equipment";
+
+        const isChargeToProjectField = fieldResponseList.find(
+          (field) => field.request_response_field_id === chargeToBooleanFieldId
+        );
+        const isChargeToProject = safeParse(
+          isChargeToProjectField ? isChargeToProjectField.request_response : ""
+        );
+        console.log(isProjectExempted);
+        let addCostCode = false;
+
+        if (isPED) {
+          // if project is not exempted, add cost code
+          addCostCode = !isProjectExempted;
+
+          // if charge to project, check if requires cost code
+          if (isChargeToProject) {
+            const chargeToProjectField = await getRequestFieldResponse(
+              supabaseClient,
+              {
+                requestId: connectedRequest.request_id,
+                fieldId: ["2bac0084-53f4-419f-aba7-fb1f77403e00"],
+              }
+            );
+            const chargeToProjectName = safeParse(
+              chargeToProjectField[0]
+                ? chargeToProjectField[0].request_response
+                : ""
+            );
+            const isChargeToProjectExempted =
+              checkIfProjectIsExempted(chargeToProjectName);
+            addCostCode = !isChargeToProjectExempted;
+          }
+
+          if (addCostCode) {
+            formSectionList.push({
+              ...form.form_section[2],
+              section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
+              section_field: form.form_section[2].section_field.map(
+                (field) => ({
+                  ...field,
+                  field_is_read_only: !isUserCostEngineer,
+                  field_response: "TBA",
+                })
+              ),
+            });
+          }
         }
+
         replaceSection(formSectionList);
+        setRequireCostEngineer(addCostCode);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

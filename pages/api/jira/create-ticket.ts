@@ -1,3 +1,5 @@
+import { insertError } from "@/backend/api/post";
+import { isError } from "@/utils/functions";
 import { createJiraCommentRequestBody } from "@/utils/jira/functions";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -6,13 +8,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const supabaseClient = createPagesServerClient({ req, res });
+
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
-
-    const supabaseClient = createPagesServerClient({ req, res });
-
     const jiraConfig = {
       user: process.env.JIRA_USER,
       api_token: process.env.JIRA_API_TOKEN,
@@ -141,6 +142,15 @@ export default async function handler(
 
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
   } catch (e) {
+    if (isError(e)) {
+      await insertError(supabaseClient, {
+        errorTableRow: {
+          error_message: e.message,
+          error_url: "/api/jira/create-ticket",
+          error_function: "onCreateJiraTicket",
+        },
+      });
+    }
     return res.status(500).json({ error: e });
   }
 }

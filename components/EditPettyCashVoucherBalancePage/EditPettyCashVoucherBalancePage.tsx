@@ -1,7 +1,6 @@
 import {
   checkIfUserIsRequestOwner,
   getNonDuplictableSectionResponse,
-  getRequestFieldResponse,
 } from "@/backend/api/get";
 import {
   createComment,
@@ -238,6 +237,8 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
 
         let balanceSection = formSectionWithResponse[1];
         let costCodeSection = formSectionWithResponse[2];
+        const withCostCode =
+          costCodeSection.section_field[0].field_response !== "";
 
         if (isOwner) {
           const updatedSectionField = balanceSection.section_field.map(
@@ -250,7 +251,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           };
         }
 
-        if (isUserCostEngineer && costCodeSection) {
+        if (isUserCostEngineer && withCostCode) {
           const updatedSectionField = costCodeSection.section_field.map(
             (field) => ({ ...field, field_is_read_only: false })
           );
@@ -259,30 +260,16 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
             ...costCodeSection,
             section_field: updatedSectionField,
           };
-        }
 
-        let isPED = false;
-
-        const lrfDepartmentField = await getRequestFieldResponse(
-          supabaseClient,
-          {
-            requestId: safeParse(formSectionResponseList[0].request_response),
-            fieldId: ["694465de-8aa9-4361-be52-f8c091c13fde"],
-          }
-        );
-
-        if (lrfDepartmentField.length > 0) {
-          const lrfDepartmentFieldResponse = safeParse(
-            `${lrfDepartmentField[0].request_response}`
+          setOldBoqCodeValue(
+            safeParse(costCodeSection.section_field[0].field_response)
           );
-
-          isPED =
-            lrfDepartmentFieldResponse.toLowerCase() === "plants and equipment";
+          setOldCostCodeValue(
+            safeParse(costCodeSection.section_field[1].field_response)
+          );
         }
 
-        if (lrfDepartmentField.length <= 0) return;
-
-        if (isPED) {
+        if (withCostCode) {
           replaceSection([
             formSectionWithResponse[0],
             balanceSection,
@@ -293,12 +280,6 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
         }
 
         setInitialRequestDetails({ sections: formSectionWithResponse });
-        setOldBoqCodeValue(
-          safeParse(costCodeSection.section_field[0].field_response)
-        );
-        setOldCostCodeValue(
-          safeParse(costCodeSection.section_field[1].field_response)
-        );
       };
       fetchRequestDetails();
     } catch (e) {

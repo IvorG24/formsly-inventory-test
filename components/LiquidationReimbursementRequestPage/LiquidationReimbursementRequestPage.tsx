@@ -29,7 +29,7 @@ import {
   createJiraTicket,
   formatJiraLRFRequisitionPayload,
 } from "@/utils/jira/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, truncate } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
@@ -503,7 +503,7 @@ const LiquidationReimbursementRequestPage = ({
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
         department,
-        purpose,
+        purpose: truncate(purpose),
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,

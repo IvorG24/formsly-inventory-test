@@ -227,3 +227,10 @@ export const getFileType = (string: string) => {
     .map((word) => word[0].toLowerCase())
     .join("");
 };
+
+export const truncate = (string: string, maxLength?: number) => {
+  const defaultMaxLength = maxLength || 255;
+  return string.length > defaultMaxLength
+    ? string.slice(0, defaultMaxLength - 3) + "..."
+    : string;
+};

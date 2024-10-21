@@ -3,14 +3,22 @@ import {
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
-import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import {
+  approveOrRejectRequest,
+  cancelRequest,
+  overrideRequest,
+} from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { JoyRideNoSSR, safeParse } from "@/utils/functions";
@@ -43,6 +51,7 @@ import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestSignerSection from "../RequestPage/RequestSignerSection";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
+import Override from "./Override";
 
 type Props = {
   request: RequestWithResponseType;
@@ -51,6 +60,7 @@ type Props = {
 const ApplicationInformationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const { colors } = useMantineTheme();
   const { setIsLoading } = useLoadingActions();
@@ -289,6 +299,34 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     }
   };
 
+  const handleOverrideRequest = async () => {
+    try {
+      setIsLoading(true);
+      const requestSignerId = signerList.find(
+        (signer) => signer.signer_is_primary_signer
+      )?.request_signer_id;
+      if (!requestSignerId || !teamMember) throw new Error();
+      await overrideRequest(supabaseClient, {
+        requestSignerId,
+        teamMemberId: teamMember.team_member_id,
+      });
+      notifications.show({
+        message: "Signer overrode.",
+        color: "green",
+      });
+      await new Promise<void>((resolve) => {
+        router.reload();
+        resolve();
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      setIsLoading(false);
+    }
+  };
+
   const openPromptDeleteModal = () =>
     modals.openConfirmModal({
       title: "Are you sure you want to delete this request?",
@@ -336,6 +374,9 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&
     requestStatus !== "CANCELED";
+  const canOverrideAction =
+    requestStatus === "PENDING" &&
+    teamMemberGroupList.includes("HUMAN RESOURCES");
   const isEditable = false;
   // signerList
   //   .map((signer) => signer.request_signer_status)
@@ -505,6 +546,10 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
+        {canOverrideAction && !canSignerTakeAction && (
+          <Override handleOverrideRequest={handleOverrideRequest} />
+        )}
+
         {!router.pathname.includes("/user/requests/") && (
           <RequestSignerSection signerList={signerList} />
         )}

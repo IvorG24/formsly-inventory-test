@@ -67,9 +67,9 @@ const sectionList = [
     sectionName: "Header",
     sectionFieldList: [
       {
-        id: "responseFilter.position",
+        id: "responseFilter.seniority",
         label: "Seniority",
-        type: "MULTISELECT",
+        type: "SELECT",
       },
       {
         id: "responseFilter.position",

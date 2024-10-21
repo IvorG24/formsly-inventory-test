@@ -2,7 +2,6 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
-  getRequestFieldResponse,
 } from "@/backend/api/get";
 import { createComment, insertError } from "@/backend/api/post";
 import {
@@ -465,6 +464,9 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           ...sectionWithDuplicateList,
           updatedCostCodeSection,
         ]);
+        setCanCostEngineerTakeAction(
+          isUserCostEngineer && requestStatus === "PENDING"
+        );
       } else {
         setSectionWithDuplicateList((prev) =>
           prev.filter((section) => section.section_name !== "Cost Code")
@@ -487,7 +489,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isUserCostEngineer, requestStatus]);
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
@@ -509,40 +511,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       fetchJiraTicketStatus(requestJira.id);
     }
   }, [requestJira.id]);
-
-  useEffect(() => {
-    try {
-      const checkIfCostEngineerIsRequired = async () => {
-        const lrfDepartmentField = await getRequestFieldResponse(
-          supabaseClient,
-          {
-            requestId: parentWavRequestId,
-            fieldId: ["694465de-8aa9-4361-be52-f8c091c13fde"],
-          }
-        );
-
-        if (lrfDepartmentField.length <= 0) return;
-
-        const lrfDepartmentFieldResponse = safeParse(
-          `${lrfDepartmentField[0].request_response}`
-        );
-
-        const isPED =
-          lrfDepartmentFieldResponse.toLowerCase() === "plants and equipment";
-
-        setCanCostEngineerTakeAction(
-          isPED && isUserCostEngineer && requestStatus === "PENDING"
-        );
-      };
-
-      checkIfCostEngineerIsRequired();
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  }, [isUserCostEngineer, parentWavRequestId, requestStatus, supabaseClient]);
 
   return (
     <Container>

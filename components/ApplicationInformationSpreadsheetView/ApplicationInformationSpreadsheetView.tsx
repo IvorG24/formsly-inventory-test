@@ -52,6 +52,7 @@ const formDefaultValues = {
     },
   },
   responseFilter: {
+    seniority: "",
     position: [],
     firstName: "",
     middleName: "",
