@@ -239,12 +239,23 @@ const TechnicalQuestionnairePage = () => {
       await updateQuestionnaireName(supabaseClient, {
         questionnaireId,
         questionnaireName: fieldValue.trim(),
+        teamMemberId: teamMember?.team_member_id || "",
       });
 
       setQuestionnnaireList(
         questionnnaireList.map((q) =>
           q.questionnaire_id === questionnaireId
-            ? { ...q, questionnaire_name: fieldValue }
+            ? {
+                ...q,
+                questionnaire_name: fieldValue,
+                questionnaire_date_updated: String(new Date()),
+                questionnaire_updated_by: {
+                  user_id: user?.user_id || "",
+                  user_first_name: user?.user_first_name || "",
+                  user_last_name: user?.user_last_name || "",
+                  user_avatar: user?.user_avatar || "",
+                },
+              }
             : q
         )
       );

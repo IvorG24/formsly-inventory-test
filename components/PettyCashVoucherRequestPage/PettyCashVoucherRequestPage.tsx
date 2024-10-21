@@ -1,6 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getExistingConnectedRequest,
+  getJiraAutomationDataByProjectId,
   getRequestComment,
 } from "@/backend/api/get";
 import { insertError } from "@/backend/api/post";
@@ -20,7 +21,8 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { isError } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
+import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -51,6 +53,8 @@ type Props = {
   request: RequestWithResponseType;
 };
 
+const pcvBalanceProjectExceptionList = ["YARD", "CENTRAL OFFICE"];
+
 const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const forms = useFormList();
   const supabaseClient = useSupabaseClient();
@@ -66,11 +70,6 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
     };
   });
 
-  const requestJira = {
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  };
-
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
@@ -80,6 +79,10 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [pcvBalanceRequestRedirectUrl, setPCVBalanceRequestRedirectUrl] =
     useState<string | null>(null);
+  const [requestJira, setRequestJira] = useState({
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  });
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -108,6 +111,19 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
+  const selectedDepartment = safeParse(
+    request.request_form.form_section[1].section_field[2].field_response[0]
+      .request_response || ""
+  ).toLowerCase();
+  const isPED = selectedDepartment === "plants and equipment";
+  const requestProjectName = request.request_project.team_project_name;
+  const isPCVBalanceNotRequired =
+    isPED &&
+    pcvBalanceProjectExceptionList
+      .map((exception) =>
+        requestProjectName.toLowerCase().includes(exception.toLowerCase())
+      )
+      .some(Boolean);
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -333,6 +349,108 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
     }
   };
 
+  const onCreateJiraTicket = async () => {
+    try {
+      if (!request.request_project_id || !user) {
+        throw new Error("Project id is not defined.");
+      }
+      setIsLoading(true);
+
+      const jiraAutomationData = await getJiraAutomationDataByProjectId(
+        supabaseClient,
+        {
+          teamProjectId: request.request_project_id,
+        }
+      );
+
+      if (!jiraAutomationData?.jiraProjectData) {
+        throw new Error(
+          "Error fetching of jira project and parent WAV request data."
+        );
+      }
+
+      const requestDetailsSectionFieldList =
+        request.request_form.form_section[1].section_field;
+
+      const department = selectedDepartment;
+      const amount = safeParse(
+        requestDetailsSectionFieldList[5].field_response[0].request_response
+      );
+
+      let approvedOfficialBusiness = "";
+      const isForOfficialBusiness = safeParse(
+        requestDetailsSectionFieldList[8].field_response[0].request_response
+      );
+
+      if (isForOfficialBusiness) {
+        approvedOfficialBusiness = safeParse(
+          requestDetailsSectionFieldList[9].field_response[0].request_response
+        );
+      }
+
+      const isChargedToProject = Boolean(
+        safeParse(
+          requestDetailsSectionFieldList[10].field_response[0]
+            ? requestDetailsSectionFieldList[10].field_response[0]
+                .request_response
+            : ""
+        )
+      );
+
+      const employeeName = safeParse(
+        requestDetailsSectionFieldList[4].field_response[0].request_response
+      );
+
+      const jiraTicketPayload = formatJiraWAVPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestor: employeeName,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
+        amount,
+        isForOfficialBusiness,
+        approvedOfficialBusiness,
+        department,
+        isChargedToProject,
+      });
+
+      const jiraTicket = await createJiraTicket({
+        requestType: "Working Advance Voucher",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+      });
+
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
+      }
+
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
+    } catch (e) {
+      const errorMessage = (e as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "onCreateJiraTicket",
+          },
+        });
+      }
+      return { jiraTicketId: "", jiraTicketLink: "" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     try {
       // update sections
@@ -432,10 +550,15 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         setPCVBalanceRequestRedirectUrl(redirectUrl);
       }
     };
-    if (requestStatus === "APPROVED") {
+    if (requestStatus === "APPROVED" && !isPCVBalanceNotRequired) {
       fetchPCVBalanceRequest();
     }
-  }, [requestStatus, activeTeam.team_name, isUserAccountant]);
+  }, [
+    requestStatus,
+    activeTeam.team_name,
+    isUserAccountant,
+    isPCVBalanceNotRequired,
+  ]);
 
   return (
     <Container>
@@ -521,6 +644,9 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
             requestId={request.request_id}
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
+            onCreateJiraTicket={
+              isPCVBalanceNotRequired ? onCreateJiraTicket : undefined
+            }
           />
         )}
 

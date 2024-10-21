@@ -154,7 +154,7 @@ const TechnicalQuestionnaireTable = ({
                 maw={120}
                 color="blue"
               >
-                <IconEdit />
+                <IconEdit size={16} />
               </ActionIcon>
             </Flex>
           ),

@@ -184,10 +184,11 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
         const uniqueFieldIdList: string[] = [];
         const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][1]["section_field"] =
           [];
+
         filteredNewFields.forEach((field) => {
           if (uniqueFieldIdList.includes(field.field_id)) {
             const currentFieldIndex = combinedFieldList.findIndex(
-              (combinedField) => combinedField.field_id === field.field_id
+              (combinedField) => combinedField.field_name === field.field_name
             );
             combinedFieldList[currentFieldIndex].field_response.push(
               ...field.field_response

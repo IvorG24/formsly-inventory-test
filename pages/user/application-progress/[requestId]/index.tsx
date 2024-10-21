@@ -57,9 +57,9 @@ type Props = {
   generalAssessmentData?: RequestViewRow;
   technicalAssessmentData?: RequestViewRow;
   hrPhoneInterviewData?: HRPhoneInterviewTableRow;
-  tradeTestData?: TradeTestTableRow | null;
   technicalInterview1Data?: TechnicalInterviewTableRow | null;
   technicalInterview2Data?: TechnicalInterviewTableRow | null;
+  tradeTestData?: TradeTestTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
   jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
 };
@@ -69,9 +69,9 @@ const Page = ({
   generalAssessmentData,
   technicalAssessmentData,
   hrPhoneInterviewData,
-  tradeTestData,
   technicalInterview1Data,
   technicalInterview2Data,
+  tradeTestData,
   backgroundCheckData,
   jobOfferData,
 }: Props) => {
@@ -86,9 +86,9 @@ const Page = ({
         generalAssessmentData={generalAssessmentData}
         technicalAssessmentData={technicalAssessmentData}
         hrPhoneInterviewData={hrPhoneInterviewData}
-        tradeTestData={tradeTestData}
         technicalInterview1Data={technicalInterview1Data}
         technicalInterview2Data={technicalInterview2Data}
+        tradeTestData={tradeTestData}
         backgroundCheckData={backgroundCheckData}
         jobOfferData={jobOfferData}
       />

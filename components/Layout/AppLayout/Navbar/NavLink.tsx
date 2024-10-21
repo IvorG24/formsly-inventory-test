@@ -57,9 +57,9 @@ import NavLinkSection from "./NavLinkSection";
 type HRIndicatorCountType = {
   applicationInformation: number;
   hrPhoneInterview: number;
-  tradeTest: number;
   technicalInterview1: number;
   technicalInterview2: number;
+  tradeTest: number;
   backgroundCheck: number;
   jobOffer: number;
 };
@@ -73,9 +73,9 @@ const ReviewAppNavLink = () => {
   const [hrIndicatorCount, setHrIndicatorCount] = useState({
     applicationInformation: 0,
     hrPhoneInterview: 0,
-    tradeTest: 0,
     technicalInterview1: 0,
     technicalInterview2: 0,
+    tradeTest: 0,
     backgroundCheck: 0,
     jobOffer: 0,
   });
@@ -460,17 +460,6 @@ const ReviewAppNavLink = () => {
       indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
     },
     {
-      label: `Practical Test`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconTools {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
-      withIndicator: Boolean(hrIndicatorCount.tradeTest),
-      indicatorLabel: `${hrIndicatorCount.tradeTest}`,
-    },
-    {
       label: `Department Interview`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
@@ -491,6 +480,17 @@ const ReviewAppNavLink = () => {
       href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
       withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
       indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
+    },
+    {
+      label: `Practical Test`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTools {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.tradeTest),
+      indicatorLabel: `${hrIndicatorCount.tradeTest}`,
     },
     {
       label: `Background Check`,
@@ -514,15 +514,19 @@ const ReviewAppNavLink = () => {
       withIndicator: Boolean(hrIndicatorCount.jobOffer),
       indicatorLabel: `${hrIndicatorCount.jobOffer}`,
     },
-    {
-      label: `Questionnaire List`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconQuestionMark {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/technical-question`,
-    },
+    ...(userTeamMemberData?.team_member_role === "ADMIN"
+      ? [
+          {
+            label: `Questionnaire List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconQuestionMark {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/technical-question`,
+          },
+        ]
+      : []),
   ];
 
   // const teamSection = [

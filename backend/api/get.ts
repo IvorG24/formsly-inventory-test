@@ -4861,8 +4861,9 @@ export const getNonDuplictableSectionResponse = async (
     .select(
       "request_response_field_id, request_response, request_response_prefix"
     )
-    .eq("request_response_request_id", requestId)
-    .in("request_response_field_id", fieldIdList);
+    .in("request_response_field_id", fieldIdList)
+    .eq("request_response_request_id", requestId);
+
   if (error) throw error;
   return data;
 };
@@ -5355,9 +5356,8 @@ export const getFieldResponseByRequestId = async (
     .schema("request_schema")
     .from("request_response_table")
     .select("request_response")
-    .eq("request_response_request_id", requestId)
-    .eq("request_response_field_id", fieldId);
-
+    .eq("request_response_field_id", fieldId)
+    .eq("request_response_request_id", requestId);
   if (error) throw error;
 
   return data;
@@ -6176,8 +6176,9 @@ export const getApplicationInformationSummaryData = async (
     `
         : ""
     }
-    LIMIT '${limit}'
-    OFFSET '${offset}'
+    , request_date_created DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
   `;
 
   const { data, error } = await supabaseClient.rpc(

@@ -1,4 +1,8 @@
-import { checkIfGroupMember, getTechnicalOptionsItem } from "@/backend/api/get";
+import {
+  checkIfGroupMember,
+  checkIfOwnerOrAdmin,
+  getTechnicalOptionsItem,
+} from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TechnicalAssessmentViewQuestionPage from "@/components/TechnicalAssessmentCreateQuestionPage/TechnicalAssessmentViewQuestionPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -22,7 +26,19 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
+      const checkIfAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
+      });
 
+      if (!checkIfAdmin) {
+        return {
+          redirect: {
+            destination: "/401",
+            permanent: false,
+          },
+        };
+      }
       const questionnaireData = await getTechnicalOptionsItem(supabaseClient, {
         teamId: userActiveTeam.team_id,
         questionnaireId: questionnaireId,

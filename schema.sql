@@ -1014,19 +1014,6 @@ CREATE TABLE hr_schema.hr_phone_interview_table (
   hr_phone_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
-CREATE TABLE hr_schema.trade_test_table (
-  trade_test_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  trade_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
-  trade_test_status_date_updated TIMESTAMPTZ,
-  trade_test_schedule TIMESTAMPTZ,
-  trade_test_meeting_link VARCHAR(4000),
-
-  trade_test_address_id UUID REFERENCES address_table(address_id),
-  trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
-);
-
 CREATE TABLE hr_schema.technical_interview_table (
   technical_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   technical_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -1038,6 +1025,19 @@ CREATE TABLE hr_schema.technical_interview_table (
 
   technical_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.trade_test_table (
+  trade_test_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  trade_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  trade_test_status_date_updated TIMESTAMPTZ,
+  trade_test_schedule TIMESTAMPTZ,
+  trade_test_meeting_link VARCHAR(4000),
+
+  trade_test_address_id UUID REFERENCES address_table(address_id),
+  trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
 CREATE TABLE hr_schema.background_check_table (
@@ -1185,9 +1185,9 @@ CREATE TABLE lookup_schema.position_table (
   position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
   position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
 
-  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_1 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_technical_interview_2 BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
@@ -1662,8 +1662,7 @@ AS $$
           SELECT COUNT(*) FROM request_schema.request_table
           INNER JOIN form_schema.form_table ON request_form_id = form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-          WHERE
-            team_member_team_id = '${teamId}'
+            AND team_member_team_id = '${teamId}'
         `
       )[0].count;
 
@@ -2067,9 +2066,9 @@ AS $$
               SELECT COUNT(*)
               FROM request_schema.request_signer_table
               INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+                AND signer_is_primary_signer = true
               WHERE
                 request_signer_request_id = '${requestId}'
-                AND signer_is_primary_signer = true
                 AND request_signer_id != '${requestSignerId}'
                 AND request_signer_status != 'APPROVED'
             `
@@ -2861,12 +2860,12 @@ AS $$
         SELECT request_response_table.*
         FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_response_request_id = request_id
+          AND request_status = 'APPROVED'
         INNER JOIN form_schema.form_table ON request_form_id = form_id
-        WHERE
-          request_status = 'APPROVED'
-          AND request_response = '${itemID}'
           AND form_is_formsly_form = true
           AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
+        WHERE
+          request_response = '${itemID}'
       `
     );
 
@@ -3357,25 +3356,25 @@ AS $$
     let request_count = 0;
 
     const base_request_list_query = `
-        SELECT
-            request_id,
-            request_formsly_id,
-            request_date_created,
-            request_status,
-            request_team_member_id,
-            request_jira_id,
-            request_jira_link,
-            request_otp_id,
-            request_form_id,
-            form_name
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        WHERE
-            tmt.team_member_team_id = $1
-            AND request_is_disabled = false
-            AND form_table.form_is_disabled = false
-            AND form_table.form_is_public_form = false
+      SELECT
+        request_id,
+        request_formsly_id,
+        request_date_created,
+        request_status,
+        request_team_member_id,
+        request_jira_id,
+        request_jira_link,
+        request_otp_id,
+        request_form_id,
+        form_name
+      FROM public.request_view
+      INNER JOIN form_schema.form_table ON request_form_id = form_id
+        AND form_is_disabled = false
+        AND form_is_public_form = false
+      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        AND team_member_team_id = $1
+      WHERE
+        request_is_disabled = false
     `;
 
     const base_sort_query = `
@@ -3384,52 +3383,54 @@ AS $$
     `;
 
     const base_request_count_query = `
-        SELECT COUNT(request_id)
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        WHERE
-            tmt.team_member_team_id = $1
-            AND request_is_disabled = false
-            AND form_table.form_is_disabled = false
-            AND form_table.form_is_public_form = false
+      SELECT COUNT(*)
+      FROM public.request_view
+      INNER JOIN form_schema.form_table ON request_form_id = form_id
+        AND form_is_disabled = false
+        AND form_is_public_form = false
+      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        AND team_member_team_id = $1
+      WHERE
+        request_is_disabled = false
     `;
 
     if (isApproversView) {
-        const approver_filter_query = `
-            AND EXISTS (
-                SELECT 1
-                FROM request_schema.request_signer_table
-                INNER JOIN form_schema.signer_table signer ON signer.signer_id = request_signer_signer_id
-                WHERE
-                    request_signer_request_id = request_view.request_id
-                    AND request_signer_status = 'PENDING'
-                    AND signer.signer_team_member_id = $2
-            )
-            AND request_view.request_status != 'CANCELED'
-        `;
+      const approver_filter_query = `
+        AND EXISTS (
+          SELECT 1
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table signer ON signer_id = request_signer_signer_id
+          WHERE
+            request_signer_request_id = request_view.request_id
+            AND request_signer_status = 'PENDING'
+            AND signer_team_member_id = $2
+        )
+        AND request_view.request_status != 'CANCELED'
+      `;
 
-        request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
+      request_list = plv8.execute(base_request_list_query + approver_filter_query + base_sort_query, [teamId, teamMemberId]);
 
-        request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
+      request_count = plv8.execute(base_request_count_query + approver_filter_query, [teamId, teamMemberId])[0];
     } else {
-        const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
+      const non_approver_filter_query = `${requestor} ${approver} ${status} ${form} ${project} ${search}`;
 
-        request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
+      request_list = plv8.execute(base_request_list_query + non_approver_filter_query + base_sort_query, [teamId]);
 
-        request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
+      request_count = plv8.execute(base_request_count_query + non_approver_filter_query, [teamId])[0];
     }
 
     const request_data = request_list.map(request => {
       const request_signer = plv8.execute(
-        `SELECT
-            request_signer_table.request_signer_id,
-            request_signer_table.request_signer_status,
-            signer_table.signer_is_primary_signer,
-            signer_table.signer_team_member_id
-         FROM request_schema.request_signer_table
-         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-         WHERE request_signer_table.request_signer_request_id = $1`,
+        `
+          SELECT
+            request_signer_id,
+            request_signer_status,
+            signer_is_primary_signer,
+            signer_team_member_id
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
+          WHERE request_signer_request_id = $1
+        `,
         [request.request_id]
       )
 
@@ -3947,10 +3948,16 @@ AS $$
     if(request.request_status === 'APPROVED' && request.form_is_public_form){
       const connectedRequestCount = plv8.execute(
         `
-          SELECT COUNT(request_response_id)
+          SELECT COUNT(*)
           FROM request_schema.request_response_table
           WHERE
-            request_response = '"${request.request_formsly_id}"'
+            request_response_field_id IN (
+              '44edd3e4-9595-4b7c-a924-98b084346d36',
+              'be0e130b-455b-47e0-a804-f90943f7bc07',
+              'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
+              '362bff3d-54fa-413b-992c-fd344d8552c6'
+            )
+            AND request_response = '"${request.request_formsly_id}"'
         `
       )[0].count;
       if(!connectedRequestCount){
@@ -3974,10 +3981,15 @@ AS $$
 
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
         `
-          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_schema.request_response_table
+          SELECT DISTINCT
+            request_response_duplicatable_section_id,
+            section_id,
+            section_order
+          FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           INNER JOIN form_schema.section_table ON section_id = field_section_id
-          WHERE request_response_request_id = '${requestData.request_id}'
+          WHERE
+            request_response_request_id = '${requestData.request_id}'
           ORDER BY section_order
         `
       );
@@ -4385,7 +4397,7 @@ AS $$
 
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(*) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -4439,7 +4451,17 @@ AS $$
       return returnData;
     };
 
-    const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_schema.request_response_table INNER JOIN form_schema.field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
+    const requestResponseData = plv8.execute(
+      `
+        SELECT
+          request_response_table.*,
+          field_name, field_order
+        FROM request_schema.request_response_table
+        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+        WHERE
+          request_response_request_id='${requestId}'
+      `
+    );
 
     const options = {};
     const idForNullDuplicationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
@@ -4503,11 +4525,11 @@ AS $$
           form_name
         FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        INNER JOIN form_schema.form_table ON form_id= request_form_id
+          AND request_status='PENDING'
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
+          AND form_name='Quotation'
         WHERE
           request_response='"${requestId}"'
-          AND request_status='PENDING'
-          AND form_name='Quotation'
         ORDER BY request_formsly_id DESC
       `
     );
@@ -4536,10 +4558,10 @@ AS $$
             request_formsly_id
           FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            AND field_name IN ('Item', 'Price per Unit', 'Quantity', 'Lead Time', 'Payment Terms', ${additionalChargeFields.map(fee => `'${fee}'`)})
           INNER JOIN request_schema.request_table ON request_id = request_response_request_id
           WHERE
             request_response_request_id = '${request_id}'
-            AND field_name IN ('Item', 'Price per Unit', 'Quantity', 'Lead Time', 'Payment Terms', ${additionalChargeFields.map(fee => `'${fee}'`)})
         `
       );
       summaryData[request_formsly_id] = 0;
@@ -4676,10 +4698,10 @@ AS $$
           user_avatar
         FROM form_schema.form_table
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+          AND team_member_team_id = '${teamId}'
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
-          team_member_team_id = '${teamId}'
-          AND form_is_disabled = false
+          form_is_disabled = false
           AND form_app = 'REQUEST'
         LIMIT ${limit}
       `);
@@ -4689,10 +4711,10 @@ AS $$
         SELECT COUNT(*)
         FROM form_schema.form_table
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+          AND team_member_team_id = '${teamId}'
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
-          team_member_team_id = '${teamId}'
-          AND form_is_disabled = false
+          form_is_disabled = false
           AND form_app = 'REQUEST'
         LIMIT ${limit}
       `)[0].count;
@@ -5698,7 +5720,7 @@ AS $$
         });
 
         const filteredRequestDetailsField = ['BOQ Code', 'Equipment Code'];
-        
+
         returnData = {
           form: {
             ...form,
@@ -6201,7 +6223,8 @@ AS $$
           const parentRequestIdField = plv8.execute(`
             SELECT request_response
             FROM request_schema.request_response_table
-            WHERE request_response_request_id = '${connectedRequest.request_id}'
+            WHERE
+              request_response_request_id = '${connectedRequest.request_id}'
               AND request_response_field_id IN (
                 '9a112d6f-a34e-4767-b3c1-7f30af858f8f',
                 '2bac0084-53f4-419f-aba7-fb1f77403e00'
@@ -6220,7 +6243,8 @@ AS $$
               const connectedRequestChargeToProjectName = plv8.execute(`
                 SELECT request_response
                 FROM request_schema.request_response_table
-                WHERE request_response_request_id = '${parentRequestIdFieldResponse}'
+                WHERE
+                  request_response_request_id = '${parentRequestIdFieldResponse}'
                   AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
               `)[0];
 
@@ -6455,9 +6479,9 @@ AS $$
             SELECT DISTINCT field_table.*
             FROM form_schema.field_table
             INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
+              AND request_response_request_id = '${requestData.request_id}'
             WHERE
               field_section_id = '${section.section_id}'
-              AND request_response_request_id = '${requestData.request_id}'
             ORDER BY field_order ASC
           `
         );
@@ -6518,11 +6542,9 @@ AS $$
         field_id
       FROM request_schema.request_response_table
       INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+        AND field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
       WHERE
         request_response_request_id = '${technicalAssessmentId}'
-        AND field_id IN (
-          '362bff3d-54fa-413b-992c-fd344d8552c6'
-        )
         ORDER BY field_order
       `);
 
@@ -6541,20 +6563,20 @@ AS $$
       const requestId = generalRequestData[0].request_id;
 
       const applicantData = plv8.execute(`
-      SELECT
-        request_response,
-        field_id
-      FROM request_schema.request_response_table
-      INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-      WHERE
-        request_response_request_id = '${requestId}'
-        AND field_id IN (
-          'be0e130b-455b-47e0-a804-f90943f7bc07',
-          '5c5284cd-7647-4307-b558-40b9076d9f7f',
-          'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-          'd209aed6-e560-49a8-aa77-66c9cada168d',
-          'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
-        )
+        SELECT
+          request_response,
+          field_id
+        FROM request_schema.request_response_table
+        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          AND field_id IN (
+            'be0e130b-455b-47e0-a804-f90943f7bc07',
+            '5c5284cd-7647-4307-b558-40b9076d9f7f',
+            'f1c516bd-e483-4f32-a5b0-5223b186afb5',
+            'd209aed6-e560-49a8-aa77-66c9cada168d',
+            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+          )
+        WHERE
+          request_response_request_id = '${requestId}'
         ORDER BY field_order
       `);
 
@@ -6578,9 +6600,9 @@ AS $$
           field_id
         FROM request_schema.request_response_table
         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          AND field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
         WHERE
           request_response_request_id = '${requestApplicationData[0].request_id}'
-          AND field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
         ORDER BY field_order ASC
       `);
 
@@ -7219,21 +7241,23 @@ AS $$
       WHERE ticket_id='${ticketId}';
     `)[0];
 
-    const requester = plv8.execute(`SELECT jsonb_build_object(
-          'team_member_id', tm.team_member_id,
-          'team_member_team_id', tm.team_member_team_id,
-          'team_member_role', tm.team_member_role,
-          'team_member_user', jsonb_build_object(
-              'user_id', u.user_id,
-              'user_first_name', u.user_first_name,
-              'user_last_name', u.user_last_name,
-              'user_email', u.user_email,
-              'user_avatar', u.user_avatar
-          )
+    const requester = plv8.execute(`
+      SELECT jsonb_build_object(
+        'team_member_id', tm.team_member_id,
+        'team_member_team_id', tm.team_member_team_id,
+        'team_member_role', tm.team_member_role,
+        'team_member_user', jsonb_build_object(
+          'user_id', u.user_id,
+          'user_first_name', u.user_first_name,
+          'user_last_name', u.user_last_name,
+          'user_email', u.user_email,
+          'user_avatar', u.user_avatar
+        )
       ) AS member
       FROM team_schema.team_member_table tm
       JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
+      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}'
+    `)[0]
 
     const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
 
@@ -7450,10 +7474,10 @@ AS $$
     plv8.execute(`UPDATE ticket_schema.ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
     const updatedTicket = plv8.execute(`SELECT tt.*, tct.ticket_category
-          FROM ticket_schema.ticket_table tt
-          INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-          WHERE ticket_id='${ticketId}';
-        `)[0];
+      FROM ticket_schema.ticket_table tt
+      INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+      WHERE ticket_id='${ticketId}';
+    `)[0];
 
     const requester = plv8.execute(
       `
@@ -7665,12 +7689,12 @@ plv8.subtransaction(function(){
       FROM form_schema.field_table
         INNER JOIN form_schema.section_table ON section_id = field_section_id
         INNER JOIN form_schema.form_table ON form_id = section_form_id
+          AND form_name = 'Item'
+          AND form_is_formsly_form = true
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+          AND team_member_team_id = '${teamId}'
       WHERE
         field_name = 'General Name' AND
-        team_member_team_id = '${teamId}' AND
-        form_name = 'Item' AND
-        form_is_formsly_form = true
     `
   )[0].field_id;
 
@@ -7683,10 +7707,10 @@ plv8.subtransaction(function(){
         request_id
       FROM request_schema.request_response_table
       INNER JOIN public.request_view ON request_id = request_response_request_id
+        AND request_is_disabled = false
       WHERE
-        request_response = '"${itemName}"' AND
-        request_response_field_id = '${generalNameFieldId}' AND
-        request_is_disabled = false
+        request_response_field_id = '${generalNameFieldId}'
+        AND request_response = '"${itemName}"'
       ORDER BY request_date_created DESC
       LIMIT '${limit}'
       OFFSET '${start}'
@@ -7698,10 +7722,10 @@ plv8.subtransaction(function(){
       SELECT COUNT(*)
       FROM request_schema.request_response_table
       INNER JOIN public.request_view ON request_id = request_response_request_id
+        AND request_is_disabled = false
       WHERE
-        request_response = '"${itemName}"' AND
-        request_response_field_id = '${generalNameFieldId}' AND
-        request_is_disabled = false
+        request_response_field_id = '${generalNameFieldId}'
+        AND request_response = '"${itemName}"'
     `
   )[0].count;
 
@@ -8141,13 +8165,13 @@ AS $$
         COUNT(*)
       FROM request_schema.request_signer_table
       INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+        AND signer_is_disabled = false
       INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-      WHERE
-        request_is_disabled = false
+        AND request_is_disabled = false
         AND request_date_created BETWEEN '${startDate}' AND '${endDate}'
         AND request_form_id = '${formId}'
-        AND signer_is_disabled = false
-        AND request_status != 'CANCELED'
+      WHERE
+        request_status != 'CANCELED'
       GROUP BY signer_team_member_id
       ORDER BY COUNT(*) DESC
       LIMIT '${limit}'
@@ -8173,34 +8197,31 @@ AS $$
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        WHERE
-          request_status = 'PENDING'
+          AND request_status = 'PENDING'
           AND request_is_disabled = false
           AND request_status != 'CANCELED'
-          AND signer_team_member_id = '${signer.signer_team_member_id}'
       `)[0].count);
       const approvedCount = Number(plv8.execute(`
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        WHERE
-          request_status = 'APPROVED'
+          AND request_status = 'APPROVED'
           AND request_is_disabled = false
           AND request_status != 'CANCELED'
-          AND signer_team_member_id = '${signer.signer_team_member_id}'
       `)[0].count);
       const rejectedCount = Number(plv8.execute(`
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          AND signer_team_member_id = '${signer.signer_team_member_id}'
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        WHERE
-          request_status = 'REJECTED'
+          AND request_status = 'REJECTED'
           AND request_is_disabled = false
           AND request_status != 'CANCELED'
-          AND signer_team_member_id = '${signer.signer_team_member_id}'
       `)[0].count);
 
       return {
@@ -8277,9 +8298,9 @@ AS $$
           SELECT *
           FROM form_schema.form_table
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+            AND team_member_team_id = '${teamId}'
           WHERE
-            team_member_team_id = '${teamId}'
-            AND form_is_disabled = false
+            form_is_disabled = false
             AND form_app = '${app}'
           ORDER BY form_date_created DESC
         `
@@ -10544,13 +10565,13 @@ AS $$
             user_avatar
           FROM item_schema.item_table AS it
           INNER JOIN item_schema.item_category_table AS ict ON it.item_category_id = ict.item_category_id
+            AND ict.item_category_is_disabled = false
           INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
           INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
             it.item_general_name = '${section.itemName}'
             AND it.item_is_disabled = false
-            AND ict.item_category_is_disabled = false
         `
       );
 
@@ -10609,11 +10630,11 @@ AS $$
                 FROM item_schema.item_table
                 INNER JOIN item_schema.item_description_table ON item_description_item_id = item_id
                 INNER JOIN form_schema.field_table ON field_id = item_description_field_id
+                  AND field_id = '${field}'
                 INNER JOIN item_schema.item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
                 LEFT JOIN item_schema.item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
                 WHERE
                   item_general_name = '${section.itemName}'
-                  AND field_id = '${field}'
                   AND item_is_disabled = false
               `
             );
@@ -10713,10 +10734,10 @@ AS $$
                 other_expenses_type
               FROM other_expenses_schema.other_expenses_category_table
               INNER JOIN other_expenses_schema.other_expenses_type_table ON other_expenses_type_category_id = other_expenses_category_id
-              WHERE
-                other_expenses_category = '${section.category}'
                 AND other_expenses_type_is_available = true
                 AND other_expenses_type_is_disabled = false
+              WHERE
+                other_expenses_category = '${section.category}'
                 AND other_expenses_category_is_disabled = false
                 AND other_expenses_category_is_available = true
             `
@@ -10778,12 +10799,12 @@ AS $$
                   equipment_name
                 FROM equipment_schema.equipment_table
                 INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
                   AND equipment_is_available = true
-                  AND equipment_category_is_disabled = false
-                  AND equipment_category_is_available = true
               `
             );
             optionData = equipmentData.map((options, index) => {
@@ -10803,18 +10824,18 @@ AS $$
                   equipment_brand
                 FROM equipment_schema.equipment_table
                 INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
                 INNER JOIN equipment_schema.equipment_description_table ON equipment_description_equipment_id = equipment_id
+                  AND equipment_description_is_disabled = false
+                  AND equipment_description_is_available = true
                 INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                  AND equipment_brand_is_disabled = false
+                  AND equipment_brand_is_available = true
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
                   AND equipment_is_available = true
-                  AND equipment_category_is_disabled = false
-                  AND equipment_category_is_available = true
-                  AND equipment_description_is_disabled = false
-                  AND equipment_description_is_available = true
-                  AND equipment_brand_is_disabled = false
-                  AND equipment_brand_is_available = true
               `
             );
 
@@ -10841,22 +10862,22 @@ AS $$
                   equipment_model
                 FROM equipment_schema.equipment_table
                 INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
                 INNER JOIN equipment_schema.equipment_description_table ON equipment_description_equipment_id = equipment_id
+                  AND equipment_description_is_disabled = false
+                  AND equipment_description_is_available = true
                 INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                  AND equipment_brand_is_disabled = false
+                  AND equipment_brand_is_available = true
+                  AND equipment_brand = '${section.brand}'
                 INNER JOIN equipment_schema.equipment_model_table ON equipment_model_id = equipment_description_model_id
+                  AND equipment_model_is_disabled = false
+                  AND equipment_model_is_available = true
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
                   AND equipment_is_available = true
-                  AND equipment_category_is_disabled = false
-                  AND equipment_category_is_available = true
-                  AND equipment_description_is_disabled = false
-                  AND equipment_description_is_available = true
-                  AND equipment_brand_is_disabled = false
-                  AND equipment_brand_is_available = true
-                  AND equipment_brand = '${section.brand}'
-                  AND equipment_brand_is_disabled = false
-                  AND equipment_brand_is_available = true
               `
             );
             optionData = equipmentData.map((options, index) => {
@@ -11081,12 +11102,12 @@ AS $$
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          AND signer_team_member_id = '${teamMemberId}'
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        WHERE
-          signer_team_member_id = '${teamMemberId}'
-          AND request_signer_status = '${status}'
-          AND request_is_disabled = false
           AND request_status != 'CANCELED'
+          AND request_is_disabled = false
+        WHERE
+          request_signer_status = '${status}'
           ${jiraIdCondition}`
       )[0].count;
     };
@@ -11135,7 +11156,7 @@ AS $$
 
       const closedCount = plv8.execute(
         `
-          SELECT COUNT(ticket_id)
+          SELECT COUNT(*)
           FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'CLOSED'
@@ -11144,7 +11165,7 @@ AS $$
       )[0].count;
       const underReviewCount = plv8.execute(
         `
-          SELECT COUNT(ticket_id)
+          SELECT COUNT(*)
           FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'UNDER REVIEW'
@@ -11153,7 +11174,7 @@ AS $$
       )[0].count;
       const incorrectCount = plv8.execute(
         `
-          SELECT COUNT(ticket_id)
+          SELECT COUNT(*)
           FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'INCORRECT'
@@ -11280,9 +11301,9 @@ plv8.subtransaction(function() {
       request_response_duplicatable_section_id
     FROM form_schema.field_table
     INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
+      AND request_response_request_id = '${requestId}'
     WHERE
-      request_response_request_id = '${requestId}'
-      AND (${duplicatableSectionIdCondition})
+      (${duplicatableSectionIdCondition})
     ORDER BY field_order ASC
   `);
 
@@ -11581,10 +11602,10 @@ plv8.subtransaction(function() {
         user_avatar
       FROM form_schema.form_table
       INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+        AND team_member_team_id = '${teamId}'
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
-        team_member_team_id = '${teamId}'
-        AND form_is_disabled = false
+        form_is_disabled = false
         AND form_app = '${app}'
         ${creatorCondition}
         ${statusCondition}
@@ -11600,13 +11621,13 @@ plv8.subtransaction(function() {
   const formCount = plv8.execute(
     `
       SELECT
-        COUNT(form_id)
+        COUNT(*)
       FROM form_schema.form_table
       INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+        AND team_member_team_id = '${teamId}'
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
-        team_member_team_id = '${teamId}'
-        AND form_is_disabled = false
+        form_is_disabled = false
         AND form_app = '${app}'
         ${creatorCondition}
         ${statusCondition}
@@ -11949,10 +11970,10 @@ plv8.subtransaction(function() {
         user_email
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        AND user_is_disabled = false
       WHERE
         team_member_team_id = '${teamId}'
         AND team_member_is_disabled = false
-        AND user_is_disabled = false
         ${searchCondition}
       ORDER BY user_first_name, user_last_name
       LIMIT ${limit} OFFSET ${offset}
@@ -12028,7 +12049,7 @@ plv8.subtransaction(function() {
   const count = plv8.execute(
     `
       SELECT
-        COUNT(team_group_member_id)
+        COUNT(*)
       FROM team_schema.team_group_member_table AS tgmt
       INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
@@ -12128,7 +12149,7 @@ plv8.subtransaction(function() {
   const count = plv8.execute(
     `
       SELECT
-        COUNT(team_project_member_id)
+        COUNT(*)
       FROM team_schema.team_project_member_table AS tpmt
       INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
@@ -12301,11 +12322,11 @@ plv8.subtransaction(function() {
         user_avatar
       FROM form_schema.signer_table
       INNER JOIN team_schema.team_project_table ON team_project_id = signer_team_project_id
+        AND team_project_name IN (${projectNameCondition})
       INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
-        team_project_name IN (${projectNameCondition})
-        AND signer_form_id = '${formId}'
+        signer_form_id = '${formId}'
         AND signer_is_disabled = false
     `
   );
@@ -12384,7 +12405,7 @@ plv8.subtransaction(function() {
   const teamMemberCount = plv8.execute(
     `
       SELECT
-        COUNT(team_member_id)
+        COUNT(*)
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -12464,7 +12485,7 @@ plv8.subtransaction(function() {
   const teamMemberCount = plv8.execute(
     `
       SELECT
-        COUNT(team_member_id)
+        COUNT(*)
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -12661,11 +12682,11 @@ plv8.subtransaction(function() {
         user_avatar
       FROM item_schema.item_category_table
       INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
+        AND signer_form_id = '${formId}'
       INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         item_category_is_disabled = false
-        AND signer_form_id = '${formId}'
         ${searchCondition}
       ORDER BY item_category ASC
       LIMIT ${limit} OFFSET ${start}
@@ -12675,12 +12696,12 @@ plv8.subtransaction(function() {
   const itemCategoryCount = plv8.execute(
     `
       SELECT
-        COUNT(item_category_id)
+        COUNT(*)
       FROM item_schema.item_category_table
       INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
+        AND signer_form_id = '${formId}'
       WHERE
         item_category_is_disabled = false
-        AND signer_form_id = '${formId}'
         ${searchCondition}
     `
   )[0].count;
@@ -12734,11 +12755,11 @@ plv8.subtransaction(function() {
         user_last_name
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        AND user_is_disabled = false
       WHERE
         team_member_role = 'APPROVER'
         AND team_member_is_disabled = false
         AND team_member_team_id = '${teamId}'
-        AND user_is_disabled = false
       ORDER BY
         user_first_name ASC,
         user_last_name ASC
@@ -12771,7 +12792,7 @@ plv8.subtransaction(function() {
   const memoAgreementCount = plv8.execute(
     `
       SELECT
-        COUNT(memo_agreement_id)
+        COUNT(*)
       FROM memo_schema.memo_agreement_table
       WHERE
         memo_agreement_by_team_member_id = '${teamMemberId}'
@@ -12884,7 +12905,7 @@ plv8.subtransaction(function() {
   if (action.toLowerCase() === "approved") {
     const memoAgreementCount = plv8.execute(
       `
-        SELECT COUNT(memo_agreement_id)
+        SELECT COUNT(*)
         FROM memo_schema.memo_agreement_table
         WHERE
           memo_agreement_by_team_member_id = '${memoSignerTeamMemberId}'
@@ -13059,9 +13080,9 @@ plv8.subtransaction(function() {
         team_member_team_id
       FROM user_schema.invitation_table
       INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
+        AND team_member_team_id = '${teamId}'
       WHERE
-        team_member_team_id = '${teamId}'
-        AND invitation_status = '${status}'
+        invitation_status = '${status}'
         AND invitation_is_disabled = false
         ${searchCondition}
       ORDER BY invitation_to_email
@@ -13071,12 +13092,12 @@ plv8.subtransaction(function() {
 
   const invitationCount = plv8.execute(
     `
-      SELECT COUNT(invitation_id)
+      SELECT COUNT(*)
       FROM user_schema.invitation_table
       INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
+        AND team_member_team_id = '${teamId}'
       WHERE
-        team_member_team_id = '${teamId}'
-        AND invitation_status = '${status}'
+        invitation_status = '${status}'
         AND invitation_is_disabled = false
         ${searchCondition}
     `
@@ -13110,9 +13131,9 @@ plv8.subtransaction(function() {
         team_member_team_id
       FROM user_schema.invitation_table
       INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
+        AND team_member_team_id = '${teamId}'
       WHERE
-        team_member_team_id = '${teamId}'
-        AND invitation_is_disabled = false
+        invitation_is_disabled = false
         AND invitation_to_email = '${userEmail}'
         AND invitation_status = 'PENDING'
       ORDER BY invitation_date_created DESC
@@ -13316,10 +13337,10 @@ plv8.subtransaction(function() {
         signer_form_id
       FROM item_schema.item_category_table
       INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
+        AND signer_form_id = '${formId}'
       WHERE
         item_category_is_available = true
         AND item_category_is_disabled = false
-        AND signer_form_id = '${formId}'
       ORDER BY item_category
     `
   ).map(itemCategory => {
@@ -13373,7 +13394,7 @@ plv8.subtransaction(function() {
 
   const teamProjectCount = plv8.execute(
     `
-      SELECT COUNT(team_project_id)
+      SELECT COUNT(*)
       FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
@@ -13465,12 +13486,12 @@ plv8.subtransaction(function() {
 
   const count = plv8.execute(
     `
-      SELECT COUNT(request_signer_id)
+      SELECT COUNT(*)
       FROM request_schema.request_signer_table
       INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+        AND signer_is_primary_signer = true
       WHERE
         request_signer_request_id = '${requestId}'
-        AND signer_is_primary_signer = true
         AND request_signer_id != '${requestSignerId}'
         AND request_signer_status != 'APPROVED'
     `
@@ -13502,7 +13523,7 @@ plv8.subtransaction(function() {
 
   const requestSignerCount = plv8.execute(
     `
-      SELECT COUNT(request_signer_id)
+      SELECT COUNT(*)
       FROM request_schema.request_signer_table
       INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         AND signer_team_member_id = '${teamMemberId}'
@@ -13540,7 +13561,7 @@ plv8.subtransaction(function() {
   const data = requestStatusList.map((status) => {
     const statusCount = plv8.execute(
       `
-        SELECT COUNT(request_id)
+        SELECT COUNT(*)
         FROM request_schema.request_table
         INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
           AND team_member_team_id = '${teamId}'
@@ -13615,7 +13636,7 @@ plv8.subtransaction(function() {
 
   const count = plv8.execute(
     `
-      SELECT COUNT(request_id)
+      SELECT COUNT(*)
       FROM request_schema.request_table
       INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         AND team_member_team_id = '${teamId}'
@@ -13652,7 +13673,7 @@ plv8.subtransaction(function() {
     const monthlyData = statusList.map(status => {
       const requestStatusCount = plv8.execute(
         `
-          SELECT COUNT(request_id)
+          SELECT COUNT(*)
           FROM request_schema.request_table
           INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
             AND team_member_team_id = '${teamId}'
@@ -13810,7 +13831,7 @@ plv8.subtransaction(function() {
 
   const teamProjectCount = plv8.execute(
     `
-      SELECT COUNT(team_project_id)
+      SELECT COUNT(*)
       FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
@@ -13898,9 +13919,9 @@ plv8.subtransaction(function() {
       SELECT user_email
       FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        AND user_email IN (${emailListCondition})
       WHERE
         team_member_team_id = '${teamId}'
-        AND user_email IN (${emailListCondition})
     `
   ).map(data => data.user_email);
 });
@@ -14079,46 +14100,46 @@ AS $$
     const endDateCondition = endDate ? `AND request_date_created <= '${endDate}'` : '';
 
     const requestCount = plv8.execute(`
-        SELECT
-            COUNT(*)
-        FROM request_schema.request_table
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
-        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
-        WHERE
-            tmt.team_member_team_id = '${teamId}'
-            AND request_status = 'APPROVED'
-            AND request_is_disabled = FALSE
-            AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
-            ${projectFilterCondition}
-            ${startDateCondition}
-            ${endDateCondition}
+      SELECT
+        COUNT(*)
+      FROM request_schema.request_table
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        AND tmt.team_member_team_id = '${teamId}'
+      INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+      WHERE
+        request_status = 'APPROVED'
+        AND request_is_disabled = FALSE
+        AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
+        ${projectFilterCondition}
+        ${startDateCondition}
+        ${endDateCondition}
     `)[0].count;
 
     const parentRequests = plv8.execute(`
-        SELECT
-            request_id,
-            request_formsly_id_prefix,
-            request_formsly_id_serial,
-            request_date_created,
-            request_status_date_updated,
-            request_jira_id,
-            request_project_id,
-            ft.form_id,
-            ft.form_name
-        FROM request_schema.request_table
-        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
-        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
-        WHERE
-            tmt.team_member_team_id = '${teamId}'
-            AND request_status = 'APPROVED'
-            AND request_is_disabled = FALSE
-            AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
-            ${projectFilterCondition}
-            ${startDateCondition}
-            ${endDateCondition}
-        ORDER BY request_date_created ${sortFilter}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+      SELECT
+        request_id,
+        request_formsly_id_prefix,
+        request_formsly_id_serial,
+        request_date_created,
+        request_status_date_updated,
+        request_jira_id,
+        request_project_id,
+        ft.form_id,
+        ft.form_name
+      FROM request_schema.request_table
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        AND tmt.team_member_team_id = '${teamId}'
+      INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+      WHERE
+        request_status = 'APPROVED'
+        AND request_is_disabled = FALSE
+        AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
+        ${projectFilterCondition}
+        ${startDateCondition}
+        ${endDateCondition}
+      ORDER BY request_date_created ${sortFilter}
+      LIMIT '${limit}'
+      OFFSET '${offset}'
     `);
 
     const requestListWithResponses = [];
@@ -14180,13 +14201,13 @@ AS $$
                 ft.form_name
             FROM request_schema.request_table
             INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+              AND tmt.team_member_team_id = '${teamId}'
             INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
             INNER JOIN request_schema.request_response_table AS rrt
                 ON rrt.request_response_request_id = request_id
                 AND REPLACE(rrt.request_response, '"', '') = '${parentRequest.request_id}'
             WHERE
-                tmt.team_member_team_id = '${teamId}'
-                AND request_status = 'APPROVED'
+                request_status = 'APPROVED'
                 AND request_is_disabled = FALSE
                 AND request_form_id = 'e10abdce-e012-45b6-bec4-e0133f1a8467'
         `);
@@ -14465,14 +14486,14 @@ plv8.subtransaction(function(){
               field_id
             FROM request_schema.request_response_table
             INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            WHERE
-              request_response_request_id = '${requestId}'
               AND field_id IN (
                 '56438f2d-da70-4fa4-ade6-855f2f29823b',
                 'e48e7297-c250-4595-ba61-2945bf559a25',
                 '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
                 '9322b870-a0a1-4788-93f0-2895be713f9c'
               )
+            WHERE
+              request_response_request_id = '${requestId}'
             ORDER BY field_order
           `
         );
@@ -14533,15 +14554,15 @@ plv8.subtransaction(function(){
             field_id
           FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            AND field_id IN (
+              'be0e130b-455b-47e0-a804-f90943f7bc07',
+              '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              'f1c516bd-e483-4f32-a5b0-5223b186afb5',
+              'd209aed6-e560-49a8-aa77-66c9cada168d',
+              'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+            )
           WHERE
             request_response_request_id = '${requestId}'
-            AND field_id IN (
-            'be0e130b-455b-47e0-a804-f90943f7bc07',
-            '5c5284cd-7647-4307-b558-40b9076d9f7f',
-            'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-            'd209aed6-e560-49a8-aa77-66c9cada168d',
-            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
-          )
           ORDER BY field_order
         `);
 
@@ -14552,15 +14573,15 @@ plv8.subtransaction(function(){
         `);
 
         const positionData = plv8.execute(`
-           SELECT
+          SELECT
             request_response,
             field_id
-           FROM request_schema.request_response_table
-           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-           WHERE
-            request_response_request_id = '${requestApplicationData[0].request_id}'
+          FROM request_schema.request_response_table
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
             AND field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-           ORDER BY field_order
+          WHERE
+            request_response_request_id = '${requestApplicationData[0].request_id}'
+          ORDER BY field_order
         `);
 
         const position_type = safeParse(positionData[0].request_response);
@@ -14722,17 +14743,15 @@ AS $$
             field_id
           FROM
             request_schema.request_response_table
-          INNER JOIN
-            form_schema.field_table
-            ON field_id = request_response_field_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            AND request_response_field_id IN (
+              '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
+              'e48e7297-c250-4595-ba61-2945bf559a25',
+              '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
+              '9322b870-a0a1-4788-93f0-2895be713f9c'
+            )
           WHERE
             request_response_request_id = '${parentRequest.request_id}'
-            AND request_response_field_id IN (
-            '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
-            'e48e7297-c250-4595-ba61-2945bf559a25',
-            '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-            '9322b870-a0a1-4788-93f0-2895be713f9c'
-          )
         `
       );
 
@@ -14803,7 +14822,7 @@ AS $$
 
     const teamMemberGroup = plv8.execute(
       `
-        SELECT COUNT(tmt.team_member_id)
+        SELECT COUNT(*)
         FROM team_schema.team_member_table AS tmt
         INNER JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
         WHERE
@@ -14832,10 +14851,9 @@ AS $$
         SELECT DISTINCT(signer_id)
         FROM request_schema.request_signer_table
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        WHERE
-          request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+          AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
           AND request_is_disabled = false
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
       `
     ).map(signer => `'${signer.signer_id}'`);
 
@@ -14965,14 +14983,14 @@ AS $$
           ${search}
           ${form}
         ORDER BY ${columnAccessor} ${sort}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
     let request_count = plv8.execute(
       `
-        SELECT COUNT(request_id) FROM (
+        SELECT COUNT(*) FROM (
           SELECT
             request_id,
             request_formsly_id,
@@ -14983,13 +15001,13 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
-          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          WHERE
-            request_is_disabled = false
-            AND form_table.form_is_disabled = false
             AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+            AND form_is_disabled = false
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
             AND request_response = '"${email}"'
+          WHERE
+            request_is_disabled = false
         ) AS a
         WHERE
           a.rowNumber = 1
@@ -15059,11 +15077,15 @@ AS $$
       if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment'].includes(request.form_name)){
         const connectedRequestCount = plv8.execute(
           `
-            SELECT COUNT(request_response_id)
+            SELECT COUNT(*)
             FROM request_schema.request_response_table
-            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
             WHERE
-              request_response = '"${request.request_formsly_id}"'
+              request_response_field_id IN (
+                'be0e130b-455b-47e0-a804-f90943f7bc07',
+                'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
+                '362bff3d-54fa-413b-992c-fd344d8552c6'
+              )
+              AND request_response = '"${request.request_formsly_id}"'
           `
         )[0].count;
         if(!connectedRequestCount){
@@ -15074,12 +15096,12 @@ AS $$
       const checkProgress = (formslyId, requestId) => {
         const generalAssessmentCount = plv8.execute(
           `
-            SELECT COUNT(request_response_id)
+            SELECT COUNT(*)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
             WHERE
               request_response = '"${formslyId}"'
-              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
           `
         )[0].count;
         if(!generalAssessmentCount){
@@ -15088,12 +15110,12 @@ AS $$
 
         const technicalAssessmentCount = plv8.execute(
           `
-            SELECT COUNT(request_response_id)
+            SELECT COUNT(*)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
             WHERE
               request_response = '"${formslyId}"'
-              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
           `
         )[0].count;
         if(!technicalAssessmentCount){
@@ -15102,7 +15124,7 @@ AS $$
 
         const hrPhoneInterviewCount = plv8.execute(
           `
-            SELECT COUNT(hr_phone_interview_id)
+            SELECT COUNT(*)
             FROM hr_schema.hr_phone_interview_table
             WHERE
               hr_phone_interview_request_id = '${requestId}'
@@ -15113,22 +15135,9 @@ AS $$
           return true;
         }
 
-        const tradeTestCount = plv8.execute(
-          `
-            SELECT COUNT(trade_test_id)
-            FROM hr_schema.trade_test_table
-            WHERE
-              trade_test_request_id = '${requestId}'
-              AND trade_test_schedule IS NULL
-          `
-        )[0].count;
-        if(tradeTestCount){
-          return true;
-        }
-
         const technicalInterviewCount = plv8.execute(
           `
-            SELECT COUNT(technical_interview_id)
+            SELECT COUNT(*)
             FROM hr_schema.technical_interview_table
             WHERE
               technical_interview_request_id = '${requestId}'
@@ -15136,6 +15145,19 @@ AS $$
           `
         )[0].count;
         if(technicalInterviewCount){
+          return true;
+        }
+
+        const tradeTestCount = plv8.execute(
+          `
+            SELECT COUNT(*)
+            FROM hr_schema.trade_test_table
+            WHERE
+              trade_test_request_id = '${requestId}'
+              AND trade_test_schedule IS NULL
+          `
+        )[0].count;
+        if(tradeTestCount){
           return true;
         }
 
@@ -15269,9 +15291,9 @@ AS $$
       = hrPhoneInterviewData
       = jobOfferData
       = undefined;
-    let tradeTestData
-      = technicalInterview1Data
+    let technicalInterview1Data
       = technicalInterview2Data
+      = tradeTestData
       = backgroundCheckData
       = null;
 
@@ -15279,14 +15301,14 @@ AS $$
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'`)[0].request_response.replaceAll('"', "");
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
 
-    if (positionData.position_is_with_trade_test) {
-      tradeTestData = undefined;
-    }
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = undefined;
     }
     if (positionData.position_is_with_technical_interview_2) {
       technicalInterview2Data = undefined;
+    }
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = undefined;
     }
     if (positionData.position_is_with_background_check) {
       backgroundCheckData = undefined;
@@ -15306,8 +15328,7 @@ AS $$
         SELECT request_view.*
         FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-        WHERE
-          request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+          AND request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
           AND request_response = '"${requestId}"'
       `
     );
@@ -15317,9 +15338,9 @@ AS $$
         generalAssessmentData: undefined,
         technicalAssessmentData,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
@@ -15370,13 +15391,12 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData: undefined,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
-      return;
     }
     technicalAssessmentData = technicalAssessmentData[0];
 
@@ -15387,34 +15407,14 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData,
         hrPhoneInterviewData: undefined,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData
       }
-      return;
     }
     hrPhoneInterviewData = hrPhoneInterviewData[0];
-
-    if (positionData.position_is_with_trade_test) {
-      tradeTestData = plv8.execute(`SELECT * FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestUUID}'`);
-       if (!tradeTestData.length) {
-        returnData = {
-          applicationInformationData,
-          generalAssessmentData,
-          technicalAssessmentData,
-          hrPhoneInterviewData,
-          tradeTestData: undefined,
-          technicalInterview1Data,
-          technicalInterview2Data,
-          backgroundCheckData,
-          jobOfferData
-        }
-        return;
-      }
-      tradeTestData = tradeTestData[0];
-    }
 
     if (positionData.position_is_with_technical_interview_1) {
       technicalInterview1Data = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}' AND technical_interview_number = 1`);
@@ -15424,13 +15424,12 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data: undefined,
           technicalInterview2Data,
+          tradeTestData,
           backgroundCheckData,
           jobOfferData
         }
-        return;
       }
       technicalInterview1Data = technicalInterview1Data[0];
     }
@@ -15443,15 +15442,32 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data: undefined,
+          tradeTestData,
           backgroundCheckData,
           jobOfferData
         }
-        return;
       }
       technicalInterview2Data = technicalInterview2Data[0];
+    }
+
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = plv8.execute(`SELECT * FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestUUID}'`);
+       if (!tradeTestData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          technicalInterview1Data,
+          technicalInterview2Data,
+          tradeTestData: undefined,
+          backgroundCheckData,
+          jobOfferData
+        }
+      }
+      tradeTestData = tradeTestData[0];
     }
 
     if (positionData.position_is_with_background_check) {
@@ -15462,13 +15478,12 @@ AS $$
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
-          tradeTestData,
           technicalInterview1Data,
           technicalInterview2Data,
+          tradeTestData,
           backgroundCheckData: undefined,
           jobOfferData
         }
-        return;
       }
       backgroundCheckData = backgroundCheckData[0];
     }
@@ -15491,13 +15506,12 @@ AS $$
         generalAssessmentData,
         technicalAssessmentData,
         hrPhoneInterviewData,
-        tradeTestData,
         technicalInterview1Data,
         technicalInterview2Data,
+        tradeTestData,
         backgroundCheckData,
         jobOfferData: undefined
       }
-      return;
     }
     jobOfferData = jobOfferData[0];
 
@@ -15506,9 +15520,9 @@ AS $$
       generalAssessmentData,
       technicalAssessmentData,
       hrPhoneInterviewData,
-      tradeTestData,
       technicalInterview1Data,
       technicalInterview2Data,
+      tradeTestData,
       backgroundCheckData,
       jobOfferData
     }
@@ -15634,34 +15648,33 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+          AND applicationInformation.request_status = 'APPROVED'
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
-        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
           ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+          AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+          AND technicalAssessment.request_status = 'APPROVED'
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+        INNER JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = applicationInformation.request_id
           ${hrPhoneInterviewDateCondition.length ? hrPhoneInterviewDateCondition : ""}
           ${hrPhoneInterviewCondition}
           ${hrPhoneInterviewScheduleCondition}
           ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}, hr_phone_interview_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -15717,21 +15730,42 @@ AS $$
 
     const steps = [
       'hr_phone_interview',
-      'trade_test',
       'technical_interview_1',
       'technical_interview_2',
+      'trade_test',
       'background_check'
     ];
     const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${position}' LIMIT 1`)[0];
     const currentStep = steps.indexOf(qualifiedStep);
 
-    if (positionData.position_is_with_trade_test && currentStep <= 0) {
-      plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_technical_interview_1 && currentStep <= 1) {
+    if (positionData.position_is_with_technical_interview_1 && currentStep <= 0) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 1`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview_1", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 1)`);
-    } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 2) {
+    } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 1) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 2`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview_2", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
       plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 2)`);
+    } else if (positionData.position_is_with_trade_test && currentStep <= 2) {
+      const isAlreadyDone = plv8.execute(`SELECT COUNT(*) FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestId}'`)[0].count;
+      if(isAlreadyDone) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "trade_test", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
+      plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
     } else if (positionData.position_is_with_background_check && currentStep <= 3) {
+      const isAlreadyDoneWithTechnical = plv8.execute(`SELECT COUNT(*) FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestId}' AND technical_interview_number = 1`)[0].count;
+      if(!isAlreadyDoneWithTechnical) {
+        plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "hr_phone_interview", "position": "${position}", "requestId": "${requestId}" }')`);
+        return;
+      };
+
       const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_week('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_week;
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
@@ -15994,34 +16028,33 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+          AND applicationInformation.request_status = 'APPROVED'
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
-        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.trade_test_table ON trade_test_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
           ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+          AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+          AND technicalAssessment.request_status = 'APPROVED'
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+        INNER JOIN hr_schema.trade_test_table ON trade_test_request_id = applicationInformation.request_id
           ${tradeTestDateCondition.length ? tradeTestDateCondition : ""}
           ${tradeTestCondition}
           ${tradeTestScheduleCondition}
           ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LEFT JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}, trade_test_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -16177,18 +16210,18 @@ AS $$
         LEFT JOIN hr_schema.hr_phone_interview_table p
           ON p.hr_phone_interview_id = iom.interview_meeting_interview_id
           AND p.hr_phone_interview_status = 'PENDING'
-        LEFT JOIN hr_schema.trade_test_table t
-          ON t.trade_test_id = iom.interview_meeting_interview_id
-          AND t.trade_test_status = 'PENDING'
         LEFT JOIN hr_schema.technical_interview_table ti
           ON ti.technical_interview_id = iom.interview_meeting_interview_id
           AND ti.technical_interview_status = 'PENDING'
+        LEFT JOIN hr_schema.trade_test_table t
+          ON t.trade_test_id = iom.interview_meeting_interview_id
+          AND t.trade_test_status = 'PENDING'
         WHERE iom.interview_meeting_is_disabled = false
           AND iom.interview_meeting_schedule = '${validStartTime.toISOString()}'
           AND (
             p.hr_phone_interview_status = 'PENDING'
-            OR t.trade_test_status = 'PENDING'
             OR ti.technical_interview_status = 'PENDING'
+            OR t.trade_test_status = 'PENDING'
           )
       `);
 
@@ -16709,35 +16742,34 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+          AND applicationInformation.request_status = 'APPROVED'
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
-        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.technical_interview_table ON technical_interview_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
-          AND technical_interview_number = ${technicalInterviewNumber}
           ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+          AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+          AND technicalAssessment.request_status = 'APPROVED'
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+        INNER JOIN hr_schema.technical_interview_table ON technical_interview_request_id = applicationInformation.request_id
+          AND technical_interview_number = ${technicalInterviewNumber}
           ${technicalInterviewDateCondition.length ? technicalInterviewDateCondition : ""}
           ${technicalInterviewCondition}
           ${technicalInterviewScheduleCondition}
           ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LEFT JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}, technical_interview_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -17012,33 +17044,32 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+          AND applicationInformation.request_status = 'APPROVED'
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
-        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
-        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.background_check_table ON background_check_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
           ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+          AND generalAssessment.request_status = 'APPROVED'
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+          AND technicalAssessment.request_status = 'APPROVED'
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+        INNER JOIN hr_schema.background_check_table ON background_check_request_id = applicationInformation.request_id
           ${backgroundCheckDateCondition.length ? backgroundCheckDateCondition : ""}
           ${backgroundCheckCondition}
           ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}, background_check_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -17254,39 +17285,38 @@ AS $$
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+          AND applicationInformation.request_status = 'APPROVED'
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
+          ${positionCondition}
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+          AND generalAssessment.request_status = 'APPROVED'
+          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+          AND technicalAssessment.request_status = 'APPROVED'
+          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
         INNER JOIN (
           SELECT
             JobOffer.*,
             ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY JobOffer.job_offer_date_created DESC) AS RowNumber
           FROM hr_schema.job_offer_table JobOffer
         ) JobOffer ON JobOffer.job_offer_request_id = applicationInformation.request_id
-        LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          applicationInformation.request_status = 'APPROVED'
-          AND generalAssessment.request_status = 'APPROVED'
-          AND technicalAssessment.request_status = 'APPROVED'
           AND JobOffer.RowNumber = 1
-          ${positionCondition}
-          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
-          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
-          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
-          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
-          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
           ${jobOfferDateCondition.length ? jobOfferDateCondition : ""}
           ${jobOfferCondition}
           ${assignedHRCondition}
-        ORDER BY ${sort.sortBy} ${sort.order}
-        LIMIT '${limit}'
-        OFFSET '${offset}'
+        LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        ORDER BY ${sort.sortBy} ${sort.order}, job_offer_date_created DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
       `
     );
 
@@ -17596,7 +17626,7 @@ AS $$
 
     const teamGroupMemberCount = plv8.execute(
       `
-        SELECT COUNT(team_group_member_id)
+        SELECT COUNT(*)
         FROM team_schema.team_group_member_table
         WHERE
           team_member_id = '${teamMemberId}'
@@ -17657,7 +17687,7 @@ AS $$
     }
 
     const candidate_referral_source = plv8.execute(`
-        SELECT request_response, COUNT(request_response)::int AS count
+        SELECT request_response, COUNT(*)::int AS count
         FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_id = request_response_request_id
         WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
@@ -17668,7 +17698,7 @@ AS $$
     const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
 
     const most_applied_position = plv8.execute(`
-      SELECT request_response, COUNT(request_response)::int AS count
+      SELECT request_response, COUNT(*)::int AS count
       FROM request_schema.request_response_table
       INNER JOIN request_schema.request_table ON request_id = request_response_request_id
       WHERE request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
@@ -17690,7 +17720,7 @@ AS $$
 
     const applicant_age_bracket = age_bracket_list.map((bracket) => {
       const result = plv8.execute(`
-        SELECT COUNT(request_response)::int
+        SELECT COUNT(*)::int
         FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table
         ON request_id = request_response_request_id
@@ -18545,11 +18575,11 @@ plv8.subtransaction(function(){
       INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
       INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
       INNER JOIN hr_schema.job_offer_table ON job_offer_request_id = request_connection_application_information_request_id
+        AND job_offer_id = '${jobOfferData.job_offer_id}'
       LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
       LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         request_connection_application_information_request_id = '${requestId}'
-        AND job_offer_id = '${jobOfferData.job_offer_id}'
       LIMIT 1
     `
   )[0];
@@ -18616,20 +18646,21 @@ plv8.subtransaction(function(){
 
   const applicationInformationCount = plv8.execute(
     `
-      SELECT COUNT(request_id)
+      SELECT COUNT(*)
       FROM request_schema.request_table
       INNER JOIN request_schema.request_signer_table ON request_signer_request_id = request_id
       INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+        AND signer_team_member_id = '${teamMemberId}'
       WHERE
         request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
         AND request_status = 'PENDING'
-        AND signer_team_member_id = '${teamMemberId}'
+
     `
   )[0].count;
 
   const hrPhoneInterviewCount = plv8.execute(
     `
-      SELECT COUNT(hr_phone_interview_id)
+      SELECT COUNT(*)
       FROM hr_schema.hr_phone_interview_table
       WHERE
         hr_phone_interview_status = 'PENDING'
@@ -18637,19 +18668,9 @@ plv8.subtransaction(function(){
     `
   )[0].count;
 
-  const tradeTestCount = plv8.execute(
-    `
-      SELECT COUNT(trade_test_id)
-      FROM hr_schema.trade_test_table
-      WHERE
-        trade_test_status = 'PENDING'
-        AND trade_test_team_member_id = '${teamMemberId}'
-    `
-  )[0].count;
-
   const technicalInterview1Count = plv8.execute(
     `
-      SELECT COUNT(technical_interview_id)
+      SELECT COUNT(*)
       FROM hr_schema.technical_interview_table
       WHERE
         technical_interview_status = 'PENDING'
@@ -18660,7 +18681,7 @@ plv8.subtransaction(function(){
 
   const technicalInterview2Count = plv8.execute(
     `
-      SELECT COUNT(technical_interview_id)
+      SELECT COUNT(*)
       FROM hr_schema.technical_interview_table
       WHERE
         technical_interview_status = 'PENDING'
@@ -18669,9 +18690,19 @@ plv8.subtransaction(function(){
     `
   )[0].count;
 
+  const tradeTestCount = plv8.execute(
+    `
+      SELECT COUNT(*)
+      FROM hr_schema.trade_test_table
+      WHERE
+        trade_test_status = 'PENDING'
+        AND trade_test_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
   const backgroundCheckCount = plv8.execute(
     `
-      SELECT COUNT(background_check_id)
+      SELECT COUNT(*)
       FROM hr_schema.background_check_table
       WHERE
         background_check_status = 'PENDING'
@@ -18681,7 +18712,7 @@ plv8.subtransaction(function(){
 
   const jobOfferCount = plv8.execute(
     `
-      SELECT COUNT(job_offer_id)
+      SELECT COUNT(*)
       FROM hr_schema.request_connection_table
       INNER JOIN (
         SELECT
@@ -18701,9 +18732,9 @@ plv8.subtransaction(function(){
   returnData = {
     applicationInformation: Number(applicationInformationCount),
     hrPhoneInterview: Number(hrPhoneInterviewCount),
-    tradeTest: Number(tradeTestCount),
     technicalInterview1: Number(technicalInterview1Count),
     technicalInterview2: Number(technicalInterview2Count),
+    tradeTest: Number(tradeTestCount),
     backgroundCheck: Number(backgroundCheckCount),
     jobOffer: Number(jobOfferCount)
   }
@@ -19125,7 +19156,7 @@ let returnData;
 plv8.subtransaction(function(){
   const { fieldAndResponse } = input_data;
 
-  const condition = fieldAndResponse.map(data => `(request_response = '"${data.response}"' AND request_response_field_id = '${data.fieldId}')`).join(" OR ")
+  const condition = fieldAndResponse.map(data => `(request_response_field_id = '${data.fieldId}' AND request_response = '"${data.response}"')`).join(" OR ")
 
   const count = plv8.execute(
     `
@@ -19503,7 +19534,7 @@ AS $$
     } else if (applicationInformationFormslyId) {
       const sssData = plv8.execute(`
         SELECT request_response
-        FROM public.request_view 
+        FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_response_request_id = request_id
           AND request_response_field_id = 'ab7bf673-c22d-4290-b858-7cba2c4d2474'
         WHERE request_formsly_id = '${applicationInformationFormslyId}'
@@ -19531,6 +19562,218 @@ AS $$
     }
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_questionnaire_position(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+
+  plv8.subtransaction(function() {
+    const { questionnaireId, teamMemberId, position } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = null
+        WHERE position_questionnaire_id = $1
+    `, [questionnaireId]);
+
+     position.forEach(pos => {
+        const positionData = plv8.execute(`
+            SELECT position_id
+            FROM lookup_schema.position_table
+            WHERE position_alias = $1
+        `, [pos])[0];
+
+        if (positionData && positionData.position_id) {
+            plv8.execute(`
+                UPDATE lookup_schema.position_table
+                SET position_questionnaire_id = $1
+                WHERE position_id = $2
+            `, [questionnaireId, positionData.position_id]);
+        }
+    });
+
+     plv8.execute(`
+        UPDATE form_schema.questionnaire_table
+        SET
+            questionnaire_updated_by = $1,
+            questionnaire_date_updated = $2
+         WHERE questionnaire_id = $3
+    `, [teamMemberId, currentDate, questionnaireId]);
+    });
+
+    return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_question_option(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+    let returnData = [];
+
+    plv8.subtransaction(function() {
+        const { questionnaireId, teamMemberId, correctAnswerEscaped, escapedQuestion, escapedChoices, fieldId } = input_data;
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+        plv8.execute(`
+            UPDATE lookup_schema.position_table
+            SET position_questionnaire_id = null
+            WHERE position_questionnaire_id = $1
+        `, [questionnaireId]);
+
+
+        plv8.execute(`
+            UPDATE form_schema.correct_response_table
+            SET correct_response_value = $1
+            WHERE correct_response_field_id = $2
+        `, [correctAnswerEscaped, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.field_table
+            SET field_name = $1
+            WHERE field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_question_table
+            SET questionnaire_question = $1
+            WHERE questionnaire_question_field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        escapedChoices.map((choice) => {
+            plv8.execute(`
+                UPDATE form_schema.question_option_table
+                SET question_option_value = $1
+                WHERE question_option_id = $2
+            `, [choice.choices, choice.fieldId]);
+        });
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_table
+            SET
+              questionnaire_updated_by = $1,
+              questionnaire_date_updated = $2
+            WHERE questionnaire_id = $3
+        `, [teamMemberId, currentDate, questionnaireId]);
+
+        returnData.push({ status: 'success' });
+    });
+
+    return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_questionnaire_position(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+
+  plv8.subtransaction(function() {
+    const { questionnaireId, teamMemberId, position } = input_data;
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(`
+        UPDATE lookup_schema.position_table
+        SET position_questionnaire_id = null
+        WHERE position_questionnaire_id = $1
+    `, [questionnaireId]);
+
+     position.forEach(pos => {
+        const positionData = plv8.execute(`
+            SELECT position_id
+            FROM lookup_schema.position_table
+            WHERE position_alias = $1
+        `, [pos])[0];
+
+        if (positionData && positionData.position_id) {
+            plv8.execute(`
+                UPDATE lookup_schema.position_table
+                SET position_questionnaire_id = $1
+                WHERE position_id = $2
+            `, [questionnaireId, positionData.position_id]);
+        }
+    });
+
+     plv8.execute(`
+        UPDATE form_schema.questionnaire_table
+        SET
+            questionnaire_updated_by = $1,
+            questionnaire_date_updated = $2
+         WHERE questionnaire_id = $3
+    `, [teamMemberId, currentDate, questionnaireId]);
+    });
+
+    return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_question_option(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+    let returnData = [];
+
+    plv8.subtransaction(function() {
+        const { questionnaireId, teamMemberId, correctAnswerEscaped, escapedQuestion, escapedChoices, fieldId } = input_data;
+
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+        plv8.execute(`
+            UPDATE lookup_schema.position_table
+            SET position_questionnaire_id = null
+            WHERE position_questionnaire_id = $1
+        `, [questionnaireId]);
+
+
+        plv8.execute(`
+            UPDATE form_schema.correct_response_table
+            SET correct_response_value = $1
+            WHERE correct_response_field_id = $2
+        `, [correctAnswerEscaped, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.field_table
+            SET field_name = $1
+            WHERE field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_question_table
+            SET questionnaire_question = $1
+            WHERE questionnaire_question_field_id = $2
+        `, [escapedQuestion, fieldId]);
+
+        escapedChoices.map((choice) => {
+            plv8.execute(`
+                UPDATE form_schema.question_option_table
+                SET question_option_value = $1
+                WHERE question_option_id = $2
+            `, [choice.choices, choice.fieldId]);
+        });
+
+        plv8.execute(`
+            UPDATE form_schema.questionnaire_table
+            SET
+              questionnaire_updated_by = $1,
+              questionnaire_date_updated = $2
+            WHERE questionnaire_id = $3
+        `, [teamMemberId, currentDate, questionnaireId]);
+
+        returnData.push({ status: 'success' });
+    });
+
+    return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

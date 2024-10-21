@@ -1570,85 +1570,45 @@ export const updateTechnicalQuestion = async (
 ) => {
   const { requestValues, questionnaireId, teamMemberId } = params;
 
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
-
-  const { error: questionnaireError } = await supabaseClient
-    .schema("form_schema")
-    .from("questionnaire_table")
-    .update({
-      questionnaire_updated_by: teamMemberId,
-      questionnaire_date_updated: currentDate,
-    })
-    .eq("questionnaire_id", questionnaireId);
-
-  if (questionnaireError) throw questionnaireError;
-
+  const escapedChoices: { fieldId: string; choices: string }[] = [];
   const correctAnswer = requestValues.choices.find(
     (choice) => choice.isCorrectAnswer
   );
-  const technicalQuestionId = requestValues.field_id;
-
   let correctAnswerFieldName = "";
   if (correctAnswer) {
     correctAnswerFieldName = correctAnswer.choice;
   }
-
+  const fieldId = requestValues.field_id;
   const correctAnswerEscaped = escapeQuotes(correctAnswerFieldName);
-
-  const { error: correctResponseError } = await supabaseClient
-    .schema("form_schema")
-    .from("correct_response_table")
-    .update({
-      correct_response_value: correctAnswerEscaped,
-    })
-    .eq("correct_response_field_id", technicalQuestionId ?? "");
-
-  if (correctResponseError) throw correctResponseError;
-
   const escapedQuestion = escapeQuotes(String(requestValues.question));
 
-  const { error: fieldTableError } = await supabaseClient
-    .schema("form_schema")
-    .from("field_table")
-    .update({
-      field_name: escapedQuestion,
-    })
-    .eq("field_id", requestValues.field_id);
-
-  if (fieldTableError) throw fieldTableError;
-
-  const { error: questionnaireQuestionError } = await supabaseClient
-    .schema("form_schema")
-    .from("questionnaire_question_table")
-    .update({
-      questionnaire_question: escapedQuestion,
-    })
-    .eq("questionnaire_question_field_id", requestValues.field_id);
-
-  if (questionnaireQuestionError) throw questionnaireQuestionError;
-
-  const promises = requestValues.choices.map(async (choice) => {
-    const escapedChoice = escapeQuotes(choice.choice);
-
+  requestValues.choices.forEach((choice) => {
     if (choice.field_name.includes("Question Choice")) {
-      return supabaseClient
-        .schema("form_schema")
-        .from("question_option_table")
-        .update({
-          question_option_value: escapedChoice,
-        })
-        .eq("question_option_id", choice.field_id);
-    }
-    return null;
-  });
-
-  const results = await Promise.all(promises.map((p) => p.catch((e) => e)));
-
-  results.forEach((result) => {
-    if (result instanceof Error) {
-      console.error("Error updating choice:", result);
+      const escapedChoice = escapeQuotes(choice.choice);
+      escapedChoices.push({
+        fieldId: choice.field_id,
+        choices: escapedChoice,
+      });
     }
   });
+
+  const inputData = {
+    questionnaireId,
+    teamMemberId,
+    correctAnswerEscaped,
+    escapedQuestion,
+    escapedChoices,
+    fieldId,
+  };
+
+  const { error } = await supabaseClient.rpc(
+    "update_technical_question_option",
+    {
+      input_data: inputData,
+    }
+  );
+
+  if (error) throw error;
 };
 
 export const updateQuestionnairePosition = async (
@@ -1659,40 +1619,11 @@ export const updateQuestionnairePosition = async (
     teamMemberId: string;
   }
 ) => {
-  const { questionnaireId, teamMemberId, position } = params;
+  const { error } = await supabaseClient.rpc("update_questionnaire_position", {
+    input_data: params,
+  });
 
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
-
-  const results = [];
-  for (const pos of position) {
-    const { data, error } = await supabaseClient
-      .schema("lookup_schema")
-      .from("position_table")
-      .update({
-        position_questionnaire_id: questionnaireId,
-      })
-      .eq("position_alias", pos);
-
-    if (error) {
-      console.error(`Failed to update position ${pos}:`, error);
-      throw error;
-    }
-
-    results.push(data);
-  }
-
-  const { error: updateError } = await supabaseClient
-    .schema("form_schema")
-    .from("questionnaire_table")
-    .update({
-      questionnaire_updated_by: teamMemberId,
-      questionnaire_date_updated: currentDate,
-    })
-    .eq("questionnaire_id", questionnaireId);
-
-  if (updateError) throw updateError;
-
-  return results;
+  if (error) throw error;
 };
 
 export const disableApikey = async (
@@ -1719,13 +1650,19 @@ export const updateQuestionnaireName = async (
   params: {
     questionnaireId: string;
     questionnaireName: string;
+    teamMemberId: string;
   }
 ) => {
-  const { questionnaireId, questionnaireName } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const { questionnaireId, questionnaireName, teamMemberId } = params;
   const { data, error } = await supabaseClient
     .schema("form_schema")
     .from("questionnaire_table")
-    .update({ questionnaire_name: questionnaireName })
+    .update({
+      questionnaire_name: questionnaireName,
+      questionnaire_updated_by: teamMemberId,
+      questionnaire_date_updated: currentDate,
+    })
     .eq("questionnaire_id", questionnaireId)
     .select("*");
 
