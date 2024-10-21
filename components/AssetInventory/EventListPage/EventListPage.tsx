@@ -7,7 +7,6 @@ import {
   ActionIcon,
   Badge,
   Button,
-  Checkbox,
   Container,
   Flex,
   Group,
@@ -171,18 +170,7 @@ const EventsListPage = () => {
               title: "Event Description",
               render: (event) => <Text>{event.event_description}</Text>,
             },
-            {
-              accessor: "event_is_disabled",
-              width: "30%",
-              title: "Include events in ",
-              render: (event) => (
-                <Group position="center">
-                  <Checkbox checked={!event.event_is_disabled}>
-                    {event.event_description}
-                  </Checkbox>
-                </Group>
-              ),
-            },
+
             {
               accessor: "event_details",
               width: "50%",
@@ -198,7 +186,6 @@ const EventsListPage = () => {
                 </Badge>
               ),
             },
-
             {
               accessor: "actions",
               title: "Actions",

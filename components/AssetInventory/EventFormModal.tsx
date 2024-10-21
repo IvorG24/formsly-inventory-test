@@ -1,7 +1,7 @@
 import { getInventoryFormDetails, getLocationOption } from "@/backend/api/get";
 import { updateEvent } from "@/backend/api/update";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   FormType,
@@ -10,7 +10,14 @@ import {
   RequestResponseTableRow,
   TeamMemberWithUserType,
 } from "@/utils/types";
-import { Box, Button, Group, Modal, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  LoadingOverlay,
+  Modal,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -48,9 +55,10 @@ const EventFormModal = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const securityGroup = useSecurityGroup();
   const teamMember = useUserTeamMember();
+  const userData = useUserProfile();
   const requestFormMethods = useForm<InventoryFormValues>();
+  const [isLoading, setIsloading] = useState(false);
   const [opened, setOpened] = useState(true);
-
   const [formData, setFormData] = useState<InventoryFormType>();
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
@@ -64,6 +72,7 @@ const EventFormModal = ({
 
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
+      setIsloading(true);
       const formValidation = securityGroup.asset.filter.event.includes(
         `${formData?.form_name}`
       );
@@ -78,8 +87,10 @@ const EventFormModal = ({
       await updateEvent(supabaseClient, {
         updateResponse: data,
         selectedRow,
+        eventId,
         teamMemberId: teamMember?.team_member_id,
         type: formData?.form_name ?? "",
+        userId: userData?.user_id,
       });
       setOpened(false);
       handleFilterForms();
@@ -87,6 +98,7 @@ const EventFormModal = ({
         message: "Event Submitted",
         color: "green",
       });
+      setIsloading(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -109,6 +121,7 @@ const EventFormModal = ({
             ...form.form_section[0],
           },
         ]);
+
         setFormData(form);
       } catch (e) {
         notifications.show({
@@ -159,10 +172,13 @@ const EventFormModal = ({
           },
           {
             ...form.form_section[1].section_field[0],
-            field_option: teamMemberOption,
+            field_option:
+              formData?.form_name === "Check In"
+                ? form.form_section[1].section_field[0].field_option // Retain the existing options
+                : teamMemberOption, // Set new options otherwise
           },
 
-          ...form.form_section[1].section_field.slice(1, 7),
+          ...form.form_section[1].section_field.slice(1, 10),
         ];
       }
       updateSection(index, {
@@ -232,7 +248,9 @@ const EventFormModal = ({
 
   return (
     <>
+      <LoadingOverlay visible={isLoading} />
       <Modal
+        withinPortal
         opened={formisEmpty ? opened : false}
         onClose={() => {
           setOpened(false);

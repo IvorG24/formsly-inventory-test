@@ -1,6 +1,6 @@
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryEventRow } from "@/utils/types";
-import { Text } from "@mantine/core";
+import { Anchor, Text } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 type Props = {
@@ -38,30 +38,14 @@ const EventPanel = ({
           {
             accessor: "returnDate",
             title: "Event Date",
-            render: (event) =>
-              event.inventory_event_return_date ? (
-                <Text>{`Return Date ( ${formatDate(new Date(event.inventory_event_return_date))} )`}</Text>
-              ) : (
-                <Text>{`Check Out Date ( ${formatDate(new Date(event.inventory_event_check_out_date || ""))} )`}</Text>
-              ),
+            render: (event) => (
+              <Text>{`${event.inventory_event} Date ( ${formatDate(new Date(event.inventory_event_date_created || ""))} )`}</Text>
+            ),
           },
           {
             accessor: "status",
             title: "Event",
             render: (event) => <Text>{event.inventory_event}</Text>,
-          },
-
-          {
-            accessor: "dueDate",
-            title: "Due Date",
-            render: (event) =>
-              event.inventory_event === "Check Out" ? (
-                <Text>
-                  {formatDate(new Date(event.inventory_event_due_date || ""))}
-                </Text>
-              ) : (
-                <Text>-</Text>
-              ),
           },
 
           {
@@ -73,6 +57,20 @@ const EventPanel = ({
               ) : (
                 <Text>-</Text>
               ),
+          },
+          {
+            accessor: "event_signature",
+            title: "Signature",
+            render: (event) => (
+              <Text>
+                <Anchor
+                  href={event.inventory_event_signature ?? ""}
+                  target="_blank"
+                >
+                  Event Signature
+                </Anchor>
+              </Text>
+            ),
           },
         ]}
       />

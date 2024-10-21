@@ -24,7 +24,7 @@ import {
   Textarea,
   Tooltip,
 } from "@mantine/core";
-import { DateInput, TimeInput, YearPickerInput } from "@mantine/dates";
+import { DateInput, TimeInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import {
   IconCalendar,
@@ -407,26 +407,18 @@ const InventoryFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field: { value, onChange } }) => {
               const dateValue = value ? new Date(`${value}`) : undefined;
-              if (field.field_name === "Year Graduated") {
-                return (
-                  <YearPickerInput
-                    value={dateValue}
-                    onChange={onChange}
-                    withAsterisk={field.field_is_required}
-                    {...inputProps}
-                    icon={<IconCalendar size={16} />}
-                    error={fieldError}
-                    readOnly={field.field_is_read_only}
-                    clearable
-                  />
-                );
-              } else if (field.field_name === "Return Date" || "Due Date") {
+
+              if (field.field_name === "Return Date" || "Due Date") {
                 return (
                   <DateInput
                     value={dateValue}
                     onChange={onChange}
                     withAsterisk={field.field_is_required}
                     {...inputProps}
+                    popoverProps={{
+                      withinPortal: true,
+                      zIndex: 1000,
+                    }}
                     icon={<IconCalendar size={16} />}
                     error={fieldError}
                     minDate={new Date()}
@@ -440,6 +432,10 @@ const InventoryFormFields = ({
                   <DateInput
                     value={dateValue}
                     onChange={onChange}
+                    popoverProps={{
+                      withinPortal: true,
+                      zIndex: 1000,
+                    }}
                     withAsterisk={field.field_is_required}
                     {...inputProps}
                     icon={<IconCalendar size={16} />}

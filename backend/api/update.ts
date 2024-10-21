@@ -49,7 +49,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate, getMemoFormat } from "./get";
-import { createNotification, uploadImage } from "./post";
+import { createNotification, handleSignatureUpload, uploadImage } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -1678,28 +1678,36 @@ export const updateEvent = async (
     selectedRow: string[];
     teamMemberId?: string;
     type: string;
+    eventId: string;
+    userId?: string;
   }
 ) => {
-  const { updateResponse, selectedRow, teamMemberId, type } = params;
+  const { updateResponse, selectedRow, teamMemberId, type, userId, eventId } =
+    params;
 
   const fieldResponsesArray: { name: string; response: string }[] = [];
-
+  let signatureUrl = null;
+  const fieldNamesArray: string[] = [];
   for (const section of updateResponse.sections) {
     for (const field of section.section_field) {
       const fieldResponse = field.field_response;
-      const fieldName = field.field_name;
-
-      const allowedFields = new Set([
-        "Check in from",
-        "Check out to",
-        "Site",
-        "Location",
-        "Department",
-        "Due Date",
-        "Notes",
-        "Return Date",
-        "Assign To",
-      ]);
+      let fieldName = field.field_name;
+      fieldNamesArray.push(fieldName);
+      if (field.field_type === "FILE" && fieldResponse instanceof File) {
+        const uploadedFileUrl = await handleSignatureUpload(
+          supabaseClient,
+          fieldResponse,
+          fieldName,
+          userId || ""
+        );
+        signatureUrl = uploadedFileUrl;
+        fieldNamesArray.push(fieldName);
+      }
+      if (field.field_type === "DATE" && field.field_date_order === 1) {
+        fieldName = "Date 1";
+        fieldNamesArray.push(fieldName);
+      }
+      const allowedFields = new Set(fieldNamesArray);
 
       if (fieldResponse && allowedFields.has(fieldName)) {
         fieldResponsesArray.push({
@@ -1715,6 +1723,8 @@ export const updateEvent = async (
     selectedRow,
     teamMemberId: teamMemberId ?? null,
     type,
+    signatureUrl,
+    eventId,
   };
 
   const { data, error } = await supabaseClient.rpc("event_status_update", {

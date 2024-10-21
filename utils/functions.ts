@@ -4,9 +4,9 @@ import { InventoryFormValues } from "@/components/AssetInventory/CreateAssetPage
 import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
+import { v4 as uuidv4 } from "uuid";
 import { startCase } from "./string";
 import { JiraItemUserTableData } from "./types";
-
 // check if a value is empty
 export const isEmpty = (value: any) => {
   if (value == null) {
@@ -445,4 +445,94 @@ export const extractInventoryData = (
 
 export const shortId = () => {
   return Math.random().toString(36).substring(2, 6);
+};
+
+export const editImageWithUUID = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          return reject(new Error("Failed to get canvas context"));
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { data, width, height } = imageData;
+
+        let minX = width,
+          maxX = 0,
+          minY = height,
+          maxY = 0;
+
+        // Detect non-white pixels (bounding box of signature)
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+            const [r, g, b] = [data[index], data[index + 1], data[index + 2]];
+
+            if (!(r > 200 && g > 200 && b > 200)) {
+              minX = Math.min(minX, x);
+              maxX = Math.max(maxX, x);
+              minY = Math.min(minY, y);
+              maxY = Math.max(maxY, y);
+            }
+          }
+        }
+
+        if (minX === width && maxX === 0 && minY === height && maxY === 0) {
+          minX = 0;
+          maxX = width;
+          minY = height / 2;
+          maxY = height / 2;
+        }
+
+        const uuid = uuidv4();
+
+        // Add UUID as a strike-through (centered across the signature)
+        ctx.font = "bold 42px Arial";
+        ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const uuidX = (minX + maxX) / 2;
+        const uuidY = (minY + maxY) / 2; // Place UUID in the middle of signature
+
+        ctx.fillText(uuid, uuidX, uuidY);
+
+        // Always save as PNG
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const editedFile = new File(
+              [blob],
+              file.name.replace(/\.[^/.]+$/, "") + ".png",
+              {
+                type: "image/png",
+              }
+            );
+            resolve(editedFile);
+          } else {
+            reject(new Error("Failed to create PNG blob from canvas"));
+          }
+        }, "image/png"); // Output format is forced to PNG
+      };
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsDataURL(file);
+  });
 };

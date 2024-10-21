@@ -11,6 +11,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
+  editImageWithUUID,
   extractInventoryData,
   formatJiraItemUserTableData,
   shortId,
@@ -26,6 +27,7 @@ import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
+  createEventFormvalues,
   CreateTicketFormValues,
   customFieldFormValues,
   EquipmentDescriptionTableInsert,
@@ -2882,4 +2884,52 @@ export const createCustomFields = async (
   if (error) throw error;
 
   return data as unknown as InventoryFieldRow;
+};
+
+export const createCustomEvent = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    createEventFormvalues: createEventFormvalues;
+    teamMemberId: string;
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("create_custom_event", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const handleSignatureUpload = async (
+  supabaseClient: SupabaseClient<Database>,
+  file: File,
+  field: string,
+  userId: string
+) => {
+  const fileType = getFileType(field);
+  const uploadParams = {
+    bucket: "USER_SIGNATURES" as AttachmentBucketType,
+    fileType,
+    userId,
+  };
+
+  const isImage = file.type.split("/")[0] === "image";
+
+  if (isImage) {
+    const editedFile = await editImageWithUUID(file);
+    const uploadResponse = await uploadImage(supabaseClient, {
+      ...uploadParams,
+      image: editedFile,
+    });
+    return uploadResponse.publicUrl;
+  } else {
+    const uploadResponse = await uploadFile(supabaseClient, {
+      ...uploadParams,
+      file,
+    });
+    return uploadResponse.publicUrl;
+  }
 };

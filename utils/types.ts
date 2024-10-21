@@ -600,9 +600,8 @@ export type InventoryFieldRow =
 export type InventoryEventRow =
   Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
 
-  export type InventoryHistoryRow =
+export type InventoryHistoryRow =
   Database["inventory_request_schema"]["Tables"]["inventory_history_table"]["Row"];
-
 
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
@@ -648,7 +647,8 @@ export type FieldType =
   | "TIME"
   | "LINK"
   | "MULTIPLE CHOICE"
-  | "AUTOCOMPLETE";
+  | "AUTOCOMPLETE"
+  | "CHECKBOX";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
@@ -2640,6 +2640,7 @@ export type InventoryFormResponseType = {
       field_description?: string;
       field_option: OptionTableRow[];
       field_response?: unknown;
+      field_date_order?: number;
       field_prefix?: string;
       field_is_sub_category?: boolean;
       field_is_custom_field?: boolean;
@@ -2796,4 +2797,32 @@ export type customFieldFormValues = {
   fieldIsRequired: boolean;
   fieldOption: string[];
   fieldCategory: string[];
+};
+
+export type eventFormField = {
+  field_name: string;
+  field_type: FieldType;
+  field_label: string;
+  field_is_required: boolean;
+  field_is_included: boolean;
+};
+
+export type eventFormDetails = {
+  eventName: string;
+  eventColor: string;
+  eventStatus: string;
+  eventDescription: string;
+  enableEvent: boolean;
+};
+
+export type eventFormAssignedTo = {
+  assignToPerson: boolean;
+  assignToCustomer: boolean;
+  assignToSite: boolean;
+};
+
+export type createEventFormvalues = {
+  event: eventFormDetails;
+  fields: eventFormField[];
+  assignedTo: eventFormAssignedTo;
 };
