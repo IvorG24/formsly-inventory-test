@@ -1701,11 +1701,14 @@ export const updateEvent = async (
   const fieldResponsesArray: { name: string; response: string }[] = [];
   let signatureUrl = null;
   const fieldNamesArray: string[] = [];
+
   for (const section of updateResponse.sections) {
     for (const field of section.section_field) {
       const fieldResponse = field.field_response;
-      let fieldName = field.field_name;
+      const fieldName = field.field_name;
       fieldNamesArray.push(fieldName);
+
+      // Handle file uploads for signature
       if (field.field_type === "FILE" && fieldResponse instanceof File) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,
@@ -1716,16 +1719,22 @@ export const updateEvent = async (
         signatureUrl = uploadedFileUrl;
         fieldNamesArray.push(fieldName);
       }
-      if (field.field_type === "DATE" && field.field_date_order === 1) {
-        fieldName = "Date 1";
-        fieldNamesArray.push(fieldName);
-      }
+
       const allowedFields = new Set(fieldNamesArray);
 
       if (fieldResponse && allowedFields.has(fieldName)) {
+        let responseValue = fieldResponse;
+
+        if (field.field_type === "DATE" && fieldResponse instanceof Date) {
+          responseValue = fieldResponse.toISOString();
+        }
+        if (field.field_type === "FILE" && fieldResponse instanceof File) {
+          responseValue = signatureUrl || "";
+        }
+
         fieldResponsesArray.push({
           name: fieldName,
-          response: String(fieldResponse),
+          response: String(responseValue),
         });
       }
     }

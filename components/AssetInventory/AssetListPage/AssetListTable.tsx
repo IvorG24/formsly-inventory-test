@@ -118,7 +118,7 @@ const AssetListTable = ({
           "inventory_request_purchase_date",
           "inventory_request_created",
           "inventory_request_date_updated",
-          "inventory_request_due_date",
+          "inventory_event_date_created",
         ];
 
         if (fieldsWithPesoSign.includes(column.value)) {

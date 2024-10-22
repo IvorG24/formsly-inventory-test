@@ -9,18 +9,21 @@ type Props = {
   asset_history: InventoryHistory[] | null;
   totalRecord: number;
   fetchHistoryPanel: (page: number) => void;
+  activeTab: string;
 };
 
 const HistoryPanel = ({
   asset_history: historyDetails = [],
   totalRecord,
   fetchHistoryPanel,
+  activeTab,
 }: Props) => {
   const [activePage, setActivePage] = useState(1);
 
   useEffect(() => {
+    if (activeTab !== "history") return;
     fetchHistoryPanel(activePage);
-  }, [activePage]);
+  }, [activePage, activeTab]);
 
   return (
     <>
@@ -53,7 +56,9 @@ const HistoryPanel = ({
             accessor: "inventory_history_event",
             title: "Event",
             render: (record) => (
-              <Text>{String(record.inventory_history_event)}</Text>
+              <Text>
+                {String(record.inventory_history_event).toUpperCase()}
+              </Text>
             ),
           },
           {

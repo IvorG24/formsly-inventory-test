@@ -1,6 +1,10 @@
-import { getInventoryFormDetails, getLocationOption } from "@/backend/api/get";
+import {
+  getCustomerList,
+  getInventoryFormDetails,
+  getLocationOption,
+} from "@/backend/api/get";
 import { updateEvent } from "@/backend/api/update";
-import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -53,7 +57,7 @@ const EventFormModal = ({
   setSelectedEventId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const securityGroup = useSecurityGroup();
+  const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const userData = useUserProfile();
   const requestFormMethods = useForm<InventoryFormValues>();
@@ -65,6 +69,7 @@ const EventFormModal = ({
     fields: formSections,
     replace: replaceSection,
     update: updateSection,
+    remove: removeSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -73,16 +78,17 @@ const EventFormModal = ({
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
       setIsloading(true);
-      const formValidation = securityGroup.asset.filter.event.includes(
-        `${formData?.form_name}`
-      );
+      //   const formValidation = securityGroup.asset.filter.event.includes(
+      //     `${formData?.form_name}`
+      //   );
 
-      if (!formValidation) {
-        notifications.show({
-          message: "Action not allowed",
-          color: "red",
-        });
-      }
+      //   if (!formValidation) {
+      //     notifications.show({
+      //       message: "Action not allowed",
+      //       color: "red",
+      //     });
+      //     return;
+      //   }
 
       await updateEvent(supabaseClient, {
         updateResponse: data,
@@ -100,6 +106,8 @@ const EventFormModal = ({
       });
       setIsloading(false);
     } catch (e) {
+      setIsloading(false);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -116,11 +124,22 @@ const EventFormModal = ({
 
         const form = await getInventoryFormDetails(supabaseClient, params);
 
-        replaceSection([
-          {
-            ...form.form_section[0],
-          },
-        ]);
+        if (
+          form.form_section[0].section_field[0].field_name ===
+            "Check In From" ||
+          form.form_section[0].section_field[0].field_name === "Check Out To" ||
+          form.form_section[0].section_field[0].field_name === "Assigned To"
+        ) {
+          const oldSection = [
+            {
+              ...form.form_section[0],
+              section_field: [form.form_section[0].section_field[0]],
+            },
+          ];
+          replaceSection(oldSection);
+        } else {
+          replaceSection(form.form_section);
+        }
 
         setFormData(form);
       } catch (e) {
@@ -143,42 +162,79 @@ const EventFormModal = ({
       const params = { eventId, userId };
 
       const form = await getInventoryFormDetails(supabaseClient, params);
+
+      const { data: customerOption } = await getCustomerList(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+
       const teamMemberOption = teamMemberList.map((member, index) => ({
         option_id: member.team_member_id,
         option_value: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
         option_order: index,
-        option_field_id: form.form_section[1].section_field[0].field_id,
+        option_field_id: form.form_section[0].section_field[0].field_id,
       }));
+      const customerListOption = customerOption.map((customer, index) => ({
+        option_id: customer.customer_id,
+        option_value: `${customer.customer_name}`,
+        option_order: index,
+        option_field_id: form.form_section[0].section_field[0].field_id,
+      }));
+
       if (value === null) {
-        replaceSection([
+        const oldSection = [
           {
             ...form.form_section[0],
+            section_field: [categorySection.section_field[0]],
           },
-        ]);
+        ];
+        replaceSection(oldSection);
         return;
       }
 
       let newSectionField = [...categorySection.section_field];
 
       if (value === "Site") {
+        removeSection(0);
         newSectionField = [
-          categorySection.section_field[0],
-          ...form.form_section[2].section_field,
+          ...form.form_section[0].section_field.filter(
+            (field) => field.field_name !== "Assigned To"
+          ),
         ];
       } else if (value === "Person") {
+        removeSection(0);
         newSectionField = [
-          {
-            ...categorySection.section_field[0],
-          },
-          {
-            ...form.form_section[1].section_field[0],
-            field_option:
-              formData?.form_name === "Check In"
-                ? form.form_section[1].section_field[0].field_option // Retain the existing options
-                : teamMemberOption, // Set new options otherwise
-          },
-
-          ...form.form_section[1].section_field.slice(1, 10),
+          ...form.form_section[0].section_field.map((field) => {
+            if (field.field_name === "Assigned To") {
+              return {
+                ...field,
+                field_option: teamMemberOption,
+              };
+            } else if (field.field_name === "Customer") {
+              return {
+                ...field,
+                field_option: customerListOption,
+              };
+            }
+            return field;
+          }),
+        ];
+      } else if (value === "Customer") {
+        removeSection(0);
+        newSectionField = [
+          ...form.form_section[0].section_field.map((field) => {
+            if (field.field_name === "Assigned To") {
+              return {
+                ...field,
+                field_option: teamMemberOption,
+              };
+            } else if (field.field_name === "Customer") {
+              return {
+                ...field,
+                field_option: customerListOption,
+              };
+            }
+            return field;
+          }),
         ];
       }
       updateSection(index, {
@@ -218,7 +274,7 @@ const EventFormModal = ({
         option_id: option.location_id,
         option_value: option.location_name,
         option_order: index,
-        option_field_id: siteLocationSection.section_field[1].field_id,
+        option_field_id: siteLocationSection.section_field[0].field_id,
       }));
       const newSectionField = siteLocationSection.section_field.map((field) => {
         if (field.field_name === "Location") {

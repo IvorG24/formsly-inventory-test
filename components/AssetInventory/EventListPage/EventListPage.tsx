@@ -150,7 +150,7 @@ const EventsListPage = () => {
             minHeight: "300px",
           }}
           withBorder
-          idAccessor="site_id"
+          idAccessor="event_id"
           page={activePage}
           totalRecords={eventCount}
           recordsPerPage={ROW_PER_PAGE}

@@ -1,78 +1,104 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryEventRow } from "@/utils/types";
-import { Anchor, Text } from "@mantine/core";
-import { DataTable } from "mantine-datatable";
+import { InventoryDynamicRow } from "@/utils/types";
+import {
+  Button,
+  Flex,
+  Grid,
+  Group,
+  Pagination,
+  Paper,
+  Text,
+} from "@mantine/core";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+
 type Props = {
   fetchEventsPanel: (page: number) => void;
   totalRecords: number;
-  eventHistoryData: InventoryEventRow[] | null;
+  eventHistoryData: InventoryDynamicRow[] | null;
+  activeTab: string;
 };
+
+const formatTitle = (key: string, eventName: string) => {
+  return key
+    .replace("event", "")
+    .replace(/_/g, " ")
+    .replace(eventName.toLowerCase(), " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 const EventPanel = ({
   totalRecords,
   eventHistoryData = [],
   fetchEventsPanel,
+  activeTab,
 }: Props) => {
   const [activePage, setActivePage] = useState(1);
-
+  const activeTeam = useActiveTeam();
+  const router = useRouter();
   useEffect(() => {
+    if (!activeTeam.team_id || activeTab !== "events") return;
     fetchEventsPanel(activePage);
-  }, [activePage]);
+  }, [activePage, activeTeam.team_id, activeTab]);
 
   return (
     <>
-      <DataTable
-        fontSize={12}
-        style={{
-          borderRadius: 4,
-          minHeight: "300px",
-        }}
-        withBorder
-        idAccessor="inventory_event_id"
-        page={activePage}
-        totalRecords={totalRecords}
-        recordsPerPage={ROW_PER_PAGE}
-        records={eventHistoryData || []}
-        onPageChange={setActivePage}
-        columns={[
-          {
-            accessor: "returnDate",
-            title: "Event Date",
-            render: (event) => (
-              <Text>{`${event.inventory_event} Date ( ${formatDate(new Date(event.inventory_event_date_created || ""))} )`}</Text>
-            ),
-          },
-          {
-            accessor: "status",
-            title: "Event",
-            render: (event) => <Text>{event.inventory_event}</Text>,
-          },
+      {eventHistoryData?.map((event, index) => (
+        <Paper shadow="sm" p="md" withBorder key={index} mb="md">
+          <Grid gutter="md">
+            {Object.entries(event).map(([key, value]) => {
+              if (key === "event_id" || key === "event_signature") return null;
 
-          {
-            accessor: "event_notes",
-            title: "Notes",
-            render: (event) =>
-              event.inventory_event_notes ? (
-                <Text>{event.inventory_event_notes}</Text>
-              ) : (
-                <Text>-</Text>
-              ),
-          },
-          {
-            accessor: "event_signature",
-            title: "Signature",
-            render: (event) => (
-              <Text>
-                <Anchor
-                  href={event.inventory_event_signature ?? ""}
-                  target="_blank"
+              return (
+                <Grid.Col span={6} key={key}>
+                  <Group>
+                    <Text weight={500}>
+                      {formatTitle(key, event.event_name)}:
+                    </Text>
+                    <Text>
+                      {typeof value === "number"
+                        ? key.toLowerCase().includes("date")
+                          ? formatDate(new Date(value)) // Format number as date if the key contains "date"
+                          : new Intl.NumberFormat("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }).format(value) // Format number as PHP currency
+                        : typeof value === "string" &&
+                            key.toLowerCase().includes("date")
+                          ? formatDate(new Date(value)) // Format string as date if it contains "date"
+                          : value ||
+                            "N/A" // Render string as is, or fallback to "N/A"
+                      }
+                    </Text>
+                  </Group>
+                </Grid.Col>
+              );
+            })}
+
+            <Grid.Col span={12}>
+              <Flex justify="flex-end" mt="md">
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    router.push(event.event_signature);
+                  }}
+                  variant="filled"
                 >
-                  Event Signature
-                </Anchor>
-              </Text>
-            ),
-          },
-        ]}
+                  Signature
+                </Button>
+              </Flex>
+            </Grid.Col>
+          </Grid>
+        </Paper>
+      ))}
+
+      <Pagination
+        value={activePage}
+        onChange={setActivePage}
+        total={Math.ceil(totalRecords / ROW_PER_PAGE)}
+        position="center"
+        mt="md"
       />
     </>
   );

@@ -287,7 +287,7 @@ const CreatePettyCashVoucherBalancePage = ({
         const isChargeToProject = safeParse(
           isChargeToProjectField ? isChargeToProjectField.request_response : ""
         );
-        console.log(isProjectExempted);
+
         let addCostCode = false;
 
         if (isPED) {

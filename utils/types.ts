@@ -597,6 +597,9 @@ export type CategoryTableRow =
 export type InventoryFieldRow =
   Database["inventory_schema"]["Tables"]["field_table"]["Row"];
 
+export type InventoryCustomerRow =
+  Database["inventory_schema"]["Tables"]["customer_table"]["Row"];
+
 export type InventoryEventRow =
   Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
 
@@ -2826,4 +2829,13 @@ export type createEventFormvalues = {
   event: eventFormDetails;
   fields: eventFormField[];
   assignedTo: eventFormAssignedTo;
+};
+
+export type InventoryDynamicRow = {
+  event_id: string;
+  event_name: string;
+  event_date_created: string;
+  event_signature: string;
+  event_notes: string;
+  [key: string]: string;
 };

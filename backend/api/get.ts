@@ -60,7 +60,8 @@ import {
   HRProjectType,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
-  InventoryEventRow,
+  InventoryCustomerRow,
+  InventoryDynamicRow,
   InventoryFieldRow,
   InventoryFormType,
   InventoryHistory,
@@ -7993,34 +7994,35 @@ export const getAssetId = async (
 
 export const getEventsHistoryData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page?: number; limit?: number; assetId: string }
+  params: { page?: number; limit?: number; assetID: string; teamID: string }
 ) => {
-  const { page = 1, limit = 10, assetId } = params;
+  const { page = 1, limit = 10, assetID, teamID } = params;
 
   const tagId = await getAssetId(supabaseClient, {
-    tagId: assetId,
+    tagId: assetID,
   });
+  const inputData = {
+    teamID,
+    assetID: tagId,
+    page,
+    limit,
+  };
+ 
 
-  let query = supabaseClient
-    .schema("inventory_request_schema")
-    .from("inventory_event_table")
-    .select("*", { count: "exact" })
-    .eq("inventory_event_request_id", tagId)
-    .order("inventory_event_date_created", { ascending: false });
-
-  if (limit && page) {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
-    query = query.range(start, end);
-  }
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient.rpc(
+    "get_event_history_by_request",
+    {
+      input_data: inputData,
+    }
+  );
 
   if (error) throw error;
 
-  return { data: data as InventoryEventRow[], totalCount: count ?? 0 };
+  return data as {
+    data: InventoryDynamicRow[];
+    totalCount: number;
+  };
 };
-
 export const getAssetHistoryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: { page?: number; limit?: number; assetId: string }
@@ -8051,4 +8053,29 @@ export const getEventFormDetails = async (
   if (error) throw error;
 
   return data as createEventFormvalues[];
+};
+
+export const getCustomerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page?: number; limit?: number; teamId: string }
+) => {
+  const { page = 1, limit = 10, teamId } = params;
+
+  let query = supabaseClient
+    .schema("inventory_schema")
+    .from("customer_table")
+    .select("*", { count: "exact" })
+    .eq("customer_team_id", teamId);
+
+  if (limit && page) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    query = query.range(start, end);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return { data: data as InventoryCustomerRow[], totalCount: count ?? 0 };
 };

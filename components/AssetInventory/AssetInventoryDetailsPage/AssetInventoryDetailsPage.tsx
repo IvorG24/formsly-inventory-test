@@ -1,8 +1,8 @@
 import {
-  getAssetHistoryData,
-  getAssetSpreadsheetView,
-  getEventDetails,
-  getEventsHistoryData,
+    getAssetHistoryData,
+    getAssetSpreadsheetView,
+    getEventDetails,
+    getEventsHistoryData,
 } from "@/backend/api/get";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
@@ -11,25 +11,25 @@ import { useUserProfile } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  InventoryEventRow,
-  InventoryHistory,
-  InventoryListType,
-  OptionType,
+    InventoryDynamicRow,
+    InventoryHistory,
+    InventoryListType,
+    OptionType,
 } from "@/utils/types";
 import {
-  Badge,
-  Box,
-  Button,
-  Container,
-  Grid,
-  Group,
-  LoadingOverlay,
-  Menu,
-  Paper,
-  Table,
-  Tabs,
-  Text,
-  Title,
+    Badge,
+    Box,
+    Button,
+    Container,
+    Grid,
+    Group,
+    LoadingOverlay,
+    Menu,
+    Paper,
+    Table,
+    Tabs,
+    Text,
+    Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -104,13 +104,13 @@ const AssetInventoryDetailsPage = ({
   const [assetDetails, setAssetDetails] =
     useState<InventoryListType[]>(initialDetails);
   const [eventHistoryData, setEventHistoryData] =
-    useState<InventoryEventRow[]>();
+    useState<InventoryDynamicRow[]>();
   const [totalRecords, setTotalRecords] = useState(0);
   const [assetHistoryData, setAssetHistoryData] =
     useState<InventoryHistory[]>();
   const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
   const securityGroup = useSecurityGroup();
-
+  const [activeTab, setActiveTab] = useState<string>("details");
   const canEdit =
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
@@ -173,17 +173,21 @@ const AssetInventoryDetailsPage = ({
 
   const fetchEventsPanel = async (page: number) => {
     try {
-      if (!assetId) return;
+      if (!assetId || !activeTeam.team_id) return;
       setIsloading(true);
       const { data, totalCount } = await getEventsHistoryData(supabaseClient, {
-        assetId,
+        assetID: assetId,
         page: page ? page : 0,
         limit: ROW_PER_PAGE,
+        teamID: activeTeam.team_id,
       });
+
       setIsloading(false);
       setTotalRecords(totalCount);
       setEventHistoryData(data);
     } catch (e) {
+
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -216,6 +220,10 @@ const AssetInventoryDetailsPage = ({
     fetchAssetDetails();
     fetchEventsPanel(1);
     fetchHistoryPanel(1);
+  };
+
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
   };
 
   return (
@@ -438,7 +446,11 @@ const AssetInventoryDetailsPage = ({
               </Grid.Col>
             </Grid>
 
-            <Tabs mt="xl" defaultValue="details">
+            <Tabs
+              mt="xl"
+              defaultValue={activeTab}
+              onTabChange={handleTabChange}
+            >
               <Tabs.List>
                 <Tabs.Tab value="details">Additional Details</Tabs.Tab>
                 <Tabs.Tab value="events">Events</Tabs.Tab>
@@ -452,6 +464,7 @@ const AssetInventoryDetailsPage = ({
 
               <Tabs.Panel value="events" mt="md">
                 <EventPanel
+                  activeTab={activeTab}
                   totalRecords={totalRecords}
                   eventHistoryData={eventHistoryData || []}
                   fetchEventsPanel={fetchEventsPanel}
@@ -463,6 +476,7 @@ const AssetInventoryDetailsPage = ({
 
               <Tabs.Panel value="history" mt="md">
                 <HistoryPanel
+                  activeTab={activeTab}
                   fetchHistoryPanel={fetchHistoryPanel}
                   totalRecord={assetHistoryRecord}
                   asset_history={assetHistoryData || []}

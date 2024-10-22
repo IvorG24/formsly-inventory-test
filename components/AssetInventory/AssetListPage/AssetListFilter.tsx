@@ -195,7 +195,7 @@ const AssetListFilter = ({
       >
         <Group>
           <TextInput
-            placeholder="Search by asset id"
+            placeholder="Search by asset tag id"
             rightSection={
               <ActionIcon size="xs" type="submit">
                 <IconSearch />

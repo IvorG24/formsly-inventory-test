@@ -106,12 +106,52 @@ const EventCreatePage = () => {
       );
 
       const updatedFields = [...includedFields];
-
       if (hasAssignedTo) {
-        updatedFields.push({
-          field_name: "Assigned To",
+        if (data.assignedTo.assignToCustomer === true) {
+          updatedFields.unshift({
+            field_name: "Customer",
+            field_type: "DROPDOWN",
+            field_label: "Customer",
+            field_is_required: true,
+            field_is_included: true,
+          });
+        }
+        if (data.assignedTo.assignToPerson === true) {
+          updatedFields.unshift({
+            field_name: "Assigned To",
+            field_type: "DROPDOWN",
+            field_label: "Assigned To",
+            field_is_required: true,
+            field_is_included: true,
+          });
+        }
+        if (data.assignedTo.assignToSite === true) {
+          updatedFields.unshift({
+            field_name: "Site",
+            field_type: "DROPDOWN",
+            field_label: "Site",
+            field_is_required: true,
+            field_is_included: true,
+          });
+          updatedFields.unshift({
+            field_name: "Location",
+            field_type: "DROPDOWN",
+            field_label: "Location",
+            field_is_required: true,
+            field_is_included: true,
+          });
+          updatedFields.unshift({
+            field_name: "Department",
+            field_type: "DROPDOWN",
+            field_label: "Department",
+            field_is_required: true,
+            field_is_included: true,
+          });
+        }
+        updatedFields.unshift({
+          field_name: "Appointed To",
           field_type: "DROPDOWN",
-          field_label: "",
+          field_label: "Appointed To",
           field_is_required: true,
           field_is_included: true,
         });
@@ -133,6 +173,7 @@ const EventCreatePage = () => {
       });
       setIsLoading(false);
     } catch (e) {
+      setIsLoading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",

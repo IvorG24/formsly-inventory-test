@@ -51,11 +51,10 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
         });
       }
 
-      const filteredData = {
-        ...data,
-        fields: updatedFields,
-      };
-      console.log(filteredData);
+      //   const filteredData = {
+      //     ...data,
+      //     fields: updatedFields,
+      //   };
 
       //   await createCustomEvent(supabaseClient, {
       //     createEventFormvalues: filteredData,
@@ -88,7 +87,6 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                     required
                     placeholder="For example, Retired, End of Life, etc."
                     {...field}
-                    aria-required
                     error={
                       errors.event?.eventName && errors.event?.eventName.message
                     }
@@ -213,7 +211,9 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                                   ? "A text area for the user to enter notes up to 1000 characters in length."
                                   : field?.field_type === "FILE"
                                     ? "A Signature file uploader"
-                                    : ""}
+                                    : field?.field_type === "DROPDOWN"
+                                      ? "A Select area containing Site,Location, etc."
+                                      : ""}
                       </td>
 
                       <td>
@@ -244,7 +244,9 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                                   ? "Notes"
                                   : field?.field_type === "FILE"
                                     ? "Signature"
-                                    : ""}
+                                    : field?.field_type === "DROPDOWN"
+                                      ? "Site"
+                                      : ""}
                       </td>
 
                       <td>
@@ -270,48 +272,51 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
               </Table>
             </ScrollArea>
           </Paper>
-
-          <Paper p="md">
-            <Stack>
-              <Title order={3}>Assign Assets to Persons or Locations</Title>
-              <Controller
-                name="assignedTo.assignToPerson"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Persons"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                    defaultChecked={field?.value}
-                  />
-                )}
-              />
-              <Controller
-                name="assignedTo.assignToCustomer"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Customers"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                    defaultChecked={field?.value}
-                  />
-                )}
-              />
-              <Controller
-                name="assignedTo.assignToSite"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Sites/Locations"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                    checked={field.value}
-                  />
-                )}
-              />
-            </Stack>
-          </Paper>
+          {Object.values(eventFormDefaultValues.assignedTo).some(
+            (value) => value === true
+          ) && (
+            <Paper p="md">
+              <Stack>
+                <Title order={3}>Assign Assets to Persons or Locations</Title>
+                <Controller
+                  name="assignedTo.assignToPerson"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Persons"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                      defaultChecked={field?.value}
+                    />
+                  )}
+                />
+                <Controller
+                  name="assignedTo.assignToCustomer"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Customers"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                      defaultChecked={field?.value}
+                    />
+                  )}
+                />
+                <Controller
+                  name="assignedTo.assignToSite"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Sites/Locations"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                      checked={field.value}
+                    />
+                  )}
+                />
+              </Stack>
+            </Paper>
+          )}
 
           <Group position="right">
             <Button fullWidth type="submit">

@@ -304,13 +304,19 @@ const InventoryFormFields = ({
                         value
                       );
                       break;
-                    case "Check in from":
+                    case "Check In From":
                       eventFormMethods?.onCheckinCategoryChange(
                         sectionIndex,
                         value
                       );
                       break;
-                    case "Check out to":
+                    case "Check Out To":
+                      eventFormMethods?.onCheckinCategoryChange(
+                        sectionIndex,
+                        value
+                      );
+                      break;
+                    case "Appointed To":
                       eventFormMethods?.onCheckinCategoryChange(
                         sectionIndex,
                         value
