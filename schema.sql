@@ -5682,7 +5682,13 @@ AS $$
           };
         });
 
-        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
+        const departments = plv8.execute(`
+            SELECT team_department_id, team_department_name 
+            FROM team_schema.team_department_table 
+            WHERE 
+                team_department_is_disabled=FALSE
+            ORDER BY team_department_name
+        `);
 
         const departmentOptions = departments.map((department, index) => {
           return {
@@ -5693,7 +5699,11 @@ AS $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
+        const bankList = plv8.execute(`
+            SELECT * 
+                FROM lookup_schema.bank_list_table 
+            ORDER BY bank_label
+        `);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[2].section_field[0].field_id,
@@ -5704,19 +5714,19 @@ AS $$
         });
 
         const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
-          if (field.field_name === 'Requesting Project') {
-            return {
-              ...field,
-              field_option: projectOptions
-            }
-          } else if (field.field_name === 'Department') {
-            return {
-              ...field,
-              field_option: departmentOptions,
-            }
-          } else {
-            return field;
-          }
+            let currentField = field;
+
+            switch(currentField.field_id) {
+                case 'ef1ca48b-89a7-4f9f-9430-1658284e18cf':
+                    currentField.field_option = projectOptions;
+                    break;
+                
+                case '041579d9-aff1-4508-a5a7-ac20e7bc7cb7':
+                    currentField.field_option = departmentOptions;
+                    break;
+            };
+
+            return currentField;
         });
 
         const filteredRequestDetailsField = ['BOQ Code', 'Equipment Code'];

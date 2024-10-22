@@ -14,6 +14,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
+import { costCodeExemptionList } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -56,8 +57,6 @@ type Props = {
   form: FormType;
   connectedRequest?: ConnectedRequestFormProps;
 };
-
-const pcvCostCodeProjectExceptionList = ["YARD", "CENTRAL OFFICE"];
 
 const CreatePettyCashVoucherBalancePage = ({
   form,
@@ -211,7 +210,7 @@ const CreatePettyCashVoucherBalancePage = ({
   };
 
   const checkIfProjectIsExempted = (projectName: string) => {
-    return pcvCostCodeProjectExceptionList
+    return costCodeExemptionList
       .map((project) =>
         projectName.toLowerCase().includes(project.toLowerCase())
       )

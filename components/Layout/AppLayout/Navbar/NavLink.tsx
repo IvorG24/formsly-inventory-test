@@ -104,7 +104,9 @@ const ReviewAppNavLink = () => {
         "Petty Cash Voucher Balance",
         "Request For Payment Code",
         "Bill of Quantity",
-      ].includes(form.form_name) && !form.form_is_public_form
+      ].includes(form.form_name) &&
+      !form.form_is_public_form &&
+      !form.form_is_hidden
   );
 
   const itemForm = forms.filter(

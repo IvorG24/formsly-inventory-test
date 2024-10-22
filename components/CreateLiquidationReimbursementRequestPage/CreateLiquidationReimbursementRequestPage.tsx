@@ -204,65 +204,124 @@ const CreateLiquidationReimbursementRequestPage = ({
     }
   };
 
+  const handleAddOrRemoveRIRField = (value: string | null) => {
+    // remove RIR field in Payee sections if value is not liquidation
+    let currentSectionList = getValues(`sections`);
+    const paymentSection = currentSectionList.find(
+      (section) => section.section_name === "Payment"
+    );
+    const payeeSections = currentSectionList.filter(
+      (section) => section.section_name === "Payee"
+    );
+    const combinedPayeeSectionFields = payeeSections.flatMap(
+      (section) => section.section_field
+    );
+    const rirFieldExists = combinedPayeeSectionFields.some(
+      (field) => field.field_name === "RIR Number"
+    );
+    if (!value?.toLowerCase().includes("liquidation") && rirFieldExists) {
+      const payeeSectionWithoutRIRField = payeeSections.map((section) => ({
+        ...section,
+        section_field: section.section_field.filter(
+          (field) => field.field_name !== "RIR Number"
+        ),
+      }));
+
+      currentSectionList = [
+        currentSectionList[0],
+        ...payeeSectionWithoutRIRField,
+      ];
+    } else if (
+      value?.toLowerCase().includes("liquidation") &&
+      !rirFieldExists
+    ) {
+      // add RIR field in Payee sections if value is liquidation
+      const rirField = initialFormSectionList[1].section_field[8];
+      const payeeSectionWithRIRField = payeeSections.map((section) => ({
+        ...section,
+        section_field:
+          section.section_field[2].field_response === "Materials"
+            ? [...section.section_field, rirField]
+            : section.section_field,
+      }));
+      currentSectionList = [currentSectionList[0], ...payeeSectionWithRIRField];
+      replaceSection([formSections[0], ...payeeSectionWithRIRField]);
+    }
+
+    if (paymentSection) {
+      currentSectionList = [...currentSectionList, paymentSection];
+    }
+
+    replaceSection(currentSectionList);
+  };
+
+  const handleAddOrRemovePaymentSection = (value: string | null) => {
+    // remove payment if pure liquidation type
+    const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
+    const liquidationWithPR =
+      value?.toLowerCase() === "liquidation with provisional receipt";
+    const paymentSectionIndex = getValues(`sections`).findIndex(
+      (section) => section.section_name === "Payment"
+    );
+    const paymentSectionIsRemoved = paymentSectionIndex < 0;
+
+    if (
+      (valueIsPureLiquidation || liquidationWithPR) &&
+      !paymentSectionIsRemoved
+    ) {
+      removeSection(paymentSectionIndex);
+    } else if (
+      !(valueIsPureLiquidation || liquidationWithPR) &&
+      paymentSectionIsRemoved
+    ) {
+      insertSection(formSections.length, form.form_section[2], {
+        shouldFocus: false,
+      });
+    }
+  };
+
+  const handleAddOrRemoveRequestDetailsConditionalField = (
+    value: string | null
+  ) => {
+    const currentRequestDetails = getValues(`sections.${0}`);
+    const sectionFields = currentRequestDetails.section_field;
+    const conditionalFieldExists = sectionFields.some(
+      (field) => field.field_name === "Working Advances"
+    );
+    const valueIsLiquidationTypeOrPCF =
+      value?.toLowerCase().includes("liquidation") ||
+      value === "Petty Cash Fund";
+
+    const addConditionalFields =
+      valueIsLiquidationTypeOrPCF && !conditionalFieldExists;
+    const removeConditionalFields =
+      !valueIsLiquidationTypeOrPCF && conditionalFieldExists;
+
+    if (addConditionalFields) {
+      const liquidationAdditionalFields =
+        initialFormSectionList[0].section_field.slice(5, 7);
+      updateSection(0, {
+        ...currentRequestDetails,
+        section_field: [...sectionFields, ...liquidationAdditionalFields].sort(
+          (a, b) => a.field_order - b.field_order
+        ),
+      });
+    } else if (removeConditionalFields) {
+      updateSection(0, {
+        ...currentRequestDetails,
+        section_field: sectionFields.filter(
+          (field) =>
+            !["Working Advances", "Ticket ID"].includes(field.field_name)
+        ),
+      });
+    }
+  };
+
   const handleRequestTypeChange = async (value: string | null) => {
     try {
-      const currentRequestDetails = getValues(`sections.${0}`);
-      const sectionFields = currentRequestDetails.section_field;
-      const conditionalFieldExists = sectionFields.some(
-        (field) => field.field_name === "Working Advances"
-      );
-      const valueIsLiquidationType = value
-        ?.toLowerCase()
-        .includes("liquidation");
-
-      const addConditionalFields =
-        valueIsLiquidationType && !conditionalFieldExists;
-      const removeConditionalFields =
-        !valueIsLiquidationType && conditionalFieldExists;
-
-      if (addConditionalFields) {
-        const liquidationAdditionalFields =
-          initialFormSectionList[0].section_field.slice(5, 7);
-        updateSection(0, {
-          ...currentRequestDetails,
-          section_field: [
-            ...sectionFields,
-            ...liquidationAdditionalFields,
-          ].sort((a, b) => a.field_order - b.field_order),
-        });
-      } else if (removeConditionalFields) {
-        updateSection(0, {
-          ...currentRequestDetails,
-          section_field: sectionFields.filter(
-            (field) =>
-              !["Working Advances", "Ticket ID"].includes(field.field_name)
-          ),
-        });
-      }
-      // remove payment if pure liquidation type or liquidation with PR
-      const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
-      const liquidationWithPR =
-        value?.toLowerCase() === "liquidation with provisional receipt";
-      const paymentSectionIsRemoved =
-        getValues(`sections`).some(
-          (section) => section.section_name === "Payment"
-        ) === false;
-
-      if (valueIsPureLiquidation || liquidationWithPR) {
-        const paymentSectionIndex = getValues(`sections`).findIndex(
-          (section) => section.section_name === "Payment"
-        );
-        if (paymentSectionIndex > 0) {
-          removeSection(paymentSectionIndex);
-        }
-      } else if (
-        !(valueIsPureLiquidation || liquidationWithPR) &&
-        paymentSectionIsRemoved
-      ) {
-        insertSection(formSections.length, form.form_section[2], {
-          shouldFocus: false,
-        });
-      }
+      handleAddOrRemoveRIRField(value);
+      handleAddOrRemoveRequestDetailsConditionalField(value);
+      handleAddOrRemovePaymentSection(value);
     } catch (e) {
       setValue(`sections.0.section_field.4.field_response`, "");
       notifications.show({
@@ -557,15 +616,15 @@ const CreateLiquidationReimbursementRequestPage = ({
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
       } else if (value === "Materials") {
-        const requestTypeValue =
-          getValues(`sections`)[0].section_field[4].field_response;
-        const isPureLiquidation = requestTypeValue === "Liquidation";
+        const requestTypeValue = getValues(`sections`)[0].section_field[4]
+          .field_response as string;
+        const isLiquidation = requestTypeValue.includes("Liquidation");
         const rirNumberDoesNotExistInSection =
           !currentPayeeSectionFieldList.some(
             (field) => field.field_name === "RIR Number"
           );
         // add rir number if true
-        if (isPureLiquidation && rirNumberDoesNotExistInSection) {
+        if (isLiquidation && rirNumberDoesNotExistInSection) {
           addField(8);
         }
 

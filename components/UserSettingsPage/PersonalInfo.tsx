@@ -1,19 +1,19 @@
+import { checkPhoneNumber } from "@/backend/api/get";
 import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
 import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
-import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
   Container,
   Divider,
   Flex,
   LoadingOverlay,
-  NumberInput,
   Paper,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { usePrevious } from "@mantine/hooks";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import validator from "validator";
@@ -35,6 +35,7 @@ const PersonalInfo = ({
   isUpdatingPersonalInfo,
   employeeNumber,
 }: Props) => {
+  const supabaseClient = useSupabaseClient();
   const user = useUserProfile();
   const userInitials = useUserIntials();
 
@@ -156,34 +157,51 @@ const PersonalInfo = ({
                 name="user_phone_number"
                 rules={{
                   validate: {
-                    valid: (value) =>
-                      !value
-                        ? true
-                        : `${value}`.length === 10
-                        ? true
-                        : "Invalid mobile number",
+                    checkNumberOfCharacter: (value) => {
+                      const stringifiedValue = value ? `${value}` : "";
 
-                    startsWith: (value) =>
-                      !value
+                      if (stringifiedValue.length !== 10) {
+                        return "Invalid Mobile Number";
+                      }
+                      return true;
+                    },
+                    isUnique: async (value) => {
+                      if (!value) return;
+                      const numberOnly = value.replace(/\D/g, "");
+                      const result = await checkPhoneNumber(supabaseClient, {
+                        phoneNumber: numberOnly.trim(),
+                      });
+                      return result ? result : "Mobile Number is already used";
+                    },
+                    startsWith: (value) => {
+                      return `${value}`[0] === "9"
                         ? true
-                        : `${value}`[0] === "9"
-                        ? true
-                        : "Mobile number must start with 9",
+                        : "Contact number must start with 9";
+                    },
                   },
                 }}
-                render={({ field: { onChange } }) => (
-                  <NumberInput
-                    w="100%"
-                    defaultValue={Number(getValues("user_phone_number"))}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
                     label="Mobile Number"
+                    required
+                    placeholder="9123456789"
                     maxLength={10}
-                    hideControls
-                    formatter={(value) => mobileNumberFormatter(value)}
-                    icon="+63"
-                    min={0}
-                    max={9999999999}
-                    onChange={onChange}
+                    value={value}
+                    onChange={(e) => {
+                      const value = e.currentTarget.value;
+                      const numberOnly = value.replace(/\D/g, "");
+
+                      if (numberOnly.length === 10) {
+                        onChange(numberOnly);
+                        return;
+                      } else {
+                        onChange(numberOnly);
+                        return;
+                      }
+                    }}
                     error={errors.user_phone_number?.message}
+                    icon={"+63"}
+                    w="100%"
                   />
                 )}
               />

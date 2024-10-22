@@ -21,6 +21,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Header from "./Header/Header";
+import MobileNumberModal from "./MobileNumberModal";
 import Navbar from "./Navbar/Navbar";
 import SSSModal from "./SSSModal";
 type LayoutProps = {
@@ -177,6 +178,24 @@ const Layout = ({ children }: LayoutProps) => {
               <SSSModal userId={user.user_id} supabaseClient={supabaseClient} />
             ),
             size: "xl",
+          });
+        }
+
+        if (!user.user_phone_number) {
+          modals.open({
+            id: "MobileNumberModal",
+            title: "Mobile Number Information",
+            withCloseButton: false,
+            closeOnClickOutside: false,
+            closeOnEscape: false,
+            centered: true,
+            children: (
+              <MobileNumberModal
+                userId={user.user_id}
+                supabaseClient={supabaseClient}
+              />
+            ),
+            size: "md",
           });
         }
       } catch (e) {

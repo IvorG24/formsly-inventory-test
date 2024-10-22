@@ -1,7 +1,6 @@
-import { checkUsername } from "@/backend/api/get";
+import { checkPhoneNumber, checkUsername } from "@/backend/api/get";
 import { Database } from "@/utils/database";
 import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
-import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Box,
   Flex,
@@ -228,35 +227,49 @@ const FirstStep = ({
                 rules={{
                   required: "Mobile Number is required.",
                   validate: {
-                    valid: (value) =>
-                      !value
+                    checkNumberOfCharacter: (value) => {
+                      const stringifiedValue = value ? `${value}` : "";
+                      if (stringifiedValue.length !== 10) {
+                        return "Invalid Mobile Number";
+                      }
+                      return true;
+                    },
+                    isUnique: async (value) => {
+                      if (!value) return;
+                      const numberOnly = value.replace(/\D/g, "");
+                      const result = await checkPhoneNumber(supabaseClient, {
+                        phoneNumber: numberOnly.trim(),
+                      });
+                      return result ? result : "Mobile Number is already used";
+                    },
+                    startsWith: (value) => {
+                      return `${value}`[0] === "9"
                         ? true
-                        : `${value}`.length === 10
-                        ? true
-                        : "Invalid mobile number",
-                    startsWith: (value) =>
-                      !value
-                        ? true
-                        : `${value}`[0] === "9"
-                        ? true
-                        : "Mobile number must start with 9",
+                        : "Contact number must start with 9";
+                    },
                   },
                 }}
                 render={({ field: { onChange, value } }) => (
-                  <NumberInput
+                  <TextInput
                     label="Mobile Number"
+                    required
                     placeholder="9123456789"
                     maxLength={10}
-                    hideControls
-                    formatter={(value) => mobileNumberFormatter(value)}
-                    icon="+63"
-                    min={0}
-                    max={9999999999}
-                    value={Number(value) || ""}
-                    onChange={onChange}
+                    value={value}
+                    onChange={(e) => {
+                      const value = e.currentTarget.value;
+                      const numberOnly = value.replace(/\D/g, "");
+
+                      if (numberOnly.length === 10) {
+                        onChange(numberOnly);
+                        return;
+                      } else {
+                        onChange(numberOnly);
+                        return;
+                      }
+                    }}
                     error={errors.user_phone_number?.message}
-                    required
-                    {...defaultInputProps}
+                    icon={"+63"}
                   />
                 )}
               />

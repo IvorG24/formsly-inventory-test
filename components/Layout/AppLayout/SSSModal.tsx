@@ -96,6 +96,10 @@ const SSSModal = ({ userId, supabaseClient }: Props) => {
       });
       modals.closeAll();
     } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     } finally {
       setIsLoading(false);
     }

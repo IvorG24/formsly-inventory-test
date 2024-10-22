@@ -22,6 +22,7 @@ import {
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
+  costCodeExemptionList,
   formatDate,
 } from "@/utils/constant";
 import { isError, safeParse } from "@/utils/functions";
@@ -154,9 +155,10 @@ const LiquidationReimbursementRequestPage = ({
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
   const requestProjectName = request.request_project.team_project_name;
   const isBOQNotRequired =
-    requestProjectName.includes("CENTRAL OFFICE") ||
-    requestProjectName.includes("YARD") ||
-    selectedDepartment === "Plants and Equipment";
+    selectedDepartment === "Plants and Equipment" &&
+    costCodeExemptionList.some((exemption) =>
+      requestProjectName.toLowerCase().includes(exemption.toLowerCase())
+    );
 
   const [canCreateBOQ, setCanCreateBOQ] = useState(false);
 
@@ -466,7 +468,10 @@ const LiquidationReimbursementRequestPage = ({
       let workingAdvances = "";
       let ticketId = "";
 
-      if (typeOfRequest.includes("Liquidation")) {
+      if (
+        typeOfRequest.toLowerCase().includes("liquidation") ||
+        typeOfRequest.toLowerCase() === "petty cash fund"
+      ) {
         const requestWorkingAdvances = safeParse(
           sortedRequestDetails[5].field_response[0].request_response
         );

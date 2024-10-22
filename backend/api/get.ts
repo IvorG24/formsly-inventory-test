@@ -7470,6 +7470,23 @@ export const checkIfUserHaveSSSID = async (
   return Boolean(count);
 };
 
+export const checkPhoneNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    phoneNumber: string;
+  }
+) => {
+  const { phoneNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_table")
+    .select("user_phone_number", { count: "exact", head: true })
+    .eq("user_phone_number", phoneNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};
+
 export const getInventoryFormDetails = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -8007,7 +8024,7 @@ export const getEventsHistoryData = async (
     page,
     limit,
   };
- 
+
 
   const { data, error } = await supabaseClient.rpc(
     "get_event_history_by_request",

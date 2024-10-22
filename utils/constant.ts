@@ -1437,3 +1437,6 @@ export const frequencyOptions = [
   { label: "Monthly", value: "monthly" },
   { label: "Yearly", value: "yearly" },
 ];
+
+// projects that does not require cost code if department === PED
+export const costCodeExemptionList = ["YARD", "CENTRAL OFFICE", "LOGISTICS"];

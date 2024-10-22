@@ -253,7 +253,12 @@ const RequestCommentList = ({
         },
         body: JSON.stringify(bodyData),
       });
-    } catch (e) {}
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   return (
