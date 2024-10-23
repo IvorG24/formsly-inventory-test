@@ -130,11 +130,6 @@ const DynamicListPage = ({
       .map((column) => column.value),
   });
 
-  const eventOptions = eventList.map((event) => ({
-    label: event.event_status,
-    value: event.event_status,
-  }));
-
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
@@ -164,7 +159,6 @@ const DynamicListPage = ({
         teamId: activeTeam.team_id,
         search: status.replace("-", " "),
       });
-      console.log(eventStatus[0].event_status);
 
       const { data, count } = await getAssetSpreadsheetView(supabaseClient, {
         page: page,
@@ -241,7 +235,7 @@ const DynamicListPage = ({
               type={"dynamic page"}
               selectedRow={selectedRows}
               userId={userId}
-              eventOptions={eventOptions}
+              eventList={eventList}
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}

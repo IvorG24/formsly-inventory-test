@@ -75,8 +75,8 @@ const EventCreatePage = () => {
           field_name: "Notes",
           field_type: "TEXTAREA",
           field_label: "Notes",
-          field_is_required: false,
-          field_is_included: false,
+          field_is_required: true,
+          field_is_included: true,
         },
         {
           field_name: "Signature",
@@ -133,21 +133,21 @@ const EventCreatePage = () => {
             field_is_required: true,
             field_is_included: true,
           });
+          updatedFields.unshift({
+            field_name: "Location",
+            field_type: "DROPDOWN",
+            field_label: "Location",
+            field_is_required: true,
+            field_is_included: true,
+          });
+          updatedFields.unshift({
+            field_name: "Site",
+            field_type: "DROPDOWN",
+            field_label: "Site",
+            field_is_required: true,
+            field_is_included: true,
+          });
         }
-        updatedFields.unshift({
-          field_name: "Location",
-          field_type: "DROPDOWN",
-          field_label: "Location",
-          field_is_required: true,
-          field_is_included: true,
-        });
-        updatedFields.unshift({
-          field_name: "Site",
-          field_type: "DROPDOWN",
-          field_label: "Site",
-          field_is_required: true,
-          field_is_included: true,
-        });
         updatedFields.unshift({
           field_name: "Appointed To",
           field_type: "DROPDOWN",
@@ -186,6 +186,7 @@ const EventCreatePage = () => {
       <LoadingOverlay visible={isLoading} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack>
+          <Title order={3}>Create custom event</Title>
           <Paper p="md">
             <Stack>
               <Title order={3}>Event Name</Title>
@@ -263,7 +264,6 @@ const EventCreatePage = () => {
                 control={control}
                 render={({ field }) => (
                   <Checkbox
-                    required
                     label="Enable this Event?"
                     {...field}
                     value={field.value ? "true" : "false"}
@@ -299,7 +299,10 @@ const EventCreatePage = () => {
                                 value={
                                   field?.field_is_included ? "true" : "false"
                                 }
-                                disabled={field?.field_name === "Signature"}
+                                disabled={
+                                  field?.field_name === "Signature" ||
+                                  field?.field_name === "Notes"
+                                }
                               />
                             )}
                           />
@@ -332,7 +335,10 @@ const EventCreatePage = () => {
                               placeholder="Label"
                               {...labelField}
                               style={{ width: "100%" }}
-                              disabled={field?.field_name === "Signature"}
+                              disabled={
+                                field?.field_name === "Signature" ||
+                                field?.field_name === "Notes"
+                              }
                             />
                           )}
                         />

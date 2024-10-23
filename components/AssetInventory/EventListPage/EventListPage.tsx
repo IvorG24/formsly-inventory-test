@@ -58,6 +58,7 @@ const EventsListPage = () => {
       const { search } = getValues();
       const { data, totalCount } = await getEventDetails(supabaseClient, {
         search,
+        type: "list",
         teamId: activeTeam.team_id,
         page,
         limit: ROW_PER_PAGE,
@@ -101,11 +102,6 @@ const EventsListPage = () => {
       setIsFetchingSiteList(false);
     }
   };
-
-  //   const handleDelete = async (site_id: string) => {
-  //     setSiteId(site_id);
-  //     setModalOpened(true);
-  //   };
 
   return (
     <Container fluid>
@@ -170,10 +166,9 @@ const EventsListPage = () => {
               title: "Event Description",
               render: (event) => <Text>{event.event_description}</Text>,
             },
-
             {
               accessor: "event_details",
-              width: "50%",
+              width: "20%",
               title: "Event Status",
               render: (event) => (
                 <Badge
@@ -184,6 +179,22 @@ const EventsListPage = () => {
                 >
                   {event.event_status}
                 </Badge>
+              ),
+            },
+            {
+              accessor: "event_is_disabled",
+              width: "15%",
+              title: "Is Disabled ?",
+              render: (event) => (
+                <Text>{event.event_is_disabled ? "Yes" : " "}</Text> // Show "False" if event_is_disabled is false
+              ),
+            },
+            {
+              accessor: "event_is_custom",
+              width: "15%",
+              title: "Is Custom Event ?",
+              render: (event) => (
+                <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
               ),
             },
             {
@@ -201,10 +212,6 @@ const EventsListPage = () => {
                     }}
                   >
                     Customize Event
-                  </Button>
-
-                  <Button size="xs" variant="outline" color="red">
-                    Delete
                   </Button>
                 </Group>
               ),

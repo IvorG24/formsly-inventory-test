@@ -1,4 +1,7 @@
-import { createEventFormvalues } from "@/utils/types";
+import { updateCustomEvent } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
+import { createEventFormvalues, eventFormField } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -6,6 +9,7 @@ import {
   Container,
   DEFAULT_THEME,
   Group,
+  LoadingOverlay,
   Paper,
   ScrollArea,
   Stack,
@@ -16,11 +20,20 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 type Props = {
   eventFormDefaultValues: createEventFormvalues;
 };
 const EditEventPage = ({ eventFormDefaultValues }: Props) => {
+  const supabaseClient = useSupabaseClient();
+  const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const {
     handleSubmit,
     control,
@@ -31,47 +44,101 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
 
   const onSubmit = async (data: createEventFormvalues) => {
     try {
-      const includedFields = data.fields.filter(
-        (field) => field.field_is_included
-      );
+      setIsLoading(true);
 
-      const hasAssignedTo = Object.values(data.assignedTo).some(
-        (value) => value === true
-      );
+      const updatedFields = [...data.fields];
 
-      const updatedFields = [...includedFields];
+      const additionalFields = [];
 
-      if (hasAssignedTo) {
-        updatedFields.push({
-          field_name: "Assigned To",
+      if (data.assignedTo.assignToCustomer === true) {
+        additionalFields.push({
+          field_name: "Customer",
           field_type: "DROPDOWN",
-          field_label: "",
+          field_label: "Customer",
           field_is_required: true,
           field_is_included: true,
         });
       }
 
-      //   const filteredData = {
-      //     ...data,
-      //     fields: updatedFields,
-      //   };
+      if (data.assignedTo.assignToPerson === true) {
+        additionalFields.push({
+          field_name: "Assigned To",
+          field_type: "DROPDOWN",
+          field_label: "Assigned To",
+          field_is_required: true,
+          field_is_included: true,
+        });
+      }
 
-      //   await createCustomEvent(supabaseClient, {
-      //     createEventFormvalues: filteredData,
-      //     teamMemberId: teamMember?.team_member_id || "",
-      //     teamId: activeTeam.team_id,
-      //   });
+      if (data.assignedTo.assignToSite === true) {
+        additionalFields.push(
+          {
+            field_name: "Site",
+            field_type: "DROPDOWN",
+            field_label: "Site",
+            field_is_required: true,
+            field_is_included: true,
+          },
+          {
+            field_name: "Department",
+            field_type: "DROPDOWN",
+            field_label: "Department",
+            field_is_required: true,
+            field_is_included: true,
+          },
+          {
+            field_name: "Location",
+            field_type: "DROPDOWN",
+            field_label: "Location",
+            field_is_required: true,
+            field_is_included: true,
+          }
+        );
+      }
+
+      if (Object.values(data.assignedTo).some((value) => value === true)) {
+        additionalFields.unshift({
+          field_id: uuidv4(),
+          field_name: "Appointed To",
+          field_type: "DROPDOWN",
+          field_label: "Appointed To",
+          field_is_required: true,
+          field_is_included: true,
+        });
+      }
+
+      updatedFields.unshift(...additionalFields);
+
+      const filteredData = {
+        ...data,
+        fields: updatedFields as eventFormField[],
+      };
+
+      await updateCustomEvent(supabaseClient, {
+        editEventFormValues: filteredData,
+        teamMemberId: teamMember?.team_member_id || "",
+        teamId: activeTeam.team_id,
+        eventId: router.query.eventId as string,
+      });
+
       notifications.show({
-        message: "Event created successfully",
+        message: "Event updated successfully",
         color: "green",
       });
+
+      setIsLoading(false);
     } catch (e) {
-      console.log(e);
+      setIsLoading(false);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
     }
   };
 
   return (
     <Container fluid>
+      <LoadingOverlay visible={isLoading} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack>
           <Paper p="md">
@@ -110,7 +177,6 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                       ...DEFAULT_THEME.colors.blue,
                       ...DEFAULT_THEME.colors.yellow,
                       ...DEFAULT_THEME.colors.orange,
-
                       ...DEFAULT_THEME.colors.teal,
                     ]}
                     {...field}
@@ -146,7 +212,6 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                   />
                 )}
               />
-
               <Controller
                 name="event.enableEvent"
                 control={control}
@@ -154,9 +219,8 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                   <Checkbox
                     required
                     label="Enable this Event?"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                    defaultChecked={!field?.value}
+                    value={field?.value ? "true" : "false"}
+                    defaultChecked={field?.value}
                   />
                 )}
               />
@@ -186,10 +250,8 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                             render={({ field: checkboxField }) => (
                               <Checkbox
                                 {...checkboxField}
-                                value={
-                                  field?.field_is_included ? "true" : "false"
-                                }
-                                defaultChecked={field?.field_is_included}
+                                checked={checkboxField.value === true}
+                                value={checkboxField?.value ? "true" : "false"}
                                 disabled={field?.field_name === "Signature"}
                               />
                             )}
@@ -248,7 +310,6 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                                       ? "Site"
                                       : ""}
                       </td>
-
                       <td>
                         <Controller
                           name={`fields.${index}.field_is_required`}
@@ -272,51 +333,50 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
               </Table>
             </ScrollArea>
           </Paper>
-          {Object.values(eventFormDefaultValues.assignedTo).some(
-            (value) => value === true
-          ) && (
-            <Paper p="md">
-              <Stack>
-                <Title order={3}>Assign Assets to Persons or Locations</Title>
-                <Controller
-                  name="assignedTo.assignToPerson"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Persons"
-                      {...field}
-                      value={field.value ? "true" : "false"}
-                      defaultChecked={field?.value}
-                    />
-                  )}
-                />
-                <Controller
-                  name="assignedTo.assignToCustomer"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Customers"
-                      {...field}
-                      value={field.value ? "true" : "false"}
-                      defaultChecked={field?.value}
-                    />
-                  )}
-                />
-                <Controller
-                  name="assignedTo.assignToSite"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Sites/Locations"
-                      {...field}
-                      value={field.value ? "true" : "false"}
-                      checked={field.value}
-                    />
-                  )}
-                />
-              </Stack>
-            </Paper>
-          )}
+
+          <Paper p="md">
+            <Stack>
+              <Title order={3}>
+                Assign Assets to Persons, Locations or Customers
+              </Title>
+              <Controller
+                name="assignedTo.assignToPerson"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="List of Persons"
+                    {...field}
+                    value={field?.value ? "true" : "false"}
+                    defaultChecked={field?.value}
+                  />
+                )}
+              />
+              <Controller
+                name="assignedTo.assignToCustomer"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="List of Customers"
+                    {...field}
+                    value={field?.value ? "true" : "false"}
+                    defaultChecked={field?.value}
+                  />
+                )}
+              />
+              <Controller
+                name="assignedTo.assignToSite"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="List of Sites/Locations"
+                    {...field}
+                    value={field?.value ? "true" : "false"}
+                    defaultChecked={field?.value}
+                  />
+                )}
+              />
+            </Stack>
+          </Paper>
 
           <Group position="right">
             <Button fullWidth type="submit">

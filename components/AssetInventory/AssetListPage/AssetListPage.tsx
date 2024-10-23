@@ -131,10 +131,6 @@ const AssetListPage = ({
       )
       .map((column) => column.value),
   });
-  const eventOptions = eventList.map((event) => ({
-    label: event.event_status,
-    value: event.event_status,
-  }));
 
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
@@ -229,7 +225,7 @@ const AssetListPage = ({
               inventoryList={inventoryList}
               selectedRow={selectedRows}
               userId={userId}
-              eventOptions={eventOptions}
+              eventList={eventList}
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}

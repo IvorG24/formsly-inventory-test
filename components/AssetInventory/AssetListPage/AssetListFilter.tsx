@@ -1,7 +1,7 @@
 import {
   CategoryTableRow,
+  EventTableRow,
   InventoryListType,
-  OptionType,
   SecurityGroupData,
   SiteTableRow,
   TeamMemberWithUserType,
@@ -29,6 +29,7 @@ type RequestListFilterProps = {
   formList: { label: string; value: string }[];
   teamMemberList: TeamMemberWithUserType[];
   siteList: SiteTableRow[];
+  eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   inventoryList: InventoryListType[];
@@ -36,7 +37,7 @@ type RequestListFilterProps = {
   handleFilterForms: () => void;
   localFilter: FilterSelectedValuesType;
   setLocalFilter: Dispatch<SetStateAction<FilterSelectedValuesType>>;
-  eventOptions: OptionType[];
+
   selectedRow: string[];
   type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
@@ -57,7 +58,7 @@ export type FilterSelectedValuesType = {
 };
 
 const AssetListFilter = ({
-  eventOptions,
+  eventList,
   inventoryList,
   teamMemberList,
   departmentList,
@@ -99,12 +100,18 @@ const AssetListFilter = ({
       setSelectedEventId(value);
     }
   };
-
+  const eventOptions = eventList.map((event) => ({
+    label: event.event_status,
+    value: event.event_status,
+  }));
   const eventSecurity = securityGroupData.asset.filter.event
     ? securityGroupData.asset.filter.event
     : [];
-
-  const filteredEvents = eventOptions.filter((event) =>
+  const eventActions = eventList.map((event) => ({
+    label: event.event_name,
+    value: event.event_id,
+  }));
+  const filteredEvents = eventActions.filter((event) =>
     eventSecurity.includes(event.label)
   );
 

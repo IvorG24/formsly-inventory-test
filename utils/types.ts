@@ -2806,7 +2806,7 @@ export type customFieldFormValues = {
 
 export type eventFormField = {
   field_name: string;
-  field_type: FieldType;
+  field_type: string;
   field_label: string;
   field_is_required: boolean;
   field_is_included: boolean;

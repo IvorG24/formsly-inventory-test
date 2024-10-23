@@ -7,135 +7,135 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-    APP_SOURCE_ID,
-    DEFAULT_NUMBER_SSOT_ROWS,
-    FETCH_OPTION_LIMIT,
-    formatDate,
-    FORMSLY_FORM_ORDER,
-    IT_ASSET_FIELD_ID_LIST,
-    ITEM_FIELD_ID_LIST,
-    PED_ITEM_FIELD_ID_LIST,
-    SELECT_OPTION_LIMIT,
-    TECHNICAL_ASSESSMENT_FIELD_LIST,
+  APP_SOURCE_ID,
+  DEFAULT_NUMBER_SSOT_ROWS,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  FORMSLY_FORM_ORDER,
+  IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+  SELECT_OPTION_LIMIT,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getFilterConditionFromArray, safeParse } from "@/utils/functions";
 import {
-    addAmpersandBetweenWords,
-    escapeQuotes,
-    escapeQuotesForObject,
-    parseJSONIfValid,
-    startCase,
+  addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
+  parseJSONIfValid,
+  startCase,
 } from "@/utils/string";
 import {
-    AddressTableRow,
-    ApplicationInformationFilterFormValues,
-    ApplicationInformationSpreadsheetData,
-    ApproverUnresolvedRequestCountType,
-    AppType,
-    AttachmentBucketType,
-    AttachmentTableRow,
-    BackgroundCheckFilterFormValues,
-    BackgroundCheckSpreadsheetData,
-    CategoryTableRow,
-    createEventFormvalues,
-    CreateTicketFormValues,
-    CreateTicketPageOnLoad,
-    CSICodeTableRow,
-    customFieldFormValues,
-    Dataset,
-    EquipmentDescriptionTableRow,
-    EquipmentPartTableInsert,
-    EquipmentPartType,
-    EquipmentTableRow,
-    EventTableRow,
-    FetchRequestListParams,
-    FetchUserRequestListParams,
-    FieldTableRow,
-    FormTableRow,
-    FormType,
-    HRAnalyticsData,
-    HRPhoneInterviewFilterFormValues,
-    HRPhoneInterviewSpreadsheetData,
-    HRProjectType,
-    InitialFormType,
-    InterviewOnlineMeetingTableRow,
-    InventoryCustomerRow,
-    InventoryDynamicRow,
-    InventoryFieldRow,
-    InventoryFormType,
-    InventoryHistory,
-    InventoryListType,
-    InventoryRequestRow,
-    ItemCategoryType,
-    ItemCategoryWithSigner,
-    ItemDescriptionFieldWithUoM,
-    ItemDescriptionTableRow,
-    ItemWithDescriptionAndField,
-    ItemWithDescriptionType,
-    JiraFormslyItemCategoryWithUserDataType,
-    JiraFormslyProjectType,
-    JiraItemCategoryDataType,
-    JiraOrganizationTableRow,
-    JiraProjectDataType,
-    JobOfferFilterFormValues,
-    JobOfferHistoryType,
-    JobOfferSpreadsheetData,
-    LocationTableRow,
-    LRFSpreadsheetData,
-    MemoListItemType,
-    MemoType,
-    NotificationOnLoad,
-    NotificationTableRow,
-    OptionTableRow,
-    OtherExpensesTypeTableRow,
-    PendingInviteType,
-    QuestionnaireData,
-    ReferenceMemoType,
-    RequestListItemType,
-    RequestListOnLoad,
-    RequestResponseTableRow,
-    RequestTableRow,
-    RequestWithResponseType,
-    SectionWithFieldType,
-    SecurityGroupData,
-    ServiceWithScopeAndChoice,
-    SignatureHistoryTableRow,
-    SignerRequestSLA,
-    SignerWithProfile,
-    SiteTableRow,
-    SSOTOnLoad,
-    SubCategoryData,
-    TeamGroupTableRow,
-    TeamMemberOnLoad,
-    TeamMemberType,
-    TeamMemberWithUser,
-    TeamMemberWithUserDetails,
-    TeamOnLoad,
-    TeamProjectTableRow,
-    TeamTableRow,
-    TechnicalAssessmentTableRow,
-    TechnicalInterviewFilterFormValues,
-    TechnicalInterviewSpreadsheetData,
-    TicketListOnLoad,
-    TicketListType,
-    TicketPageOnLoad,
-    TicketStatusType,
-    TradeTestFilterFormValues,
-    TradeTestSpreadsheetData,
-    TransactionTableRow,
-    UnformattedRequestListItemRequestSigner,
-    UserIssuedItem,
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AttachmentBucketType,
+  AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
+  CategoryTableRow,
+  createEventFormvalues,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  customFieldFormValues,
+  Dataset,
+  EquipmentDescriptionTableRow,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
+  EventTableRow,
+  FetchRequestListParams,
+  FetchUserRequestListParams,
+  FieldTableRow,
+  FormTableRow,
+  FormType,
+  HRAnalyticsData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
+  HRProjectType,
+  InitialFormType,
+  InterviewOnlineMeetingTableRow,
+  InventoryCustomerRow,
+  InventoryDynamicRow,
+  InventoryFieldRow,
+  InventoryFormType,
+  InventoryHistory,
+  InventoryListType,
+  InventoryRequestRow,
+  ItemCategoryType,
+  ItemCategoryWithSigner,
+  ItemDescriptionFieldWithUoM,
+  ItemDescriptionTableRow,
+  ItemWithDescriptionAndField,
+  ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
+  JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
+  JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  LocationTableRow,
+  LRFSpreadsheetData,
+  MemoListItemType,
+  MemoType,
+  NotificationOnLoad,
+  NotificationTableRow,
+  OptionTableRow,
+  OtherExpensesTypeTableRow,
+  PendingInviteType,
+  QuestionnaireData,
+  ReferenceMemoType,
+  RequestListItemType,
+  RequestListOnLoad,
+  RequestResponseTableRow,
+  RequestTableRow,
+  RequestWithResponseType,
+  SectionWithFieldType,
+  SecurityGroupData,
+  ServiceWithScopeAndChoice,
+  SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
+  SiteTableRow,
+  SSOTOnLoad,
+  SubCategoryData,
+  TeamGroupTableRow,
+  TeamMemberOnLoad,
+  TeamMemberType,
+  TeamMemberWithUser,
+  TeamMemberWithUserDetails,
+  TeamOnLoad,
+  TeamProjectTableRow,
+  TeamTableRow,
+  TechnicalAssessmentTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
+  TicketListOnLoad,
+  TicketListType,
+  TicketPageOnLoad,
+  TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
+  TransactionTableRow,
+  UnformattedRequestListItemRequestSigner,
+  UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -1790,7 +1790,6 @@ export const getTeamMemberProjectList = async (
     limit: number;
   }
 ) => {
-
   const { data, error } = await supabaseClient
     .rpc("get_team_member_project_list", { input_data: params })
     .select("*");
@@ -1808,8 +1807,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -7507,9 +7506,10 @@ export const getEventDetails = async (
     limit?: number;
     page?: number;
     teamId: string;
+    type?: string;
   }
 ) => {
-  const { search, limit, page, teamId } = params;
+  const { search, limit, page, teamId, type = "option" } = params;
 
   const start = page && limit ? (page - 1) * limit : undefined;
   const end = start !== undefined && limit ? start + limit - 1 : undefined;
@@ -7518,7 +7518,11 @@ export const getEventDetails = async (
     .from("inventory_event_table")
     .select("*", { count: "exact" })
     .eq("event_team_id", teamId)
-    .eq("event_is_disabled", false);
+    .order("event_date_created", { ascending: false });
+
+  if (type === "option") {
+    query = query.eq("event_is_disabled", false);
+  }
 
   if (start !== undefined && end !== undefined) {
     query = query.range(start, end);
@@ -7777,7 +7781,7 @@ export const getAssetSpreadsheetView = async (
     status?: string;
     assignedToPerson?: string[];
     assignedToSite?: string[];
-    teamId:string;
+    teamId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -8023,7 +8027,6 @@ export const getEventsHistoryData = async (
     page,
     limit,
   };
-
 
   const { data, error } = await supabaseClient.rpc(
     "get_event_history_by_request",

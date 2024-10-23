@@ -8,6 +8,7 @@ import {
   ApiKeyData,
   AppType,
   BackgroundCheckSpreadsheetData,
+  createEventFormvalues,
   customFieldFormValues,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
@@ -1846,4 +1847,22 @@ export const updateCustomFields = async (
   if (error) throw error;
 
   return data as unknown as InventoryFieldRow;
+};
+
+export const updateCustomEvent = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    editEventFormValues: createEventFormvalues;
+    teamMemberId: string;
+    teamId: string;
+    eventId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("edit_custom_event", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data;
 };
