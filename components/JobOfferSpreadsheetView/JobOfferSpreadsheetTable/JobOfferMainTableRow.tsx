@@ -54,6 +54,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconCheck,
   IconFile,
+  IconHeartHandshake,
   IconHistory,
   IconHourglass,
   IconProgress,
@@ -265,6 +266,8 @@ const JobOfferMainTableRow = ({
         return <IconProgress size={14} />;
       case "FOR POOLING":
         return <IconHourglass size={14} />;
+      case "WITH ACCEPTED OFFER":
+        return <IconHeartHandshake size={14} />;
     }
   };
 
@@ -331,9 +334,12 @@ const JobOfferMainTableRow = ({
       onConfirm: async () => handleUpdateJobOffer(),
     });
 
-  const isForPooling = !["ACCEPTED", "PENDING", "FOR POOLING"].includes(
-    item.job_offer_status
-  );
+  const isForPooling = ![
+    "ACCEPTED",
+    "PENDING",
+    "FOR POOLING",
+    "WITH ACCEPTED OFFER",
+  ].includes(item.job_offer_status);
   const isForAddOffer = [
     "WAITING FOR OFFER",
     "REJECTED",

@@ -26,7 +26,7 @@ import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFu
 import { formatDate } from "@/utils/constant";
 import { isError, safeParse } from "@/utils/functions";
 import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, truncate } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
@@ -326,8 +326,18 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       } = parentWavRequest;
 
       let approvedOfficialBusiness = "";
-      const requestSectionFieldList =
+      const requestSectionFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
         wavRequest.request_form.form_section[1].section_field;
+
+      const particularsField = requestSectionFieldList.find(
+        (field) => field.field_name === "Particulars"
+      );
+
+      const particulars = safeParse(
+        particularsField?.field_response[0]
+          ? particularsField.field_response[0].request_response
+          : ""
+      );
 
       const department = safeParse(
         requestSectionFieldList[2].field_response[0].request_response
@@ -369,6 +379,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         approvedOfficialBusiness,
         department,
         isChargedToProject,
+        particulars: truncate(particulars),
       });
 
       const jiraTicket = await createJiraTicket({

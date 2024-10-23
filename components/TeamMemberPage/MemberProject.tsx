@@ -28,25 +28,43 @@ type Props = {
   projectCount: number;
 };
 
-const MemberProject = ({ memberId, projectList, projectCount }: Props) => {
+const MemberProject = ({
+  memberId,
+  projectList: initialProjectList,
+  projectCount: initialProjectCount,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const { register, handleSubmit } = useForm<SearchForm>();
+  const { register, handleSubmit, getValues } = useForm<SearchForm>();
 
-  const [records, setRecords] = useState(projectList);
-  const [count, setCount] = useState(projectCount);
+  const [records, setRecords] = useState(
+    initialProjectList.sort((a, b) =>
+      a.team_project.team_project_name < b.team_project.team_project_name
+        ? -1
+        : a.team_project.team_project_name > b.team_project.team_project_name
+        ? 1
+        : 0
+    )
+  );
+  const [count, setCount] = useState(initialProjectCount);
   const [activePage, setActivePage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearchTeamProject = async (data: SearchForm) => {
-    try {
+  const handleSearchTeamProject = async (
+    data: SearchForm & { page?: number }
+  ) => {
+    if (!data.page) {
       setActivePage(1);
+    }
+    try {
       setIsLoading(true);
       const { keyword } = data;
+      const currentPage = data.page ?? 1;
+      const offset = (currentPage - 1) * ROW_PER_PAGE;
       const { data: projectList, count: projectCount } =
         await getTeamMemberProjectList(supabaseClient, {
           teamMemberId: memberId,
           search: keyword,
-          page: 1,
+          offset,
           limit: ROW_PER_PAGE,
         });
       setRecords(
@@ -55,8 +73,9 @@ const MemberProject = ({ memberId, projectList, projectCount }: Props) => {
           team_project: TeamProjectTableRow;
         }[]
       );
+
       setCount(projectCount ? projectCount : 0);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -115,6 +134,7 @@ const MemberProject = ({ memberId, projectList, projectCount }: Props) => {
             page={activePage}
             onPageChange={(page) => {
               setActivePage(page);
+              handleSearchTeamProject({ keyword: getValues("keyword"), page });
             }}
             fetching={isLoading}
           />

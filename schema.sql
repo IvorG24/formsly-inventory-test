@@ -4077,16 +4077,43 @@ AS $$
       groupCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
-    const memberProjectToSelect = plv8.execute(`SELECT tpmt2.team_project_member_id, tpt2.team_project_name FROM team_schema.team_project_member_table tpmt2 INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id WHERE tpmt2.team_member_id='${teamMemberId}' ORDER BY tpt2.team_project_name ASC LIMIT 10`);
+    const memberProjectToSelect = plv8.execute(
+      `
+        SELECT 
+          tpmt2.team_project_member_id, 
+          tpt2.team_project_name 
+        FROM team_schema.team_project_member_table tpmt2 
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
+        WHERE 
+          tpmt2.team_member_id='${teamMemberId}' 
+        ORDER BY tpt2.team_project_name ASC 
+        LIMIT 10
+      `
+    );
 
     let projectList = []
     let projectCount = 0
     if(memberProjectToSelect.length > 0){
       const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
 
-      projectList = plv8.execute(`SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_schema.team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id) AS team_project FROM team_schema.team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' AND tpmt.team_project_member_id IN (${memberProjectToSelectArray});`);
+      projectList = plv8.execute(
+        `
+          SELECT 
+            tpmt.team_project_member_id, 
+            ( 
+              SELECT row_to_json(tpt) 
+              FROM team_schema.team_project_table tpt 
+              WHERE 
+                tpt.team_project_id = tpmt.team_project_id
+            ) AS team_project 
+            FROM team_schema.team_project_member_table tpmt 
+            WHERE 
+              tpmt.team_member_id='${teamMemberId}' 
+              AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
+        `
+      );
 
-      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
     team_member_data = {member: member, userValidId, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
@@ -17539,6 +17566,161 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION accept_job_offer_fetch_request_id_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      requestReferenceId,
+      email
+    } = input_data;
+
+    const requestData = plv8.execute(
+      `
+        SELECT request_response_request_id
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+          AND request_response = '"${email}"'
+      `
+    );
+    if (!requestData.length) return;
+
+    returnData = requestData.map(request => `'${request.request_response_request_id}'`);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_job_offer_update_status(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      requestIdList
+    } = input_data;
+
+    plv8.execute(
+      `
+        UPDATE request_schema.request_table
+        SET request_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          request_status = 'PENDING'
+          AND request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.hr_phone_interview_table
+        SET hr_phone_interview_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          hr_phone_interview_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND hr_phone_interview_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.technical_interview_table
+        SET technical_interview_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          technical_interview_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND technical_interview_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET trade_test_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          trade_test_status IN ('PENDING', 'WAITING FOR SCHEDULE')
+          AND trade_test_request_id IN (${requestIdList})
+      `
+    );
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.background_check_table
+        SET background_check_status = 'WITH ACCEPTED OFFER'
+        WHERE
+          background_check_status = 'PENDING'
+          AND background_check_request_id IN (${requestIdList})
+      `
+    );
+  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_job_offer_fetch_job_offer_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      requestIdList,
+      requestReferenceId
+    } = input_data;
+
+    returnData = plv8.execute(
+      `
+        SELECT
+          request_id
+        FROM request_schema.request_table
+        INNER JOIN (
+          SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY job_offer_date_created DESC) AS rn
+          FROM hr_schema.job_offer_table
+          WHERE
+            job_offer_request_id IN (${requestIdList})
+            AND job_offer_request_id != '${requestReferenceId}'
+        ) jo ON job_offer_request_id = request_id
+        AND jo.rn = 1
+        AND job_offer_status IN ('PENDING', 'REJECTED', 'WAITING FOR OFFER', 'FOR POOLING')
+        ORDER BY job_offer_date_created DESC
+      `
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_job_offer_update_job_offer(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      jobOfferList
+    } = input_data;
+
+    const jobOfferInput = jobOfferList.map(jobOffer => {
+      return `('WITH ACCEPTED OFFER', '${jobOffer.request_id}')`;
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO hr_schema.job_offer_table
+        (
+          job_offer_status,
+          job_offer_request_id
+        )
+        VALUES ${jobOfferInput}
+      `
+    );
+  });
+$$ LANGUAGE plv8;
+
 CREATE OR REPLACE FUNCTION get_job_history(
   input_data JSON
 )
@@ -17566,26 +17748,31 @@ AS $$
         attachmentData = plv8.execute(`SELECT * FROM public.attachment_table WHERE attachment_id = '${jobOffer.job_offer_attachment_id}'`);
       }
 
-      const teamMemberData = plv8.execute(
-        `
-          SELECT
-            team_member_id,
-            user_first_name,
-            user_last_name
-          FROM team_schema.team_member_table
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-          WHERE
-            team_member_id = '${jobOffer.job_offer_team_member_id}'
-          LIMIT 1
-        `
-      )[0];
+      let teamMemberData;
+      if (jobOffer.job_offer_team_member_id) {
+        teamMemberData = plv8.execute(
+          `
+            SELECT
+              team_member_id,
+              user_first_name,
+              user_last_name
+            FROM team_schema.team_member_table
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              team_member_id = '${jobOffer.job_offer_team_member_id}'
+            LIMIT 1
+          `
+        )[0];
+      }
+
+      
 
       return {
         ...jobOffer,
         job_offer_attachment: attachmentData.length ? attachmentData[0] : null,
         job_offer_team_member: {
-          team_member_id: teamMemberData.team_member_id,
-          team_member_full_name: `${teamMemberData.user_first_name} ${teamMemberData.user_last_name}`
+          team_member_id: teamMemberData ? teamMemberData.team_member_id : "",
+          team_member_full_name: teamMemberData ? `${teamMemberData.user_first_name} ${teamMemberData.user_last_name}` : ""
         }
       }
     });
@@ -19717,6 +19904,72 @@ AS $$
   });
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_team_member_project_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let team_member_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      offset,
+      search,
+      limit
+    } = input_data;
+
+    let searchValue = "";
+    if(search) {
+      searchValue = "AND team_project_name ILIKE '%${search}%'";
+    }
+
+    const memberProjectToSelect = plv8.execute(
+      `
+        SELECT 
+          tpmt2.team_project_member_id, 
+          tpt2.team_project_name 
+        FROM team_schema.team_project_member_table tpmt2 
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
+        WHERE 
+          tpmt2.team_member_id='${teamMemberId}'
+          ${searchValue}
+        ORDER BY tpt2.team_project_name ASC
+        OFFSET ${offset}
+        LIMIT ${limit}
+      `
+    );
+
+    let projectList = []
+    let projectCount = 0
+    if(memberProjectToSelect.length > 0){
+      const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
+
+      projectList = plv8.execute(
+        `
+          SELECT 
+            tpmt.team_project_member_id, 
+            ( 
+              SELECT row_to_json(tpt) 
+              FROM team_schema.team_project_table tpt 
+              WHERE 
+                tpt.team_project_id = tpmt.team_project_id
+            ) AS team_project 
+            FROM team_schema.team_project_member_table tpmt 
+            WHERE 
+              tpmt.team_member_id='${teamMemberId}' 
+              AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
+        `
+      );
+
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+    }
+
+    team_member_data = {projectList, projectCount: `${projectCount}`}
+ });
+ return team_member_data;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -20610,66 +20863,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests or a
 CREATE POLICY "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (
-  request_team_member_id IN (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-      )
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table
-    INNER JOIN form_schema.signer_table ON signer_team_member_id = team_member_id
-    INNER JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
-    WHERE
-      team_member_user_id = (SELECT auth.uid())
-      AND request_signer_request_id = request_id
-  )
-)
-WITH CHECK (
-  request_team_member_id IN (
-    SELECT team_member_id
-    FROM team_schema.team_member_table
-    WHERE team_member_user_id = (SELECT auth.uid())
-  ) OR (
-    SELECT team_member_team_id
-    FROM form_schema.form_table
-    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-    WHERE form_id = request_form_id
-  ) = (
-    SELECT DISTINCT(team_member_team_id)
-    FROM team_schema.team_member_table AS tmt
-    LEFT JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
-    WHERE
-      tmt.team_member_user_id = (SELECT auth.uid())
-      AND (
-        team_member_role IN ('OWNER', 'APPROVER')
-        OR
-        tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
-      )
-  )
-);
+USING (true)
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_schema.request_table;
 CREATE POLICY "Allow DELETE for authenticated users on own requests" ON request_schema.request_table

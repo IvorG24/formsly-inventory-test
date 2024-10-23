@@ -264,7 +264,6 @@ const CreateLiquidationReimbursementRequestPage = ({
       (section) => section.section_name === "Payment"
     );
     const paymentSectionIsRemoved = paymentSectionIndex < 0;
-
     if (
       (valueIsPureLiquidation || liquidationWithPR) &&
       !paymentSectionIsRemoved
@@ -780,12 +779,7 @@ const CreateLiquidationReimbursementRequestPage = ({
           ),
         };
 
-        const paymentSection = {
-          ...initialFormSectionList[2],
-          section_field: [initialFormSectionList[2].section_field[0]],
-        };
-
-        replaceSection([requestDetailsSection, payeeSection, paymentSection]);
+        replaceSection([requestDetailsSection, payeeSection]);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

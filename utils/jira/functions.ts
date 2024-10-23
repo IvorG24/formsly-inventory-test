@@ -542,6 +542,7 @@ export const formatJiraWAVPayload = ({
   approvedOfficialBusiness,
   department,
   isChargedToProject,
+  particulars,
 }: JiraWAVTicketPayloadProps) => {
   const isPEDDepartment =
     department === "Plants and Equipment" && !isChargedToProject;
@@ -569,6 +570,9 @@ export const formatJiraWAVPayload = ({
         },
         "37": {
           text: requestor,
+        },
+        "38": {
+          text: particulars,
         },
       },
     },

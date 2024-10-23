@@ -1,7 +1,7 @@
 import { insertError } from "@/backend/api/post";
 import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
@@ -20,7 +20,7 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSession, useUser } from "@supabase/auth-helpers-react";
 import { IconFile, IconMap, IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -39,6 +39,7 @@ const JobOffer = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const user = useUser();
+  const session = useSession();
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const { setIsLoading } = useLoadingActions();
 
@@ -60,6 +61,7 @@ const JobOffer = ({
 
   const handleUpdateJobOffer = async (action: string, reason?: string) => {
     try {
+      if (!user?.email) throw new Error("Missing user email");
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
       await updateJobOfferStatus(supabaseClient, {
@@ -76,7 +78,23 @@ const JobOffer = ({
         manpowerLoadingReferenceCreatedBy:
           jobOfferData.job_offer_manpower_loading_reference_created_by as string,
         compensation: jobOfferData.job_offer_compensation as string,
+        email: user.email,
       });
+
+      if (action === "Accept") {
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requestReferenceId: jobOfferData.job_offer_request_id,
+            email: user.email,
+            token: `Bearer ${session?.access_token}`,
+          }),
+        };
+        await fetch(`${BASE_URL}/api/formsly/accept-job-offer`, requestOptions);
+      }
 
       setJobOfferStatus(newStatus);
       notifications.show({
@@ -232,14 +250,15 @@ const JobOffer = ({
             </Group>
           </Group>
         )}
-        {jobOfferStatus === "ACCEPTED" && (
-          <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
-            <Text>
-              We appreciate you taking us up on our job offer. Kindly expect to
-              get the message from HR.
-            </Text>
-          </Alert>
-        )}
+        {jobOfferStatus === "ACCEPTED" ||
+          (jobOfferStatus === "WITH ACCEPTED OFFER" && (
+            <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+              <Text>
+                We appreciate you taking us up on our job offer. Kindly expect
+                to get the message from HR.
+              </Text>
+            </Alert>
+          ))}
         {jobOfferStatus === "WAITING FOR OFFER" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>

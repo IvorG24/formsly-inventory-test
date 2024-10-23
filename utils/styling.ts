@@ -72,6 +72,8 @@ export const getStatusToColor = (status: string) => {
       return "gray";
     case "for pooling":
       return "yellow";
+    case "with accepted offer":
+      return "pink";
     default:
       return "";
   }
@@ -128,6 +130,8 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#fab005";
     case "accepted":
       return "#40C057";
+    case "with accepted offer":
+      return "#e64980";
   }
 };
 
@@ -335,5 +339,7 @@ export const getHRAnalyticsStatusToColor = (status: string) => {
       return "#fcc419";
     case "missed":
       return "#cc5de8";
+    case "with accepted offer":
+      return "#e64980";
   }
 };

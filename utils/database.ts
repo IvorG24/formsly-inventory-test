@@ -3382,6 +3382,30 @@ export type Database = {
       }
     }
     Functions: {
+      accept_job_offer_fetch_job_offer_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      accept_job_offer_fetch_request_id_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      accept_job_offer_update_job_offer: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
+      accept_job_offer_update_status: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
       accept_team_invitation: {
         Args: {
           invitation_id: string
@@ -4417,6 +4441,12 @@ export type Database = {
         Returns: Json
       }
       get_team_member_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_member_project_list: {
         Args: {
           input_data: Json
         }

@@ -154,11 +154,9 @@ const LiquidationReimbursementRequestPage = ({
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
   const requestProjectName = request.request_project.team_project_name;
-  const isBOQNotRequired =
-    selectedDepartment === "Plants and Equipment" &&
-    costCodeExemptionList.some((exemption) =>
-      requestProjectName.toLowerCase().includes(exemption.toLowerCase())
-    );
+  const isBOQNotRequired = costCodeExemptionList.some((exemption) =>
+    requestProjectName.toLowerCase().includes(exemption.toLowerCase())
+  );
 
   const [canCreateBOQ, setCanCreateBOQ] = useState(false);
 

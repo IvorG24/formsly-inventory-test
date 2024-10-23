@@ -24,7 +24,7 @@ import {
   createJiraTicket,
   formatJiraLRFRequisitionPayload,
 } from "@/utils/jira/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, truncate } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
@@ -338,8 +338,22 @@ const BillOfQuantityRequestPage = ({
         throw new Error("Error fetching Jira project data.");
       }
 
+      const lrfRequestDetails = lrfRequest.request_form.form_section[0]
+        .section_field as SectionField;
+
+      const sortedLrfRequestDetails = lrfRequestDetails.sort(
+        (a, b) => a.field_order - b.field_order
+      );
+      const selectedDepartment = safeParse(
+        sortedLrfRequestDetails[2].field_response[0].request_response
+      );
+
+      const isPED = selectedDepartment === "Plants and Equipment";
+
       const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=23&requestType=367",
+        `/api/jira/get-form?serviceDeskId=${isPED ? "27" : "23"}&requestType=${
+          isPED ? "406" : "367"
+        }`,
         {
           method: "GET",
           headers: {
@@ -353,19 +367,9 @@ const BillOfQuantityRequestPage = ({
       if (!fields) {
         throw new Error("Jira form is not defined.");
       }
-      const departmentList = fields["469"].choices;
       const typeList = fields["442"].choices;
       const workingAdvanceList = fields["445"].choices;
 
-      const lrfRequestDetails = lrfRequest.request_form.form_section[0]
-        .section_field as SectionField;
-
-      const sortedLrfRequestDetails = lrfRequestDetails.sort(
-        (a, b) => a.field_order - b.field_order
-      );
-      const department = safeParse(
-        sortedLrfRequestDetails[2].field_response[0].request_response
-      );
       const purpose = safeParse(
         sortedLrfRequestDetails[3].field_response[0].request_response
       );
@@ -375,8 +379,30 @@ const BillOfQuantityRequestPage = ({
 
       let workingAdvances = "";
       let ticketId = "";
+      let department = selectedDepartment;
 
-      if (typeOfRequest.includes("Liquidation")) {
+      if (!isPED) {
+        const departmentList = fields["469"].choices;
+        const departmentMatch = departmentList.find(
+          (departmentItem: { id: string; name: string }) =>
+            departmentItem.name.toLowerCase() ===
+            selectedDepartment.toLowerCase()
+        );
+
+        if (!departmentMatch?.id) {
+          notifications.show({
+            message: "Department is undefined.",
+            color: "red",
+          });
+          return { jiraTicketId: "", jiraTicketLink: "" };
+        }
+        department = departmentMatch.id;
+      }
+
+      if (
+        typeOfRequest.toLowerCase().includes("liquidation") ||
+        typeOfRequest.toLowerCase() === "petty cash fund"
+      ) {
         const requestWorkingAdvances = safeParse(
           sortedLrfRequestDetails[5].field_response[0].request_response
         );
@@ -391,21 +417,17 @@ const BillOfQuantityRequestPage = ({
         );
       }
 
-      const departmentId = departmentList.find(
-        (departmentItem: { id: string; name: string }) =>
-          departmentItem.name.toLowerCase() === department.toLowerCase()
-      );
       const typeOfRequestId = typeList.find(
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
 
-      if (!departmentId || !typeOfRequestId) {
+      if (!department || !typeOfRequestId) {
         notifications.show({
           message: "Department or type of request is undefined.",
           color: "red",
         });
-        return { success: false, data: null };
+        return { jiraTicketId: "", jiraTicketLink: "" };
       }
 
       const requestor = `${lrfRequest.request_team_member.team_member_user.user_first_name} ${lrfRequest.request_team_member.team_member_user.user_last_name}`;
@@ -417,8 +439,8 @@ const BillOfQuantityRequestPage = ({
         requestor: requestor,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: departmentId.id,
-        purpose,
+        department: department,
+        purpose: truncate(purpose),
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,

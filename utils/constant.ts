@@ -63,6 +63,8 @@ export const unsortableFieldList = [
   "Assigned HR",
   "Action",
   "Meeting Link",
+  "Job Offer Attachment",
+  "Job Offer History",
 ];
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
@@ -1438,5 +1440,9 @@ export const frequencyOptions = [
   { label: "Yearly", value: "yearly" },
 ];
 
-// projects that does not require cost code if department === PED
-export const costCodeExemptionList = ["YARD", "CENTRAL OFFICE", "LOGISTICS"];
+// projects that does not require cost code
+export const costCodeExemptionList = [
+  "YARD",
+  "CENTRAL OFFICE",
+  "SANTISIMO LOGISTICS",
+];

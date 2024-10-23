@@ -1783,37 +1783,35 @@ export const getAllTeamMembersWithoutProjectMembers = async (
 // Get team member project list
 export const getTeamMemberProjectList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamMemberId: string; search?: string; page: number; limit: number }
-) => {
-  const { teamMemberId, search, page, limit } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema("team_schema")
-    .from("team_project_member_table")
-    .select("team_project_member_id, team_project: team_project_id!inner(*)", {
-      count: "exact",
-    })
-    .eq("team_member_id", teamMemberId);
-
-  if (search) {
-    query = query.ilike("team_project.team_project_name", `%${search}%`);
+  params: {
+    teamMemberId: string;
+    search?: string;
+    offset: number;
+    limit: number;
   }
+) => {
 
-  query = query.order("team_project_name", {
-    ascending: true,
-    foreignTable: "team_project",
-  });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_member_project_list", { input_data: params })
+    .select("*");
   if (error) throw error;
+  const formattedData = data as unknown as {
+    projectList: {
+      team_project_member_id: string;
+      team_project: TeamProjectTableRow;
+    }[];
+    projectCount: number;
+  };
 
   return {
-    data,
-    count,
+    data: formattedData.projectList.sort((a, b) =>
+      a.team_project.team_project_name < b.team_project.team_project_name
+        ? -1
+        : a.team_project.team_project_name > b.team_project.team_project_name
+        ? 1
+        : 0
+    ),
+    count: formattedData.projectCount,
   };
 };
 

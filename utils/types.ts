@@ -2129,6 +2129,7 @@ export type JiraWAVTicketPayloadProps = {
   isForOfficialBusiness: boolean;
   isChargedToProject: boolean;
   approvedOfficialBusiness?: string;
+  particulars: string;
 };
 
 export type JiraESRTicketPayloadProps = {

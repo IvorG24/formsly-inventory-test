@@ -267,6 +267,10 @@ const JobOfferFilterMenu = ({
                         value: "FOR POOLING",
                         label: "For Pooling",
                       },
+                      {
+                        value: "WITH ACCEPTED OFFER",
+                        label: "With Accepted Offer",
+                      },
                     ]}
                     value={newValue as string[]}
                     onChange={onChange}

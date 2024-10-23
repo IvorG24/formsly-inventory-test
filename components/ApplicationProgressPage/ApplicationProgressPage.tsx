@@ -25,6 +25,7 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconClockOff,
+  IconHeartHandshake,
   IconHourglass,
   IconProgress,
   IconTag,
@@ -239,9 +240,20 @@ const ApplicationProgressPage = (props: Props) => {
               <Text>{value}</Text>
             </Badge>
           ),
-          icon: <IconHourglass color={"#FBB605"} />,
+          icon: <IconHourglass color={"#FAB005"} />,
           completedIcon: <IconHourglass color={"white"} />,
           color: "yellow",
+        };
+      case "WITH ACCEPTED OFFER":
+        return {
+          description: (
+            <Badge color="pink">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconHeartHandshake color={"#E64980"} />,
+          completedIcon: <IconHeartHandshake color={"white"} />,
+          color: "pink",
         };
     }
   };
