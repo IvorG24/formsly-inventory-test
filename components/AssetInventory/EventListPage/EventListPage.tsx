@@ -110,7 +110,7 @@ const EventsListPage = () => {
   return (
     <Container fluid>
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Events</Title>
+        <Title order={3}>List of Events</Title>
         <Text>
           This is the list of Events currently in the system, including their
           descriptions and available actions. You can edit or delete each site

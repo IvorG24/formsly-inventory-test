@@ -218,7 +218,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
         type="site"
       />
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Sites</Title>
+        <Title order={3}>List of Sites</Title>
         <Text>
           This is the list of sites currently in the system, including their
           descriptions and available actions. You can edit or delete each site

@@ -127,20 +127,6 @@ const EventCreatePage = () => {
         }
         if (data.assignedTo.assignToSite === true) {
           updatedFields.unshift({
-            field_name: "Site",
-            field_type: "DROPDOWN",
-            field_label: "Site",
-            field_is_required: true,
-            field_is_included: true,
-          });
-          updatedFields.unshift({
-            field_name: "Location",
-            field_type: "DROPDOWN",
-            field_label: "Location",
-            field_is_required: true,
-            field_is_included: true,
-          });
-          updatedFields.unshift({
             field_name: "Department",
             field_type: "DROPDOWN",
             field_label: "Department",
@@ -148,6 +134,20 @@ const EventCreatePage = () => {
             field_is_included: true,
           });
         }
+        updatedFields.unshift({
+          field_name: "Location",
+          field_type: "DROPDOWN",
+          field_label: "Location",
+          field_is_required: true,
+          field_is_included: true,
+        });
+        updatedFields.unshift({
+          field_name: "Site",
+          field_type: "DROPDOWN",
+          field_label: "Site",
+          field_is_required: true,
+          field_is_included: true,
+        });
         updatedFields.unshift({
           field_name: "Appointed To",
           field_type: "DROPDOWN",

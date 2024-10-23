@@ -141,7 +141,7 @@ const DepartmentSetupPage = ({ securityGroup }: Props) => {
   return (
     <Container fluid>
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Departments</Title>
+        <Title order={3}>List of Departments</Title>
         <Text>
           This is the list of Departments currently in the system, including
           their descriptions and available actions. You can edit or delete each

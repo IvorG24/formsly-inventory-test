@@ -116,7 +116,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions }: Props) => {
       <Stack spacing="sm">
         <Group position="apart" align="end">
           <Stack>
-            <Title variant="dimmed" order={2}>
+            <Title variant="dimmed" order={3}>
               Asset Setup Page
             </Title>
             <Text size="sm">

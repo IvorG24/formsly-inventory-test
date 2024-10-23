@@ -126,11 +126,6 @@ const AssetListFilter = ({
     label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
   }));
 
-  const statusList = [
-    { value: "CHECKED OUT", label: "Check out" },
-    { value: "AVAILABLE", label: "Available" },
-  ];
-
   const siteListchoices = siteList.map((site) => {
     return {
       label: site.site_name,
@@ -322,7 +317,7 @@ const AssetListFilter = ({
               name="status"
               render={({ field: { value, onChange } }) => (
                 <Select
-                  data={statusList}
+                  data={eventOptions}
                   placeholder="Status"
                   ref={statusRef}
                   value={value}

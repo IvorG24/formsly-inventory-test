@@ -25,13 +25,22 @@ import {
   IconPuzzle,
   IconSettings,
   IconSettingsUp,
+  IconTimelineEvent,
   IconUserCancel,
-  IconUserPlus,
+  TablerIconsProps,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, useState } from "react";
 import Navlink from "./NavLink";
 import SelectTeam from "./SelectTeam";
+type NavLink = {
+  id: string;
+  label: string;
+  icon: (props: TablerIconsProps) => JSX.Element;
+  href?: string;
+  subLinks?: NavLink[];
+  nestedSubLinks?: NavLink[];
+};
 type Props = {
   openNavbar: boolean;
   setOpenNavbar: Dispatch<boolean>;
@@ -55,36 +64,38 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
     securityGroup?.asset?.permissions.find(
       (permission) => permission.key === "viewOnly"
     )?.value ?? false;
+
   const canViewSetupSection = (id: keyof typeof securityGroup.privileges) => {
-    return securityGroup.privileges[id]?.view ?? false;
+    return securityGroup.privileges[id]?.view ?? [];
   };
 
-  const navlinkData = [
-    canView && {
-      id: "asset",
-      icon: IconListDetails,
-      label: "Asset",
-      subLinks: [
-        {
-          id: "asset-list",
-          label: "Asset List",
-          icon: IconPuzzle,
-          href: `/${formattedTeamName}/inventory`,
-        },
-        {
-          id: "check-in",
-          label: "Check In",
-          icon: IconUserPlus,
-          href: `/${formattedTeamName}/inventory/check-in`,
-        },
-        {
-          id: "check-out",
-          label: "Check Out",
-          icon: IconUserCancel,
-          href: `/${formattedTeamName}/inventory/check-out`,
-        },
-      ],
-    },
+  const navlinkData: NavLink[] = [
+    ...(canView
+      ? [
+          {
+            id: "asset",
+            icon: IconListDetails,
+            label: "Asset",
+            subLinks: [
+              {
+                id: "asset-list",
+                label: "Asset List",
+                icon: IconPuzzle,
+                href: `/${formattedTeamName}/inventory`,
+              },
+              ...securityGroup.asset.filter.event.map((event) => ({
+                id: event,
+                label: event.charAt(0).toUpperCase() + event.slice(1),
+                icon: IconTimelineEvent,
+                href: `/${formattedTeamName}/inventory/list/${
+                  event.charAt(0).toLowerCase() +
+                  event.slice(1).replace(/ /g, "-").toLowerCase()
+                }`,
+              })),
+            ],
+          },
+        ]
+      : []),
     {
       id: "advanced",
       icon: IconBriefcaseOff,
@@ -103,41 +114,61 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       icon: IconSettings,
       label: "Setup",
       subLinks: [
-        canViewSetupSection("site") && {
-          id: "site",
-          label: "Sites",
-          icon: IconGps,
-          href: `/${formattedTeamName}/inventory/setup/sites`,
-        },
-        canViewSetupSection("location") && {
-          id: "location",
-          label: "Locations",
-          icon: IconLocation,
-          href: `/${formattedTeamName}/inventory/setup/location`,
-        },
-        canViewSetupSection("category") && {
-          id: "category",
-          label: "Categories",
-          icon: IconCategory,
-          href: `/${formattedTeamName}/inventory/setup/categories`,
-        },
-        canViewSetupSection("subCategory") && {
-          id: "subCategory",
-          label: "Sub Categories",
-          icon: IconCategory2,
-          href: `/${formattedTeamName}/inventory/setup/sub-categories`,
-        },
-        canViewSetupSection("department") && {
-          id: "department",
-          label: "Departments",
-          icon: IconBuilding,
-          href: `/${formattedTeamName}/inventory/setup/department`,
-        },
+        ...(canViewSetupSection("site")
+          ? [
+              {
+                id: "site",
+                label: "Sites",
+                icon: IconGps,
+                href: `/${formattedTeamName}/inventory/setup/sites`,
+              },
+            ]
+          : []),
+        ...(canViewSetupSection("location")
+          ? [
+              {
+                id: "location",
+                label: "Locations",
+                icon: IconLocation,
+                href: `/${formattedTeamName}/inventory/setup/location`,
+              },
+            ]
+          : []),
+        ...(canViewSetupSection("category")
+          ? [
+              {
+                id: "category",
+                label: "Categories",
+                icon: IconCategory,
+                href: `/${formattedTeamName}/inventory/setup/categories`,
+              },
+            ]
+          : []),
+        ...(canViewSetupSection("subCategory")
+          ? [
+              {
+                id: "subCategory",
+                label: "Sub Categories",
+                icon: IconCategory2,
+                href: `/${formattedTeamName}/inventory/setup/sub-categories`,
+              },
+            ]
+          : []),
+        ...(canViewSetupSection("department")
+          ? [
+              {
+                id: "department",
+                label: "Departments",
+                icon: IconBuilding,
+                href: `/${formattedTeamName}/inventory/setup/department`,
+              },
+            ]
+          : []),
         {
           id: "databases",
           label: "Databases",
           icon: IconDatabase,
-          subLinks: [
+          nestedSubLinks: [
             {
               id: "customField",
               label: "Asset Setup",
@@ -152,11 +183,15 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconCategory2,
           href: `/${formattedTeamName}/inventory/events`,
         },
-      ].filter(Boolean), // Filter out falsy entries
+      ],
     },
-  ].filter(Boolean); // Filter out falsy entries
+  ];
 
   const handleNavlinkClick = (href: string) => {
+    if (isSmallScreen) {
+      setOpenNavbar(false);
+    }
+
     router.push(href);
   };
 
@@ -239,17 +274,21 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                         {!isCollapsed && (
                           <Menu.Dropdown>
                             <Menu.Label>Database Actions</Menu.Label>
-                            {subLink.subLinks?.map((nestedSubLink) => (
-                              <Menu.Item
-                                key={nestedSubLink.id}
-                                icon={<nestedSubLink.icon size={20} />}
-                                onClick={() =>
-                                  handleNavlinkClick(nestedSubLink.href || "")
-                                }
-                              >
-                                {nestedSubLink.label}
-                              </Menu.Item>
-                            ))}
+                            {subLink.nestedSubLinks?.map(
+                              (nestedSubLink) =>
+                                nestedSubLink && (
+                                  <Menu.Item
+                                    key={nestedSubLink.id}
+                                    onClick={() =>
+                                      handleNavlinkClick(
+                                        nestedSubLink.href || ""
+                                      )
+                                    }
+                                  >
+                                    {nestedSubLink.label}
+                                  </Menu.Item>
+                                )
+                            )}
                           </Menu.Dropdown>
                         )}
                       </Menu>
@@ -330,7 +369,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                     color:
                       theme.colorScheme === "dark"
                         ? theme.colors.blue[2]
-                        : theme.colors.blue[7], // Set text color on hover
+                        : theme.colors.blue[7],
                   },
                   "&[data-active]": {
                     backgroundColor: "transparent",
@@ -341,7 +380,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                   },
                 },
                 inner: {
-                  justifyContent: "flex-start", // Align text and icon to the left
+                  justifyContent: "flex-start",
                 },
               })}
             >

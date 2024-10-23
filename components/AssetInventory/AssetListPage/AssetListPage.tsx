@@ -1,4 +1,4 @@
-import { getAssetSpreadsheetView, getEventDetails } from "@/backend/api/get";
+import { getAssetSpreadsheetView } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -9,8 +9,8 @@ import {
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
+  EventTableRow,
   InventoryListType,
-  OptionType,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -30,6 +30,7 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   userId: string;
+  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   tableColumnList: {
     label: string;
@@ -54,6 +55,7 @@ const AssetListPage = ({
   siteList,
   departmentList,
   categoryList,
+  eventList,
   tableColumnList,
   securityGroupData,
 }: Props) => {
@@ -67,7 +69,6 @@ const AssetListPage = ({
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<FilterSelectedValuesType>({
       key: "inventory-request-list-filter",
@@ -130,6 +131,10 @@ const AssetListPage = ({
       )
       .map((column) => column.value),
   });
+  const eventOptions = eventList.map((event) => ({
+    label: event.event_status,
+    value: event.event_status,
+  }));
 
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
@@ -169,6 +174,7 @@ const AssetListPage = ({
         locations,
         sites: securityGroupData.asset.filter.site || sites,
         category: securityGroupData.asset.filter.category || category,
+        teamId: activeTeam.team_id,
       });
 
       setInventoryList(data);
@@ -204,29 +210,14 @@ const AssetListPage = ({
   };
 
   useEffect(() => {
-    const getEventOptions = async () => {
-      if (!activeTeam.team_id) return;
-      const { data } = await getEventDetails(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-
-      const initialEventOptions: OptionType[] = data.map((event) => ({
-        label: event.event_name,
-        value: event.event_id,
-      }));
-
-      setOptionsEvent(initialEventOptions);
-    };
-
-    getEventOptions();
     handlePagination(activePage);
-  }, [activeTeam.team_id, activePage]);
+  }, [activeTeam]);
 
   return (
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={4}>Asset List Page</Title>
+          <Title order={3}>Asset List Page</Title>
           <Text>Manage your team assets here.</Text>
         </Box>
       </Flex>
@@ -238,7 +229,7 @@ const AssetListPage = ({
               inventoryList={inventoryList}
               selectedRow={selectedRows}
               userId={userId}
-              eventOptions={optionsEvent}
+              eventOptions={eventOptions}
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}

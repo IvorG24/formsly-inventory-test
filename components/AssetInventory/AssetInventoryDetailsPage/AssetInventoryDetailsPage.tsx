@@ -1,8 +1,8 @@
 import {
-    getAssetHistoryData,
-    getAssetSpreadsheetView,
-    getEventDetails,
-    getEventsHistoryData,
+  getAssetHistoryData,
+  getAssetSpreadsheetView,
+  getEventDetails,
+  getEventsHistoryData,
 } from "@/backend/api/get";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
@@ -11,25 +11,25 @@ import { useUserProfile } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-    InventoryDynamicRow,
-    InventoryHistory,
-    InventoryListType,
-    OptionType,
+  InventoryDynamicRow,
+  InventoryHistory,
+  InventoryListType,
+  OptionType,
 } from "@/utils/types";
 import {
-    Badge,
-    Box,
-    Button,
-    Container,
-    Grid,
-    Group,
-    LoadingOverlay,
-    Menu,
-    Paper,
-    Table,
-    Tabs,
-    Text,
-    Title,
+  Badge,
+  Box,
+  Button,
+  Container,
+  Grid,
+  Group,
+  LoadingOverlay,
+  Menu,
+  Paper,
+  Table,
+  Tabs,
+  Text,
+  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -72,6 +72,7 @@ const excludedKeys = [
   "inventory_request_item_code",
   "inventory_request_serial_number",
   "inventory_request_si_number",
+  "inventory_event_date_created",
 ];
 
 const formatLabel = (key: string) => {
@@ -158,8 +159,10 @@ const AssetInventoryDetailsPage = ({
 
   const fetchAssetDetails = async () => {
     try {
+      if (!activeTeam.team_id) return;
       const { data } = await getAssetSpreadsheetView(supabaseClient, {
         search: router.query.assetId as string,
+        teamId: activeTeam.team_id,
       });
       setAssetDetails(data);
       setSelectedEventId(null);
@@ -186,8 +189,6 @@ const AssetInventoryDetailsPage = ({
       setTotalRecords(totalCount);
       setEventHistoryData(data);
     } catch (e) {
-
-
       notifications.show({
         message: "Something went wrong",
         color: "red",

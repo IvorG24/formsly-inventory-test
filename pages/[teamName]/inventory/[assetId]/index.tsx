@@ -7,10 +7,11 @@ import { InventoryListType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ supabaseClient, context, securityGroupData }) => {
+  async ({ supabaseClient, context, securityGroupData, userActiveTeam }) => {
     try {
       const { data } = await getAssetSpreadsheetView(supabaseClient, {
         search: context.query.assetId as string,
+        teamId: userActiveTeam.team_id,
       });
       const hasViewOnlyPersmissions = securityGroupData.asset.permissions.some(
         (permission) =>
@@ -45,10 +46,11 @@ type Props = {
 const Page = ({ data }: Props) => {
   return (
     <>
-      <Meta description="Asset List Page" url="/teamName/inventory[assetId]" />
-      <AssetInventoryDetailsPage
-        asset_details={data}
+      <Meta
+        description="Asset Details Page"
+        url="/teamName/inventory/[assetId]"
       />
+      <AssetInventoryDetailsPage asset_details={data} />
     </>
   );
 };

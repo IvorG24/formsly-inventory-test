@@ -220,7 +220,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
         type="field"
       />
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Sub Categories</Title>
+        <Title order={3}>List of Sub Categories</Title>
         <Text>
           This is the list of sub categories currently in the system. You can
           edit or delete each sub category as needed.

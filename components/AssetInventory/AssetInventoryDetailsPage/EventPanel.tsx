@@ -53,23 +53,21 @@ const EventPanel = ({
               return (
                 <Grid.Col span={6} key={key}>
                   <Group>
-                    <Text weight={500}>
+                    <Text size="sm" weight={500}>
                       {formatTitle(key, event.event_name)}:
                     </Text>
-                    <Text>
+                    <Text size="sm">
                       {typeof value === "number"
                         ? key.toLowerCase().includes("date")
-                          ? formatDate(new Date(value)) // Format number as date if the key contains "date"
+                          ? formatDate(new Date(value))
                           : new Intl.NumberFormat("en-PH", {
                               style: "currency",
                               currency: "PHP",
-                            }).format(value) // Format number as PHP currency
+                            }).format(value)
                         : typeof value === "string" &&
                             key.toLowerCase().includes("date")
-                          ? formatDate(new Date(value)) // Format string as date if it contains "date"
-                          : value ||
-                            "N/A" // Render string as is, or fallback to "N/A"
-                      }
+                          ? formatDate(new Date(value))
+                          : value || "N/A"}
                     </Text>
                   </Group>
                 </Grid.Col>

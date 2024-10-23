@@ -205,7 +205,7 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
         type="category"
       />
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Categories</Title>
+        <Title order={3}>List of Categories</Title>
         <Text>
           This is the list of categories currently in the system. You can edit
           or delete each category as needed.

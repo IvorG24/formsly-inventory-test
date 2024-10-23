@@ -1,11 +1,12 @@
 // Imports
 import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
-import CheckinListPage from "@/components/AssetInventory/CheckinListPage/CheckinListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
+import DynamicListPage from "@/components/AssetInventory/DynamicEventListPage/DynamicListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
+  EventTableRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -33,7 +34,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
           },
         };
       }
-
       return {
         props: {
           ...data,
@@ -58,6 +58,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   fields: {
     value: string;
@@ -71,21 +72,23 @@ const Page = ({
   departmentList,
   categoryList,
   fields,
+  eventList,
   securityGroupData,
 }: Props) => {
   return (
     <>
       <Meta
-        description="Check in List Page"
-        url="/teamName/inventory/check-in"
+        description="Dynamic List Page"
+        url="/teamName/inventory/list/[statusName]"
       />
-      <CheckinListPage
+      <DynamicListPage
+        eventList={eventList}
         securityGroup={securityGroupData}
-        tableColumnList={fields}
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
         userId={userId}
+        tableColumnList={fields}
       />
     </>
   );

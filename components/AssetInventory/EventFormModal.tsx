@@ -128,7 +128,7 @@ const EventFormModal = ({
           form.form_section[0].section_field[0].field_name ===
             "Check In From" ||
           form.form_section[0].section_field[0].field_name === "Check Out To" ||
-          form.form_section[0].section_field[0].field_name === "Assigned To"
+          form.form_section[0].section_field[0].field_name === "Appointed To"
         ) {
           const oldSection = [
             {
@@ -161,25 +161,27 @@ const EventFormModal = ({
       const categorySection = getValues(`sections.${index}`);
       const params = { eventId, userId };
 
+      // Fetch form details and customer list options
       const form = await getInventoryFormDetails(supabaseClient, params);
-
       const { data: customerOption } = await getCustomerList(supabaseClient, {
         teamId: activeTeam.team_id,
       });
 
-      const teamMemberOption = teamMemberList.map((member, index) => ({
+      // Prepare options for team members and customers
+      const teamMemberOption = teamMemberList.map((member, idx) => ({
         option_id: member.team_member_id,
         option_value: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
-        option_order: index,
+        option_order: idx,
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));
-      const customerListOption = customerOption.map((customer, index) => ({
+      const customerListOption = customerOption.map((customer, idx) => ({
         option_id: customer.customer_id,
         option_value: `${customer.customer_name}`,
-        option_order: index,
+        option_order: idx,
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));
 
+      // If no value is selected, reset the section to its original state
       if (value === null) {
         const oldSection = [
           {
@@ -191,52 +193,52 @@ const EventFormModal = ({
         return;
       }
 
-      let newSectionField = [...categorySection.section_field];
+      // Remove the first section before proceeding
+      removeSection(0);
 
-      if (value === "Site") {
-        removeSection(0);
-        newSectionField = [
-          ...form.form_section[0].section_field.filter(
-            (field) => field.field_name !== "Assigned To"
-          ),
-        ];
-      } else if (value === "Person") {
-        removeSection(0);
-        newSectionField = [
-          ...form.form_section[0].section_field.map((field) => {
-            if (field.field_name === "Assigned To") {
-              return {
-                ...field,
-                field_option: teamMemberOption,
-              };
-            } else if (field.field_name === "Customer") {
-              return {
-                ...field,
-                field_option: customerListOption,
-              };
-            }
-            return field;
-          }),
-        ];
-      } else if (value === "Customer") {
-        removeSection(0);
-        newSectionField = [
-          ...form.form_section[0].section_field.map((field) => {
-            if (field.field_name === "Assigned To") {
-              return {
-                ...field,
-                field_option: teamMemberOption,
-              };
-            } else if (field.field_name === "Customer") {
-              return {
-                ...field,
-                field_option: customerListOption,
-              };
-            }
-            return field;
-          }),
-        ];
+      let newSectionField = [...form.form_section[0].section_field];
+
+      // Hiding logic for each category
+      if (value === "Customer") {
+        // Hide "Site," "Department," "Location," "Assigned To"
+        newSectionField = newSectionField.filter(
+          (field) =>
+            field.field_name !== "Site" &&
+            field.field_name !== "Department" &&
+            field.field_name !== "Location" &&
+            field.field_name !== "Assigned To"
+        );
+      } else if (value === "Person" && form.form_name !== "Check In") {
+        newSectionField = newSectionField.filter(
+          (field) =>
+            field.field_name !== "Site" &&
+            field.field_name !== "Location" &&
+            field.field_name !== "Department" &&
+            field.field_name !== "Customer"
+        );
+      } else if (value === "Site") {
+        newSectionField = newSectionField.filter(
+          (field) =>
+            field.field_name !== "Assigned To" &&
+            field.field_name !== "Customer"
+        );
       }
+      newSectionField = newSectionField.map((field) => {
+        if (field.field_name === "Assigned To") {
+          return {
+            ...field,
+            field_option: teamMemberOption,
+          };
+        } else if (field.field_name === "Customer") {
+          return {
+            ...field,
+            field_option: customerListOption,
+          };
+        }
+        return field;
+      });
+
+      // Update the form section with the new fields
       updateSection(index, {
         ...categorySection,
         section_field: newSectionField as typeof categorySection.section_field,

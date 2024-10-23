@@ -213,7 +213,7 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
       />
       <LoadingOverlay visible={isFetchingLocationList} />
       <Flex direction="column" gap="sm">
-        <Title order={2}>List of Locations</Title>
+        <Title order={3}>List of Locations</Title>
         <Text>
           This is the list of locations currently in the system. You can edit or
           delete each location as needed.

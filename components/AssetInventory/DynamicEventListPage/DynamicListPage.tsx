@@ -9,8 +9,8 @@ import {
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
+  EventTableRow,
   InventoryListType,
-  OptionType,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -19,6 +19,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import AssetListFilter from "../AssetListPage/AssetListFilter";
@@ -30,6 +31,7 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroup: SecurityGroupData;
+  eventList: EventTableRow[];
   tableColumnList: {
     label: string;
     value: string;
@@ -49,9 +51,10 @@ export type FilterSelectedValuesType = {
   isAscendingSort?: boolean;
 };
 
-const CheckoutListPage = ({
+const DynamicListPage = ({
   userId,
   siteList,
+  eventList,
   departmentList,
   tableColumnList,
   categoryList,
@@ -61,30 +64,29 @@ const CheckoutListPage = ({
   const supabaseClient = useSupabaseClient();
   const teamMemberList = useTeamMemberList();
   const formList = useFormList();
-
+  const router = useRouter();
+  const status = router.query.statusName as string;
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<FilterSelectedValuesType>({
-      key: "check-out-inventory-request-list-filter",
+      key: `${status}-inventory-request-list-filter`,
       defaultValue: {
         search: "",
         sites: securityGroup.asset.filter.site,
         locations: "",
         department: securityGroup.asset.filter.department,
         category: securityGroup.asset.filter.category,
-        status: "CHECKED OUT",
+        status: "",
         assignedToPerson: [],
         assignedToSite: [],
         isAscendingSort: false,
       },
     });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-
   const filterFormMethods = useForm<FilterSelectedValuesType>({
     defaultValues: localFilter,
     mode: "onChange",
@@ -128,6 +130,11 @@ const CheckoutListPage = ({
       .map((column) => column.value),
   });
 
+  const eventOptions = eventList.map((event) => ({
+    label: event.event_status,
+    value: event.event_status,
+  }));
+
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
@@ -136,7 +143,7 @@ const CheckoutListPage = ({
   const handleFetchRequestList = async (page: number) => {
     try {
       setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) {
+      if (!activeTeam.team_id || !status) {
         console.warn(
           "RequestListPage handleFilterFormsError: active team_id not found"
         );
@@ -153,18 +160,25 @@ const CheckoutListPage = ({
         isAscendingSort,
       } = getValues();
 
+      const { data: eventStatus } = await getEventDetails(supabaseClient, {
+        teamId: activeTeam.team_id,
+        search: status.replace("-", " "),
+      });
+      console.log(eventStatus[0].event_status);
+
       const { data, count } = await getAssetSpreadsheetView(supabaseClient, {
         page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
         search,
-        status: "CHECKED OUT",
+        status: eventStatus[0].event_status,
         assignedToPerson,
         assignedToSite,
         department: securityGroup.asset.filter.department || department,
         locations,
         sites: securityGroup.asset.filter.site || sites,
         category: securityGroup.asset.filter.category || category,
+        teamId: activeTeam.team_id,
       });
 
       setInventoryList(data);
@@ -198,31 +212,23 @@ const CheckoutListPage = ({
       setIsFetchingRequestList(false);
     }
   };
-
   useEffect(() => {
-    const getEventOptions = async () => {
-      if (!activeTeam.team_id) return;
-      const { data } = await getEventDetails(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-
-      const initialEventOptions: OptionType[] = data.map((event) => ({
-        label: event.event_name,
-        value: event.event_id,
-      }));
-
-      setOptionsEvent(initialEventOptions);
-    };
-
-    getEventOptions();
     handlePagination(activePage);
-  }, [activeTeam.team_id, activePage]);
-
+  }, [activeTeam, status]);
   return (
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={4}>Check out List Page</Title>
+          <Title order={3}>
+            {status
+              .split("-")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ")}{" "}
+            List Page
+          </Title>
           <Text>Manage your team assets here.</Text>
         </Box>
       </Flex>
@@ -232,10 +238,10 @@ const CheckoutListPage = ({
             <AssetListFilter
               securityGroupData={securityGroup}
               inventoryList={inventoryList}
-              type={"check out"}
+              type={"dynamic page"}
               selectedRow={selectedRows}
               userId={userId}
-              eventOptions={optionsEvent}
+              eventOptions={eventOptions}
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}
@@ -274,4 +280,4 @@ const CheckoutListPage = ({
   );
 };
 
-export default CheckoutListPage;
+export default DynamicListPage;
