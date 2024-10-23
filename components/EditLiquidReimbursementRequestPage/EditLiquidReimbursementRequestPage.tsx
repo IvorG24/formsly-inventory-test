@@ -876,7 +876,7 @@ const EditLiquidReimbursementRequestPage = ({
 
         const isPED = requestDetailsSectionFieldList.some(
           (field) =>
-            field.field_name === "Department" &&
+            field.field_id === "041579d9-aff1-4508-a5a7-ac20e7bc7cb7" &&
             field.field_response === "Plants and Equipment"
         );
 
@@ -888,11 +888,13 @@ const EditLiquidReimbursementRequestPage = ({
           }`
         );
 
-        const isNotLiquidation = !requestTypeResponse
-          .toLowerCase()
-          .includes("liquidation");
+        const requestTypeWithWAV = ["liquidation", "petty cash fund"];
 
-        if (isNotLiquidation) {
+        const isLiquidationOrPCF = requestTypeWithWAV.some((type) =>
+          requestTypeResponse.toLowerCase().includes(type)
+        );
+
+        if (!isLiquidationOrPCF) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
               (field) =>

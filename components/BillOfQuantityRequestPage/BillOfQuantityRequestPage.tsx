@@ -404,17 +404,23 @@ const BillOfQuantityRequestPage = ({
         typeOfRequest.toLowerCase() === "petty cash fund"
       ) {
         const requestWorkingAdvances = safeParse(
-          sortedLrfRequestDetails[5].field_response[0].request_response
+          sortedLrfRequestDetails[5].field_response[0]
+            ? sortedLrfRequestDetails[5].field_response[0].request_response
+            : ""
         );
         const choiceMatch = workingAdvanceList.find(
           (workingAdvanceItem: { id: string; name: string }) =>
             workingAdvanceItem.name.toLowerCase() ===
             requestWorkingAdvances.toLowerCase()
         );
-        workingAdvances = choiceMatch.id;
-        ticketId = safeParse(
-          sortedLrfRequestDetails[6].field_response[0].request_response
-        );
+        if (choiceMatch && choiceMatch.id) {
+          workingAdvances = choiceMatch.id;
+          ticketId = safeParse(
+            sortedLrfRequestDetails[6].field_response[0]
+              ? sortedLrfRequestDetails[6].field_response[0].request_response
+              : ""
+          );
+        }
       }
 
       const typeOfRequestId = typeList.find(
@@ -447,7 +453,6 @@ const BillOfQuantityRequestPage = ({
         ticketId,
         amount,
       });
-
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
