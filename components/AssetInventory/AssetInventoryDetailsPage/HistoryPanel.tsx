@@ -1,7 +1,7 @@
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { InventoryHistory } from "@/utils/types";
-import { Avatar, Flex, Text } from "@mantine/core";
+import { Avatar, Flex, Group, Stack, Text, TextInput } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 
@@ -26,7 +26,10 @@ const HistoryPanel = ({
   }, [activePage, activeTab]);
 
   return (
-    <>
+    <Stack>
+      <Group>
+        <TextInput placeholder="Search By Action"></TextInput>
+      </Group>
       <DataTable
         fontSize={12}
         style={{
@@ -120,7 +123,7 @@ const HistoryPanel = ({
           },
         ]}
       />
-    </>
+    </Stack>
   );
 };
 

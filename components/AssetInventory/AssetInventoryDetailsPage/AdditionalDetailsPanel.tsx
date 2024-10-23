@@ -55,9 +55,9 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
           <tbody>
             <tr>
               <td>
-                <Text weight={500}>Item Nav Order</Text>
+                <Text weight={500}>CSI Item Code</Text>
               </td>
-              <td>{detail.inventory_request_item_code}</td>
+              <td>{detail.inventory_request_csi_code}</td>
             </tr>
             <tr>
               <td>
@@ -71,6 +71,14 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
               </td>
               <td>{detail.inventory_request_serial_number}</td>
             </tr>
+            {detail.inventory_request_old_asset_number && (
+              <tr>
+                <td>
+                  <Text weight={500}>Old Asset Number</Text>
+                </td>
+                <td>{detail.inventory_request_old_asset_number}</td>
+              </tr>
+            )}
           </tbody>
         </Table>
       </Card>

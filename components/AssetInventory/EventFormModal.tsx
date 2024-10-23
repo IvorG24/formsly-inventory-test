@@ -161,13 +161,13 @@ const EventFormModal = ({
       const categorySection = getValues(`sections.${index}`);
       const params = { eventId, userId };
 
-      // Fetch form details and customer list options
+
       const form = await getInventoryFormDetails(supabaseClient, params);
       const { data: customerOption } = await getCustomerList(supabaseClient, {
         teamId: activeTeam.team_id,
       });
 
-      // Prepare options for team members and customers
+
       const teamMemberOption = teamMemberList.map((member, idx) => ({
         option_id: member.team_member_id,
         option_value: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
@@ -181,7 +181,7 @@ const EventFormModal = ({
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));
 
-      // If no value is selected, reset the section to its original state
+
       if (value === null) {
         const oldSection = [
           {
@@ -198,9 +198,9 @@ const EventFormModal = ({
 
       let newSectionField = [...form.form_section[0].section_field];
 
-      // Hiding logic for each category
+
       if (value === "Customer") {
-        // Hide "Site," "Department," "Location," "Assigned To"
+
         newSectionField = newSectionField.filter(
           (field) =>
             field.field_name !== "Site" &&

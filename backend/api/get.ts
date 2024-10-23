@@ -66,11 +66,13 @@ import {
   InventoryFormType,
   InventoryHistory,
   InventoryListType,
+  InventoryLocationSiteRow,
   InventoryRequestRow,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
+  ItemLevelThreeeDescriptionRow,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   JiraFormslyItemCategoryWithUserDataType,
@@ -7693,28 +7695,15 @@ export const getLocationList = async (
     limit: number;
   }
 ) => {
-  const { site_id, page, limit } = params;
-
-  const start = (page - 1) * limit;
-  const end = start + limit - 1;
-  let query = supabaseClient
-    .schema("inventory_schema")
-    .from("location_table")
-    .select("*", { count: "exact" })
-    .eq("location_is_disabled", false)
-    .range(start, end);
-
-  if (site_id) {
-    query = query.eq("location_site_id", site_id);
-  }
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient.rpc("get_location_list", {
+    input_data: params,
+  });
 
   if (error) throw error;
 
-  return {
-    data: data as LocationTableRow[],
-    totalCount: count ?? 0,
+  return data as {
+    data: InventoryLocationSiteRow[];
+    totalCount: 0;
   };
 };
 
@@ -8097,4 +8086,20 @@ export const getCustomerList = async (
   if (error) throw error;
 
   return { data: data as InventoryCustomerRow[], totalCount: count ?? 0 };
+};
+
+export const getAssetCodeDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { assetName: string | null; teamId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_asset_code_description",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as ItemLevelThreeeDescriptionRow;
 };

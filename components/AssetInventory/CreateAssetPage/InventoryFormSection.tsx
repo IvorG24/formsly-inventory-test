@@ -20,6 +20,7 @@ type RequestFormSectionProps = {
   isEdit?: boolean;
   loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
   assetFormMethods?: {
+    onAssetNameChange?: (index: number, value: string | null) => void;
     onCategoryNameChange: (index: number, value: string | null) => void;
     onSiteNameChange: (index: number, value: string | null) => void;
   };

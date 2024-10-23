@@ -1710,7 +1710,7 @@ export const updateEvent = async (
       const fieldName = field.field_name;
       fieldNamesArray.push(fieldName);
 
-      // Handle file uploads for signature
+
       if (field.field_type === "FILE" && fieldResponse instanceof File) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,

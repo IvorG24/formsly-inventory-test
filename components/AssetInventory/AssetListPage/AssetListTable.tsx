@@ -255,12 +255,14 @@ const AssetListTable = ({
           render: (record) => {
             const {
               site_name,
+              customer_name,
               assignee_user_id,
               assignee_first_name,
               assignee_last_name,
               assignee_team_member_d,
             } = record as {
               site_name: string;
+              customer_name: string;
               assignee_user_id: string | null;
               assignee_first_name: string;
               assignee_last_name: string;
@@ -269,20 +271,16 @@ const AssetListTable = ({
 
             const isAssignedUser = !!assignee_user_id;
             const avatarLabel = isAssignedUser
-              ? `${assignee_first_name[0] + assignee_last_name[0]}`
-              : site_name;
+              ? `${assignee_first_name[0]}${assignee_last_name[0]}`
+              : site_name || customer_name;
 
             return (
               <Flex px={0} gap={8} align="center">
-                {assignee_user_id && (
+                {isAssignedUser && (
                   <Avatar
-                    color={
-                      isAssignedUser
-                        ? getAvatarColor(
-                            Number(`${assignee_user_id?.charCodeAt(0)}`)
-                          )
-                        : undefined
-                    }
+                    color={getAvatarColor(
+                      Number(`${assignee_user_id?.charCodeAt(0)}`)
+                    )}
                     className={classes.requestor}
                     onClick={() =>
                       assignee_team_member_d
@@ -302,7 +300,7 @@ const AssetListTable = ({
                     <Text>{`${assignee_first_name} ${assignee_last_name}`}</Text>
                   </Anchor>
                 ) : (
-                  <Text>{site_name}</Text>
+                  <Text>{site_name || customer_name}</Text>
                 )}
               </Flex>
             );

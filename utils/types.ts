@@ -145,6 +145,9 @@ export type ItemDescriptionFieldUOMTableInsert =
 export type ItemDescriptionFieldUOMTableUpdate =
   Database["item_schema"]["Tables"]["item_description_field_uom_table"]["Update"];
 
+export type ItemLevelThreeeDescriptionRow =
+  Database["item_schema"]["Tables"]["item_level_three_description_table"]["Row"];
+
 export type SupplierTableRow =
   Database["team_schema"]["Tables"]["supplier_table"]["Row"];
 export type SupplierTableInsert =
@@ -2706,6 +2709,7 @@ export type SubCategoryData = {
 
 export type InventoryListType = InventoryRequestRow & {
   site_name?: string;
+  customer_name?: string;
   inventory_request_status_color: string;
   inventory_request_due_date: string;
   request_creator_team_member_id?: string;
@@ -2839,4 +2843,8 @@ export type InventoryDynamicRow = {
   event_signature: string;
   event_notes: string;
   [key: string]: string;
+};
+
+export type InventoryLocationSiteRow = LocationTableRow & {
+  site_name: string;
 };

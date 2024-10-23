@@ -2,7 +2,7 @@ import { checkUniqueValue } from "@/backend/api/get";
 import { updateDrawerData } from "@/backend/api/update";
 import {
   CategoryTableRow,
-  LocationTableRow,
+  InventoryLocationSiteRow,
   SiteTableRow,
   SubCategory,
 } from "@/utils/types";
@@ -23,7 +23,7 @@ type UpdateModalProps = {
   typeOption?: { value: string; label: string }[];
   setCurrentSiteList?: React.Dispatch<React.SetStateAction<SiteTableRow[]>>;
   setCurrentLocationList?: React.Dispatch<
-    React.SetStateAction<LocationTableRow[]>
+    React.SetStateAction<InventoryLocationSiteRow[]>
   >;
   setCurrentCategoryList?: React.Dispatch<
     React.SetStateAction<CategoryTableRow[]>

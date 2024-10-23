@@ -29,6 +29,7 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCalendar,
   IconClock,
+  IconCurrencyPeso,
   IconExternalLink,
   IconFile,
 } from "@tabler/icons-react";
@@ -51,6 +52,7 @@ type RequestFormFieldsProps = {
   isEdit?: boolean;
   isLoading: boolean | undefined;
   assetFormMethods?: {
+    onAssetNameChange?: (index: number, value: string | null) => void;
     onCategoryNameChange: (index: number, value: string | null) => void;
     onSiteNameChange: (index: number, value: string | null) => void;
   };
@@ -210,6 +212,13 @@ const InventoryFormFields = ({
                 value={value as number}
                 onChange={onChange}
                 withAsterisk={field.field_is_required}
+                icon={
+                  ["Cost", "Value", "Amount"].some((keyword) =>
+                    field.field_name.includes(keyword)
+                  ) ? (
+                    <IconCurrencyPeso size={16} />
+                  ) : null
+                }
                 {...inputProps}
                 error={fieldError}
                 maxLength={10}
@@ -303,7 +312,9 @@ const InventoryFormFields = ({
                         sectionIndex,
                         value
                       );
-                      break;
+                      if (assetFormMethods?.onAssetNameChange) {
+                        assetFormMethods.onAssetNameChange(sectionIndex, value);
+                      }
                     case "Check In From":
                       eventFormMethods?.onCheckinCategoryChange(
                         sectionIndex,

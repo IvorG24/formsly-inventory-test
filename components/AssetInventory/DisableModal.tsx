@@ -2,7 +2,7 @@ import { disableDrawerData } from "@/backend/api/update";
 import {
   CategoryTableRow,
   InventoryFieldRow,
-  LocationTableRow,
+  InventoryLocationSiteRow,
   SiteTableRow,
   SubCategory,
 } from "@/utils/types";
@@ -15,7 +15,7 @@ type DisableModalProps = {
   close: () => void;
   setCurrentSiteList?: React.Dispatch<React.SetStateAction<SiteTableRow[]>>;
   setCurrentLocationList?: React.Dispatch<
-    React.SetStateAction<LocationTableRow[]>
+    React.SetStateAction<InventoryLocationSiteRow[]>
   >;
   setCurrentCategoryList?: React.Dispatch<
     React.SetStateAction<CategoryTableRow[]>

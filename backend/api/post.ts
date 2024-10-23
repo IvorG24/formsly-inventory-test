@@ -2598,7 +2598,8 @@ export const createAssetRequest = async (
   const { InventoryFormValues, formId, teamMemberId } = params;
 
   const {
-    item_code,
+    csi_code,
+    description,
     asset_name,
     brand,
     model,
@@ -2642,8 +2643,9 @@ export const createAssetRequest = async (
     requestId,
     formId,
     teamMemberId,
+    description,
     asset_name,
-    item_code,
+    csi_code,
     brand,
     model,
     serial_number,
@@ -2687,7 +2689,8 @@ export const updateAssetRequest = async (
   const { InventoryFormValues, formId, teamMemberId, requestId } = params;
 
   const {
-    item_code,
+    csi_code,
+    description,
     asset_name,
     brand,
     model,
@@ -2737,7 +2740,8 @@ export const updateAssetRequest = async (
     formId,
     teamMemberId,
     asset_name,
-    item_code,
+    csi_code,
+    description,
     brand,
     model,
     serial_number,

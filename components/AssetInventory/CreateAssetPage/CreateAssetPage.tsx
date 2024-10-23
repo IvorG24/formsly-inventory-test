@@ -1,4 +1,8 @@
-import { getLocationOption, getSubFieldOrCustomField } from "@/backend/api/get";
+import {
+  getAssetCodeDescription,
+  getLocationOption,
+  getSubFieldOrCustomField,
+} from "@/backend/api/get";
 import { createAssetRequest, getItemOption } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -101,6 +105,59 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOnAssetNameChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const categorySection = getValues(`sections.${index}`);
+
+      if (value === null) {
+        setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        updateSection(index, {
+          ...categorySection,
+          section_field: form.form_section[1].section_field,
+        });
+        return;
+      }
+
+      const item = await getAssetCodeDescription(supabaseClient, {
+        assetName: value || null,
+        teamId: activeTeam.team_id,
+      });
+
+      // Check if the item contains the necessary data and map the section fields
+      const newSectionField = categorySection.section_field.map((field) => {
+        if (field.field_name === "CSI Item Code") {
+          return {
+            ...field,
+            field_response: item?.item_level_three_description_csi_code || "",
+          };
+        }
+        if (field.field_name === "Description") {
+          return {
+            ...field,
+            field_response: item?.item_level_three_description || "",
+          };
+        }
+        return field;
+      });
+
+      updateSection(index, {
+        ...categorySection,
+        section_field: newSectionField as Omit<
+          (typeof categorySection.section_field)[0],
+          "field_special_field_template_id"
+        >[],
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     }
   };
 
@@ -262,8 +319,8 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   return (
     <Container>
       <LoadingOverlay visible={isLoading} />
-      <Title order={2} color="dimmed">
-        Create Asset
+      <Title order={3} color="dimmed">
+        Create Asset Form
       </Title>
       <Space h="md" />
       <FormProvider {...requestFormMethods}>
@@ -280,6 +337,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={formslyFormName}
                     assetFormMethods={{
+                      onAssetNameChange: handleOnAssetNameChange,
                       onCategoryNameChange: handleOnCategoryNameChange,
                       onSiteNameChange: handleOnSiteNameChange,
                     }}

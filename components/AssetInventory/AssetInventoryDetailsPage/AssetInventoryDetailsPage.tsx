@@ -286,7 +286,7 @@ const AssetInventoryDetailsPage = ({
                 <Box
                   style={{
                     width: "100%",
-                    height: "300px", // Adjust the height as needed
+                    height: "330px", // Adjust the height as needed
                     backgroundColor: "gray",
                     display: "flex",
                     justifyContent: "center",
@@ -319,6 +319,8 @@ const AssetInventoryDetailsPage = ({
                         if (
                           [
                             "inventory_request_tag_id",
+                            "inventory_request_description",
+                            "inventory_request_equipment_type",
                             "inventory_request_brand",
                             "inventory_request_model",
                             "inventory_request_site",
@@ -401,6 +403,7 @@ const AssetInventoryDetailsPage = ({
                       </td>
                       <td>
                         {detail.site_name || ""}
+                        {detail.customer_name || ""}
                         {`${detail.assignee_first_name || ""} ${detail.assignee_last_name || ""}`}
                       </td>
                     </tr>

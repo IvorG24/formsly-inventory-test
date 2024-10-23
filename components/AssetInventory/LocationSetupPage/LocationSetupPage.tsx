@@ -5,7 +5,7 @@ import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   InventoryAssetFormValues,
-  LocationTableRow,
+  InventoryLocationSiteRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -43,7 +43,7 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
   const activeTeam = useActiveTeam();
   const [activePage, setActivePage] = useState(1);
   const [currentLocationList, setCurrentLocationList] = useState<
-    LocationTableRow[]
+    InventoryLocationSiteRow[]
   >([]);
   const [locationCount, setLocationCount] = useState(0);
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -94,6 +94,7 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
         limit: ROW_PER_PAGE,
         page,
       });
+
       setCurrentLocationList(data);
       setLocationCount(totalCount);
     } catch (e) {
@@ -175,6 +176,7 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
         location_name: result.result_name,
         location_is_disabled: false,
         location_site_id: result.result_id,
+        site_name: data?.site_name || "",
       };
 
       setCurrentLocationList((prev) => [...prev, newData]);
@@ -281,9 +283,15 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
           columns={[
             {
               accessor: "location_name",
-              width: "85%",
+              width: "50%",
               title: "Location Name",
               render: (location) => <Text>{location.location_name}</Text>,
+            },
+            {
+              accessor: "site_name",
+              width: "50%",
+              title: "Site Name",
+              render: (location) => <Text>{location.site_name}</Text>,
             },
             {
               accessor: "actions",

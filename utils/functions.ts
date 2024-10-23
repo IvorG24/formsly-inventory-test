@@ -373,7 +373,8 @@ export const extractInventoryData = (
 ) => {
   const inventoryData: Record<string, string> = {
     asset_name: "",
-    item_code: "",
+    csi_code: "",
+    description:"",
     brand: "",
     model: "",
     serial_number: "",
@@ -392,7 +393,8 @@ export const extractInventoryData = (
 
   const fieldMapping: Record<string, keyof typeof inventoryData> = {
     "Asset Name": "asset_name",
-    "NAV Item Code": "item_code",
+    "CSI Item Code": "csi_code",
+    "Description":"description",
     Brand: "brand",
     Model: "model",
     "Serial No.": "serial_number",
@@ -412,9 +414,7 @@ export const extractInventoryData = (
   for (const section of InventoryFormValues.sections) {
     for (const field of section.section_field) {
       const mappedKey = fieldMapping[field.field_name];
-
       let responseValue = field.field_response;
-
       if (
         typeof responseValue === "boolean" ||
         responseValue !== undefined ||
@@ -427,7 +427,6 @@ export const extractInventoryData = (
         }
 
         if (mappedKey) {
-          // Handle string, number, and date types
           inventoryData[mappedKey] =
             typeof responseValue === "string" ||
             typeof responseValue === "number"
