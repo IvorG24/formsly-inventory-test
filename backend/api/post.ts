@@ -11,6 +11,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
+  capitalizeFirstWord,
   editImageWithUUID,
   extractInventoryData,
   formatJiraItemUserTableData,
@@ -2690,7 +2691,9 @@ export const createAssetRequest = async (
 
   const responseValues = fieldResponse
     .map((response) => {
-      const responseValue = response.inventory_response_value ?? "";
+      const responseValue = capitalizeFirstWord(
+        response.inventory_response_value ?? ""
+      );
       return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
     })
     .join(",");
@@ -2785,7 +2788,7 @@ export const updateAssetRequest = async (
   const formattedResponseValues = fieldResponse
     .filter((response) => response.inventory_response_value !== null)
     .map((response) => {
-      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
+      return `('${capitalizeFirstWord(response.inventory_response_value)}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
     });
 
   const responseValues =

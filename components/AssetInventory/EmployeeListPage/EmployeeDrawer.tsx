@@ -1,0 +1,149 @@
+import { getFormOnLoad, getLocationOption } from "@/backend/api/get";
+import { useUserProfile } from "@/stores/useUserStore";
+import { InventoryFormType } from "@/utils/types";
+import { Box, Button, Drawer, Group } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import InventoryFormSection from "../CreateAssetPage/InventoryFormSection";
+import { InventoryFormValues } from "../EventFormModal";
+
+type Props = {
+  isOpen: boolean;
+  close: () => void;
+};
+
+const EmployeeDrawer = ({ isOpen, close }: Props) => {
+  const [formData, setFormData] = useState<InventoryFormType>();
+  const userProfile = useUserProfile();
+  const supabaseClient = useSupabaseClient();
+  const requestFormMethods = useForm<InventoryFormValues>();
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const {
+    fields: formSections,
+    replace: replaceSection,
+    update: updateSection,
+  } = useFieldArray({
+    control,
+    name: "sections",
+  });
+  useEffect(() => {
+    const getInventoryForm = async () => {
+      try {
+        if (!userProfile || !isOpen) return;
+        const { form } = await getFormOnLoad(supabaseClient, {
+          userId: userProfile?.user_id,
+          formId: "93b73759-26b0-46ee-9003-d332391f07f2",
+        });
+
+        replaceSection(form.form_section);
+        setFormData(form);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong",
+          color: "red",
+        });
+      }
+    };
+    getInventoryForm();
+  }, [userProfile, replaceSection, isOpen]);
+
+  const handleOnSiteNameChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    try {
+      const siteLocationSection = getValues(`sections.${index}`);
+
+      if (value === null) {
+        setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        updateSection(index, {
+          ...siteLocationSection,
+          section_field: siteLocationSection.section_field,
+        });
+        return;
+      }
+
+      const data = await getLocationOption(supabaseClient, {
+        siteName: value,
+      });
+
+      const optionList = data.map((option, index) => ({
+        option_id: option.location_id,
+        option_value: option.location_name,
+        option_order: index,
+        option_field_id: siteLocationSection.section_field[0].field_id,
+      }));
+      const newSectionField = siteLocationSection.section_field.map((field) => {
+        if (field.field_name === "Location") {
+          return {
+            ...field,
+            field_option: optionList,
+          };
+        }
+        return { ...field };
+      });
+
+      updateSection(index, {
+        ...siteLocationSection,
+        section_field: newSectionField as Omit<
+          (typeof siteLocationSection.section_field)[0],
+          "field_special_field_template_id"
+        >[],
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later hey.",
+        color: "red",
+      });
+    }
+  };
+  const handleFormSubmit = async (data: InventoryFormValues) => {
+    try {
+      console.log(data);
+    } catch (e) {}
+  };
+
+  return (
+    <Drawer
+      title={formData?.form_description}
+      position="right"
+      opened={isOpen}
+      onClose={() => {
+        close();
+      }}
+    >
+      <FormProvider {...requestFormMethods}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          {formSections.map((section, idx) => {
+            const sectionFields = section.section_field || [];
+            return (
+              <Box key={section.section_id}>
+                <InventoryFormSection
+                  type="Modal"
+                  key={section.section_id}
+                  section={{
+                    ...section,
+                    section_field: sectionFields,
+                  }}
+                  eventFormMethods={{
+                    onSiteCategorychange: handleOnSiteNameChange,
+                  }}
+                  sectionIndex={idx}
+                />
+              </Box>
+            );
+          })}
+          <Group position="right" mt="md">
+            <Button fullWidth type="submit">
+              Submit
+            </Button>
+          </Group>
+        </form>
+      </FormProvider>
+    </Drawer>
+  );
+};
+
+export default EmployeeDrawer;

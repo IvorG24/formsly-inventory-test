@@ -22,11 +22,13 @@ import {
   IconGps,
   IconListDetails,
   IconLocation,
+  IconNetwork,
   IconPuzzle,
   IconSettings,
   IconSettingsUp,
   IconTimelineEvent,
   IconUserCancel,
+  IconUserCode,
   TablerIconsProps,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
@@ -101,6 +103,18 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       icon: IconBriefcaseOff,
       label: "Advanced",
       subLinks: [
+        {
+          id: "employee",
+          label: "List of Employee",
+          icon: IconUserCode,
+          href: `/${formattedTeamName}/inventory/employee`,
+        },
+        {
+          id: "customer",
+          label: "List of Customer",
+          icon: IconNetwork,
+          href: `/${formattedTeamName}/inventory/customer`,
+        },
         {
           id: "security-groups",
           label: "Security Group",

@@ -368,6 +368,20 @@ export const getFilterConditionFromArray = ({
       break;
   }
 };
+export const capitalizeFirstWord = (str: string) => {
+  if (!str) return str;
+  const firstSpaceIndex = str.indexOf(" ");
+  if (firstSpaceIndex === -1) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  return (
+    str.charAt(0).toUpperCase() +
+    str.slice(1, firstSpaceIndex) +
+    str.slice(firstSpaceIndex)
+  );
+};
+
 export const extractInventoryData = (
   InventoryFormValues: InventoryFormValues
 ) => {
@@ -430,7 +444,7 @@ export const extractInventoryData = (
           inventoryData[mappedKey] =
             typeof responseValue === "string" ||
             typeof responseValue === "number"
-              ? String(responseValue)
+              ? capitalizeFirstWord(String(responseValue))
               : responseValue instanceof Date
                 ? responseValue.toISOString()
                 : "";

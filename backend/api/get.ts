@@ -62,6 +62,7 @@ import {
   InterviewOnlineMeetingTableRow,
   InventoryCustomerRow,
   InventoryDynamicRow,
+  InventoryEmployeeList,
   InventoryFieldRow,
   InventoryFormType,
   InventoryHistory,
@@ -8145,4 +8146,53 @@ export const getAssetCodeDescription = async (
   if (error) throw error;
 
   return data as ItemLevelThreeeDescriptionRow;
+};
+
+export const getEmployeeInventoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { search?: string; page: number; limit: number; teamID: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_employee_inventory_list",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    data: InventoryEmployeeList[];
+    totalCount: 0;
+  };
+};
+export const uploadCSVFileEmployee = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { parsedData: InventoryEmployeeList[] }
+) => {
+  const { parsedData } = params;
+  const { data, error } = await supabaseClient.rpc("import_employee_data", {
+    input_data: { employees: parsedData },
+  });
+
+  if (error) throw error;
+
+  return data;
+};
+export const getFormOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { formId: string; userId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_inventory_request_page_on_load",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    form: InventoryFormType;
+  };
 };

@@ -251,6 +251,7 @@ const AssetListTable = ({
           accessor: "assignee_first_name",
           title: "Assigned To",
           sortable: true,
+          width: 180,
           hidden: checkIfColumnIsHidden("assignee_first_name"),
           render: (record) => {
             const {
@@ -311,6 +312,7 @@ const AssetListTable = ({
           accessor: "request_creator_user_id",
           title: "Created By",
           sortable: true,
+          width: 200,
           hidden: checkIfColumnIsHidden("request_creator_user_id"),
           render: (record) => {
             const {
@@ -363,6 +365,7 @@ const AssetListTable = ({
           accessor: "view",
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
+          width: 180,
           textAlignment: "center",
           render: ({ inventory_request_tag_id }) => (
             <ActionIcon

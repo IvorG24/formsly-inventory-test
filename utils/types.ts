@@ -2848,3 +2848,9 @@ export type InventoryDynamicRow = {
 export type InventoryLocationSiteRow = LocationTableRow & {
   site_name: string;
 };
+
+export type InventoryEmployeeList = SCICEmployeeTableRow & {
+  site_name: string;
+  location_name: string;
+  team_department_name: string;
+};
