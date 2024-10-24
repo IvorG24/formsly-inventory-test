@@ -34,7 +34,6 @@
     "@types/node": "20.1.7",
     "@types/react": "18.2.6",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
-    "@vercel/speed-insights": "^1.0.1",
     "chart.js": "^4.3.0",
     "chartjs-plugin-datalabels": "^2.2.0",
     "compressorjs": "^1.2.1",

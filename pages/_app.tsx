@@ -1,7 +1,6 @@
 import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
 import { RouterTransition } from "@/components/RouterTransition/RouterTransition";
 import { useIsLoading } from "@/stores/useLoadingStore";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import {
   ColorScheme,
@@ -71,7 +70,6 @@ export default function App(
               <Suspense fallback={<Loader />}>
                 <Component {...pageProps} />
               </Suspense>
-              <SpeedInsights />
             </Layout>
           </SessionContextProvider>
         </ModalsProvider>

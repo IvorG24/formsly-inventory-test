@@ -12,6 +12,7 @@ import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
   capitalizeEachWord,
+  escapeQuotesForObject,
   formatTeamNameToUrlKey,
   getInitials,
 } from "@/utils/string";
@@ -203,8 +204,12 @@ const JobOfferMainTableRow = ({
         }
       );
 
+      const escapedData = escapeQuotesForObject(
+        data as unknown as Record<string, string>
+      );
+
       await addJobOffer(supabaseClient, {
-        ...data,
+        ...(escapedData as Omit<JobOfferFormType, "attachment">),
         teamMemberId: teamMember.team_member_id,
         requestReferenceId: item.hr_request_reference_id,
         userEmail: item.application_information_email,

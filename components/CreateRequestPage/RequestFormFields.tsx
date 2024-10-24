@@ -946,6 +946,8 @@ const RequestFormFields = ({
                       );
                       break;
                     case "Requesting Project":
+                    case "Project Responsible for PCF Charges":
+                    case "Requesting Project Chargeable":
                       itemFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
                       otherExpensesMethods?.onProjectNameChange(value);
@@ -1056,6 +1058,7 @@ const RequestFormFields = ({
                       );
                       break;
                     case "Department":
+                    case "Chargeable Department":
                       requestForPaymentFormMethods?.onDepartmentChange(
                         value,
                         prevValue as string | null

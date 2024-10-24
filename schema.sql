@@ -4079,14 +4079,14 @@ AS $$
 
     const memberProjectToSelect = plv8.execute(
       `
-        SELECT 
-          tpmt2.team_project_member_id, 
-          tpt2.team_project_name 
-        FROM team_schema.team_project_member_table tpmt2 
-        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
-        WHERE 
-          tpmt2.team_member_id='${teamMemberId}' 
-        ORDER BY tpt2.team_project_name ASC 
+        SELECT
+          tpmt2.team_project_member_id,
+          tpt2.team_project_name
+        FROM team_schema.team_project_member_table tpmt2
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id
+        WHERE
+          tpmt2.team_member_id='${teamMemberId}'
+        ORDER BY tpt2.team_project_name ASC
         LIMIT 10
       `
     );
@@ -4098,17 +4098,17 @@ AS $$
 
       projectList = plv8.execute(
         `
-          SELECT 
-            tpmt.team_project_member_id, 
-            ( 
-              SELECT row_to_json(tpt) 
-              FROM team_schema.team_project_table tpt 
-              WHERE 
+          SELECT
+            tpmt.team_project_member_id,
+            (
+              SELECT row_to_json(tpt)
+              FROM team_schema.team_project_table tpt
+              WHERE
                 tpt.team_project_id = tpmt.team_project_id
-            ) AS team_project 
-            FROM team_schema.team_project_member_table tpmt 
-            WHERE 
-              tpmt.team_member_id='${teamMemberId}' 
+            ) AS team_project
+            FROM team_schema.team_project_member_table tpmt
+            WHERE
+              tpmt.team_member_id='${teamMemberId}'
               AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
         `
       );
@@ -5710,9 +5710,9 @@ AS $$
         });
 
         const departments = plv8.execute(`
-            SELECT team_department_id, team_department_name 
-            FROM team_schema.team_department_table 
-            WHERE 
+            SELECT team_department_id, team_department_name
+            FROM team_schema.team_department_table
+            WHERE
                 team_department_is_disabled=FALSE
             ORDER BY team_department_name
         `);
@@ -5727,8 +5727,8 @@ AS $$
         });
 
         const bankList = plv8.execute(`
-            SELECT * 
-                FROM lookup_schema.bank_list_table 
+            SELECT *
+                FROM lookup_schema.bank_list_table
             ORDER BY bank_label
         `);
         const bankListOptions = bankList.map((bank, index) => {
@@ -5747,7 +5747,7 @@ AS $$
                 case 'ef1ca48b-89a7-4f9f-9430-1658284e18cf':
                     currentField.field_option = projectOptions;
                     break;
-                
+
                 case '041579d9-aff1-4508-a5a7-ac20e7bc7cb7':
                     currentField.field_option = departmentOptions;
                     break;
@@ -7731,7 +7731,7 @@ plv8.subtransaction(function(){
         INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           AND team_member_team_id = '${teamId}'
       WHERE
-        field_name = 'General Name' AND
+        field_name = 'General Name'
     `
   )[0].field_id;
 
@@ -17765,7 +17765,7 @@ AS $$
         )[0];
       }
 
-      
+
 
       return {
         ...jobOffer,
@@ -19926,12 +19926,12 @@ AS $$
 
     const memberProjectToSelect = plv8.execute(
       `
-        SELECT 
-          tpmt2.team_project_member_id, 
-          tpt2.team_project_name 
-        FROM team_schema.team_project_member_table tpmt2 
-        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id 
-        WHERE 
+        SELECT
+          tpmt2.team_project_member_id,
+          tpt2.team_project_name
+        FROM team_schema.team_project_member_table tpmt2
+        INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id
+        WHERE
           tpmt2.team_member_id='${teamMemberId}'
           ${searchValue}
         ORDER BY tpt2.team_project_name ASC
@@ -19947,17 +19947,17 @@ AS $$
 
       projectList = plv8.execute(
         `
-          SELECT 
-            tpmt.team_project_member_id, 
-            ( 
-              SELECT row_to_json(tpt) 
-              FROM team_schema.team_project_table tpt 
-              WHERE 
+          SELECT
+            tpmt.team_project_member_id,
+            (
+              SELECT row_to_json(tpt)
+              FROM team_schema.team_project_table tpt
+              WHERE
                 tpt.team_project_id = tpmt.team_project_id
-            ) AS team_project 
-            FROM team_schema.team_project_member_table tpmt 
-            WHERE 
-              tpmt.team_member_id='${teamMemberId}' 
+            ) AS team_project
+            FROM team_schema.team_project_member_table tpmt
+            WHERE
+              tpmt.team_member_id='${teamMemberId}'
               AND tpmt.team_project_member_id IN (${memberProjectToSelectArray})
         `
       );
@@ -23181,6 +23181,34 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.scic_employee
 CREATE POLICY "Allow READ for anon users" ON lookup_schema.scic_employee_table
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.scic_employee_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role"
+ON lookup_schema.scic_employee_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.scic_employee_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role"
+ON lookup_schema.scic_employee_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 --- form_schema.special_field_template_table
 ALTER TABLE form_schema.special_field_template_table ENABLE ROW LEVEL SECURITY;

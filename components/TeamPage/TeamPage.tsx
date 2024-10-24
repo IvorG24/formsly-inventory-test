@@ -39,6 +39,7 @@ import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
 import LeaveTeamSection from "./LeaveTeamSection";
 import QuickOnboarding from "./QuickOnboarding";
+import TeamEmployee from "./TeamEmployee/TeamEmployee";
 import AdminGroup from "./TeamGroup/AdminGroup";
 import ApproverGroup from "./TeamGroup/ApproverGroup";
 import TeamGroups from "./TeamGroup/TeamGroups/TeamGroups";
@@ -423,7 +424,12 @@ const TeamPage = ({
         isOwnerOrAdmin={isOwnerOrAdmin}
         teamId={initialTeam.team_id}
       />
-
+      {isOwnerOrAdmin && (
+        <TeamEmployee
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          teamId={initialTeam.team_id}
+        />
+      )}
       {isOwnerOrAdmin && (
         <>
           <InviteMember

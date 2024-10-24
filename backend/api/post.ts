@@ -70,6 +70,8 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
+  SCICEmployeeTableInsert,
+  SCICEmployeeTableUpdate,
   securityGroupsFormValues,
   ServiceForm,
   ServiceScopeChoiceTableInsert,
@@ -2581,6 +2583,60 @@ export const createSSSID = async (
     .schema("user_schema")
     .from("user_sss_table")
     .insert(sssData);
+  if (error) throw error;
+};
+
+export const checkHRISNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    hrisNumber: string;
+  }
+) => {
+  const { hrisNumber } = params;
+  let isUnique = false;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("scic_employee_table")
+    .select("scic_employee_hris_id_number")
+    .eq("scic_employee_hris_id_number", hrisNumber)
+    .limit(1);
+  if (error) throw error;
+
+  if (data.length > 0) {
+    isUnique = true;
+  }
+
+  return isUnique;
+};
+
+export const createNewEmployee = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeData: SCICEmployeeTableInsert;
+  }
+) => {
+  const { employeeData } = params;
+
+  const { error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("scic_employee_table")
+    .insert(employeeData);
+  if (error) throw error;
+};
+
+export const updateEmployee = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeData: SCICEmployeeTableUpdate;
+  }
+) => {
+  const { employeeData } = params;
+
+  const { error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("scic_employee_table")
+    .update(employeeData)
+    .eq("scic_employee_id", employeeData.scic_employee_id as string);
   if (error) throw error;
 };
 
