@@ -2,7 +2,7 @@ import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { InventoryHistory, OptionType } from "@/utils/types";
-import { Avatar, Flex, Group, MultiSelect, Stack, Text } from "@mantine/core";
+import { Avatar, Flex, MultiSelect, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useFocusWithin } from "@mantine/hooks";
 import { DataTable } from "mantine-datatable";
@@ -62,7 +62,7 @@ const HistoryPanel = ({
 
   return (
     <Stack>
-      <Group spacing={"xl"}>
+      <Flex justify="space-between">
         <Controller
           control={control}
           name="date"
@@ -130,7 +130,7 @@ const HistoryPanel = ({
             />
           )}
         />
-      </Group>
+      </Flex>
       <DataTable
         fontSize={12}
         style={{
