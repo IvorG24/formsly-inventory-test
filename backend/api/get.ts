@@ -7684,6 +7684,7 @@ export const getGroupList = async (
     totalCount: count ?? 0,
   };
 };
+
 export const getSiteList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -8015,6 +8016,7 @@ export const getCustomFieldDetails = async (
 
   return data as customFieldFormValues;
 };
+
 export const getAssetId = async (
   supabaseClient: SupabaseClient<Database>,
   params: { tagId: string }
@@ -8064,9 +8066,17 @@ export const getEventsHistoryData = async (
     totalCount: number;
   };
 };
+
 export const getAssetHistoryData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page?: number; limit?: number; assetId: string }
+  params: {
+    page?: number;
+    limit?: number;
+    assetId: string;
+    date?: string;
+    actionBy?: string[];
+    event?: string[];
+  }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_asset_history", {
     input_data: params,

@@ -161,12 +161,10 @@ const EventFormModal = ({
       const categorySection = getValues(`sections.${index}`);
       const params = { eventId, userId };
 
-
       const form = await getInventoryFormDetails(supabaseClient, params);
       const { data: customerOption } = await getCustomerList(supabaseClient, {
         teamId: activeTeam.team_id,
       });
-
 
       const teamMemberOption = teamMemberList.map((member, idx) => ({
         option_id: member.team_member_id,
@@ -180,7 +178,6 @@ const EventFormModal = ({
         option_order: idx,
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));
-
 
       if (value === null) {
         const oldSection = [
@@ -198,9 +195,7 @@ const EventFormModal = ({
 
       let newSectionField = [...form.form_section[0].section_field];
 
-
       if (value === "Customer") {
-
         newSectionField = newSectionField.filter(
           (field) =>
             field.field_name !== "Site" &&
@@ -257,13 +252,12 @@ const EventFormModal = ({
   ) => {
     try {
       const siteLocationSection = getValues(`sections.${index}`);
-      const params = { eventId, userId };
-      const form = await getInventoryFormDetails(supabaseClient, params);
+
       if (value === null) {
         setValue(`sections.${index}.section_field.${0}.field_response`, "");
         updateSection(index, {
           ...siteLocationSection,
-          section_field: form.form_section[index].section_field,
+          section_field: siteLocationSection.section_field,
         });
         return;
       }

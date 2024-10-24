@@ -8,7 +8,8 @@ import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { excludedKeys, ROW_PER_PAGE } from "@/utils/constant";
+import { formatLabel } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   InventoryDynamicRow,
@@ -36,6 +37,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconDotsVertical, IconEdit } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import EventFormModal from "../EventFormModal";
 import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
 import AssetLinkPanel from "./AssetLinkPanel";
@@ -46,47 +48,10 @@ type Props = {
   asset_details: InventoryListType[];
 };
 
-const excludedKeys = [
-  "inventory_request_name",
-  "request_creator_first_name",
-  "request_creator_last_name",
-  "site_name",
-  "inventory_assignee_team_member_id",
-  "request_creator_team_member_id",
-  "request_creator_user_id",
-  "assignee_user_id",
-  "inventory_assignee_asset_request_id",
-  "request_creator_avatar",
-  "assignee_team_member_id",
-  "assignee_first_name",
-  "assignee_last_name",
-  "inventory_request_purchase_date",
-  "inventory_request_purchase_from",
-  "inventory_request_purchase_order",
-  "inventory_request_created_by",
-  "inventory_request_created",
-  "inventory_request_cost",
-  "inventory_assignee_site_id",
-  "inventory_request_form_id",
-  "inventory_request_status_color",
-  "inventory_request_item_code",
-  "inventory_request_serial_number",
-  "inventory_request_si_number",
-  "inventory_event_date_created",
-];
-
-const formatLabel = (key: string) => {
-  if (key === "inventory_request_tag_id") {
-    return "Asset Tag ID";
-  } else if (key === "inventory_request_si_number") {
-    return "SI number";
-  } else if (key === "inventory_request_item_code") {
-    return "Item NAV Code";
-  }
-  const formattedKey = key.replace(/^inventory_request_/, "");
-  return formattedKey
-    .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+export type historyFilterForms = {
+  event: string[];
+  date: string;
+  actionBy: string[];
 };
 
 const AssetInventoryDetailsPage = ({
@@ -97,21 +62,25 @@ const AssetInventoryDetailsPage = ({
   const user = useUserProfile();
   const router = useRouter();
   const teamMemberList = useTeamMemberList();
+  const securityGroup = useSecurityGroup();
 
   const assetId = router.query.assetId as string;
   const [isLoading, setIsloading] = useState(false);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
+  const [statusList, setStatusList] = useState<OptionType[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assetDetails, setAssetDetails] =
     useState<InventoryListType[]>(initialDetails);
+
   const [eventHistoryData, setEventHistoryData] =
     useState<InventoryDynamicRow[]>();
   const [totalRecords, setTotalRecords] = useState(0);
+
   const [assetHistoryData, setAssetHistoryData] =
     useState<InventoryHistory[]>();
   const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
-  const securityGroup = useSecurityGroup();
   const [activeTab, setActiveTab] = useState<string>("details");
+
   const canEdit =
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
@@ -146,7 +115,17 @@ const AssetInventoryDetailsPage = ({
           value: event.event_id,
         })
       );
+      const initialStatusOptions: OptionType[] = [
+        ...data.map((event) => ({
+          label: event.event_name,
+          value: event.event_name.toUpperCase(),
+        })),
+        { label: "Link As Child", value: "LINK AS CHILD" },
+        { label: "Link As Parent", value: "LINK AS PARENT" },
+        { label: "Update", value: "UPDATE" },
+      ];
 
+      setStatusList(initialStatusOptions);
       setOptionsEvent(initialEventOptions);
     };
 
@@ -156,6 +135,15 @@ const AssetInventoryDetailsPage = ({
   const handleMenuClick = (eventId: string) => {
     setSelectedEventId(eventId);
   };
+  const filterFormMethods = useForm<historyFilterForms>({
+    defaultValues: {
+      event: [],
+      date: "",
+      actionBy: [],
+    },
+    mode: "onChange",
+  });
+  const { handleSubmit, getValues } = filterFormMethods;
 
   const fetchAssetDetails = async () => {
     try {
@@ -200,16 +188,22 @@ const AssetInventoryDetailsPage = ({
     try {
       if (!assetId) return;
       setIsloading(true);
+      const { actionBy, event, date } = getValues();
+
       const { data, totalCount } = await getAssetHistoryData(supabaseClient, {
         assetId,
         page: page ? page : 0,
         limit: ROW_PER_PAGE,
+        actionBy: actionBy ?? [],
+        event: event ?? [],
+        date: date ?? "",
       });
 
       setIsloading(false);
       setAssetHistoryRecord(totalCount);
       setAssetHistoryData(data);
     } catch (e) {
+      setIsloading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -225,6 +219,12 @@ const AssetInventoryDetailsPage = ({
 
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
+  };
+
+  const handleFilterForms = async () => {
+    try {
+      await fetchHistoryPanel(1);
+    } catch (e) {}
   };
 
   return (
@@ -479,12 +479,17 @@ const AssetInventoryDetailsPage = ({
               </Tabs.Panel>
 
               <Tabs.Panel value="history" mt="md">
-                <HistoryPanel
-                  activeTab={activeTab}
-                  fetchHistoryPanel={fetchHistoryPanel}
-                  totalRecord={assetHistoryRecord}
-                  asset_history={assetHistoryData || []}
-                />
+                <FormProvider {...filterFormMethods}>
+                  <form onSubmit={handleSubmit(handleFilterForms)}>
+                    <HistoryPanel
+                      statusList={statusList}
+                      activeTab={activeTab}
+                      fetchHistoryPanel={fetchHistoryPanel}
+                      totalRecord={assetHistoryRecord}
+                      asset_history={assetHistoryData || []}
+                    />
+                  </form>
+                </FormProvider>
               </Tabs.Panel>
             </Tabs>
           </Box>

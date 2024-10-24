@@ -1,37 +1,37 @@
 import {
-  MAX_FILE_SIZE,
-  MAX_FILE_SIZE_IN_MB,
-  MAX_INT,
-  MAX_TEXT_LENGTH,
-  SELECT_OPTION_LIMIT,
+    MAX_FILE_SIZE,
+    MAX_FILE_SIZE_IN_MB,
+    MAX_INT,
+    MAX_TEXT_LENGTH,
+    SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
 import { parseJSONIfValid } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
-  ActionIcon,
-  Autocomplete,
-  Checkbox,
-  FileInput,
-  Flex,
-  Loader,
-  MultiSelect,
-  NumberInput,
-  Radio,
-  Select,
-  Stack,
-  Switch,
-  TextInput,
-  Textarea,
-  Tooltip,
+    ActionIcon,
+    Autocomplete,
+    Checkbox,
+    FileInput,
+    Flex,
+    Loader,
+    MultiSelect,
+    NumberInput,
+    Radio,
+    Select,
+    Stack,
+    Switch,
+    TextInput,
+    Textarea,
+    Tooltip,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import {
-  IconCalendar,
-  IconClock,
-  IconCurrencyPeso,
-  IconExternalLink,
-  IconFile,
+    IconCalendar,
+    IconClock,
+    IconCurrencyPeso,
+    IconExternalLink,
+    IconFile,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
@@ -306,15 +306,18 @@ const InventoryFormFields = ({
                         value
                       );
                       break;
+                    case "Asset Name":
+                      if (assetFormMethods?.onAssetNameChange) {
+                        assetFormMethods.onAssetNameChange(sectionIndex, value);
+                      }
+                      break;
                     case "Site":
                       assetFormMethods?.onSiteNameChange(sectionIndex, value);
                       eventFormMethods?.onSiteCategorychange(
                         sectionIndex,
                         value
                       );
-                      if (assetFormMethods?.onAssetNameChange) {
-                        assetFormMethods.onAssetNameChange(sectionIndex, value);
-                      }
+                      break;
                     case "Check In From":
                       eventFormMethods?.onCheckinCategoryChange(
                         sectionIndex,

@@ -129,7 +129,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         teamId: activeTeam.team_id,
       });
 
-      // Check if the item contains the necessary data and map the section fields
       const newSectionField = categorySection.section_field.map((field) => {
         if (field.field_name === "CSI Item Code") {
           return {

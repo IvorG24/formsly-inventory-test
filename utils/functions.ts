@@ -374,7 +374,7 @@ export const extractInventoryData = (
   const inventoryData: Record<string, string> = {
     asset_name: "",
     csi_code: "",
-    description:"",
+    description: "",
     brand: "",
     model: "",
     serial_number: "",
@@ -394,7 +394,7 @@ export const extractInventoryData = (
   const fieldMapping: Record<string, keyof typeof inventoryData> = {
     "Asset Name": "asset_name",
     "CSI Item Code": "csi_code",
-    "Description":"description",
+    Description: "description",
     Brand: "brand",
     Model: "model",
     "Serial No.": "serial_number",
@@ -534,4 +534,18 @@ export const editImageWithUUID = (file: File): Promise<File> => {
 
     reader.readAsDataURL(file);
   });
+};
+
+export const formatLabel = (key: string) => {
+  if (key === "inventory_request_tag_id") {
+    return "Asset Tag ID";
+  } else if (key === "inventory_request_si_number") {
+    return "SI number";
+  } else if (key === "inventory_request_item_code") {
+    return "Item NAV Code";
+  }
+  const formattedKey = key.replace(/^inventory_request_/, "");
+  return formattedKey
+    .replace(/_/g, " ")
+    .replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
 };

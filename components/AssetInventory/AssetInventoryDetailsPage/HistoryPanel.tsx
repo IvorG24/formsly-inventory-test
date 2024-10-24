@@ -1,13 +1,19 @@
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
-import { InventoryHistory } from "@/utils/types";
-import { Avatar, Flex, Group, Stack, Text, TextInput } from "@mantine/core";
+import { InventoryHistory, OptionType } from "@/utils/types";
+import { Avatar, Flex, Group, MultiSelect, Stack, Text } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { useFocusWithin } from "@mantine/hooks";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
+import { Controller, useFormContext } from "react-hook-form";
+import { historyFilterForms } from "./AssetInventoryDetailsPage";
 
 type Props = {
   asset_history: InventoryHistory[] | null;
   totalRecord: number;
+  statusList: OptionType[];
   fetchHistoryPanel: (page: number) => void;
   activeTab: string;
 };
@@ -16,19 +22,114 @@ const HistoryPanel = ({
   asset_history: historyDetails = [],
   totalRecord,
   fetchHistoryPanel,
+  statusList,
   activeTab,
 }: Props) => {
   const [activePage, setActivePage] = useState(1);
+  const teamMemberList = useTeamMemberList();
+  const [filterSelectedValues, setFilterSelectedValues] =
+    useState<historyFilterForms>({
+      event: [],
+      date: "",
+      actionBy: [],
+    });
 
   useEffect(() => {
     if (activeTab !== "history") return;
     fetchHistoryPanel(activePage);
   }, [activePage, activeTab]);
 
+  const { ref: eventRef, focused: event } = useFocusWithin();
+  const { ref: acionByRef, focused: actionBy } = useFocusWithin();
+  const { ref: dateRef, focused: date } = useFocusWithin();
+  const { control } = useFormContext<historyFilterForms>();
+
+  const handleFilterChange = async (
+    key: keyof historyFilterForms,
+    value: string[] | boolean | string = []
+  ) => {
+    const filterMatch = filterSelectedValues[`${key}`];
+
+    if (value !== filterMatch) {
+      fetchHistoryPanel(1);
+      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
+    }
+  };
+  const teamMemberOption = teamMemberList.map((member) => ({
+    value: member.team_member_id,
+    label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+  }));
+
   return (
     <Stack>
-      <Group>
-        <TextInput placeholder="Search By Action"></TextInput>
+      <Group spacing={"xl"}>
+        <Controller
+          control={control}
+          name="date"
+          render={({ field: { value, onChange } }) => (
+            <DatePickerInput
+              placeholder="Date"
+              label="Date"
+              ref={dateRef}
+              value={value ? new Date(value) : null}
+              onChange={(value) => {
+                onChange(value);
+                if (!date)
+                  handleFilterChange(
+                    "date",
+                    value ? [new Date(value).toISOString()] : []
+                  );
+              }}
+              sx={{ flex: 1 }}
+              miw={250}
+              maw={320}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="event"
+          render={({ field: { value, onChange } }) => (
+            <MultiSelect
+              data={statusList}
+              placeholder="event"
+              label="Event"
+              ref={eventRef}
+              value={value}
+              searchable
+              onChange={(value) => {
+                onChange(value);
+                if (!event) handleFilterChange("event", value);
+              }}
+              onDropdownClose={() => handleFilterChange("event", value)}
+              sx={{ flex: 1 }}
+              miw={250}
+              maw={320}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="actionBy"
+          render={({ field: { value, onChange } }) => (
+            <MultiSelect
+              data={teamMemberOption}
+              placeholder="Action By"
+              label="Action By"
+              ref={acionByRef}
+              value={value as string[]}
+              searchable
+              onChange={(value) => {
+                onChange(value);
+                if (!actionBy) handleFilterChange("actionBy", value);
+              }}
+              onDropdownClose={() => handleFilterChange("actionBy", value)}
+              sx={{ flex: 1 }}
+              miw={250}
+              maw={320}
+            />
+          )}
+        />
       </Group>
       <DataTable
         fontSize={12}

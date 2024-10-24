@@ -166,10 +166,19 @@ const AssetListPage = ({
         status,
         assignedToPerson,
         assignedToSite,
-        department: securityGroupData.asset.filter.department || department,
+        department:
+          securityGroupData.asset.filter.department.length > 0
+            ? securityGroupData.asset.filter.department
+            : department,
         locations,
-        sites: securityGroupData.asset.filter.site || sites,
-        category: securityGroupData.asset.filter.category || category,
+        sites:
+          securityGroupData.asset.filter.site.length > 0
+            ? securityGroupData.asset.filter.site
+            : sites,
+        category:
+          securityGroupData.asset.filter.category.length > 0
+            ? securityGroupData.asset.filter.category
+            : category,
         teamId: activeTeam.team_id,
       });
 
