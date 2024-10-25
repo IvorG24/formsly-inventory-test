@@ -4,8 +4,8 @@ import {
   getEventDetails,
   getEventsHistoryData,
 } from "@/backend/api/get";
+import { useEmployeeList } from "@/stores/useEmployeeStore";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
-import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { excludedKeys, ROW_PER_PAGE } from "@/utils/constant";
@@ -61,9 +61,9 @@ const AssetInventoryDetailsPage = ({
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
   const router = useRouter();
-  const teamMemberList = useTeamMemberList();
-  const securityGroup = useSecurityGroup();
 
+  const securityGroup = useSecurityGroup();
+  const employeeList = useEmployeeList();
   const assetId = router.query.assetId as string;
   const [isLoading, setIsloading] = useState(false);
   const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
@@ -233,7 +233,7 @@ const AssetInventoryDetailsPage = ({
         <EventFormModal
           setSelectedEventId={setSelectedEventId}
           eventId={selectedEventId}
-          teamMemberList={teamMemberList}
+          teamMemberList={employeeList}
           selectedRow={[assetDetails[0].inventory_request_id]}
           userId={user?.user_id || ""}
           handleFilterForms={fetchAllDetails}

@@ -6,7 +6,6 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
-import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   EventTableRow,
@@ -59,7 +58,6 @@ const AssetListPage = ({
   tableColumnList,
   securityGroupData,
 }: Props) => {
-  const teamMemberList = useTeamMemberList();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -238,7 +236,6 @@ const AssetListPage = ({
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}
-              teamMemberList={teamMemberList}
               handleFilterForms={handleFilterForms}
               formList={filteredFormList}
               localFilter={localFilter}

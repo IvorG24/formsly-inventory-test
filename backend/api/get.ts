@@ -1811,8 +1811,8 @@ export const getTeamMemberProjectList = async (
       a.team_project.team_project_name < b.team_project.team_project_name
         ? -1
         : a.team_project.team_project_name > b.team_project.team_project_name
-        ? 1
-        : 0
+          ? 1
+          : 0
     ),
     count: formattedData.projectCount,
   };
@@ -8150,7 +8150,13 @@ export const getAssetCodeDescription = async (
 
 export const getEmployeeInventoryList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { search?: string; page: number; limit: number; teamID: string }
+  params: {
+    nameSearch?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    teamID: string;
+  }
 ) => {
   const { data, error } = await supabaseClient.rpc(
     "get_employee_inventory_list",
@@ -8166,6 +8172,7 @@ export const getEmployeeInventoryList = async (
     totalCount: 0;
   };
 };
+
 export const uploadCSVFileEmployee = async (
   supabaseClient: SupabaseClient<Database>,
   params: { parsedData: InventoryEmployeeList[] }

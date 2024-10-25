@@ -209,6 +209,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       const siteLocationSection = getValues(`sections.${index}`);
       if (value === null) {
         setValue(`sections.${index}.section_field.${0}.field_response`, "");
+        setValue(`sections.${index}.section_field.${1}.field_option`, []);
         updateSection(index, {
           ...siteLocationSection,
           section_field: form.form_section[2].section_field,

@@ -1,16 +1,22 @@
 import {
   getActiveGroup,
   getAllTeamOfUser,
+  getEmployeeInventoryList,
   getSecurityGroups,
   getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
+import { useEmployeeListActions } from "@/stores/useEmployeeStore";
 import { useSecurityAction } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
-import { TeamMemberType, TeamTableRow } from "@/utils/types";
+import {
+  InventoryEmployeeList,
+  TeamMemberType,
+  TeamTableRow,
+} from "@/utils/types";
 import { AppShell, LoadingOverlay, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -32,6 +38,7 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setTeamMemberStore } = useTeamMemberListActions();
+  const { setEmployeeList } = useEmployeeListActions();
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
     useUserActions();
@@ -58,6 +65,34 @@ const Layout = ({ children }: LayoutProps) => {
     }
     return allTeamMembers;
   };
+
+  const fetchEmployee = async (teamId: string) => {
+    const allTeamMembers: InventoryEmployeeList[] = [];
+    let page = 1;
+    const limit = 500;
+    let moreMembers = true;
+
+    while (moreMembers) {
+      const { data: currentBatch, totalCount } = await getEmployeeInventoryList(
+        supabaseClient,
+        {
+          teamID: teamId,
+          page: page,
+          limit: limit,
+        }
+      );
+
+      if (currentBatch.length > 0) {
+        allTeamMembers.push(...currentBatch);
+        page++;
+      }
+
+      moreMembers = allTeamMembers.length < totalCount;
+    }
+
+    return allTeamMembers;
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       if (!userId) return;
@@ -127,6 +162,9 @@ const Layout = ({ children }: LayoutProps) => {
         if (activeTeamId) {
           const teamMemberList = await fetchAllTeamMembers(activeTeamId);
           setTeamMemberStore(teamMemberList);
+
+          const employeeList = await fetchEmployee(activeTeamId);
+          setEmployeeList(employeeList);
         }
         setIsloading(false);
       } catch (e) {

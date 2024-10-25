@@ -1,23 +1,22 @@
 import { checkUniqueField } from "@/backend/api/get";
 import { createCustomFields } from "@/backend/api/post";
 import {
-    customFieldFormValues,
-    InventoryFieldRow,
-    OptionType,
+  customFieldFormValues,
+  InventoryFieldRow,
+  OptionType,
 } from "@/utils/types";
 import {
-    ActionIcon,
-    Button,
-    Checkbox,
-    Divider,
-    Group,
-    Paper,
-    Radio,
-    ScrollArea,
-    Select,
-    Stack,
-    Text,
-    TextInput,
+  ActionIcon,
+  Button,
+  Checkbox,
+  Divider,
+  Group,
+  Paper,
+  ScrollArea,
+  Select,
+  Stack,
+  Text,
+  TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -53,13 +52,13 @@ const AssetCreateFieldForm = ({
 
   const onSubmit = async (data: customFieldFormValues) => {
     try {
-        if(!canAddData) {
-            notifications.show({
-                message:"Action not allowed",
-                color:"red"
-            })
-            return;
-        }
+      if (!canAddData) {
+        notifications.show({
+          message: "Action not allowed",
+          color: "red",
+        });
+        return;
+      }
       const checkIfFieldUnique = await checkUniqueField(supabaseClient, {
         fieldName: data.fieldName,
       });
@@ -155,18 +154,11 @@ const AssetCreateFieldForm = ({
             control={control}
             defaultValue={true}
             render={({ field }) => (
-              <Radio.Group
-                label="Is Field Required?"
+              <Checkbox
+                label="Required"
                 {...field}
                 value={field.value ? "true" : "false"}
-                onChange={(value) => field.onChange(value === "true")}
-                withAsterisk
-              >
-                <Group mt="xs">
-                  <Radio value="true" label="Required" />
-                  <Radio value="false" label="Not Required" />
-                </Group>
-              </Radio.Group>
+              />
             )}
           />
 

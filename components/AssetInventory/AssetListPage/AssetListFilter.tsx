@@ -1,3 +1,4 @@
+import { useEmployeeList } from "@/stores/useEmployeeStore";
 import {
   CategoryTableRow,
   EventTableRow,
@@ -27,7 +28,6 @@ import EventFormModal from "../EventFormModal";
 
 type RequestListFilterProps = {
   formList: { label: string; value: string }[];
-  teamMemberList: TeamMemberWithUserType[];
   siteList: SiteTableRow[];
   eventList: EventTableRow[];
   departmentList: Department[];
@@ -60,7 +60,6 @@ export type FilterSelectedValuesType = {
 const AssetListFilter = ({
   eventList,
   inventoryList,
-  teamMemberList,
   departmentList,
   siteList,
   categoryList,
@@ -82,6 +81,7 @@ const AssetListFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
+  const employeeList = useEmployeeList();
   const { ref: assignedToRef, focused: assignedToRefFocused } =
     useFocusWithin();
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
@@ -128,9 +128,9 @@ const AssetListFilter = ({
     });
   const [isFilter, setIsfilter] = useState(false);
 
-  const memberList = teamMemberList.map((member) => ({
-    value: member.team_member_id,
-    label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+  const memberList = employeeList.map((member) => ({
+    value: member.scic_employee_id,
+    label: `${member.scic_employee_first_name} ${member.scic_employee_last_name}`,
   }));
 
   const siteListchoices = siteList.map((site) => {
@@ -181,7 +181,7 @@ const AssetListFilter = ({
       {selectedEventId && (
         <EventFormModal
           handleFilterForms={handleFilterForms}
-          teamMemberList={teamMemberList}
+          teamMemberList={employeeList}
           selectedRow={selectedRow}
           key={selectedEventId}
           userId={userId}

@@ -12,7 +12,6 @@ import {
   Divider,
   Group,
   Paper,
-  Radio,
   ScrollArea,
   Select,
   Stack,
@@ -170,19 +169,14 @@ const AssetUpdateFieldForm = ({
           <Controller
             name="fieldIsRequired"
             control={control}
+            defaultValue={true}
             render={({ field }) => (
-              <Radio.Group
-                label="Is Field Required?"
+              <Checkbox
+                label="Required"
                 {...field}
                 value={field.value ? "true" : "false"}
-                onChange={(value) => field.onChange(value === "true")}
-                withAsterisk
-              >
-                <Group mt="xs">
-                  <Radio value="true" label="Required" />
-                  <Radio value="false" label="Not Required" />
-                </Group>
-              </Radio.Group>
+                checked={field.value}
+              />
             )}
           />
 

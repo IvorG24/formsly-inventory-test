@@ -13,7 +13,7 @@ import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 // import { AppType } from "@/utils/types";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
+import { startCase } from "@/utils/string";
 import {
   ActionIcon,
   Avatar,
@@ -24,7 +24,6 @@ import {
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
-  IconBox,
   IconHelpCircle,
   IconLogout,
   IconMoonStars,
@@ -118,17 +117,7 @@ const HeaderMenu = () => {
           >
             {`${startCase(colorScheme === "dark" ? "light" : "dark")} Mode`}
           </Menu.Item>
-          <Menu.Label>Inventory</Menu.Label>
-          <Menu.Item
-            onClick={() =>
-              router.push(
-                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory`
-              )
-            }
-            icon={<IconBox size={16} />}
-          >
-            Inventory
-          </Menu.Item>
+
           <Menu.Label>Support</Menu.Label>
           <Menu.Item
             icon={<IconHelpCircle size={16} />}

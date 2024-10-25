@@ -257,20 +257,16 @@ const AssetListTable = ({
             const {
               site_name,
               customer_name,
-              assignee_user_id,
               assignee_first_name,
               assignee_last_name,
-              assignee_team_member_d,
             } = record as {
               site_name: string;
               customer_name: string;
-              assignee_user_id: string | null;
               assignee_first_name: string;
               assignee_last_name: string;
-              assignee_team_member_d: string;
             };
 
-            const isAssignedUser = !!assignee_user_id;
+            const isAssignedUser = !!assignee_first_name;
             const avatarLabel = isAssignedUser
               ? `${assignee_first_name[0]}${assignee_last_name[0]}`
               : site_name || customer_name;
@@ -278,26 +274,11 @@ const AssetListTable = ({
             return (
               <Flex px={0} gap={8} align="center">
                 {isAssignedUser && (
-                  <Avatar
-                    color={getAvatarColor(
-                      Number(`${assignee_user_id?.charCodeAt(0)}`)
-                    )}
-                    className={classes.requestor}
-                    onClick={() =>
-                      assignee_team_member_d
-                        ? window.open(`/member/${assignee_team_member_d}`)
-                        : null
-                    }
-                  >
-                    {avatarLabel}
-                  </Avatar>
+                  <Avatar className={classes.requestor}>{avatarLabel}</Avatar>
                 )}
 
                 {isAssignedUser ? (
-                  <Anchor
-                    href={`/member/${assignee_team_member_d}`}
-                    target="_blank"
-                  >
+                  <Anchor target="_blank">
                     <Text>{`${assignee_first_name} ${assignee_last_name}`}</Text>
                   </Anchor>
                 ) : (

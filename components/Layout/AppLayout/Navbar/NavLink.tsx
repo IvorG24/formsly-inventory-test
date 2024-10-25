@@ -28,6 +28,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconBox,
   IconCode,
   IconDashboard,
   IconFile,
@@ -437,6 +438,26 @@ const ReviewAppNavLink = () => {
     //   href: `/create-team`,
     // },
   ];
+  const inventorySection = [
+    {
+      label: "Inventory",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconBox {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/inventory`,
+    },
+    // {
+    //   label: "Create Team",
+    //   icon: (
+    //     <Box ml="sm" {...defaultNavLinkContainerProps}>
+    //       <IconCirclePlus {...defaultIconProps} />
+    //     </Box>
+    //   ),
+    //   href: `/create-team`,
+    // },
+  ];
 
   const hrSection = [
     {
@@ -646,7 +667,13 @@ const ReviewAppNavLink = () => {
           {...defaultNavLinkProps}
         />
       )}
-
+      {!isEmpty(activeTeam) && hasTeam && (
+        <NavLinkSection
+          label={"Inventory"}
+          links={inventorySection}
+          {...defaultNavLinkProps}
+        />
+      )}
       {forms.length > 0 && (
         <>
           {(userTeamMemberData?.team_member_role === "ADMIN" ||

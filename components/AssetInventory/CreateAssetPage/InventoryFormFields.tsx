@@ -57,6 +57,7 @@ type RequestFormFieldsProps = {
     onSiteNameChange: (index: number, value: string | null) => void;
   };
   eventFormMethods?: {
+    handleAssignToChange: (index: number, value: string | null) => void;
     onCheckinCategoryChange?: (index: number, value: string | null) => void;
     onSiteCategorychange: (index: number, value: string | null) => void;
   };
@@ -295,7 +296,7 @@ const InventoryFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field: { value, onChange } }) => (
               <Select
-                value={value as string}
+                value={(value as string) || ""}
                 withinPortal={true}
                 onChange={(value) => {
                   onChange(value);
@@ -310,6 +311,12 @@ const InventoryFormFields = ({
                       if (assetFormMethods?.onAssetNameChange) {
                         assetFormMethods.onAssetNameChange(sectionIndex, value);
                       }
+                      break;
+                    case "Assigned To":
+                      eventFormMethods?.handleAssignToChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
                     case "Site":
                       assetFormMethods?.onSiteNameChange(sectionIndex, value);
@@ -349,6 +356,7 @@ const InventoryFormFields = ({
                 searchable={formslyFormName !== ""}
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
+                defaultValue={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
                 disabled={isEdit && field.field_name === "Requesting Project"}
                 readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
