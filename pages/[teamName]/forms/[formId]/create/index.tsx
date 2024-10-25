@@ -1,5 +1,6 @@
 import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
 import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
+import CreateEvaluationResultRequestPage from "@/components/CreateEvaluationResultRequestPage/CreateEvaluationResultRequestPage";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
@@ -206,6 +207,8 @@ const Page = ({
             connectedRequest={connectedRequest}
           />
         );
+      case "Evaluation Result":
+        return <CreateEvaluationResultRequestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

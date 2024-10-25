@@ -2427,6 +2427,10 @@ export type TechnicalInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
   technical_interview_date_created: string;
   technical_interview_status: string;
   technical_interview_schedule: string;
+  technical_interview_evaluation_link: string;
+  technical_interview_evaluator_team_member_id: string;
+  technical_interview_assigned_evaluator: string;
+  technical_interview_evaluation_request_id: string;
   meeting_link: string;
 };
 

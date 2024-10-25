@@ -1430,19 +1430,22 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field }) => (
+            render={({ field: { value, onChange, onBlur } }) => (
               <TimeInput
                 {...inputProps}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
+                value={value as string}
+                onChange={onChange}
+                onBlur={onBlur}
                 ref={timeInputRef}
                 error={fieldError}
                 rightSection={
-                  <ActionIcon
-                    onClick={() => timeInputRef.current?.showPicker()}
-                  >
-                    <IconClock size="1rem" stroke={1.5} />
-                  </ActionIcon>
+                  !field.field_is_read_only && (
+                    <ActionIcon
+                      onClick={() => timeInputRef.current?.showPicker()}
+                    >
+                      <IconClock size="1rem" stroke={1.5} />
+                    </ActionIcon>
+                  )
                 }
                 icon={<IconClock size={16} />}
               />

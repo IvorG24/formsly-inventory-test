@@ -166,7 +166,7 @@ const PersonalInfo = ({
                       return true;
                     },
                     isUnique: async (value) => {
-                      if (!value) return;
+                      if (!value || value === user?.user_phone_number) return;
                       const numberOnly = value.replace(/\D/g, "");
                       const result = await checkPhoneNumber(supabaseClient, {
                         phoneNumber: numberOnly.trim(),

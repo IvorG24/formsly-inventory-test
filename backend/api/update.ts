@@ -3,7 +3,11 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
+import {
+  escapeQuotes,
+  escapeQuotesForObject,
+  formatTeamNameToUrlKey,
+} from "@/utils/string";
 import {
   ApiKeyData,
   AppType,
@@ -46,6 +50,7 @@ import {
   TicketType,
   TradeTestSpreadsheetData,
   updateTypeDate,
+  UserTableRow,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -154,7 +159,7 @@ export const approveOrRejectRequest = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("approve_or_reject_request", {
-      input_data: { ...params },
+      input_data: params,
     })
     .select("*")
     .single();
@@ -1447,10 +1452,15 @@ export const updateBackgroundCheckStatus = async (
     data: BackgroundCheckSpreadsheetData;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("update_background_check_status", {
-    input_data: params,
-  });
+  const { data, error } = await supabaseClient.rpc(
+    "update_background_check_status",
+    {
+      input_data: params,
+    }
+  );
   if (error) throw error;
+
+  return data as UserTableRow;
 };
 
 export const addJobOffer = async (
@@ -1487,7 +1497,7 @@ export const updateJobOfferStatus = async (
   }
 ) => {
   const { error } = await supabaseClient.rpc("update_job_offer_status", {
-    input_data: params,
+    input_data: escapeQuotesForObject(params),
   });
   if (error) throw error;
 };
@@ -1684,6 +1694,27 @@ export const overrideRequest = async (
     .select("*")
     .single();
   if (error) throw error;
+};
+
+export const updateAssignedEvaluator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    link: string;
+    notificationLink: string;
+    teamMemberId: string;
+    interviewId: string;
+    formslyId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_evaluator", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data as UserTableRow;
 };
 
 export const overrideStep = async (

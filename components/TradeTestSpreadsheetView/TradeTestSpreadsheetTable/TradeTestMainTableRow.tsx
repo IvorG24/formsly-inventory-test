@@ -188,7 +188,7 @@ const TradeTestMainTableRow = ({
       )}
       {!hiddenColumnList.includes("meeting_link") && (
         <td>
-          {item.meeting_link && (
+          {item.meeting_link && item.trade_test_status === "PENDING" && (
             <Flex align="center" justify="center" gap="xs">
               <Button
                 className="meeting-link"

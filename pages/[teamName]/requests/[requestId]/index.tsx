@@ -2,6 +2,7 @@ import ApplicationInformationRequestPage from "@/components/ApplicationInformati
 import ApplicationInformationV1RequestPage from "@/components/ApplicationInformationV1RequestPage/ApplicationInformationV1RequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
+import EvaluationResultRequestPage from "@/components/EvaluationResultRequestPage/EvaluationResultRequestPage";
 import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
@@ -184,6 +185,8 @@ const Page = ({
       return <GeneralAssessmentRequestPage request={request} />;
     } else if (request.request_form.form_name === "Technical Assessment") {
       return <TechnicalAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Evaluation Result") {
+      return <EvaluationResultRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

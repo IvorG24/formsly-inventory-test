@@ -4,11 +4,18 @@ import {
 } from "@/backend/api/get";
 import {
   overrideStep,
+  updateAssignedEvaluator,
   updateTechnicalInterviewStatus,
 } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
-import { startCase } from "@/utils/string";
+import {
+  BASE_URL,
+  DEFAULT_NUMBER_SSOT_ROWS,
+  formatDate,
+  formatTime,
+} from "@/utils/constant";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   OptionType,
   TechnicalInterviewFilterFormValues,
@@ -22,6 +29,7 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
 import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
@@ -78,6 +86,7 @@ const TechnicalInterviewSpreadsheetView = ({
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
+  const team = useActiveTeam();
   const [data, setData] = useState<TechnicalInterviewSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -307,6 +316,121 @@ const TechnicalInterviewSpreadsheetView = ({
     }
   };
 
+  const handleAssignEvaluator = async (
+    data: { evaluatorId: string; evaluatorName: string },
+    interviewId: string,
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    },
+    meetingLink: string,
+    schedule: string
+  ) => {
+    try {
+      setIsLoading(true);
+      const link = `${BASE_URL}/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/b86026fd-1d2b-4ddb-af7b-873f5211acbf/create?interviewId=${interviewId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+      const notificationLink = `/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/b86026fd-1d2b-4ddb-af7b-873f5211acbf/create?interviewId=${interviewId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+      const evaluatorUserData = await updateAssignedEvaluator(supabaseClient, {
+        link,
+        notificationLink,
+        teamMemberId: data.evaluatorId,
+        interviewId,
+        formslyId,
+      });
+
+      const scheduledDate = new Date(schedule);
+      const formattedDate = formatDate(scheduledDate);
+      const formattedTime = formatTime(scheduledDate);
+      
+      const emailNotificationProps: {
+        to: string;
+        subject: string;
+      } & EmailNotificationTemplateProps = {
+        to: evaluatorUserData.user_email,
+        subject: `${
+          technicalInterviewNumber === 1 ? "Department" : "Requestor"
+        } Interview - ${formattedDate} ${formattedTime} - ${startCase(
+          candidateData.name
+        )} - ${candidateData.position}`,
+        greetingPhrase: `Dear ${startCase(
+          evaluatorUserData.user_first_name
+        )} ${startCase(evaluatorUserData.user_last_name)},`,
+        message: `
+              <p>
+                This is to inform you that an interview with ${startCase(
+                  candidateData.name
+                )} for the position of ${
+          candidateData.position
+        } has been scheduled with the following details below:
+              </p>
+              <p>
+                <b>Date: </b>${formattedDate}
+              </p>
+              <p>
+                <b>Time: </b>${formattedTime}
+              </p>
+              <p>
+                <b>Meeting Link: </b><a href=${meetingLink}>${meetingLink}</a>
+              </p>
+              <p>
+                Following the interview, we kindly request your prompt insights and evaluation of the candidate to facilitate the next steps in the hiring process. Please complete the evaluation form through your Formsly account, or you can click the link below to proceed:
+              </p>
+              <p>
+                <a href=${link}>${link}</a>
+              </p>
+              <p>
+                Should you require any further information or adjustments, please don't hesitate to reach out to the Recruitment Team.
+              </p>
+              <p>
+                Please note that this is an automated email; do not reply to this message.
+              </p>
+          `,
+        closingPhrase: "Best regards,",
+        signature: "Sta. Clara International Corporation Recruitment Team",
+      };
+      await fetch("/api/resend/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailNotificationProps),
+      });
+
+      setData((prev) =>
+        prev.map((prevData) => {
+          if (prevData.technical_interview_id !== interviewId) return prevData;
+
+          return {
+            ...prevData,
+            technical_interview_assigned_evaluator: data.evaluatorName,
+            technical_interview_evaluator_team_member_id: data.evaluatorId,
+            technical_interview_evaluation_link: link,
+          };
+        })
+      );
+      notifications.show({
+        message: "Evaluation updated.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -357,6 +481,7 @@ const TechnicalInterviewSpreadsheetView = ({
         }
         handleCheckRow={handleCheckRow}
         technicalInterviewNumber={technicalInterviewNumber}
+        handleAssignEvaluator={handleAssignEvaluator}
         handleOverride={handleOverride}
       />
     </Stack>

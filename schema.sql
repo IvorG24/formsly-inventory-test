@@ -1022,9 +1022,12 @@ CREATE TABLE hr_schema.technical_interview_table (
   technical_interview_schedule TIMESTAMPTZ,
   technical_interview_meeting_link VARCHAR(4000),
   technical_interview_number INT DEFAULT 1 NOT NULL,
+  technical_interview_evaluation_link VARCHAR(4000),
 
   technical_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+  technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  technical_interview_evaluator_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  technical_interview_evaluation_request_id UUID REFERENCES request_schema.request_table(request_id)
 );
 
 CREATE TABLE hr_schema.trade_test_table (
@@ -1649,7 +1652,8 @@ AS $$
       status,
       requestScore,
       rootFormslyRequestId,
-      recruiter
+      recruiter,
+      interviewParams
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1716,6 +1720,8 @@ AS $$
         endId = `GA`;
       } else if(formName === 'Technical Assessment') {
         endId = `TA`;
+      } else if(formName === 'Evaluation Result') {
+        endId = `ER`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -1889,6 +1895,19 @@ AS $$
     } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
       const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
       plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_technical_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+    }
+
+    if (interviewParams) {
+      plv8.execute(
+        `
+          UPDATE hr_schema.technical_interview_table
+          SET technical_interview_evaluation_request_id = '${requestId}' 
+          WHERE
+            technical_interview_id = '${interviewParams.technicalInterviewId}'
+        `
+      );
+      const query = 'SELECT public.update_technical_interview_status($1::json)';
+      plv8.execute(query, [JSON.stringify(interviewParams)]);
     }
  });
  return request_data;
@@ -3965,7 +3984,7 @@ AS $$
       }
     }
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information v1', 'Application Information', 'General Assessment', 'Technical Assessment'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information v1', 'Application Information', 'General Assessment', 'Technical Assessment', 'Evaluation Result'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -6382,6 +6401,50 @@ AS $$
             form
           }
         }
+      } else if (form.form_name === "Evaluation Result") {
+        const projects = plv8.execute(
+          `
+            SELECT
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              form.form_section[0],
+              {
+                ...form.form_section[1],
+                section_field: [
+                  ...form.form_section[1].section_field.slice(0, 3),
+                   {
+                    ...form.form_section[1].section_field[3],
+                    field_option: projectOptions
+                  },
+                ],
+              },
+              ...form.form_section.slice(2),
+            ],
+          },
+        }
+        return;
       } else {
         returnData = { form }
       }
@@ -16776,7 +16839,11 @@ AS $$
           technical_interview_status,
           technical_interview_schedule,
           technical_interview_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          technical_interview_evaluation_link,
+          technical_interview_evaluator_team_member_id,
+          CONCAT(hru.user_first_name, ' ', hru.user_last_name) AS assigned_hr,
+          CONCAT(eu.user_first_name, ' ', eu.user_last_name) AS technical_interview_assigned_evaluator,
+          er.request_formsly_id AS technical_interview_evaluation_request_id
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -16802,8 +16869,11 @@ AS $$
           ${technicalInterviewCondition}
           ${technicalInterviewScheduleCondition}
           ${assignedHRCondition}
-        LEFT JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS hrtm ON hrtm.team_member_id = technical_interview_team_member_id
+        LEFT JOIN user_schema.user_table AS hru ON hru.user_id = hrtm.team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS etm ON etm.team_member_id = technical_interview_evaluator_team_member_id
+        LEFT JOIN user_schema.user_table AS eu ON eu.user_id = etm.team_member_user_id
+        LEFT JOIN public.request_view AS er ON er.request_id = technical_interview_evaluation_request_id
         ORDER BY ${sort.sortBy} ${sort.order}, technical_interview_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -17183,8 +17253,20 @@ AS $$
       `
     );
 
-    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email.toLowerCase()}' LIMIT 1`);
-    if(userId.length){
+    const userData = plv8.execute(
+      `
+        SELECT 
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_email
+        FROM user_schema.user_table 
+        WHERE 
+          user_email = '${data.application_information_email.toLowerCase()}' 
+        LIMIT 1
+      `
+    );
+    if(userData.length){
       plv8.execute(
         `
           INSERT INTO public.notification_table
@@ -17200,7 +17282,7 @@ AS $$
             '${status}',
             'Background Check status is updated to ${status}',
             '/user/application-progress/${data.application_information_request_id}',
-            '${userId[0].user_id}'
+            '${userData[0].user_id}'
           )
         `
       );
@@ -17210,6 +17292,8 @@ AS $$
       const parsedPosition = data.position.replaceAll('"', '');
       plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "background_check", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
     }
+
+    returNData = userData;
   });
   return returnData;
 $$ LANGUAGE plv8;
@@ -19968,6 +20052,154 @@ AS $$
     team_member_data = {projectList, projectCount: `${projectCount}`}
  });
  return team_member_data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_evaluator(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      link,
+      notificationLink,
+      teamMemberId,
+      interviewId,
+      formslyId
+    } = input_data;
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.technical_interview_table
+        SET
+          technical_interview_evaluation_link = '${link}',
+          technical_interview_evaluator_team_member_id = '${teamMemberId}'
+        WHERE
+          technical_interview_id = '${interviewId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT team_member_user_id FROM team_schema.team_member_table WHERE team_member_id = '${teamMemberId}'`)[0].team_member_user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES
+        (
+          'REQUEST',
+          'REQUEST',
+          'You are assigned to evaluate ${formslyId} applicant',
+          '${notificationLink}',
+          '${userId}'
+        )
+      `
+    );
+
+    returnData = plv8.execute(`SELECT user_first_name, user_last_name, user_email FROM user_schema.user_table WHERE user_id = '${userId}'`)[0];
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_evaluation_result_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      interviewId
+    } = input_data;
+
+    const requestId = plv8.execute(
+      `
+        SELECT technical_interview_request_id
+        FROM hr_schema.technical_interview_table
+        WHERE
+          technical_interview_id = '${interviewId}'
+      `
+    )[0].technical_interview_request_id;
+
+    const firstName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
+        LIMIT 1
+      `
+    );
+    const middleName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
+        LIMIT 1
+      `
+    );
+    const lastName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
+        LIMIT 1
+      `
+    );
+    const position = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        LIMIT 1
+      `
+    );
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+        LIMIT 1
+      `
+    );
+
+    const interviewData = plv8.execute(
+      `
+        SELECT technical_interview_table.*, request_formsly_id
+        FROM hr_schema.technical_interview_table
+        INNER JOIN public.request_view ON request_id = technical_interview_request_id
+        WHERE
+          technical_interview_id = '${interviewId}'
+        LIMIT 1
+      `
+    );
+
+    returnData = {
+      candidateFirstName: JSON.parse(firstName[0].request_response),
+      candidateMiddleName: middleName.length ? JSON.parse(middleName[0].request_response) : "",
+      candidateLastName: JSON.parse(lastName[0].request_response),
+      position: JSON.parse(position[0].request_response),
+      email: JSON.parse(email[0].request_response),
+      interviewData: interviewData[0]
+    }
+ });
+ return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

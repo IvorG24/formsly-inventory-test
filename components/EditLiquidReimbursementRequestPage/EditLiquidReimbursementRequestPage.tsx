@@ -919,7 +919,6 @@ const EditLiquidReimbursementRequestPage = ({
         value !== "Petty Cash Fund Reimbursement" &&
         ticketIdIndex < 0
       ) {
-        console.log("called");
         // add ticket id
         const ticketIdField = initialFormSectionList[0].section_field.find(
           (field) => field.field_id === "4e980cfe-c286-498c-a609-7bd246db8a9b"
