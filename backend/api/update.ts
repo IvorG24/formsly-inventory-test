@@ -1686,6 +1686,19 @@ export const overrideRequest = async (
   if (error) throw error;
 };
 
+export const overrideStep = async (
+  supabaseClient: SupabaseClient,
+  params: { hrTeamMemberId: string; rowId: string; table: string }
+) => {
+  const { hrTeamMemberId, rowId, table } = params;
+  const { error } = await supabaseClient
+    .schema("hr_schema")
+    .from(`${table}_table`)
+    .update({ [`${table}_team_member_id`]: hrTeamMemberId })
+    .eq(`${table}_id`, rowId);
+  if (error) throw error;
+};
+
 export const updateEvent = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

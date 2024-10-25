@@ -29,6 +29,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -141,11 +142,21 @@ const CreateSubconWorkAndServiceRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      if (!signerList.length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
-        signers: [...signerList],
+        signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,

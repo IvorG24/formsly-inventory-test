@@ -115,6 +115,7 @@ type Props = {
     data: TradeTestSpreadsheetData
   ) => void;
   handleCheckRow: (item: TradeTestSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const TradeTestSpreadsheetTable = ({
@@ -128,6 +129,7 @@ const TradeTestSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateTradeTestStatus,
   handleCheckRow,
+  handleOverride
 }: Props) => {
   const { classes } = useStyles();
 
@@ -206,6 +208,7 @@ const TradeTestSpreadsheetTable = ({
                   hiddenColumnList={hiddenColumnList}
                   handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
                   handleCheckRow={handleCheckRow}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

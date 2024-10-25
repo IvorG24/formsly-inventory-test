@@ -86,6 +86,7 @@ type Props = {
   projectOptions: HRProjectType[];
   teamMemberGroupList: string[];
   teamMemberOptions: TeamMemberType[];
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const JobOfferMainTableRow = ({
@@ -100,6 +101,7 @@ const JobOfferMainTableRow = ({
   projectOptions,
   teamMemberGroupList,
   teamMemberOptions,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -117,7 +119,6 @@ const JobOfferMainTableRow = ({
   const [isScheduling, setIsScheduling] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
-  const [isOverriding, setIsOverriding] = useState(false);
 
   const {
     handleSubmit,
@@ -848,8 +849,7 @@ const JobOfferMainTableRow = ({
       )}
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") &&
-          !isOverriding && (
+          teamMemberGroupList.includes("HUMAN RESOURCES") && (
             <Stack spacing="xs">
               {(isForPooling || isForAddOffer) && (
                 <Button
@@ -866,8 +866,11 @@ const JobOfferMainTableRow = ({
                       labels: { confirm: "Confirm", cancel: "Cancel" },
                       onConfirm: async () => {
                         const result = await handleCheckRow(item);
-                        if (result) {
-                          setIsOverriding(true);
+                        if (result && teamMember) {
+                          handleOverride(
+                            teamMember.team_member_id,
+                            item.job_offer_id
+                          );
                         }
                       },
                     })
@@ -878,8 +881,7 @@ const JobOfferMainTableRow = ({
               )}
             </Stack>
           )}
-        {(teamMember?.team_member_id === item.assigned_hr_team_member_id ||
-          isOverriding) && (
+        {teamMember?.team_member_id === item.assigned_hr_team_member_id && (
           <Stack spacing="xs">
             {isForPooling && (
               <Button color="yellow" w={140} onClick={poolingModal}>

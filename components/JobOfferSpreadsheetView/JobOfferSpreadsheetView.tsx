@@ -20,6 +20,7 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import JobOfferColumnsMenu from "./JobOfferColumnsMenu";
 
+import { overrideStep } from "@/backend/api/update";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -27,6 +28,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
+import { startCase } from "@/utils/string";
 import JobOfferFilterMenu from "./JobOfferFilterMenu";
 import JobOfferSpreadsheetTable from "./JobOfferSpreadsheetTable/JobOfferSpreadsheetTable";
 
@@ -243,6 +245,44 @@ const JobOfferSpreadsheetView = ({
     }
   };
 
+  const handleOverride = async (hrTeamMemberId: string, rowId: string) => {
+    try {
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      await overrideStep(supabaseClient, {
+        hrTeamMemberId: teamMember?.team_member_id,
+        rowId,
+        table: "job_offer",
+      });
+
+      setData((prev) =>
+        prev.map((thisItem) => {
+          if (thisItem.job_offer_id !== rowId) return thisItem;
+          return {
+            ...thisItem,
+            assigned_hr: startCase(
+              `${user?.user_first_name} ${user?.user_last_name}`
+            ),
+            assigned_hr_team_member_id: hrTeamMemberId,
+          };
+        })
+      );
+
+      notifications.show({
+        message: "The applicant is successfully reassigned.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -294,6 +334,7 @@ const JobOfferSpreadsheetView = ({
         projectOptions={projectOptions}
         teamMemberGroupList={teamMemberGroupList}
         teamMemberOptions={teamMemberOptions}
+        handleOverride={handleOverride}
       />
     </Stack>
   );

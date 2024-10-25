@@ -20,7 +20,6 @@ import {
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconCopy, IconSquareCheck, IconVideo } from "@tabler/icons-react";
-import { useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -38,6 +37,7 @@ type Props = {
     data: TechnicalInterviewSpreadsheetData
   ) => void;
   handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const TechnicalInterviewMainTableRow = ({
@@ -45,14 +45,13 @@ const TechnicalInterviewMainTableRow = ({
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
   handleCheckRow,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
 
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const teamMemberGroupList = useUserTeamMemberGroupList();
-
-  const [isOverriding, setIsOverriding] = useState(false);
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -220,7 +219,6 @@ const TechnicalInterviewMainTableRow = ({
       <td>
         {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
           teamMemberGroupList.includes("HUMAN RESOURCES") &&
-          !isOverriding &&
           item.technical_interview_status === "PENDING" && (
             <Button
               w={140}
@@ -236,8 +234,11 @@ const TechnicalInterviewMainTableRow = ({
                   labels: { confirm: "Confirm", cancel: "Cancel" },
                   onConfirm: async () => {
                     const result = await handleCheckRow(item);
-                    if (result) {
-                      setIsOverriding(true);
+                    if (result && teamMember) {
+                      handleOverride(
+                        teamMember.team_member_id,
+                        item.technical_interview_id
+                      );
                     }
                   },
                 })
@@ -246,8 +247,7 @@ const TechnicalInterviewMainTableRow = ({
               Override
             </Button>
           )}
-        {(teamMember?.team_member_id === item.assigned_hr_team_member_id ||
-          isOverriding) &&
+        {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
           item.technical_interview_status === "PENDING" && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button

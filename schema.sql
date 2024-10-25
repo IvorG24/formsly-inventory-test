@@ -18654,7 +18654,7 @@ plv8.subtransaction(function(){
         ${table}_id,
         ${table}_date_created,
         ${table}_status,
-        ${table}_schedule,
+        ${table === "background_check" ? "" : `${table}_schedule,`}
         ${table}_team_member_id AS assigned_hr_team_member_id,
         CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
       FROM hr_schema.request_connection_table

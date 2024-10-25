@@ -1,5 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
@@ -25,16 +28,21 @@ type Props = {
     data: BackgroundCheckSpreadsheetData
   ) => void;
   setData: Dispatch<SetStateAction<BackgroundCheckSpreadsheetData[]>>;
+  handleCheckRow: (item: BackgroundCheckSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const BackgroundCheckMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateBackgroundCheckStatus,
+  handleCheckRow,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -162,8 +170,39 @@ const BackgroundCheckMainTableRow = ({
         </td>
       )}
       <td>
-        {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
-          item.background_check_status === "PENDING" && (
+        {item.background_check_status === "PENDING" &&
+          teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+          teamMemberGroupList.includes("HUMAN RESOURCES") && (
+            <Button
+              w={140}
+              onClick={() =>
+                modals.openConfirmModal({
+                  title: "Confirm Override",
+                  centered: true,
+                  children: (
+                    <Text size="sm">
+                      Are you sure you want to override this application?
+                    </Text>
+                  ),
+                  labels: { confirm: "Confirm", cancel: "Cancel" },
+                  onConfirm: async () => {
+                    const result = await handleCheckRow(item);
+                    if (result && teamMember) {
+                      handleOverride(
+                        teamMember.team_member_id,
+                        item.background_check_id
+                      );
+                    }
+                  },
+                })
+              }
+            >
+              Override
+            </Button>
+          )}
+
+        {item.background_check_status === "PENDING" &&
+          teamMember?.team_member_id === item.assigned_hr_team_member_id && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button
                 color="green"

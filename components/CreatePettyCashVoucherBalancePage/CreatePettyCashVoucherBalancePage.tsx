@@ -41,6 +41,7 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -102,6 +103,16 @@ const CreatePettyCashVoucherBalancePage = ({
     try {
       if (!requestorProfile) return;
       if (!teamMember || !connectedRequest) return;
+
+      if (!signerList.length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
       setIsLoading(true);
       const requesterName = `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`;

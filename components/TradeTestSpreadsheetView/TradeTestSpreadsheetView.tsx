@@ -2,7 +2,7 @@ import {
   checkSpreadsheetRowStatus,
   getTradeTestSummaryData,
 } from "@/backend/api/get";
-import { updateTradeTestStatus } from "@/backend/api/update";
+import { overrideStep, updateTradeTestStatus } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
@@ -20,6 +20,7 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
 
+import { startCase } from "@/utils/string";
 import TradeTestFilterMenu from "./TradeTestFilterMenu";
 import TradeTestSpreadsheetTable from "./TradeTestSpreadsheetTable/TradeTestSpreadsheetTable";
 
@@ -255,6 +256,44 @@ const TradeTestSpreadsheetView = ({
     }
   };
 
+  const handleOverride = async (hrTeamMemberId: string, rowId: string) => {
+    try {
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      await overrideStep(supabaseClient, {
+        hrTeamMemberId: teamMember?.team_member_id,
+        rowId,
+        table: "trade_test",
+      });
+
+      setData((prev) =>
+        prev.map((thisItem) => {
+          if (thisItem.trade_test_id !== rowId) return thisItem;
+          return {
+            ...thisItem,
+            assigned_hr: startCase(
+              `${user?.user_first_name} ${user?.user_last_name}`
+            ),
+            assigned_hr_team_member_id: hrTeamMemberId,
+          };
+        })
+      );
+
+      notifications.show({
+        message: "The applicant is successfully reassigned.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -299,6 +338,7 @@ const TradeTestSpreadsheetView = ({
         hiddenColumnList={hiddenColumnList}
         handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
         handleCheckRow={handleCheckRow}
+        handleOverride={handleOverride}
       />
     </Stack>
   );

@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     borderLeft: "0.5px solid #dee2e6",
     borderRight: "0.5px solid #dee2e6",
   },
-  fullCell: { width: "30%" },
+  fullCell: { width: "40%" },
   minCell: { width: "20%" },
 });
 
@@ -122,7 +122,7 @@ type Props = {
   }[];
 };
 
-const LiquidationReimbursementTableVersion = ({
+const PettyCashVoucherTableVersion = ({
   requestDetails,
   requestorDetails,
   requestIDs,
@@ -138,17 +138,17 @@ const LiquidationReimbursementTableVersion = ({
   const requestForm = requestDetails.find(
     (detail) => detail.label === "Form Name:"
   );
-  const project = requestItems[0].fields.find(
-    (detail) => detail.label === "Project Responsible for PCF Charges"
+  const project = requestItems[1].fields.find(
+    (detail) => detail.label === "Requesting Project Chargeable"
   );
   const formlsyId = requestIDs.find((detail) => detail.label === "Formsly ID:");
   const jiraId = requestIDs.find((detail) => detail.label === "Jira ID:");
 
   const payeeTableColumns = [
-    "Date",
-    "Supplier Name/Payee",
-    "Type of Request",
-    "Invoice Amount",
+    "Particular Type",
+    "Particular",
+    "Unit Cost",
+    "Amount",
   ];
 
   return (
@@ -202,25 +202,25 @@ const LiquidationReimbursementTableVersion = ({
         <Fragment>
           <View>
             <Text style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
-              Payee
+              Particular Details
             </Text>
             <View style={styles.table}>
               <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
                 <View style={[styles.tableCol, styles.minCell]}>
-                  <Text style={styles.tableHeader}>Date</Text>
+                  <Text style={styles.tableHeader}>Particular Type</Text>
                 </View>
                 <View style={[styles.tableCol, styles.fullCell]}>
-                  <Text style={styles.tableHeader}>Supplier Name/Payee</Text>
-                </View>
-                <View style={[styles.tableCol, styles.fullCell]}>
-                  <Text style={styles.tableHeader}>Type of Request</Text>
+                  <Text style={styles.tableHeader}>Particular</Text>
                 </View>
                 <View style={[styles.tableCol, styles.minCell]}>
-                  <Text style={styles.tableHeader}>Invoice Amount</Text>
+                  <Text style={styles.tableHeader}>Unit Cost</Text>
+                </View>
+                <View style={[styles.tableCol, styles.minCell]}>
+                  <Text style={styles.tableHeader}>Amount</Text>
                 </View>
               </View>
               {requestItems
-                .filter((section) => section.title === "Payee")
+                .filter((section) => section.title === "Particular Details")
                 .map((item, index) => {
                   return (
                     <View key={index} style={styles.tableRow} wrap={false}>
@@ -233,7 +233,11 @@ const LiquidationReimbursementTableVersion = ({
                             key={i}
                             style={[
                               styles.tableCell,
-                              ["Invoice Amount", "Date"].includes(field.label)
+                              [
+                                "Amount",
+                                "Unit Cost",
+                                "Particular Type",
+                              ].includes(field.label)
                                 ? styles.minCell
                                 : styles.fullCell,
                             ]}
@@ -253,7 +257,7 @@ const LiquidationReimbursementTableVersion = ({
   );
 };
 
-export default LiquidationReimbursementTableVersion;
+export default PettyCashVoucherTableVersion;
 
 const Footer = () => (
   <View style={styles.footer} fixed>

@@ -81,13 +81,26 @@ const SignInPage = () => {
         email: data.email,
         password: data.password,
       });
+
       if (error?.toLowerCase().includes("invalid login credentials")) {
         notifications.show({
           message: "Invalid login credentials.",
           color: "red",
         });
+        setIsLoading(false);
         return;
-      }
+      } else if (
+        error?.toLowerCase().includes("authapierror: email not confirmed")
+      ) {
+        notifications.show({
+          message:
+            "You need to verify your email first before proceeding to formsly. If you don't received the verification email, you can try to sign up again",
+          color: "orange",
+          autoClose: false,
+        });
+        setIsLoading(false);
+        return;
+      } else if (error) throw error;
       notifications.show({
         message: "Sign in successful.",
         color: "green",
@@ -127,7 +140,6 @@ const SignInPage = () => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -239,8 +251,9 @@ const SignInPage = () => {
                     size="md"
                     type="submit"
                     data-cy="signin-button-submit"
+                    disabled={isLoading}
                   >
-                    Sign in
+                    Sign In
                   </Button>
                 </Stack>
               </form>

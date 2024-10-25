@@ -164,6 +164,7 @@ type RequestFormFieldsProps = {
       fieldIndex: number,
       sectionIndex: number
     ) => void;
+    onWorkingAdvancesChange: (value: string | null, fieldIndex: number) => void;
   };
   personnelTransferRequisitionMethods?: {
     onTypeOfTransferChange: (value: string | null) => void;
@@ -1200,9 +1201,14 @@ const RequestFormFields = ({
                       applicationInformationFormMethods?.onFieldOfStudyChange(
                         value
                       );
-
                     case "Particular Type":
                       pettyCashVoucherFormMethods?.onParticularTypeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Working Advances":
+                      liquidationReimbursementFormMethods?.onWorkingAdvancesChange(
                         value,
                         sectionIndex
                       );

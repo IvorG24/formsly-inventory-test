@@ -81,6 +81,8 @@ type Props = {
     data: BackgroundCheckSpreadsheetData
   ) => void;
   setData: Dispatch<SetStateAction<BackgroundCheckSpreadsheetData[]>>;
+  handleCheckRow: (item: BackgroundCheckSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const BackgroundCheckSpreadsheetTable = ({
@@ -94,6 +96,8 @@ const BackgroundCheckSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateBackgroundCheckStatus,
   setData,
+  handleCheckRow,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -174,6 +178,8 @@ const BackgroundCheckSpreadsheetTable = ({
                     handleUpdateBackgroundCheckStatus
                   }
                   setData={setData}
+                  handleCheckRow={handleCheckRow}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

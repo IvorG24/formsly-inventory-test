@@ -46,6 +46,7 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 
 type Props = {
   request: RequestWithResponseType;
@@ -442,11 +443,18 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {canCreatePCVBalance && (
-          <Button onClick={() => handleCreatePCVBalanceRequest()}>
-            Create PCV Balance
-          </Button>
-        )}
+        <Flex gap="sm">
+          {canCreatePCVBalance && (
+            <Button onClick={() => handleCreatePCVBalanceRequest()}>
+              Create PCV Balance
+            </Button>
+          )}
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Flex>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection

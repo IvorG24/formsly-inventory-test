@@ -1,6 +1,12 @@
-import { getBackgroundCheckSummaryData } from "@/backend/api/get";
-import { updateBackgroundCheckStatus } from "@/backend/api/update";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  checkSpreadsheetRowStatus,
+  getBackgroundCheckSummaryData,
+} from "@/backend/api/get";
+import {
+  overrideStep,
+  updateBackgroundCheckStatus,
+} from "@/backend/api/update";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
   BackgroundCheckFilterFormValues,
@@ -10,13 +16,14 @@ import {
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import BackgroundCheckColumnsMenu from "./BackgroundCheckColumnsMenu";
 
+import { startCase } from "@/utils/string";
 import BackgroundCheckFilterMenu from "./BackgroundCheckFilterMenu";
 import BackgroundCheckSpreadsheetTable from "./BackgroundCheckSpreadsheetTable/BackgroundCheckSpreadsheetTable";
 
@@ -67,7 +74,7 @@ const BackgroundCheckSpreadsheetView = ({
   positionOptionList,
   hrOptionList,
 }: Props) => {
-  const user = useUser();
+  const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<BackgroundCheckSpreadsheetData[]>([]);
@@ -96,7 +103,7 @@ const BackgroundCheckSpreadsheetView = ({
       const newData = await getBackgroundCheckSummaryData(supabaseClient, {
         ...filterData,
         ...data,
-        userId: user.id,
+        userId: user.user_id,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
@@ -176,7 +183,7 @@ const BackgroundCheckSpreadsheetView = ({
       }
     };
     fetchInitialData();
-  }, [user?.id]);
+  }, [user?.user_id]);
 
   const handleUpdateBackgroundCheckStatus = async (
     status: string,
@@ -207,6 +214,80 @@ const BackgroundCheckSpreadsheetView = ({
         color: "green",
       });
     } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRow = async (item: BackgroundCheckSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkSpreadsheetRowStatus(supabaseClient, {
+        id: item.background_check_id,
+        status: item.background_check_status,
+        table: "background_check",
+      });
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.background_check_id !== item.background_check_id)
+              return thisItem;
+            return fetchedRow as unknown as BackgroundCheckSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.log(e);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOverride = async (hrTeamMemberId: string, rowId: string) => {
+    try {
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      await overrideStep(supabaseClient, {
+        hrTeamMemberId: teamMember?.team_member_id,
+        rowId,
+        table: "background_check",
+      });
+
+      setData((prev) =>
+        prev.map((thisItem) => {
+          if (thisItem.background_check_id !== rowId) return thisItem;
+          return {
+            ...thisItem,
+            assigned_hr: startCase(
+              `${user?.user_first_name} ${user?.user_last_name}`
+            ),
+            assigned_hr_team_member_id: hrTeamMemberId,
+          };
+        })
+      );
+
+      notifications.show({
+        message: "The applicant is successfully reassigned.",
+        color: "green",
+      });
+    } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -260,6 +341,8 @@ const BackgroundCheckSpreadsheetView = ({
         hiddenColumnList={hiddenColumnList}
         handleUpdateBackgroundCheckStatus={handleUpdateBackgroundCheckStatus}
         setData={setData}
+        handleCheckRow={handleCheckRow}
+        handleOverride={handleOverride}
       />
     </Stack>
   );

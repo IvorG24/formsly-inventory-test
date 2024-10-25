@@ -26,6 +26,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -119,6 +120,16 @@ const CreateLiquidationReimbursementRequestPage = ({
       const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
+
+      if (!signerList.length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
@@ -287,9 +298,9 @@ const CreateLiquidationReimbursementRequestPage = ({
     const conditionalFieldExists = sectionFields.some(
       (field) => field.field_name === "Working Advances"
     );
+    const isPettyCashFund = value === "Petty Cash Fund";
     const valueIsLiquidationTypeOrPCF =
-      value?.toLowerCase().includes("liquidation") ||
-      value === "Petty Cash Fund";
+      value?.toLowerCase().includes("liquidation") || isPettyCashFund;
 
     const addConditionalFields =
       valueIsLiquidationTypeOrPCF && !conditionalFieldExists;
@@ -314,6 +325,55 @@ const CreateLiquidationReimbursementRequestPage = ({
         ),
       });
     }
+
+    handleAddOrRemoveConditionalWAVOption(
+      valueIsLiquidationTypeOrPCF,
+      isPettyCashFund
+    );
+  };
+
+  const handleAddOrRemoveConditionalWAVOption = (
+    valueIsLiquidationTypeOrPCF: boolean,
+    isPettyCashFund: boolean
+  ) => {
+    if (!valueIsLiquidationTypeOrPCF) return;
+
+    const wavFieldId = "b949fe36-d43f-497c-b821-bca21336474a";
+    let wavField = initialFormSectionList[0].section_field.find(
+      (field) => field.field_id === wavFieldId
+    );
+    if (!wavField) return;
+
+    const pettyCashOptionValue = "Petty Cash Fund Reimbursement";
+    const hasPettyCashOption = wavField.field_option.some(
+      (option) => option.option_value === pettyCashOptionValue
+    );
+    if (isPettyCashFund && !hasPettyCashOption) {
+      const pettyCashOption = wavField.field_option.find(
+        (option) => option.option_value === pettyCashOptionValue
+      );
+
+      if (!pettyCashOption) return;
+      wavField = {
+        ...wavField,
+        field_option: [...wavField.field_option, pettyCashOption],
+      };
+    } else if (!isPettyCashFund && hasPettyCashOption) {
+      wavField = {
+        ...wavField,
+        field_option: wavField.field_option.filter(
+          (option) => option.option_value !== pettyCashOptionValue
+        ),
+      };
+    }
+
+    const updatedRequestDetails = getValues(`sections.${0}`);
+    updateSection(0, {
+      ...updatedRequestDetails,
+      section_field: updatedRequestDetails.section_field.map((field) =>
+        field.field_id === wavFieldId ? (wavField as Field) : field
+      ),
+    });
   };
 
   const handleRequestTypeChange = async (value: string | null) => {
@@ -747,6 +807,48 @@ const CreateLiquidationReimbursementRequestPage = ({
     }
   };
 
+  const handleWorkingAdvancesChange = async (
+    value: string | null,
+    fieldIndex: number
+  ) => {
+    try {
+      if (!value) return;
+      const requestDetailsSection = getValues(`sections.0`);
+      let updatedSectionFieldList = requestDetailsSection.section_field;
+      const ticketIdIndex = requestDetailsSection.section_field.findIndex(
+        (field) => field.field_id === "4e980cfe-c286-498c-a609-7bd246db8a9b"
+      );
+      if (value === "Petty Cash Fund Reimbursement" && ticketIdIndex > 0) {
+        // remove ticket id field
+        updatedSectionFieldList = requestDetailsSection.section_field.filter(
+          (field) => field.field_id !== "4e980cfe-c286-498c-a609-7bd246db8a9b"
+        );
+      } else if (
+        value !== "Petty Cash Fund Reimbursement" &&
+        ticketIdIndex < 0
+      ) {
+        console.log("called");
+        // add ticket id
+        const ticketIdField = initialFormSectionList[0].section_field.find(
+          (field) => field.field_id === "4e980cfe-c286-498c-a609-7bd246db8a9b"
+        );
+        if (!ticketIdField) return;
+        updatedSectionFieldList = [...updatedSectionFieldList, ticketIdField];
+      }
+
+      updateSection(0, {
+        ...requestDetailsSection,
+        section_field: updatedSectionFieldList,
+      });
+    } catch (e) {
+      setValue(`sections.0.section_field.${fieldIndex}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
@@ -822,6 +924,7 @@ const CreateLiquidationReimbursementRequestPage = ({
                       onPayeeVatBooleanChange: handlePayeeVatBooleanChange,
                       onInvoiceAmountChange: handleInvoiceAmountChange,
                       onModeOfPaymentChange: handleModeOfPaymentChange,
+                      onWorkingAdvancesChange: handleWorkingAdvancesChange,
                     }}
                     formslyFormName={form.form_name}
                   />

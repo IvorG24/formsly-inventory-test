@@ -520,6 +520,7 @@ const LiquidationReimbursementRequestPage = ({
         ticketId,
         amount,
       });
+
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
@@ -712,14 +713,16 @@ const LiquidationReimbursementRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {canCreateBOQ && (
-          <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
-        )}
-        <ExportToPdfMenu
-          isFormslyForm={request.request_form.form_is_formsly_form}
-          formName={request.request_form.form_name}
-          requestId={request.request_formsly_id ?? request.request_id}
-        />
+        <Flex gap="sm">
+          {canCreateBOQ && (
+            <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
+          )}
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Flex>
       </Flex>
 
       <Stack spacing="xl" mt="xl">

@@ -101,6 +101,7 @@ type Props = {
   projectOptions: HRProjectType[];
   teamMemberGroupList: string[];
   teamMemberOptions: TeamMemberType[];
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const JobOfferSpreadsheetTable = ({
@@ -121,6 +122,7 @@ const JobOfferSpreadsheetTable = ({
   projectOptions,
   teamMemberGroupList,
   teamMemberOptions,
+  handleOverride
 }: Props) => {
   const { classes } = useStyles();
 
@@ -207,6 +209,7 @@ const JobOfferSpreadsheetTable = ({
                   projectOptions={projectOptions}
                   teamMemberGroupList={teamMemberGroupList}
                   teamMemberOptions={teamMemberOptions}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

@@ -37,6 +37,7 @@ type Props = {
   ) => void;
   handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
   technicalInterviewNumber: number;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -51,6 +52,7 @@ const TechnicalInterviewSpreadsheetTable = ({
   handleUpdateTechnicalInterviewStatus,
   handleCheckRow,
   technicalInterviewNumber,
+  handleOverride
 }: Props) => {
   const { classes } = useStyles();
   const label = technicalInterviewNumber === 1 ? "Derpartment" : "Requestor";
@@ -181,6 +183,7 @@ const TechnicalInterviewSpreadsheetTable = ({
                     handleUpdateTechnicalInterviewStatus
                   }
                   handleCheckRow={handleCheckRow}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

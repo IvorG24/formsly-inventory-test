@@ -102,6 +102,7 @@ type Props = {
     data: HRPhoneInterviewSpreadsheetData
   ) => void;
   handleCheckRow: (item: HRPhoneInterviewSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const HRPhoneInterviewSpreadsheetTable = ({
@@ -115,6 +116,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateHRPhoneInterviewStatus,
   handleCheckRow,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -197,6 +199,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
                     handleUpdateHRPhoneInterviewStatus
                   }
                   handleCheckRow={handleCheckRow}
+                  handleOverride={handleOverride}
                 />
               ))}
             </tbody>

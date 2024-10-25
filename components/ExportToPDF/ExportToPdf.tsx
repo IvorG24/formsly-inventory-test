@@ -21,6 +21,7 @@ import PEDItemBulkPdfDocumentTableVersion from "./PEDItemBulkPdfDocumentTableVer
 import PEDItemSinglePdfDocumentTableVersion from "./PEDItemSinglePdfDocumentTableVersion";
 import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
+import PettyCashVoucherTableVersion from "./PettyCashVoucherTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
 type Props = {
@@ -254,6 +255,17 @@ const ExportToPdf = ({
       case "Liquidation Reimbursement":
         return (
           <LiquidationReimbursementTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+
+      case "Petty Cash Voucher":
+        return (
+          <PettyCashVoucherTableVersion
             requestDetails={requestDetails}
             requestorDetails={requestorDetails}
             requestIDs={requestIDs}

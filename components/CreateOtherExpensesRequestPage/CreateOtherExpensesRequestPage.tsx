@@ -37,6 +37,7 @@ import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -154,6 +155,16 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
       const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
+
+      if (!signerList.length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,

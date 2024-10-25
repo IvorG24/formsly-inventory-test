@@ -36,6 +36,7 @@ import { v4 as uuidv4 } from "uuid";
 import RequestFormDetails from "../CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "../CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "../CreateRequestPage/RequestFormSigner";
+import InvalidSignerNotification from "../InvalidSignerNotification/InvalidSignerNotification";
 
 export type Section = FormWithResponseType["form_section"][0];
 
@@ -108,6 +109,16 @@ const EditRequestPage = ({
       if (!requestorProfile || !teamMember) return;
 
       setIsLoading(true);
+
+      if (!form.form_signer.length) {
+        notifications.show({
+          title: "There's no assigned signer.",
+          message: <InvalidSignerNotification />,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
 
       let request: RequestTableRow;
       if (isReferenceOnly) {

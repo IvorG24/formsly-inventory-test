@@ -2,9 +2,13 @@ import {
   checkSpreadsheetRowStatus,
   getTechnicalInterviewSummaryData,
 } from "@/backend/api/get";
-import { updateTechnicalInterviewStatus } from "@/backend/api/update";
+import {
+  overrideStep,
+  updateTechnicalInterviewStatus,
+} from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { startCase } from "@/utils/string";
 import {
   OptionType,
   TechnicalInterviewFilterFormValues,
@@ -19,7 +23,6 @@ import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TechnicalInterviewColumnsMenu from "./TechnicalInterviewColumnsMenu";
-
 import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
 
@@ -266,6 +269,44 @@ const TechnicalInterviewSpreadsheetView = ({
     }
   };
 
+  const handleOverride = async (hrTeamMemberId: string, rowId: string) => {
+    try {
+      if (!teamMember) return;
+
+      setIsLoading(true);
+      await overrideStep(supabaseClient, {
+        hrTeamMemberId: teamMember?.team_member_id,
+        rowId,
+        table: "technical_interview",
+      });
+
+      setData((prev) =>
+        prev.map((thisItem) => {
+          if (thisItem.technical_interview_id !== rowId) return thisItem;
+          return {
+            ...thisItem,
+            assigned_hr: startCase(
+              `${user?.user_first_name} ${user?.user_last_name}`
+            ),
+            assigned_hr_team_member_id: hrTeamMemberId,
+          };
+        })
+      );
+
+      notifications.show({
+        message: "The applicant is successfully reassigned.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -316,6 +357,7 @@ const TechnicalInterviewSpreadsheetView = ({
         }
         handleCheckRow={handleCheckRow}
         technicalInterviewNumber={technicalInterviewNumber}
+        handleOverride={handleOverride}
       />
     </Stack>
   );

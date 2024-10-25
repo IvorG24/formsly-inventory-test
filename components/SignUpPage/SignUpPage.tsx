@@ -91,6 +91,7 @@ const SignUpPage = () => {
           color: "orange",
           autoClose: false,
         });
+        setIsLoading(false);
         return;
       }
 
@@ -114,7 +115,6 @@ const SignUpPage = () => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -213,8 +213,8 @@ const SignUpPage = () => {
                         "Your password does not match.",
                     })}
                   />
-                  <Button type="submit" size="md">
-                    Sign up
+                  <Button type="submit" size="md" disabled={isLoading}>
+                    Sign Up
                   </Button>
                 </Stack>
               </form>

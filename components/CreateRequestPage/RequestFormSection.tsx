@@ -122,6 +122,7 @@ type RequestFormSectionProps = {
       fieldIndex: number,
       sectionIndex: number
     ) => void;
+    onWorkingAdvancesChange: (value: string | null, fieldIndex: number) => void;
   };
   personnelTransferRequisitionMethods?: {
     onMannerOfTransferChange: (

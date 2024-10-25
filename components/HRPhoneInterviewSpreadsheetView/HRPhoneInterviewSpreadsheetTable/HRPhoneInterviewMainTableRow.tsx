@@ -10,7 +10,6 @@ import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -28,6 +27,7 @@ type Props = {
     data: HRPhoneInterviewSpreadsheetData
   ) => void;
   handleCheckRow: (item: HRPhoneInterviewSpreadsheetData) => Promise<boolean>;
+  handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
 const HRPhoneInterviewMainTableRow = ({
@@ -35,13 +35,12 @@ const HRPhoneInterviewMainTableRow = ({
   hiddenColumnList,
   handleUpdateHRPhoneInterviewStatus,
   handleCheckRow,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const teamMemberGroupList = useUserTeamMemberGroupList();
-
-  const [isOverriding, setIsOverriding] = useState(false);
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -181,8 +180,7 @@ const HRPhoneInterviewMainTableRow = ({
       <td>
         {item.hr_phone_interview_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
-          teamMemberGroupList.includes("HUMAN RESOURCES") &&
-          !isOverriding && (
+          teamMemberGroupList.includes("HUMAN RESOURCES") && (
             <Button
               w={140}
               onClick={() =>
@@ -197,8 +195,11 @@ const HRPhoneInterviewMainTableRow = ({
                   labels: { confirm: "Confirm", cancel: "Cancel" },
                   onConfirm: async () => {
                     const result = await handleCheckRow(item);
-                    if (result) {
-                      setIsOverriding(true);
+                    if (result && teamMember) {
+                      handleOverride(
+                        teamMember.team_member_id,
+                        item.hr_phone_interview_id
+                      );
                     }
                   },
                 })
@@ -209,8 +210,7 @@ const HRPhoneInterviewMainTableRow = ({
           )}
 
         {item.hr_phone_interview_status === "PENDING" &&
-          (teamMember?.team_member_id === item.assigned_hr_team_member_id ||
-            isOverriding) && (
+          teamMember?.team_member_id === item.assigned_hr_team_member_id && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button
                 color="green"
