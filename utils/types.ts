@@ -603,9 +603,6 @@ export type InventoryFieldRow =
 export type InventoryCustomerRow =
   Database["inventory_schema"]["Tables"]["customer_table"]["Row"];
 
-export type InventoryEventRow =
-  Database["inventory_request_schema"]["Tables"]["inventory_event_table"]["Row"];
-
 export type InventoryHistoryRow =
   Database["inventory_request_schema"]["Tables"]["inventory_history_table"]["Row"];
 
@@ -2857,4 +2854,5 @@ export type InventoryEmployeeList = SCICEmployeeTableRow & {
   site_name: string;
   location_name: string;
   team_department_name: string;
+  [key: string]: string;
 };

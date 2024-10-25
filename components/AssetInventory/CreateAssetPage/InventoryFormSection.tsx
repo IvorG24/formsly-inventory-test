@@ -25,7 +25,6 @@ type RequestFormSectionProps = {
     onSiteNameChange: (index: number, value: string | null) => void;
   };
   eventFormMethods?: {
-    handleAssignToChange: (index: number, value: string | null) => void;
     onCheckinCategoryChange?: (index: number, value: string | null) => void;
     onSiteCategorychange: (index: number, value: string | null) => void;
   };

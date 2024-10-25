@@ -1,6 +1,5 @@
 import {
   getCustomerList,
-  getEmployeeInventoryList,
   getInventoryFormDetails,
   getLocationOption,
 } from "@/backend/api/get";
@@ -65,8 +64,7 @@ const EventFormModal = ({
   const [isLoading, setIsloading] = useState(false);
   const [opened, setOpened] = useState(true);
   const [formData, setFormData] = useState<InventoryFormType>();
-  const { handleSubmit, control, getValues, setValue, trigger } =
-    requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
@@ -304,66 +302,6 @@ const EventFormModal = ({
     }
   };
 
-  const handleAssignToChange = async (index: number, value: string | null) => {
-    try {
-      if (value === null) {
-        const assignSection = getValues(`sections.${index}`);
-        setValue(`sections.${index}.section_field.${2}.field_response`, "");
-        updateSection(index, {
-          ...assignSection,
-          section_field: assignSection.section_field,
-        });
-        return;
-      }
-
-      const { data: EmployeeData } = await getEmployeeInventoryList(
-        supabaseClient,
-        {
-          teamID: activeTeam.team_id,
-          nameSearch: value,
-        }
-      );
-      await handleOnSiteNameChange(index, EmployeeData[0].site_name);
-      const assignSection = getValues(`sections.${index}`);
-
-      const newSectionField = assignSection.section_field.map((field) => {
-        if (field.field_name.toLowerCase() === "site") {
-          return {
-            ...field,
-            field_response: EmployeeData[0].site_name || "",
-          };
-        }
-        if (field.field_name.toLowerCase() === "location") {
-          return {
-            ...field,
-            field_response: EmployeeData[0].location_name || "",
-          };
-        }
-        if (field.field_name.toLowerCase() === "department") {
-          return {
-            ...field,
-            field_response: EmployeeData[0].team_department_name || "",
-          };
-        }
-        return field;
-      });
-
-      updateSection(index, {
-        ...assignSection,
-        section_field: newSectionField as Omit<
-          (typeof assignSection.section_field)[0],
-          "field_special_field_template_id"
-        >[],
-      });
-      await trigger(`sections.${index}.section_field.${index}.field_response`);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
   const formisEmpty = formData && formData.form_section.length > 0;
 
   return (
@@ -396,7 +334,6 @@ const EventFormModal = ({
                       section_field: sectionFields,
                     }}
                     eventFormMethods={{
-                      handleAssignToChange: handleAssignToChange,
                       onCheckinCategoryChange: handleOnEventCategoryChange,
                       onSiteCategorychange: handleOnSiteNameChange,
                     }}

@@ -1,6 +1,6 @@
 // Imports
 import { getCategoryOptions } from "@/backend/api/get";
-import EmployeeListPage from "@/components/AssetInventory/EmployeeListPage/EmployeeListPage";
+import CustomerListPage from "@/components/AssetInventory/CustomerListPage/CustomerListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import { CategoryTableRow, SecurityGroupData } from "@/utils/types";
@@ -51,10 +51,10 @@ const Page = ({ securityGroupData }: Props) => {
   return (
     <>
       <Meta
-        description="Employee List Page"
-        url="/teamName/inventory/employee"
+        description="Customer List Page"
+        url="/teamName/inventory/customer"
       />
-      <EmployeeListPage securityGroup={securityGroupData} />
+      <CustomerListPage securityGroup={securityGroupData} />
     </>
   );
 };

@@ -6,7 +6,6 @@ import {
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 
-import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import {
   CategoryTableRow,
   EventTableRow,
@@ -62,7 +61,7 @@ const DynamicListPage = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const teamMemberList = useTeamMemberList();
+
   const formList = useFormList();
   const router = useRouter();
   const status = router.query.statusName as string;
@@ -239,7 +238,6 @@ const DynamicListPage = ({
               siteList={siteList}
               categoryList={categoryList}
               departmentList={departmentList}
-              teamMemberList={teamMemberList}
               handleFilterForms={handleFilterForms}
               formList={filteredFormList}
               localFilter={localFilter}

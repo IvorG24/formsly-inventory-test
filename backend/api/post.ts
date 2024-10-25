@@ -42,6 +42,8 @@ import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InventoryAssetFormValues,
+  InventoryCustomerRow,
+  InventoryEmployeeList,
   InventoryFieldRow,
   InventoryRequestResponseInsert,
   InventoryRequestRow,
@@ -289,7 +291,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -2609,6 +2611,7 @@ export const checkHRISNumber = async (
 ) => {
   const { hrisNumber } = params;
   let isUnique = false;
+
   const { data, error } = await supabaseClient
     .schema("lookup_schema")
     .from("scic_employee_table")
@@ -2697,7 +2700,7 @@ export const createAssetRequest = async (
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
           inventory_response_value: field.field_response as string,
-          inventory_response_asset_request_id: requestId,
+          inventory_response_request_id: requestId,
         });
       }
     }
@@ -2708,7 +2711,7 @@ export const createAssetRequest = async (
       const responseValue = capitalizeFirstWord(
         response.inventory_response_value ?? ""
       );
-      return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
+      return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     })
     .join(",");
 
@@ -2747,6 +2750,7 @@ export const createAssetRequest = async (
 
   return data as InventoryRequestRow;
 };
+
 export const updateAssetRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2793,7 +2797,7 @@ export const updateAssetRequest = async (
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
           inventory_response_value: field.field_response as string,
-          inventory_response_asset_request_id: assetId,
+          inventory_response_request_id: assetId,
         });
       }
     }
@@ -2802,7 +2806,7 @@ export const updateAssetRequest = async (
   const formattedResponseValues = fieldResponse
     .filter((response) => response.inventory_response_value !== null)
     .map((response) => {
-      return `('${capitalizeFirstWord(response.inventory_response_value)}', '${response.inventory_response_field_id}', '${response.inventory_response_asset_request_id}')`;
+      return `('${capitalizeFirstWord(response.inventory_response_value)}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     });
 
   const responseValues =
@@ -2843,6 +2847,7 @@ export const updateAssetRequest = async (
 
   return requestId;
 };
+
 export const getItemOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -3009,4 +3014,100 @@ export const handleSignatureUpload = async (
     });
     return uploadResponse.publicUrl;
   }
+};
+
+export const createInventoryEmployee = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    EmployeeData: InventoryFormValues;
+  }
+) => {
+  const { EmployeeData } = params;
+  const sectionFields = EmployeeData.sections;
+
+  const formattedFields = sectionFields[0].section_field.map((field) => ({
+    response:
+      typeof field.field_response === "string"
+        ? String(field.field_response.toUpperCase())
+        : field.field_response,
+  }));
+  const employeeId = uuidv4();
+  const employeeData = {
+    scic_employee_id: employeeId,
+    scic_employee_hris_id_number: String(formattedFields[0].response),
+    scic_employee_first_name: String(formattedFields[1].response),
+    scic_employee_middle_name: String(formattedFields[2].response) || null,
+    scic_employee_last_name: String(formattedFields[3].response),
+    scic_employee_suffix: formattedFields[4].response
+      ? String(formattedFields[4].response)
+      : null,
+    site_name: String(formattedFields[5].response),
+    location_name: String(formattedFields[6].response),
+    team_department_name: String(formattedFields[7].response),
+  };
+
+  const fieldResponse: InventoryRequestResponseInsert[] = [];
+  for (const section of EmployeeData.sections) {
+    for (const field of section.section_field) {
+      if (field.field_is_custom_field) {
+        fieldResponse.push({
+          inventory_response_request_id: employeeId,
+          inventory_response_field_id: field.field_id,
+          inventory_response_value: field.field_response as string,
+        });
+      }
+    }
+  }
+  const responseValues = fieldResponse
+    .map((response) => {
+      const responseValue = capitalizeFirstWord(
+        response.inventory_response_value ?? ""
+      );
+      return `('${responseValue}', '${response.inventory_response_field_id}','${response.inventory_response_request_id}')`;
+    })
+    .join(",");
+  console.log(responseValues);
+
+  const inputData = {
+    employeeData,
+    responseValues,
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "create_update_employee_data",
+    {
+      input_data: inputData,
+    }
+  );
+  if (error) throw error;
+
+  return data;
+};
+
+export const uploadCSVFileEmployee = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { parsedData: InventoryEmployeeList[] }
+) => {
+  const { parsedData } = params;
+  const { data, error } = await supabaseClient.rpc("import_employee_data", {
+    input_data: { employees: parsedData },
+  });
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const uploadCSVFileCustomer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { parsedData: InventoryCustomerRow[]; teamId: string }
+) => {
+  const { parsedData, teamId } = params;
+  const { data, error } = await supabaseClient.rpc("import_customer_data", {
+    input_data: { customer: parsedData, teamId: teamId },
+  });
+
+  if (error) throw error;
+
+  return data;
 };

@@ -5,7 +5,6 @@ import {
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
-  TeamMemberWithUserType,
 } from "@/utils/types";
 import {
   ActionIcon,

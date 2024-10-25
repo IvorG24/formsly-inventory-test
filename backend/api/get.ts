@@ -8151,27 +8151,18 @@ export const getEventFormDetails = async (
 
 export const getCustomerList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page?: number; limit?: number; teamId: string }
+  params: { search?: string; page?: number; limit?: number; teamId: string }
 ) => {
-  const { page = 1, limit = 10, teamId } = params;
-
-  let query = supabaseClient
-    .schema("inventory_schema")
-    .from("customer_table")
-    .select("*", { count: "exact" })
-    .eq("customer_team_id", teamId);
-
-  if (limit && page) {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
-    query = query.range(start, end);
-  }
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient.rpc(
+    "get_customer_inventory_list",
+    {
+      input_data: params,
+    }
+  );
 
   if (error) throw error;
 
-  return { data: data as InventoryCustomerRow[], totalCount: count ?? 0 };
+  return data as { data: InventoryCustomerRow[]; totalCount: 0 };
 };
 
 export const getAssetCodeDescription = async (
@@ -8215,19 +8206,6 @@ export const getEmployeeInventoryList = async (
   };
 };
 
-export const uploadCSVFileEmployee = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { parsedData: InventoryEmployeeList[] }
-) => {
-  const { parsedData } = params;
-  const { data, error } = await supabaseClient.rpc("import_employee_data", {
-    input_data: { employees: parsedData },
-  });
-
-  if (error) throw error;
-
-  return data;
-};
 export const getFormOnLoad = async (
   supabaseClient: SupabaseClient<Database>,
   params: { formId: string; userId: string }

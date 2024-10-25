@@ -12,7 +12,6 @@ import {
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 // import { AppType } from "@/utils/types";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { startCase } from "@/utils/string";
 import {
   ActionIcon,
@@ -37,7 +36,7 @@ const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
-  const activeTeam = useActiveTeam();
+
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
   const user = useUserProfile();

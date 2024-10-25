@@ -16,7 +16,7 @@ type Props = {
   activePage: number;
 };
 
-const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
+const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
   const [formData, setFormData] = useState<InventoryFormType>();
   const userProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
@@ -38,7 +38,7 @@ const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
         if (!userProfile || !isOpen) return;
         const { form } = await getFormOnLoad(supabaseClient, {
           userId: userProfile?.user_id,
-          formId: "93b73759-26b0-46ee-9003-d332391f07f2",
+          formId: "b15e05e6-b8c9-4599-ab01-7e3afd0cdd68",
         });
 
         replaceSection(form.form_section);
@@ -176,4 +176,4 @@ const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
   );
 };
 
-export default EmployeeDrawer;
+export default CustomerDrawer;

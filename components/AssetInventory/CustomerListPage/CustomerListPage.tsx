@@ -1,8 +1,8 @@
-import { getEmployeeInventoryList } from "@/backend/api/get";
-import { uploadCSVFileEmployee } from "@/backend/api/post";
+import { getCustomerList } from "@/backend/api/get";
+import { uploadCSVFileCustomer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryEmployeeList, SecurityGroupData } from "@/utils/types";
+import { InventoryCustomerRow, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -24,7 +24,7 @@ import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import EmployeeDrawer from "./EmployeeDrawer";
+import CustomerDrawer from "./CustomerDrawer";
 
 type FormValues = {
   search: string;
@@ -35,27 +35,17 @@ type FormValues = {
 type Props = {
   securityGroup: SecurityGroupData;
 };
-type Column = {
-  accessor: string;
-  title: string;
-  render: (row: InventoryEmployeeList) => JSX.Element;
-};
-const EmployeeListPage = ({ securityGroup }: Props) => {
+const CustomerListPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
-  const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
+  console.log(securityGroup);
 
   const [activePage, setActivePage] = useState(1);
-  const [currentEmployeeList, setCurrentEmployeeList] = useState<
-    InventoryEmployeeList[]
-  >([]);
+  const [customerList, setCustomerList] = useState<InventoryCustomerRow[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
-  const [currentEmployeeCount, setCurrentEmployeeCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  //   const canAddData = securityGroup.privileges.site.add === true;
-  //   const canDeleteData = securityGroup.privileges.site.delete === true;
-  //   const canEditData = securityGroup.privileges.site.edit === true;
   const formMethods = useForm<FormValues>({
     defaultValues: {
       site_name: "",
@@ -67,39 +57,20 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
 
   useEffect(() => {
     handlePagination(activePage);
-  }, [activeTeam.team_id]);
-  console.log(securityGroup);
+  }, [activePage, activeTeam.team_id]);
 
-  const handleFetchSiteList = async (page: number) => {
+  const handleFetchCustomerList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
       const { search } = getValues();
-      const { data, totalCount } = await getEmployeeInventoryList(
-        supabaseClient,
-        {
-          search,
-          teamID: activeTeam.team_id,
-          page,
-          limit: ROW_PER_PAGE,
-        }
-      );
-      if (data.length > 0) {
-        const generatedColumns = Object.keys(data[0])
-          .filter((key) => key !== "scic_employee_id")
-          .map((key) => ({
-            accessor: key,
-            title: key
-              .replace(/scic_employee_/gi, "")
-              .replace(/NAME/gi, " ")
-              .replace(/_/g, " ")
-              .toUpperCase(),
-            render: (row: InventoryEmployeeList) => <Text>{row[key]}</Text>,
-          }));
-
-        setColumns(generatedColumns);
-      }
-      setCurrentEmployeeList(data);
-      setCurrentEmployeeCount(totalCount);
+      const { data, totalCount } = await getCustomerList(supabaseClient, {
+        search,
+        teamId: activeTeam.team_id,
+        page,
+        limit: ROW_PER_PAGE,
+      });
+      setCustomerList(data);
+      setCustomerCount(totalCount);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -112,7 +83,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     try {
       setActivePage(1);
       setIsLoading(true);
-      await handleFetchSiteList(1);
+      await handleFetchCustomerList(1);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -127,7 +98,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     try {
       setActivePage(page);
       setIsLoading(true);
-      await handleFetchSiteList(page);
+      await handleFetchCustomerList(page);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -146,25 +117,24 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
       header: true,
       skipEmptyLines: true,
       complete: async (result) => {
-        const parsedData = result.data as unknown as InventoryEmployeeList[];
+        const parsedData = result.data as unknown as InventoryCustomerRow[];
 
         try {
           setIsLoading(true);
-          await uploadCSVFileEmployee(supabaseClient, {
+          await uploadCSVFileCustomer(supabaseClient, {
             parsedData: parsedData,
+            teamId: activeTeam.team_id,
           });
 
           notifications.show({
-            message: "Employees imported successfully!",
+            message: "Customer imported successfully!",
             color: "green",
           });
 
-          handleFetchSiteList(1);
+          handleFetchCustomerList(activePage);
         } catch (error) {
-          console.log(error);
-
           notifications.show({
-            message: "Error importing employees.",
+            message: "Error importing Customer.",
             color: "red",
           });
         } finally {
@@ -183,7 +153,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         <form onSubmit={handleSubmit(handleCSVSubmit)}>
           <FileInput
             accept=".csv"
-            placeholder="Employee csv file"
+            placeholder="Customer csv file"
             label="CSV File"
             withAsterisk
             {...register("file", { required: true })}
@@ -209,16 +179,16 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
 
   return (
     <Container fluid>
-      <EmployeeDrawer
+      <CustomerDrawer
         isOpen={opened}
         close={close}
-        handleFetch={handleFetchSiteList}
+        handleFetch={handleFetchCustomerList}
         activePage={activePage}
       />
       <Flex direction="column" gap="sm">
-        <Title order={3}>List of Employee</Title>
+        <Title order={3}>List of Customers</Title>
         <Text>
-          This is the list of Employee currently in the system, including their
+          This is the list of Customer currently in the system, including their
           descriptions and available actions. You can edit or delete each site
           as needed.
         </Text>
@@ -226,7 +196,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="center">
             <TextInput
-              placeholder="Search by hris id"
+              placeholder="Search by customer_name"
               {...register("search")}
               rightSection={
                 <ActionIcon size="xs" type="submit">
@@ -245,13 +215,13 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
                 Import
               </Button>
               <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Site
+                Add New Customer
               </Button>
               {/* {canAddData && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Site
-              </Button>
-            )} */}
+                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                  Add New Site
+                </Button>
+              )} */}
             </Group>
           </Group>
         </form>
@@ -267,16 +237,35 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
           withBorder
           idAccessor="site_id"
           page={activePage}
-          totalRecords={currentEmployeeCount}
+          totalRecords={customerCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
-          records={currentEmployeeList}
+          records={customerList}
           fetching={isLoading}
-          columns={columns}
+          columns={[
+            {
+              accessor: "customer_name",
+              width: "10%",
+              title: "Customer Company",
+              render: (customer) => <Text>{customer.customer_name}</Text>,
+            },
+            {
+              accessor: "customer_company",
+              width: "10%",
+              title: "Customer Company",
+              render: (customer) => <Text>{customer.customer_company}</Text>,
+            },
+            {
+              accessor: "customer_email",
+              width: "10%",
+              title: "Customer Email",
+              render: (customer) => <Text>{customer.customer_email}</Text>,
+            },
+          ]}
         />
       </Flex>
     </Container>
   );
 };
 
-export default EmployeeListPage;
+export default CustomerListPage;
