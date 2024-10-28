@@ -240,7 +240,7 @@ const AssetInventoryDetailsPage = ({
         />
       )}
       <LoadingOverlay visible={isLoading} />
-      <Paper shadow="lg" p="lg">
+      <Paper shadow="xl" p="lg" withBorder>
         {assetDetails.map((detail, idx) => (
           <Box key={idx}>
             <Group position="apart" mb="md">
@@ -248,6 +248,7 @@ const AssetInventoryDetailsPage = ({
               <Group>
                 {canEdit && (
                   <Button
+                    variant="outline"
                     onClick={() => {
                       router.push(
                         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${detail.inventory_request_tag_id}/edit`
@@ -326,6 +327,7 @@ const AssetInventoryDetailsPage = ({
                             "inventory_request_site",
                             "inventory_request_location",
                             "inventory_request_department",
+                            "inventory_request_old_asset_number",
                           ].includes(key)
                         ) {
                           acc.push(

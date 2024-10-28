@@ -52,7 +52,6 @@ type Props = {
 const CustomerListPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
-  console.log(securityGroup);
 
   const [activePage, setActivePage] = useState(1);
   const [customerList, setCustomerList] = useState<InventoryCustomerList[]>([]);

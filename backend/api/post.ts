@@ -2688,38 +2688,49 @@ export const createAssetRequest = async (
     teamName: string;
   }
 ) => {
-  const { InventoryFormValues, formId, teamMemberId } = params;
+  const { InventoryFormValues, teamMemberId, teamId } = params;
+  const { data: tagId, error: tagError } = await supabaseClient
+    .schema("inventory_request_schema")
+    .from("inventory_request_table")
+    .select("inventory_request_tag_id")
+    .order("inventory_request_tag_id", { ascending: false })
+    .limit(1);
 
-  const {
-    csi_code,
-    description,
-    asset_name,
-    brand,
-    model,
-    serial_number,
-    equipment_type,
-    old_asset_number,
-    category,
-    site,
-    location,
-    department,
-    purchase_order,
-    purchase_date,
-    purchase_form,
-    cost,
-    si_number,
-  } = extractInventoryData(InventoryFormValues);
+  if (tagError) throw tagError;
 
+  const newTagId = tagId[0].inventory_request_tag_id + 1;
   const requestId = uuidv4();
   const fieldResponse: InventoryRequestResponseInsert[] = [];
+  const fieldValue = [];
 
   for (const section of InventoryFormValues.sections) {
     for (const field of section.section_field) {
+      const responseValue = field.field_response;
+
       if (field.field_is_sub_category || field.field_is_custom_field) {
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
-          inventory_response_value: field.field_response as string,
+          inventory_response_value: String(responseValue),
           inventory_response_request_id: requestId,
+        });
+      } else if (!field.field_is_sub_category || !field.field_is_custom_field) {
+        const formattedResponse =
+          typeof responseValue === "string" || typeof responseValue === "number"
+            ? capitalizeFirstWord(String(responseValue))
+            : responseValue instanceof Date
+              ? responseValue.toISOString()
+              : "";
+
+        if (field.field_type === "date" && responseValue) {
+          fieldValue.push({
+            response:
+              responseValue instanceof Date
+                ? responseValue.toISOString()
+                : new Date(responseValue as string).toISOString(),
+          });
+        }
+        fieldValue.push({
+          response: formattedResponse,
         });
       }
     }
@@ -2732,30 +2743,16 @@ export const createAssetRequest = async (
       );
       return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     })
-    .join(",");
+    .join(", ");
+
+  const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
+    .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
+    .join(", ")})`;
 
   const requestData = {
-    requestId,
-    formId,
-    teamMemberId,
-    description,
-    asset_name,
-    csi_code,
-    brand,
-    model,
-    serial_number,
-    old_asset_number,
-    equipment_type,
-    category,
-    site,
-    location,
-    department,
-    purchase_order,
-    purchase_date,
-    purchase_form,
-    cost,
-    si_number,
     responseValues,
+    assetResponseValue,
+    requestId,
   };
 
   const { data, error } = await supabaseClient
@@ -2833,7 +2830,6 @@ export const updateAssetRequest = async (
 
   const requestData = {
     assetId,
-    formId,
     teamMemberId,
     asset_name,
     csi_code,

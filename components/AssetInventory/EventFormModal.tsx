@@ -318,7 +318,7 @@ const EventFormModal = ({
         }}
         size="xl"
       >
-        <Title order={3}>Event Form</Title>
+        <Title order={3}>{formData?.form_name} Form Event</Title>
         <FormProvider {...requestFormMethods}>
           <form onSubmit={handleSubmit(handleFormSubmit)}>
             {formSections.map((section, idx) => {

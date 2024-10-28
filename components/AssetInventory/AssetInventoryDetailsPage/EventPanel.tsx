@@ -3,11 +3,12 @@ import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryDynamicRow } from "@/utils/types";
 import {
   Button,
+  Card,
+  Divider,
   Flex,
   Grid,
   Group,
   Pagination,
-  Paper,
   Text,
 } from "@mantine/core";
 import { useRouter } from "next/router";
@@ -37,6 +38,7 @@ const EventPanel = ({
   const [activePage, setActivePage] = useState(1);
   const activeTeam = useActiveTeam();
   const router = useRouter();
+
   useEffect(() => {
     if (!activeTeam.team_id || activeTab !== "events") return;
     fetchEventsPanel(activePage);
@@ -45,15 +47,15 @@ const EventPanel = ({
   return (
     <>
       {eventHistoryData?.map((event, index) => (
-        <Paper shadow="sm" p="md" withBorder key={index} mb="md">
-          <Grid gutter="md">
+        <Card shadow="md" p="lg" withBorder key={index} mb="lg" radius="md">
+          <Grid gutter="lg">
             {Object.entries(event).map(([key, value]) => {
               if (key === "event_id" || key === "event_signature") return null;
 
               return (
                 <Grid.Col span={6} key={key}>
-                  <Group>
-                    <Text size="sm" weight={500}>
+                  <Group align="apart" spacing="xs">
+                    <Text size="sm" weight={600}>
                       {formatTitle(key, event.event_name)}:
                     </Text>
                     <Text size="sm">
@@ -73,22 +75,21 @@ const EventPanel = ({
                 </Grid.Col>
               );
             })}
-
-            <Grid.Col span={12}>
-              <Flex justify="flex-end" mt="md">
-                <Button
-                  size="xs"
-                  onClick={() => {
-                    router.push(event.event_signature);
-                  }}
-                  variant="filled"
-                >
-                  Signature
-                </Button>
-              </Flex>
-            </Grid.Col>
           </Grid>
-        </Paper>
+
+          <Divider my="md" />
+
+          <Flex justify="flex-end">
+            <Button
+              size="sm"
+              onClick={() => {
+                router.push(event.event_signature);
+              }}
+            >
+              Signature
+            </Button>
+          </Flex>
+        </Card>
       ))}
 
       <Pagination
@@ -97,6 +98,7 @@ const EventPanel = ({
         total={Math.ceil(totalRecords / ROW_PER_PAGE)}
         position="center"
         mt="md"
+        size="sm"
       />
     </>
   );

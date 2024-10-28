@@ -62,7 +62,7 @@ const HistoryPanel = ({
 
   return (
     <Stack>
-      <Flex justify="space-between">
+      <Flex justify="space-between" wrap={"wrap"} gap={"md"}>
         <Controller
           control={control}
           name="date"
@@ -92,7 +92,7 @@ const HistoryPanel = ({
           render={({ field: { value, onChange } }) => (
             <MultiSelect
               data={statusList}
-              placeholder="event"
+              placeholder="Event"
               label="Event"
               ref={eventRef}
               value={value}

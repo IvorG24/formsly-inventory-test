@@ -297,7 +297,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
                 ...form.form_section[0].section_field[0],
                 field_option: itemOptionList,
               },
-              ...form.form_section[0].section_field.slice(1, 7),
+              ...form.form_section[0].section_field.slice(1, 8),
             ],
           },
           form.form_section[1],

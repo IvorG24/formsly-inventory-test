@@ -47,7 +47,6 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
-  console.log(securityGroup);
 
   const [activePage, setActivePage] = useState(1);
   const [currentEmployeeList, setCurrentEmployeeList] = useState<
