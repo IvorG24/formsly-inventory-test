@@ -2658,6 +2658,25 @@ export const updateEmployee = async (
   if (error) throw error;
 };
 
+export const createRequesterPrimarySigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    requesterTeamMemberId: string[];
+    signerTeamMemberId: string;
+    signerAction: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "create_requester_primary_signer",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+};
+
 export const createAssetRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

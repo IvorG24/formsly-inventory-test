@@ -263,6 +263,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
             formId,
+            requesterTeamMemberId: `${teamMember?.team_member_id}`,
           });
           if (data.length !== 0) {
             setSignerList(data as unknown as FormType["form_signer"]);

@@ -1,5 +1,6 @@
 import { checkHRISNumber, createNewEmployee } from "@/backend/api/post";
 import { Database } from "@/utils/database";
+import { transformEmployeeData } from "@/utils/functions";
 import { SCICEmployeeTableInsert } from "@/utils/types";
 import {
   Button,
@@ -47,10 +48,13 @@ const CreateNewEmployee = ({
 
   const handleCreateNewEmployee = async (data: SCICEmployeeTableInsert) => {
     try {
+      const transformedData = transformEmployeeData(data);
+
       await createNewEmployee(supabaseClient, {
-        employeeData: data,
+        employeeData: transformedData,
       });
 
+      // Additional actions post-creation
       handleFetch(activePage);
       setIsCreatingEmployee(false);
       notifications.show({
@@ -119,6 +123,7 @@ const CreateNewEmployee = ({
                   withAsterisk
                   label="First Name"
                   w="100%"
+                  value={field.value.toUpperCase()}
                   error={fieldState.error?.message}
                 />
               )}
@@ -132,7 +137,7 @@ const CreateNewEmployee = ({
                   {...field}
                   label="Middle Name (optional)"
                   w="100%"
-                  value={field.value || ""}
+                  value={field.value?.toUpperCase() || ""}
                 />
               )}
             />
@@ -153,6 +158,7 @@ const CreateNewEmployee = ({
                   withAsterisk
                   label="Last Name"
                   w="100%"
+                  value={field.value.toUpperCase()}
                   error={fieldState.error?.message}
                 />
               )}

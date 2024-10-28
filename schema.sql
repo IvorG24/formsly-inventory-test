@@ -307,7 +307,8 @@ CREATE TABLE form_schema.signer_table (
   signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
-  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,            
+  signer_is_requester_signer BOOLEAN DEFAULT FALSE NOT NULL,                                                            
 
   signer_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
@@ -376,6 +377,13 @@ CREATE TABLE form_schema.form_team_group_table (
 
   UNIQUE(form_id, team_group_id)
 );
+
+CREATE TABLE form_schema.requester_primary_signer_table (
+  requester_primary_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,                                               
+  requester_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
+);
+
 
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -12306,90 +12314,91 @@ RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = [];
+function fetchSignerData(condition, params = []) {
+    return plv8.execute(`
+        SELECT
+            signer_id,
+            signer_is_primary_signer,
+            signer_action,
+            signer_order,
+            signer_is_disabled,
+            signer_team_project_id,
+            team_member_id,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+        FROM form_schema.signer_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        ${condition}
+    `, params);
+};
 plv8.subtransaction(function() {
-  const {
-    projectId,
-    formId,
-    departmentId
-  } = input_data;
+    const {
+        projectId,
+        formId,
+        departmentId,
+        requesterTeamMemberId
+    } = input_data;
 
-  let query = `
-      SELECT
-        signer_id,
-        signer_is_primary_signer,
-        signer_action,
-        signer_order,
-        signer_is_disabled,
-        signer_team_project_id,
-        team_member_id,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_avatar
-      FROM form_schema.signer_table
-      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        signer_team_project_id = '${projectId}'
-        AND signer_form_id = '${formId}'
+    const hasSpecialSigner = plv8.execute(`
+        SELECT requester_primary_signer_signer_id
+        FROM form_schema.requester_primary_signer_table
+        INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+        WHERE
+            requester_team_member_id = $1
+            AND signer_form_id = $2
+    `, [requesterTeamMemberId, formId])[0];
+
+    let condition = `
+        WHERE signer_team_project_id = $1
+        AND signer_form_id = $2
         AND signer_is_disabled = false
+        AND signer_is_requester_signer = false
     `;
 
-  if (departmentId) {
-    query = query + ` AND signer_team_department_id = '${departmentId}'`
-  } else {
-    query = query + ` AND signer_team_department_id IS NULL`
-  }
+    const params = [projectId, formId];
+    let signerData = [];
 
-  let signerData = plv8.execute(query);
-
-  if (signerData.length <= 0) {
-    signerData = plv8.execute(`
-      SELECT
-        signer_id,
-        signer_is_primary_signer,
-        signer_action,
-        signer_order,
-        signer_is_disabled,
-        signer_team_project_id,
-        team_member_id,
-        user_id,
-        user_first_name,
-        user_last_name,
-        user_avatar
-      FROM form_schema.signer_table
-      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        signer_team_project_id = '${projectId}'
-        AND signer_form_id = '${formId}'
-        AND signer_team_department_id IS NULL
-        AND signer_is_disabled = false
-    `)
-  }
-
-  returnData = signerData.map(signer => {
-    return {
-      signer_id: signer.signer_id,
-      signer_is_primary_signer: signer.signer_is_primary_signer,
-      signer_action: signer.signer_action,
-      signer_order: signer.signer_order,
-      signer_is_disabled: signer.signer_is_disabled,
-      signer_team_project_id: signer.signer_team_project_id,
-      signer_team_member: {
-        team_member_id: signer.team_member_id,
-        team_member_user: {
-          user_id: signer.user_id,
-          user_first_name: signer.user_first_name,
-          user_last_name: signer.user_last_name,
-          user_avatar: signer.user_avatar,
-        }
-      }
+    if (hasSpecialSigner) {
+        signerData = fetchSignerData(`WHERE signer_id = $1`, [hasSpecialSigner.requester_primary_signer_signer_id]);
+    } else if (departmentId) {
+        condition += ` AND signer_team_department_id = $3`;
+        params.push(departmentId);
+        signerData = fetchSignerData(condition, params);
+    } 
+    
+    if (signerData.length <= 0) {
+        signerData = fetchSignerData(`
+            WHERE signer_team_project_id = $1
+            AND signer_form_id = $2
+            AND signer_team_department_id IS NULL
+            AND signer_is_disabled = false
+        `, [projectId, formId]);
     }
-  })
+
+    returnData = signerData.map(signer => ({
+        signer_id: signer.signer_id,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+        signer_action: signer.signer_action,
+        signer_order: signer.signer_order,
+        signer_is_disabled: signer.signer_is_disabled,
+        signer_team_project_id: signer.signer_team_project_id,
+        signer_team_member: {
+            team_member_id: signer.team_member_id,
+            team_member_user: {
+                user_id: signer.user_id,
+                user_first_name: signer.user_first_name,
+                user_last_name: signer.user_last_name,
+                user_avatar: signer.user_avatar,
+            }
+        }
+    }));
 });
 return returnData;
 $$ LANGUAGE plv8;
+
 
 CREATE OR REPLACE FUNCTION get_multiple_project_signer_with_team_member(
   input_data JSON
@@ -20202,6 +20211,116 @@ AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION create_requester_primary_signer(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+plv8.subtransaction(function() {
+    const {
+        formId,
+        requesterTeamMemberId,
+        signerTeamMemberId,
+        signerAction
+    } = input_data;
+
+    let signerData = plv8.execute(`
+        SELECT *
+        FROM form_schema.signer_table
+        WHERE
+            signer_is_requester_signer = TRUE
+            AND signer_form_id = $1
+            AND signer_team_member_id = $2
+        LIMIT 1
+    `, [formId, signerTeamMemberId])[0];
+
+    if (!signerData) {
+        const signerIsPrimary = true;
+        const signerIsRequesterSigner = true;
+        const signerOrder = 1;
+
+        signerData = plv8.execute(`
+            INSERT INTO form_schema.signer_table 
+                (signer_is_primary_signer, signer_action, signer_is_requester_signer, signer_form_id, signer_team_member_id, signer_order)
+            VALUES
+                ($1, $2, $3, $4, $5, $6)
+            RETURNING *;  
+        `, [signerIsPrimary, signerAction, signerIsRequesterSigner, formId, signerTeamMemberId, signerOrder])[0];
+    }
+
+    requesterTeamMemberId.forEach((requester) => {
+        const duplicateCount = plv8.execute(`
+            SELECT COUNT(*)
+            FROM form_schema.requester_primary_signer_table
+            WHERE
+                requester_team_member_id = $1
+                AND requester_primary_signer_signer_id = $2
+        `, [requester, signerData.signer_id])[0].count;
+
+        if (Number(duplicateCount) === 0) {
+            plv8.execute(`
+                INSERT INTO form_schema.requester_primary_signer_table 
+                    (requester_team_member_id, requester_primary_signer_signer_id)
+                VALUES
+                    ($1, $2)
+            `, [requester, signerData.signer_id]);
+        }
+    });
+});
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_requester_signer_list(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    page,
+    limit,
+    search,
+    formId
+  } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const requesterSignerCount = plv8.execute(`SELECT COUNT(*) FROM form_schema.requester_primary_signer_table`)[0].count;
+
+    let query = `
+        SELECT
+            requester_primary_signer_id,
+            requester_team_member_id,
+            requester_primary_signer_signer_id,
+            signer_team_member_id AS requester_primary_signer_signer_team_member_id
+        FROM form_schema.requester_primary_signer_table
+        INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+        INNER JOIN team_schema.team_member_table signer_team_member ON signer_team_member.team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table signer_user ON signer_user.user_id = signer_team_member.team_member_user_id
+        INNER JOIN team_schema.team_member_table requester_team_member ON requester_team_member.team_member_id = requester_team_member_id
+        INNER JOIN user_schema.user_table requester_user ON requester_user.user_id = requester_team_member.team_member_user_id
+        WHERE
+            signer_form_id = $1
+            AND signer_is_disabled = false
+            AND signer_is_requester_signer = true
+        `;
+    let params = [formId, limit, start];
+    if (search) {
+        query += ` AND (CONCAT(signer_user.user_first_name, ' ', signer_user.user_last_name) ILIKE $4 OR CONCAT(requester_user.user_first_name, ' ', requester_user.user_last_name) ILIKE $4)`;
+        params.push(`%${search}%`)
+    }
+
+    query += ` LIMIT $2 OFFSET $3`;
+
+    const requesterSignerList = plv8.execute(query, params);
+
+    returnData = {data: requesterSignerList, count: Number(requesterSignerCount)};
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -20648,7 +20767,7 @@ WITH CHECK (
       team_member_user_id = (SELECT auth.uid())
       AND signer_id = request_signer_signer_id
   )
-)
+);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON request_schema.request_signer_table
@@ -23784,6 +23903,56 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_requ
 CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_request_table
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+--- form_schema.requester_primary_signer_table
+ALTER TABLE form_schema.requester_primary_signer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.requester_primary_signer_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.requester_primary_signer_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.requester_primary_signer_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role"
+ON form_schema.requester_primary_signer_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.requester_primary_signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role"
+ON form_schema.requester_primary_signer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.requester_primary_signer_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role"
+ON form_schema.requester_primary_signer_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 ----- END: POLICIES
 

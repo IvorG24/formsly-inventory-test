@@ -207,3 +207,16 @@ export const deleteInterviewOnlineMeeting = async (
 
   if (error) throw error;
 };
+
+export const removeRequesterSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  requester_primary_signer_id: string
+) => {
+  const { error } = await supabaseClient
+    .schema("form_schema")
+    .from("requester_primary_signer_table")
+    .delete()
+    .eq("requester_primary_signer_id", requester_primary_signer_id);
+
+  if (error) throw error;
+};

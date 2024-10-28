@@ -47,6 +47,7 @@ import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDepartmentSignerSection from "./FormDepartmentSignerSection/FormDepartmentSignerSection";
 import FormDetailsSection from "./FormDetailsSection";
+import FormRequesterSignerSection from "./FormRequesterSignerSection/FormRequesterSignerSection";
 import FormSectionList from "./FormSectionList";
 
 type Props = {
@@ -514,6 +515,8 @@ const RequestFormPage = ({
                 departmentOptionList={departmentOptionList}
               />
             )}
+
+            <FormRequesterSignerSection formId={form.form_id} />
           </>
         )}
       </Stack>

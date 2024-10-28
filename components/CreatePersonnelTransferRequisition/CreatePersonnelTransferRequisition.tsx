@@ -743,6 +743,7 @@ const CreatePersonnelTransferRequisition = ({
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
             formId,
+            requesterTeamMemberId: `${teamMember?.team_member_id}`,
           });
           const signerData = data as unknown as FormType["form_signer"];
           if (data.length !== 0) {
@@ -783,6 +784,7 @@ const CreatePersonnelTransferRequisition = ({
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
             formId,
+            requesterTeamMemberId: `${teamMember?.team_member_id}`,
           });
           const signerData = data as unknown as FormType["form_signer"];
           if (data.length !== 0) {

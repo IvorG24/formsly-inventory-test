@@ -407,6 +407,7 @@ const SchedulingCalendar = ({
           supabaseClient,
           {
             ...testOnlineMeetingProps,
+            interview_meeting_schedule: tempDate.toISOString(),
             interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
             updateScheduleProps,
           }

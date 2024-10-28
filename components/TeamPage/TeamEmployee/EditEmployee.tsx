@@ -1,6 +1,7 @@
 import { checkHRISNumber, updateEmployee } from "@/backend/api/post";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { transformEmployeeData } from "@/utils/functions";
 import { SCICEmployeeTableRow, SCICEmployeeTableUpdate } from "@/utils/types";
 import {
   Button,
@@ -39,8 +40,9 @@ const CreateNewEmployee = ({
 
   const handleUpdateEmployee = async (data: SCICEmployeeTableUpdate) => {
     try {
+      const transformedData = transformEmployeeData(data);
       await updateEmployee(supabaseClient, {
-        employeeData: data,
+        employeeData: transformedData,
       });
 
       handleFetch(activePage);
@@ -118,6 +120,7 @@ const CreateNewEmployee = ({
                   label="First Name"
                   readOnly={!isOwnerOrAdmin}
                   w="100%"
+                  value={field.value.toUpperCase()}
                   error={fieldState.error?.message}
                 />
               )}
@@ -132,7 +135,7 @@ const CreateNewEmployee = ({
                   label="Middle Name (optional)"
                   w="100%"
                   readOnly={!isOwnerOrAdmin}
-                  value={field.value || ""}
+                  value={field.value?.toUpperCase() || ""}
                 />
               )}
             />
@@ -154,6 +157,7 @@ const CreateNewEmployee = ({
                   label="Last Name"
                   readOnly={!isOwnerOrAdmin}
                   w="100%"
+                  value={field.value.toUpperCase()}
                   error={fieldState.error?.message}
                 />
               )}

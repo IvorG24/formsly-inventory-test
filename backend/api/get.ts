@@ -15,6 +15,7 @@ import {
   IT_ASSET_FIELD_ID_LIST,
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  ROW_PER_PAGE,
   SELECT_OPTION_LIMIT,
   TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
@@ -95,6 +96,7 @@ import {
   PendingInviteType,
   QuestionnaireData,
   ReferenceMemoType,
+  RequesterPrimarySignerType,
   RequestListItemType,
   RequestListOnLoad,
   RequestResponseTableRow,
@@ -2007,6 +2009,7 @@ export const getProjectSignerWithTeamMember = async (
     projectId: string;
     formId: string;
     departmentId?: string;
+    requesterTeamMemberId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -7559,6 +7562,28 @@ export const getSCICEmployeeList = async (
   return {
     data: data as SCICEmployeeTableRow[],
     totalCount: count ?? 0,
+  };
+};
+
+export const getRequesterPrimarySignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_requester_signer_list",
+    {
+      input_data: { ...params, limit: ROW_PER_PAGE },
+    }
+  );
+  if (error) throw error;
+
+  return data as {
+    data: RequesterPrimarySignerType[];
+    count: number;
   };
 };
 
