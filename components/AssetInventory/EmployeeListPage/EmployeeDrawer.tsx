@@ -1,7 +1,7 @@
 import { getFormOnLoad, getLocationOption } from "@/backend/api/get";
 import { checkHRISNumber, createInventoryEmployee } from "@/backend/api/post";
 import { useUserProfile } from "@/stores/useUserStore";
-import { InventoryFormType } from "@/utils/types";
+import { InventoryEmployeeList, InventoryFormType } from "@/utils/types";
 import { Box, Button, Drawer, Group } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -14,14 +14,23 @@ type Props = {
   close: () => void;
   handleFetch: (page: number) => void;
   activePage: number;
+  mode: "create" | "edit";
+  employeeData?: InventoryEmployeeList;
 };
 
-const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
+const EmployeeDrawer = ({
+  isOpen,
+  close,
+  handleFetch,
+  activePage,
+  mode,
+  employeeData,
+}: Props) => {
   const [formData, setFormData] = useState<InventoryFormType>();
   const userProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control, getValues, setValue, reset, setError } =
+  const { handleSubmit, control, getValues, setValue, setError } =
     requestFormMethods;
   const {
     fields: formSections,
@@ -31,27 +40,6 @@ const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
     control,
     name: "sections",
   });
-
-  useEffect(() => {
-    const getInventoryForm = async () => {
-      try {
-        if (!userProfile || !isOpen) return;
-        const { form } = await getFormOnLoad(supabaseClient, {
-          userId: userProfile?.user_id,
-          formId: "93b73759-26b0-46ee-9003-d332391f07f2",
-        });
-
-        replaceSection(form.form_section);
-        setFormData(form);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong",
-          color: "red",
-        });
-      }
-    };
-    getInventoryForm();
-  }, [userProfile, replaceSection, isOpen, close, reset]);
 
   const handleOnSiteNameChange = async (
     index: number,
@@ -104,18 +92,94 @@ const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
     }
   };
 
+  useEffect(() => {
+    const getInventoryForm = async () => {
+      try {
+        if (!userProfile || !isOpen) return;
+        const { form } = await getFormOnLoad(supabaseClient, {
+          userId: userProfile?.user_id,
+          formId: "93b73759-26b0-46ee-9003-d332391f07f2",
+        });
+        replaceSection(form.form_section);
+        if (mode === "edit" && employeeData) {
+          const sections = getValues("sections");
+
+          Object.keys(employeeData).forEach((key) => {
+            const normalizedKey = key
+              .replace(/^scic_employee_/, "")
+              .replace(/_/g, " ")
+              .toLowerCase();
+
+            sections.forEach((section, sectionIndex) => {
+              const fieldIndex = section.section_field.findIndex(
+                (field) => field.field_name.toLowerCase() === normalizedKey
+              );
+
+              if (fieldIndex !== -1) {
+                const field = sections[0].section_field[fieldIndex];
+                if (field.field_name.toLowerCase() === "hris id number") {
+                  setValue(
+                    `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+                    parseInt(employeeData[key], 10)
+                  );
+                } else if (field.field_name.toLowerCase() === "site") {
+                  const siteValue = String(employeeData[key]);
+                  setValue(
+                    `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+                    siteValue
+                  );
+
+                  handleOnSiteNameChange(sectionIndex, siteValue);
+                } else {
+                  setValue(
+                    `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+                    String(employeeData[key])
+                  );
+                }
+              }
+            });
+          });
+          replaceSection(sections);
+        } else if (mode === "create") {
+          replaceSection(form.form_section);
+        }
+
+        setFormData(form);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong",
+          color: "red",
+        });
+      }
+    };
+    getInventoryForm();
+  }, [userProfile, isOpen, employeeData, mode, getValues, setValue]);
+
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
       const hrisNumber = data.sections[0].section_field[0].field_response;
-      const isHRISUnique = await checkHRISNumber(supabaseClient, {
-        hrisNumber: String(hrisNumber),
-      });
-      if (isHRISUnique) {
-        setError(`sections.${0}.section_field.${0}.field_response`, {
-          type: "manual",
-          message: "HRIS number must be unique.",
+      const isEditMode = mode === "edit";
+      const isCreateMode = mode === "create";
+
+      const originalHRISNumber = isEditMode
+        ? employeeData?.scic_employee_hris_id_number
+        : null;
+
+      if (
+        isCreateMode ||
+        (isEditMode && String(hrisNumber) !== String(originalHRISNumber))
+      ) {
+        const isHRISUnique = await checkHRISNumber(supabaseClient, {
+          hrisNumber: String(hrisNumber),
         });
-        return;
+
+        if (isHRISUnique) {
+          setError(`sections.${0}.section_field.${0}.field_response`, {
+            type: "manual",
+            message: "HRIS number must be unique.",
+          });
+          return;
+        }
       }
 
       await createInventoryEmployee(supabaseClient, {
@@ -123,14 +187,21 @@ const EmployeeDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
       });
 
       notifications.show({
-        message: "Employee created successfully",
+        message: isCreateMode
+          ? "Employee created successfully"
+          : "Employee updated successfully",
         color: "green",
       });
+
+      // Refresh data and close the form
       handleFetch(activePage);
       close();
       replaceSection(formData?.form_section || []);
     } catch (e) {
-    } finally {
+      notifications.show({
+        message: "An error occurred. Please try again.",
+        color: "red",
+      });
     }
   };
 

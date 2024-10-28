@@ -1,7 +1,8 @@
 import { getFormOnLoad, getLocationOption } from "@/backend/api/get";
-import { checkHRISNumber, createInventoryEmployee } from "@/backend/api/post";
+import { checkCustomerName, createInventoryCustomer } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
-import { InventoryFormType } from "@/utils/types";
+import { InventoryCustomerList, InventoryFormType } from "@/utils/types";
 import { Box, Button, Drawer, Group } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -10,18 +11,32 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "../CreateAssetPage/InventoryFormSection";
 import { InventoryFormValues } from "../EventFormModal";
 type Props = {
+  mode: "create" | "edit";
   isOpen: boolean;
   close: () => void;
   handleFetch: (page: number) => void;
   activePage: number;
+  customerData?: InventoryCustomerList;
+  setCustomerData: React.Dispatch<
+    React.SetStateAction<InventoryCustomerList | null>
+  >;
 };
 
-const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
+const CustomerDrawer = ({
+  isOpen,
+  close,
+  handleFetch,
+  activePage,
+  mode,
+  customerData,
+  setCustomerData,
+}: Props) => {
   const [formData, setFormData] = useState<InventoryFormType>();
   const userProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
+  const activeTeam = useActiveTeam();
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control, getValues, setValue, reset, setError } =
+  const { handleSubmit, control, getValues, setValue, setError } =
     requestFormMethods;
   const {
     fields: formSections,
@@ -36,13 +51,38 @@ const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
     const getInventoryForm = async () => {
       try {
         if (!userProfile || !isOpen) return;
+
         const { form } = await getFormOnLoad(supabaseClient, {
           userId: userProfile?.user_id,
           formId: "b15e05e6-b8c9-4599-ab01-7e3afd0cdd68",
         });
+        setFormData(form);
 
         replaceSection(form.form_section);
-        setFormData(form);
+        if (mode === "edit" && customerData) {
+          const sections = getValues("sections");
+
+          Object.keys(customerData).forEach((key) => {
+            const normalizedKey = key.replace(/_/g, " ").toLowerCase();
+
+            sections.forEach((section, sectionIndex) => {
+              const fieldIndex = section.section_field.findIndex(
+                (field) => field.field_name.toLowerCase() === normalizedKey
+              );
+
+              if (fieldIndex !== -1) {
+                setValue(
+                  `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+                  String(customerData[key])
+                );
+              }
+            });
+          });
+
+          replaceSection(sections);
+        } else if (mode === "create") {
+          replaceSection(form.form_section);
+        }
       } catch (e) {
         notifications.show({
           message: "Something went wrong",
@@ -50,8 +90,9 @@ const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
         });
       }
     };
+
     getInventoryForm();
-  }, [userProfile, replaceSection, isOpen, close, reset]);
+  }, [userProfile, isOpen, customerData, mode, getValues, setValue]);
 
   const handleOnSiteNameChange = async (
     index: number,
@@ -106,20 +147,34 @@ const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
 
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
-      const hrisNumber = data.sections[0].section_field[0].field_response;
-      const isHRISUnique = await checkHRISNumber(supabaseClient, {
-        hrisNumber: String(hrisNumber),
-      });
-      if (isHRISUnique) {
-        setError(`sections.${0}.section_field.${0}.field_response`, {
-          type: "manual",
-          message: "HRIS number must be unique.",
+      const customerName = data.sections[0].section_field[0].field_response;
+      const isEditMode = mode === "edit";
+      const isCreateMode = mode === "create";
+
+      const originalHRISNumber = isEditMode
+        ? customerData?.customer_name
+        : null;
+
+      if (
+        isCreateMode ||
+        (isEditMode && String(customerName) !== String(originalHRISNumber))
+      ) {
+        const isCustomerUnique = await checkCustomerName(supabaseClient, {
+          customerName: String(customerName),
         });
-        return;
+
+        if (isCustomerUnique) {
+          setError(`sections.${0}.section_field.${0}.field_response`, {
+            type: "manual",
+            message: "Customer name must be unique.",
+          });
+          return;
+        }
       }
 
-      await createInventoryEmployee(supabaseClient, {
-        EmployeeData: data,
+      await createInventoryCustomer(supabaseClient, {
+        customerData: data,
+        teamId: activeTeam.team_id,
       });
 
       notifications.show({
@@ -142,6 +197,7 @@ const CustomerDrawer = ({ isOpen, close, handleFetch, activePage }: Props) => {
       onClose={() => {
         close();
         replaceSection(formData?.form_section || []);
+        setCustomerData(null);
       }}
     >
       <FormProvider {...requestFormMethods}>

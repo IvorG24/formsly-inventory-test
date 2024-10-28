@@ -18,7 +18,12 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconFileImport, IconPlus, IconSearch } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconFileImport,
+  IconPlus,
+  IconSearch,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
@@ -28,8 +33,6 @@ import EmployeeDrawer from "./EmployeeDrawer";
 
 type FormValues = {
   search: string;
-  site_name: string;
-  site_description: string;
   file?: File;
 };
 type Props = {
@@ -44,6 +47,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
+  console.log(securityGroup);
 
   const [activePage, setActivePage] = useState(1);
   const [currentEmployeeList, setCurrentEmployeeList] = useState<
@@ -52,14 +56,15 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   const [opened, { open, close }] = useDisclosure(false);
   const [currentEmployeeCount, setCurrentEmployeeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<InventoryEmployeeList | null>(null);
+  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   //   const canAddData = securityGroup.privileges.site.add === true;
   //   const canDeleteData = securityGroup.privileges.site.delete === true;
   //   const canEditData = securityGroup.privileges.site.edit === true;
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      site_name: "",
-      site_description: "",
+      search: "",
     },
   });
 
@@ -68,7 +73,6 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   useEffect(() => {
     handlePagination(activePage);
   }, [activeTeam.team_id]);
-  console.log(securityGroup);
 
   const handleFetchSiteList = async (page: number) => {
     try {
@@ -95,7 +99,19 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
               .toUpperCase(),
             render: (row: InventoryEmployeeList) => <Text>{row[key]}</Text>,
           }));
-
+        generatedColumns.push({
+          accessor: "actions",
+          title: "Actions",
+          render: (row: InventoryEmployeeList) => (
+            <ActionIcon
+              onClick={() => handleEdit(row)}
+              color="blue"
+              variant="light"
+            >
+              <IconEdit size={16} />
+            </ActionIcon>
+          ),
+        });
         setColumns(generatedColumns);
       }
       setCurrentEmployeeList(data);
@@ -106,6 +122,12 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         color: "red",
       });
     }
+  };
+
+  const handleEdit = (employee: InventoryEmployeeList) => {
+    setSelectedEmployee(employee);
+    setDrawerMode("edit");
+    open();
   };
 
   const handleFilterForms = async () => {
@@ -161,8 +183,6 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
 
           handleFetchSiteList(1);
         } catch (error) {
-          console.log(error);
-
           notifications.show({
             message: "Error importing employees.",
             color: "red",
@@ -206,17 +226,24 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
       centered: true,
     });
   };
-
+  const handleCreate = () => {
+    setSelectedEmployee(null);
+    setDrawerMode("create");
+    open();
+  };
   return (
     <Container fluid>
       <EmployeeDrawer
+        mode={drawerMode}
         isOpen={opened}
         close={close}
         handleFetch={handleFetchSiteList}
         activePage={activePage}
+        employeeData={selectedEmployee ?? undefined}
       />
+
       <Flex direction="column" gap="sm">
-        <Title order={3}>List of Employee</Title>
+        <Title order={3}>List of Employees</Title>
         <Text>
           This is the list of Employee currently in the system, including their
           descriptions and available actions. You can edit or delete each site
@@ -244,7 +271,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
               >
                 Import
               </Button>
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+              <Button leftIcon={<IconPlus size={16} />} onClick={handleCreate}>
                 Add New Site
               </Button>
               {/* {canAddData && (

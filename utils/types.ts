@@ -2684,7 +2684,7 @@ export type InventoryFormType = {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
       field_section_duplicatable_id?: string;
-      field_response?: string;
+      field_response?: string | number;
       field_correct_response?: FieldCorrectResponseTableRow | null;
     })[];
   })[];
@@ -2851,8 +2851,12 @@ export type InventoryLocationSiteRow = LocationTableRow & {
 };
 
 export type InventoryEmployeeList = SCICEmployeeTableRow & {
-  site_name: string;
-  location_name: string;
-  team_department_name: string;
+  site: string;
+  location: string;
+  department: string;
+  [key: string]: string;
+};
+
+export type InventoryCustomerList = InventoryCustomerRow & {
   [key: string]: string;
 };

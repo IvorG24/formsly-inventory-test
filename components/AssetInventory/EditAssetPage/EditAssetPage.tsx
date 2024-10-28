@@ -217,11 +217,13 @@ const EditAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
         handleOnSiteNameChange(
           2,
-          form.form_section[2].section_field[0].field_response || null
+          (form.form_section[2].section_field[0].field_response as string) ||
+            null
         );
         handleOnCategoryNameChange(
           1,
-          form.form_section[1].section_field[0].field_response || null
+          (form.form_section[1].section_field[0].field_response as string) ||
+            null
         );
       } catch (e) {
         notifications.show({

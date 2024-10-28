@@ -60,7 +60,7 @@ import {
   HRProjectType,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
-  InventoryCustomerRow,
+  InventoryCustomerList,
   InventoryDynamicRow,
   InventoryEmployeeList,
   InventoryFieldRow,
@@ -8162,7 +8162,7 @@ export const getCustomerList = async (
 
   if (error) throw error;
 
-  return data as { data: InventoryCustomerRow[]; totalCount: 0 };
+  return data as { data: InventoryCustomerList[]; totalCount: 0 };
 };
 
 export const getAssetCodeDescription = async (

@@ -2,7 +2,11 @@ import { getCustomerList } from "@/backend/api/get";
 import { uploadCSVFileCustomer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryCustomerRow, SecurityGroupData } from "@/utils/types";
+import {
+  InventoryCustomerList,
+  InventoryCustomerRow,
+  SecurityGroupData,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -18,7 +22,12 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconFileImport, IconPlus, IconSearch } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconFileImport,
+  IconPlus,
+  IconSearch,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
@@ -28,10 +37,15 @@ import CustomerDrawer from "./CustomerDrawer";
 
 type FormValues = {
   search: string;
-  site_name: string;
-  site_description: string;
   file?: File;
 };
+
+type Column = {
+  accessor: string;
+  title: string;
+  render: (row: InventoryCustomerList) => JSX.Element;
+};
+
 type Props = {
   securityGroup: SecurityGroupData;
 };
@@ -41,15 +55,17 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   console.log(securityGroup);
 
   const [activePage, setActivePage] = useState(1);
-  const [customerList, setCustomerList] = useState<InventoryCustomerRow[]>([]);
+  const [customerList, setCustomerList] = useState<InventoryCustomerList[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
   const [customerCount, setCustomerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<InventoryCustomerList | null>(null);
+  const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      site_name: "",
-      site_description: "",
+      search: "",
     },
   });
 
@@ -69,6 +85,29 @@ const CustomerListPage = ({ securityGroup }: Props) => {
         page,
         limit: ROW_PER_PAGE,
       });
+      if (data.length > 0) {
+        const generatedColumns = Object.keys(data[0])
+          .filter((key) => key !== "customer_id" && key !== "customer_team_id")
+          .map((key) => ({
+            accessor: key,
+            title: key.replace(/_/g, " ").toUpperCase(),
+            render: (row: InventoryCustomerList) => <Text>{row[key]}</Text>,
+          }));
+        generatedColumns.push({
+          accessor: "actions",
+          title: "Actions",
+          render: (row: InventoryCustomerRow) => (
+            <ActionIcon
+              onClick={() => handleEdit(row)}
+              color="blue"
+              variant="light"
+            >
+              <IconEdit size={16} />
+            </ActionIcon>
+          ),
+        });
+        setColumns(generatedColumns);
+      }
       setCustomerList(data);
       setCustomerCount(totalCount);
     } catch (e) {
@@ -177,6 +216,16 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     });
   };
 
+  const handleEdit = (customer: InventoryCustomerRow) => {
+    setSelectedCustomer(customer);
+    setDrawerMode("edit");
+    open();
+  };
+  const handleCreate = () => {
+    setSelectedCustomer(null);
+    setDrawerMode("create");
+    open();
+  };
   return (
     <Container fluid>
       <CustomerDrawer
@@ -184,6 +233,9 @@ const CustomerListPage = ({ securityGroup }: Props) => {
         close={close}
         handleFetch={handleFetchCustomerList}
         activePage={activePage}
+        mode={drawerMode}
+        customerData={selectedCustomer ?? undefined}
+        setCustomerData={setSelectedCustomer}
       />
       <Flex direction="column" gap="sm">
         <Title order={3}>List of Customers</Title>
@@ -214,7 +266,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
               >
                 Import
               </Button>
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+              <Button leftIcon={<IconPlus size={16} />} onClick={handleCreate}>
                 Add New Customer
               </Button>
               {/* {canAddData && (
@@ -242,26 +294,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           onPageChange={handlePagination}
           records={customerList}
           fetching={isLoading}
-          columns={[
-            {
-              accessor: "customer_name",
-              width: "10%",
-              title: "Customer Company",
-              render: (customer) => <Text>{customer.customer_name}</Text>,
-            },
-            {
-              accessor: "customer_company",
-              width: "10%",
-              title: "Customer Company",
-              render: (customer) => <Text>{customer.customer_company}</Text>,
-            },
-            {
-              accessor: "customer_email",
-              width: "10%",
-              title: "Customer Email",
-              render: (customer) => <Text>{customer.customer_email}</Text>,
-            },
-          ]}
+          columns={columns}
         />
       </Flex>
     </Container>
