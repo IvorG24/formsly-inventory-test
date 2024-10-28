@@ -184,10 +184,22 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconDatabase,
           nestedSubLinks: [
             {
-              id: "customField",
+              id: "assetCustomField",
               label: "Asset Setup",
               icon: IconSettingsUp,
               href: `/${formattedTeamName}/inventory/asset-setup`,
+            },
+            {
+              id: "employeeCustomField",
+              label: "Employee Setup",
+              icon: IconSettingsUp,
+              href: `/${formattedTeamName}/inventory/employee-setup`,
+            },
+            {
+              id: "customerCustomField",
+              label: "Customer Setup",
+              icon: IconSettingsUp,
+              href: `/${formattedTeamName}/inventory/customer-setup`,
             },
           ],
         },

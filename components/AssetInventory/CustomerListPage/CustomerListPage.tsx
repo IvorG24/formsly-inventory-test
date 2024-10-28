@@ -95,15 +95,17 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           }));
         generatedColumns.push({
           accessor: "actions",
-          title: "Actions",
+          title: "ACTIONS",
           render: (row: InventoryCustomerRow) => (
-            <ActionIcon
+            <Button
               onClick={() => handleEdit(row)}
               color="blue"
-              variant="light"
+              variant="outline"
+              size="sm"
+              rightIcon={<IconEdit size={16} />}
             >
-              <IconEdit size={16} />
-            </ActionIcon>
+              Edit
+            </Button>
           ),
         });
         setColumns(generatedColumns);

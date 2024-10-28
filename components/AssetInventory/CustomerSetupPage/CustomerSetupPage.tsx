@@ -21,17 +21,20 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
+import CreateFieldForm from "../AssetSetupPage/CreateFieldForm";
+import UpdateFieldForm from "../AssetSetupPage/UpdateFieldForm";
 import DisableModal from "../DisableModal";
-
-import CreateFieldForm from "./CreateFieldForm";
-import UpdateFieldForm from "./UpdateFieldForm";
 
 type Props = {
   categoryOptions: CategoryTableRow[];
   securityGroup: SecurityGroupData;
   field: InventoryFieldRow[];
 };
-const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
+const CustomerSetupPage = ({
+  securityGroup,
+  categoryOptions,
+  field,
+}: Props) => {
   const supabaseClient = useSupabaseClient();
   const [customFields, setCustomFields] = useState<InventoryFieldRow[]>([]);
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
@@ -46,12 +49,12 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
   const canAddData = securityGroup.privileges.customField.add === true;
   const canDeleteData = securityGroup.privileges.customField.delete === true;
   const canEditData = securityGroup.privileges.customField.edit === true;
-  const sectionId = "80aedd40-a682-4390-9e82-0e9592f7f912";
+  const sectionId = "db8f19ab-30f0-4485-8719-7c0525b79b0f";
   useEffect(() => {
     const fetchCustomCategory = async () => {
       try {
         const { data, totalCount } = await getCustomFieldData(supabaseClient, {
-          sectionId: "80aedd40-a682-4390-9e82-0e9592f7f912",
+          sectionId: sectionId,
           isCustomField: true,
         });
         setCustomFields(data);
@@ -119,7 +122,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
         <Group position="apart" align="end">
           <Stack>
             <Title variant="dimmed" order={3}>
-              Asset Setup Page
+              Customer Setup Page
             </Title>
             <Text size="sm">List of default and custom fields</Text>
           </Stack>
@@ -266,7 +269,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
             setCustomFields={setCustomFields}
             canAddData={canAddData}
             sectionId={sectionId}
-            type="asset"
+            type="employee"
           />
         )}
         {canEditData && showUpdateForm && customFieldsDefaultValue && (
@@ -278,7 +281,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
             customFieldForm={customFieldsDefaultValue}
             canEditData={canEditData}
             sectionId={sectionId}
-            type="asset"
+            type="employee"
           />
         )}
       </Stack>
@@ -286,4 +289,4 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
   );
 };
 
-export default AssetSetupPage;
+export default CustomerSetupPage;

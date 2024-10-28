@@ -74,7 +74,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     handlePagination(activePage);
   }, [activeTeam.team_id]);
 
-  const handleFetchSiteList = async (page: number) => {
+  const handleFetchEmployeeList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
       const { search } = getValues();
@@ -103,13 +103,15 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
           accessor: "actions",
           title: "Actions",
           render: (row: InventoryEmployeeList) => (
-            <ActionIcon
+            <Button
               onClick={() => handleEdit(row)}
               color="blue"
-              variant="light"
+              variant="outline"
+              size="sm"
+              rightIcon={<IconEdit size={16} />}
             >
-              <IconEdit size={16} />
-            </ActionIcon>
+              Edit
+            </Button>
           ),
         });
         setColumns(generatedColumns);
@@ -134,7 +136,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     try {
       setActivePage(1);
       setIsLoading(true);
-      await handleFetchSiteList(1);
+      await handleFetchEmployeeList(1);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -149,7 +151,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     try {
       setActivePage(page);
       setIsLoading(true);
-      await handleFetchSiteList(page);
+      await handleFetchEmployeeList(page);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -181,7 +183,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
             color: "green",
           });
 
-          handleFetchSiteList(1);
+          handleFetchEmployeeList(1);
         } catch (error) {
           notifications.show({
             message: "Error importing employees.",
@@ -237,7 +239,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         mode={drawerMode}
         isOpen={opened}
         close={close}
-        handleFetch={handleFetchSiteList}
+        handleFetch={handleFetchEmployeeList}
         activePage={activePage}
         employeeData={selectedEmployee ?? undefined}
       />

@@ -40,14 +40,18 @@ type Props = {
   customFieldForm: customFieldFormValues;
   handleClickCustomField: (fieldId: string) => void;
   canEditData: boolean;
+  sectionId: string;
+  type: "employee" | "asset" | "customer";
 };
-const AssetUpdateFieldForm = ({
+const UpdateFieldForm = ({
   setCustomFields,
   setShowUpdateForm,
   categoryList,
   customFieldForm,
   handleClickCustomField,
   canEditData,
+  sectionId,
+  type = "asset",
 }: Props) => {
   const { control, handleSubmit, watch, reset } =
     useForm<customFieldFormValues>({
@@ -71,6 +75,7 @@ const AssetUpdateFieldForm = ({
       if (data.fieldName !== originalFieldName) {
         const checkIfFieldUnique = await checkUniqueField(supabaseClient, {
           fieldName: data.fieldName,
+          sectionId,
         });
 
         if (checkIfFieldUnique) {
@@ -237,52 +242,65 @@ const AssetUpdateFieldForm = ({
               />
             </>
           )}
-
-          <Divider />
-          <Text fw={500}>Choose a category </Text>
-          <ScrollArea mih={100} mah={400}>
-            <Group position="center">
-              <Controller
-                name="fieldCategory"
-                control={control}
-                defaultValue={[]}
-                render={({ field }) => (
-                  <Stack>
-                    <Checkbox
-                      label="All Categories"
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          field.onChange(categoryList.map((cat) => cat.value));
-                        } else {
-                          field.onChange([]);
-                        }
-                      }}
-                      checked={field.value.length === categoryList.length}
-                    />
-                    {categoryList.map((cat) => (
-                      <Checkbox
-                        key={cat.value}
-                        label={cat.label}
-                        value={cat.value}
-                        onChange={(e) => {
-                          const checked = e.currentTarget.checked;
-                          if (checked) {
-                            field.onChange([...field.value, cat.value]);
-                          } else {
-                            field.onChange(
-                              field.value.filter((c) => c !== cat.value)
-                            );
+          {type === "asset" && (
+            <>
+              <Divider />
+              <Text fw={500}>Choose a category </Text>
+              <ScrollArea mih={100} mah={400}>
+                <Group position="center">
+                  <Controller
+                    name="fieldCategory"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <Stack>
+                        <Checkbox
+                          label="All Categories"
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              field.onChange(
+                                categoryList.map((cat) => cat.value)
+                              );
+                            } else {
+                              field.onChange([]);
+                            }
+                          }}
+                          checked={
+                            (field.value ?? []).length === categoryList.length
                           }
-                        }}
-                        checked={field.value.includes(cat.value)}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              />
-            </Group>
-          </ScrollArea>
-          <Divider />
+                        />
+                        {categoryList.map((cat) => (
+                          <Checkbox
+                            key={cat.value}
+                            label={cat.label}
+                            value={cat.value}
+                            onChange={(e) => {
+                              const checked = e.currentTarget.checked;
+                              if (checked) {
+                                field.onChange([
+                                  ...(field.value ?? []),
+                                  cat.value,
+                                ]);
+                              } else {
+                                field.onChange(
+                                  (field.value ?? []).filter(
+                                    (c) => c !== cat.value
+                                  )
+                                );
+                              }
+                            }}
+                            checked={(field.value ?? []).includes(cat.value)}
+                          />
+                        ))}
+                      </Stack>
+                    )}
+                  />
+                </Group>
+              </ScrollArea>
+              <Divider />
+            </>
+          )}
+
           <Group position="center">
             <Button fullWidth type="submit">
               Update Custom Field
@@ -294,4 +312,4 @@ const AssetUpdateFieldForm = ({
   );
 };
 
-export default AssetUpdateFieldForm;
+export default UpdateFieldForm;

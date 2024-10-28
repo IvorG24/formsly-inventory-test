@@ -2936,9 +2936,10 @@ export const createCustomFields = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     customFieldFormValues: customFieldFormValues;
+    sectionId: string;
   }
 ) => {
-  const { customFieldFormValues } = params;
+  const { customFieldFormValues, sectionId } = params;
   const fieldId = uuidv4();
 
   const { data: fieldData, error: fieldError } = await supabaseClient
@@ -2953,7 +2954,7 @@ export const createCustomFields = async (
   const fieldValue = `
   '${fieldId}', '${customFieldFormValues.fieldName}',
   '${customFieldFormValues.fieldIsRequired}', '${customFieldFormValues.fieldType}',
-  ${fieldData[0].field_order + 1}, TRUE, '80aedd40-a682-4390-9e82-0e9592f7f912'
+  ${fieldData[0].field_order + 1}, TRUE, '${sectionId}'
 `;
 
   const optionsValues = customFieldFormValues.fieldOption
@@ -2963,8 +2964,8 @@ export const createCustomFields = async (
         })
         .join(", ")
     : [];
-
   const categoriesValues =
+    customFieldFormValues.fieldCategory &&
     customFieldFormValues.fieldCategory.length > 0
       ? customFieldFormValues.fieldCategory
           .map((categoryId) => {

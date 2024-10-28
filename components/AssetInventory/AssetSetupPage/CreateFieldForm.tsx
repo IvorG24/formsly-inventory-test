@@ -38,12 +38,16 @@ type Props = {
   setShowCustomForm: Dispatch<SetStateAction<boolean>>;
   categoryList: OptionType[];
   canAddData: boolean;
+  sectionId: string;
+  type: "employee" | "asset" | "customer";
 };
-const AssetCreateFieldForm = ({
+const CreateFieldForm = ({
   setCustomFields,
   setShowCustomForm,
   categoryList,
   canAddData,
+  sectionId,
+  type = "asset",
 }: Props) => {
   const { control, handleSubmit, watch, reset } =
     useForm<customFieldFormValues>();
@@ -61,6 +65,7 @@ const AssetCreateFieldForm = ({
       }
       const checkIfFieldUnique = await checkUniqueField(supabaseClient, {
         fieldName: data.fieldName,
+        sectionId: sectionId,
       });
       if (checkIfFieldUnique) {
         notifications.show({
@@ -71,6 +76,7 @@ const AssetCreateFieldForm = ({
       }
       const customFieldData = await createCustomFields(supabaseClient, {
         customFieldFormValues: data,
+        sectionId: sectionId,
       });
 
       setCustomFields((prev) => [...prev, customFieldData]);
@@ -82,6 +88,8 @@ const AssetCreateFieldForm = ({
       setShowCustomForm(false);
       reset();
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -219,51 +227,65 @@ const AssetCreateFieldForm = ({
               />
             </>
           )}
-          <Divider />
-          <Text fw={500}>Choose a Category</Text>
-          <ScrollArea mih={100} mah={400}>
-            <Group position="center">
-              <Controller
-                name="fieldCategory"
-                control={control}
-                defaultValue={[]}
-                render={({ field }) => (
-                  <Stack>
-                    <Checkbox
-                      label="All Categories"
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          field.onChange(categoryList.map((cat) => cat.value));
-                        } else {
-                          field.onChange([]);
-                        }
-                      }}
-                      checked={field.value.length === categoryList.length}
-                    />
-                    {categoryList.map((cat) => (
-                      <Checkbox
-                        key={cat.value}
-                        label={cat.label}
-                        value={cat.value}
-                        onChange={(e) => {
-                          const checked = e.currentTarget.checked;
-                          if (checked) {
-                            field.onChange([...field.value, cat.value]);
-                          } else {
-                            field.onChange(
-                              field.value.filter((c) => c !== cat.value)
-                            );
+          {type === "asset" && (
+            <>
+              <Divider />
+              <Text fw={500}>Choose a Category</Text>
+              <ScrollArea mih={100} mah={400}>
+                <Group position="center">
+                  <Controller
+                    name="fieldCategory"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <Stack>
+                        <Checkbox
+                          label="All Categories"
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              field.onChange(
+                                categoryList.map((cat) => cat.value)
+                              );
+                            } else {
+                              field.onChange([]);
+                            }
+                          }}
+                          checked={
+                            (field.value ?? []).length === categoryList.length
                           }
-                        }}
-                        checked={field.value.includes(cat.value)}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              />
-            </Group>
-          </ScrollArea>
-          <Divider />
+                        />
+                        {categoryList.map((cat) => (
+                          <Checkbox
+                            key={cat.value}
+                            label={cat.label}
+                            value={cat.value}
+                            onChange={(e) => {
+                              const checked = e.currentTarget.checked;
+                              if (checked) {
+                                field.onChange([
+                                  ...(field.value ?? []),
+                                  cat.value,
+                                ]);
+                              } else {
+                                field.onChange(
+                                  (field.value ?? []).filter(
+                                    (c) => c !== cat.value
+                                  )
+                                );
+                              }
+                            }}
+                            checked={(field.value ?? []).includes(cat.value)}
+                          />
+                        ))}
+                      </Stack>
+                    )}
+                  />
+                </Group>
+              </ScrollArea>
+              <Divider />
+            </>
+          )}
+
           <Group position="center">
             <Button fullWidth type="submit">
               Create Custom Field
@@ -275,4 +297,4 @@ const AssetCreateFieldForm = ({
   );
 };
 
-export default AssetCreateFieldForm;
+export default CreateFieldForm;

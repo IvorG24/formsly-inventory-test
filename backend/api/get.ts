@@ -8017,9 +8017,10 @@ export const checkUniqueField = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     fieldName: string;
+    sectionId: string;
   }
 ) => {
-  const { fieldName } = params;
+  const { fieldName, sectionId } = params;
   let returnData = false;
   const { data, error } = await supabaseClient
     .schema("inventory_schema")
@@ -8028,6 +8029,7 @@ export const checkUniqueField = async (
     .ilike("field_name", fieldName.toLocaleLowerCase())
     .eq("field_is_custom_field", true)
     .eq("field_is_disabled", false)
+    .eq("field_section_id", sectionId)
     .limit(1);
   if (error) throw error;
 
@@ -8040,15 +8042,23 @@ export const checkUniqueField = async (
 
 export const getCustomFieldData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { page?: number; limit?: number; search?: string }
+  params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sectionId: string;
+    isCustomField?: boolean;
+  }
 ) => {
-  const { page, limit, search } = params;
+  const { page, limit, search, sectionId, isCustomField } = params;
   let query = supabaseClient
     .schema("inventory_schema")
     .from("field_table")
     .select("*", { count: "exact" })
     .eq("field_is_disabled", false)
-    .eq("field_is_custom_field", true);
+    .eq("field_section_id", sectionId)
+    .eq("field_is_custom_field", isCustomField ? isCustomField : false)
+    .order("field_order", { ascending: true });
 
   if (search) {
     query = query.ilike("field_name", `%${search}%`);

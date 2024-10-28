@@ -1756,7 +1756,6 @@ export const updateEvent = async (
       const fieldName = field.field_name;
       fieldNamesArray.push(fieldName);
 
-
       if (field.field_type === "FILE" && fieldResponse instanceof File) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,
@@ -1872,6 +1871,7 @@ export const updateCustomFields = async (
     : [];
 
   const categoriesValues =
+    customFieldFormValues.fieldCategory &&
     customFieldFormValues.fieldCategory.length > 0
       ? customFieldFormValues.fieldCategory
           .map((categoryId) => {

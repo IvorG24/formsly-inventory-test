@@ -1,6 +1,6 @@
 // Imports
 import { getCategoryOptions, getCustomFieldData } from "@/backend/api/get";
-import AssetSetupPage from "@/components/AssetInventory/AssetSetupPage/AssetSetupPage";
+import CustomerSetupPage from "@/components/AssetInventory/CustomerSetupPage/CustomerSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
@@ -20,7 +20,8 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         }
       );
       const { data: field } = await getCustomFieldData(supabaseClient, {
-        sectionId: "74263b1b-af2d-44b7-849f-ea6bd62c392f",
+        sectionId: "db8f19ab-30f0-4485-8719-7c0525b79b0f",
+        isCustomField: false,
       });
       const hasViewOnlyPersmissions =
         securityGroupData.privileges.customField.view === true;
@@ -60,10 +61,10 @@ const Page = ({ securityGroupData, categoryOptions, field }: Props) => {
   return (
     <>
       <Meta
-        description="Asset Setup Page"
-        url="/teamName/inventory/asset-setup"
+        description="Customer Setup Page"
+        url="/teamName/inventory/customer-setup"
       />
-      <AssetSetupPage
+      <CustomerSetupPage
         field={field}
         securityGroup={securityGroupData}
         categoryOptions={categoryOptions}

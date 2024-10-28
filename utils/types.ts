@@ -2823,7 +2823,7 @@ export type customFieldFormValues = {
   fieldType: string;
   fieldIsRequired: boolean;
   fieldOption: string[];
-  fieldCategory: string[];
+  fieldCategory?: string[];
 };
 
 export type eventFormField = {
