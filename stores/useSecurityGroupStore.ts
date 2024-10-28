@@ -23,6 +23,8 @@ const defaultSecurityGroup: SecurityGroupData = {
     subCategory: { view: false, add: false, edit: false, delete: false },
     department: { view: false, add: false, edit: false, delete: false },
     customField: { view: false, add: false, edit: false, delete: false },
+    customer: { view: false, add: false, edit: false, delete: false },
+    employee: { view: false, add: false, edit: false, delete: false },
   },
 };
 

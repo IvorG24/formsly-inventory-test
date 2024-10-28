@@ -58,9 +58,8 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   const [selectedEmployee, setSelectedEmployee] =
     useState<InventoryEmployeeList | null>(null);
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
-  //   const canAddData = securityGroup.privileges.site.add === true;
-  //   const canDeleteData = securityGroup.privileges.site.delete === true;
-  //   const canEditData = securityGroup.privileges.site.edit === true;
+  const canAddData = securityGroup.privileges.employee.add === true;
+  const canEditData = securityGroup.privileges.customer.edit === true;
   const formMethods = useForm<FormValues>({
     defaultValues: {
       search: "",
@@ -102,15 +101,19 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
           accessor: "actions",
           title: "Actions",
           render: (row: InventoryEmployeeList) => (
-            <Button
-              onClick={() => handleEdit(row)}
-              color="blue"
-              variant="outline"
-              size="sm"
-              rightIcon={<IconEdit size={16} />}
-            >
-              Edit
-            </Button>
+            <>
+              {canEditData && (
+                <Button
+                  onClick={() => handleEdit(row)}
+                  color="blue"
+                  variant="outline"
+                  size="sm"
+                  rightIcon={<IconEdit size={16} />}
+                >
+                  Edit
+                </Button>
+              )}
+            </>
           ),
         });
         setColumns(generatedColumns);
@@ -264,23 +267,28 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
               miw={250}
               maw={320}
             />
-            <Group>
-              <Button
-                leftIcon={<IconFileImport size={16} />}
-                onClick={() => handleAction()}
-                variant="outline"
-              >
-                Import
-              </Button>
-              <Button leftIcon={<IconPlus size={16} />} onClick={handleCreate}>
-                Add New Site
-              </Button>
-              {/* {canAddData && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Site
-              </Button>
-            )} */}
-            </Group>
+            {canAddData && (
+              <Group>
+                <Button
+                  leftIcon={<IconFileImport size={16} />}
+                  onClick={() => handleAction()}
+                  variant="outline"
+                >
+                  Import
+                </Button>
+                <Button
+                  leftIcon={<IconPlus size={16} />}
+                  onClick={handleCreate}
+                >
+                  Add New Site
+                </Button>
+                {/* {canAddData && (
+  <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+    Add New Site
+  </Button>
+)} */}
+              </Group>
+            )}
           </Group>
         </form>
 

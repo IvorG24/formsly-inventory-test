@@ -2814,6 +2814,8 @@ export type permissionsFormValues = {
     subCategory: permissions;
     department: permissions;
     customField: permissions;
+    employee: permissions;
+    customer: permissions;
   };
 };
 

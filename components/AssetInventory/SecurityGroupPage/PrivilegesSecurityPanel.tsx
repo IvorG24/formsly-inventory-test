@@ -41,6 +41,7 @@ const PrivilegesSecurityPanel = ({ privilegesGroupdata }: Props) => {
     control,
     name: "privileges",
   });
+
   const toggleAll = (type: keyof permissions, checked: boolean) => {
     tables.forEach((table) => {
       setValue(`privileges.${table.name}.${type}`, checked);
@@ -53,6 +54,8 @@ const PrivilegesSecurityPanel = ({ privilegesGroupdata }: Props) => {
     { label: "Sub Category", name: "subCategory" },
     { label: "Departments", name: "department" },
     { label: "Custom Field", name: "customField" },
+    { label: "Employee", name: "employee" },
+    { label: "Customer", name: "customer" },
   ] as const;
 
   const handlePrivilegesSubmit = async (data: permissionsFormValues) => {
@@ -88,7 +91,6 @@ const PrivilegesSecurityPanel = ({ privilegesGroupdata }: Props) => {
             Set user permission to add / edit / delete / view records:
           </Text>
 
-      
           <Grid>
             <Grid.Col span={12} sm={3}>
               <Text weight={600}>Table</Text>

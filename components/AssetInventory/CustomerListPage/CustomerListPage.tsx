@@ -70,6 +70,10 @@ const CustomerListPage = ({ securityGroup }: Props) => {
 
   const { register, handleSubmit, getValues, setValue } = formMethods;
 
+  const canAddData = securityGroup.privileges.customer.add === true;
+  const canEditData = securityGroup.privileges.customer.edit === true;
+//   const canDeleteData = securityGroup.privileges.customer.delete === true;
+
   useEffect(() => {
     handlePagination(activePage);
   }, [activePage, activeTeam.team_id]);
@@ -96,15 +100,19 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           accessor: "actions",
           title: "ACTIONS",
           render: (row: InventoryCustomerRow) => (
-            <Button
-              onClick={() => handleEdit(row)}
-              color="blue"
-              variant="outline"
-              size="sm"
-              rightIcon={<IconEdit size={16} />}
-            >
-              Edit
-            </Button>
+            <>
+              {canEditData && (
+                <Button
+                  onClick={() => handleEdit(row)}
+                  color="blue"
+                  variant="outline"
+                  size="sm"
+                  rightIcon={<IconEdit size={16} />}
+                >
+                  Edit
+                </Button>
+              )}
+            </>
           ),
         });
         setColumns(generatedColumns);
@@ -222,6 +230,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     setDrawerMode("edit");
     open();
   };
+
   const handleCreate = () => {
     setSelectedCustomer(null);
     setDrawerMode("create");
@@ -259,23 +268,24 @@ const CustomerListPage = ({ securityGroup }: Props) => {
               miw={250}
               maw={320}
             />
-            <Group>
-              <Button
-                leftIcon={<IconFileImport size={16} />}
-                onClick={() => handleAction()}
-                variant="outline"
-              >
-                Import
-              </Button>
-              <Button leftIcon={<IconPlus size={16} />} onClick={handleCreate}>
-                Add New Customer
-              </Button>
-              {/* {canAddData && (
-                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                  Add New Site
+            {canAddData && (
+              <Group>
+                <Button
+                  leftIcon={<IconFileImport size={16} />}
+                  onClick={() => handleAction()}
+                  variant="outline"
+                >
+                  Import
                 </Button>
-              )} */}
-            </Group>
+
+                <Button
+                  leftIcon={<IconPlus size={16} />}
+                  onClick={handleCreate}
+                >
+                  Add New Customer
+                </Button>
+              </Group>
+            )}
           </Group>
         </form>
 

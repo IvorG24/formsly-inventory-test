@@ -22,7 +22,6 @@ import {
   IconGps,
   IconListDetails,
   IconLocation,
-  IconNetwork,
   IconPuzzle,
   IconSettings,
   IconSettingsUp,
@@ -103,18 +102,26 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       icon: IconBriefcaseOff,
       label: "Advanced",
       subLinks: [
-        {
-          id: "employee",
-          label: "List of Employee",
-          icon: IconUserCode,
-          href: `/${formattedTeamName}/inventory/employee`,
-        },
-        {
-          id: "customer",
-          label: "List of Customer",
-          icon: IconNetwork,
-          href: `/${formattedTeamName}/inventory/customer`,
-        },
+        ...(canViewSetupSection("employee")
+          ? [
+              {
+                id: "employee",
+                label: "List of Employee",
+                icon: IconUserCode,
+                href: `/${formattedTeamName}/inventory/employee`,
+              },
+            ]
+          : []),
+        ...(canViewSetupSection("customer")
+          ? [
+              {
+                id: "customer",
+                label: "List of Customer",
+                icon: IconUserCode,
+                href: `/${formattedTeamName}/inventory/customer`,
+              },
+            ]
+          : []),
         {
           id: "security-groups",
           label: "Security Group",

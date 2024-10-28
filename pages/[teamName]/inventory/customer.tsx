@@ -16,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         }
       );
       const hasViewOnlyPersmissions =
-        securityGroupData.privileges.customField.view === true;
+        securityGroupData.privileges.customer.view === true;
 
       if (!hasViewOnlyPersmissions) {
         return {
