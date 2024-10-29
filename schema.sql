@@ -384,7 +384,6 @@ CREATE TABLE form_schema.requester_primary_signer_table (
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
-
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
@@ -1058,7 +1057,8 @@ CREATE TABLE hr_schema.background_check_table (
   background_check_status_date_updated TIMESTAMPTZ,
 
   background_check_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  background_check_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+  background_check_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
+  background_check_evaluation_request_id UUID REFERENCES request_schema.request_table(request_id)
 );
 
 CREATE TABLE hr_schema.job_offer_table (
@@ -1661,7 +1661,8 @@ AS $$
       requestScore,
       rootFormslyRequestId,
       recruiter,
-      interviewParams
+      interviewParams,
+      backgroundCheckParams
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1730,6 +1731,8 @@ AS $$
         endId = `TA`;
       } else if(formName === 'Evaluation Result') {
         endId = `ER`;
+      } else if(formName === 'Background Investigation') {
+        endId = `BI`;
       }
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -1897,7 +1900,7 @@ AS $$
 
     if (formId === '16ae1f62-c553-4b0e-909a-003d92828036') {
       plv8.execute(`INSERT INTO hr_schema.request_connection_table (request_connection_application_information_request_id) VALUES ('${requestId}')`)
-    } else if (formId === '71f569a0-70a8-4609-82d2-5cc26ac1fe8c') {
+    } else if (formId === '2f9100a9-f322-405f-acda-68bbf94236b0') {
       const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
       plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_general_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
     } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
@@ -1916,6 +1919,17 @@ AS $$
       );
       const query = 'SELECT public.update_technical_interview_status($1::json)';
       plv8.execute(query, [JSON.stringify(interviewParams)]);
+    } else if (backgroundCheckParams) {
+      plv8.execute(
+        `
+          UPDATE hr_schema.background_check_table
+          SET background_check_evaluation_request_id = '${requestId}' 
+          WHERE
+            background_check_id = '${backgroundCheckParams.backgroundCheckId}'
+        `
+      );
+      const query = 'SELECT public.update_background_check_status($1::json)';
+      plv8.execute(query, [JSON.stringify(backgroundCheckParams)]);
     }
  });
  return request_data;
@@ -3981,6 +3995,7 @@ AS $$
             request_response_field_id IN (
               '44edd3e4-9595-4b7c-a924-98b084346d36',
               'be0e130b-455b-47e0-a804-f90943f7bc07',
+              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
               'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
               '362bff3d-54fa-413b-992c-fd344d8552c6'
             )
@@ -3992,7 +4007,21 @@ AS $$
       }
     }
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information v1', 'Application Information', 'General Assessment', 'Technical Assessment', 'Evaluation Result'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (
+        request.form_is_formsly_form && [
+            'Subcon', 'Request For Payment v1', 
+            'Petty Cash Voucher', 
+            'Petty Cash Voucher Balance', 
+            'Application Information v1', 
+            'Application Information',
+            'General Assessment v1',
+            'General Assessment',
+            'Technical Assessment', 
+            'Evaluation Result', 
+            'Background Investigation'
+          ].includes(request.form_name)
+        )
+      ) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -6681,7 +6710,12 @@ AS $$
             '5c5284cd-7647-4307-b558-40b9076d9f7f',
             'f1c516bd-e483-4f32-a5b0-5223b186afb5',
             'd209aed6-e560-49a8-aa77-66c9cada168d',
-            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6',
+            'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
+            '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
+            '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
+            '69a2664f-c34d-4381-b19c-749c4a9a012b',
+            '8abe5d1a-8370-4472-b88e-3580f724d12d'
           )
         WHERE
           request_response_request_id = '${requestId}'
@@ -14664,11 +14698,11 @@ plv8.subtransaction(function(){
           FROM request_schema.request_response_table
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
             AND field_id IN (
-              'be0e130b-455b-47e0-a804-f90943f7bc07',
-              '5c5284cd-7647-4307-b558-40b9076d9f7f',
-              'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-              'd209aed6-e560-49a8-aa77-66c9cada168d',
-              'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+              'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
+              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
+              '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
+              '69a2664f-c34d-4381-b19c-749c4a9a012b',
+              '8abe5d1a-8370-4472-b88e-3580f724d12d'
             )
           WHERE
             request_response_request_id = '${requestId}'
@@ -14780,14 +14814,14 @@ plv8.subtransaction(function(){
                 {
                   ...form.form_section[1].section_field[3],
                   field_response:
-                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
                   ? safeParse(applicantData[3].request_response)
                   : '',
                 },
                 {
                   ...form.form_section[1].section_field[4],
                   field_response:
-                  applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                  applicantData[3].field_id === '69a2664f-c34d-4381-b19c-749c4a9a012b'
                   ? safeParse(applicantData[4].request_response)
                   : safeParse(applicantData[3].request_response),
                 },
@@ -15081,6 +15115,7 @@ AS $$
             AND field_id IN (
               '56438f2d-da70-4fa4-ade6-855f2f29823b',
               '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
               '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
             )
           WHERE
@@ -15183,7 +15218,7 @@ AS $$
       });
 
       let isWithViewIndicator = false;
-      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment'].includes(request.form_name)){
+      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment v1', 'General Assessment'].includes(request.form_name)){
         const connectedRequestCount = plv8.execute(
           `
             SELECT COUNT(*)
@@ -15191,6 +15226,7 @@ AS $$
             WHERE
               request_response_field_id IN (
                 'be0e130b-455b-47e0-a804-f90943f7bc07',
+                'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
                 'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
                 '362bff3d-54fa-413b-992c-fd344d8552c6'
               )
@@ -15208,7 +15244,10 @@ AS $$
             SELECT COUNT(*)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
+              AND request_form_id IN (
+                '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
+                '2f9100a9-f322-405f-acda-68bbf94236b0'
+              )
             WHERE
               request_response = '"${formslyId}"'
           `
@@ -15437,7 +15476,10 @@ AS $$
         SELECT request_view.*
         FROM public.request_view
         INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          AND request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+          AND request_response_field_id IN (
+            'be0e130b-455b-47e0-a804-f90943f7bc07',
+            'c3225996-d3e8-4fb4-87d8-f5ced778adcf'
+          )
           AND request_response = '"${requestId}"'
       `
     );
@@ -17157,7 +17199,8 @@ AS $$
           background_check_date_created,
           background_check_status,
           background_check_team_member_id AS assigned_hr_team_member_id,
-          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr,
+          bi.request_formsly_id AS background_check_evaluation_request_id
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
           AND applicationInformation.request_status = 'APPROVED'
@@ -17183,6 +17226,7 @@ AS $$
           ${assignedHRCondition}
         LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
         LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN public.request_view AS bi ON bi.request_id = background_check_evaluation_request_id
         ORDER BY ${sort.sortBy} ${sort.order}, background_check_date_created DESC
         LIMIT ${limit}
         OFFSET ${offset}
@@ -20319,6 +20363,101 @@ plv8.subtransaction(function() {
     returnData = {data: requesterSignerList, count: Number(requesterSignerCount)};
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_background_check_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      backgroundCheckId
+    } = input_data;
+
+    const requestId = plv8.execute(
+      `
+        SELECT background_check_request_id
+        FROM hr_schema.background_check_table
+        WHERE
+          background_check_id = '${backgroundCheckId}'
+      `
+    )[0].background_check_request_id;
+
+    const firstName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
+        LIMIT 1
+      `
+    );
+    const middleName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
+        LIMIT 1
+      `
+    );
+    const lastName = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
+        LIMIT 1
+      `
+    );
+    const position = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        LIMIT 1
+      `
+    );
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id = '${requestId}'
+          AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+        LIMIT 1
+      `
+    );
+
+    const backgroundCheckData = plv8.execute(
+      `
+        SELECT background_check_table.*, request_formsly_id
+        FROM hr_schema.background_check_table
+        INNER JOIN public.request_view ON request_id = background_check_request_id
+        WHERE
+          background_check_id = '${backgroundCheckId}'
+        LIMIT 1
+      `
+    );
+
+    returnData = {
+      candidateFirstName: JSON.parse(firstName[0].request_response),
+      candidateMiddleName: middleName.length ? JSON.parse(middleName[0].request_response) : "",
+      candidateLastName: JSON.parse(lastName[0].request_response),
+      position: JSON.parse(position[0].request_response),
+      email: JSON.parse(email[0].request_response),
+      backgroundCheckData: backgroundCheckData[0]
+    }
+ });
+ return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

@@ -66,6 +66,7 @@ const Page = ({ form }: Props) => {
     switch (form.form_name) {
       case "Application Information":
         return <CreateApplicationInformationRequestPage form={form} />;
+      case "General Assessment v1":
       case "General Assessment":
         return <CreateGeneralAssessmentRequestPage form={form} />;
       case "Technical Assessment":

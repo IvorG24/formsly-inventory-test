@@ -449,7 +449,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             className="next-step"
             onClick={() =>
               router.push(
-                `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`
+                `/public-form/2f9100a9-f322-405f-acda-68bbf94236b0/create?applicationInformationId=${request.request_formsly_id}`
               )
             }
           >

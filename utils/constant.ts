@@ -66,6 +66,7 @@ export const unsortableFieldList = [
   "Job Offer Attachment",
   "Job Offer History",
   "Evaluation",
+  "Background Investigation",
 ];
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [

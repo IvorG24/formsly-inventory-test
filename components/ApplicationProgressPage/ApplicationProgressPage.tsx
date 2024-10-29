@@ -120,6 +120,7 @@ const ApplicationProgressPage = (props: Props) => {
         jobOfferData={jobOfferData}
         jobOfferStatus={jobOfferStatus}
         setJobOfferStatus={setJobOfferStatus}
+        applicationInformationFormslyId={applicationInformationData.request_formsly_id}
       />
     ) : null,
   };

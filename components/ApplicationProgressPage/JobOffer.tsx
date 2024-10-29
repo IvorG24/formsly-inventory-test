@@ -1,7 +1,12 @@
-import { insertError } from "@/backend/api/post";
+import { createAttachment, insertError } from "@/backend/api/post";
 import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { BASE_URL, formatDate } from "@/utils/constant";
+import {
+  BASE_URL,
+  formatDate,
+  MAX_FILE_SIZE,
+  MAX_FILE_SIZE_IN_MB,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
@@ -11,6 +16,7 @@ import {
   Alert,
   Badge,
   Button,
+  FileInput,
   Group,
   Stack,
   Text,
@@ -24,17 +30,19 @@ import { useSession, useUser } from "@supabase/auth-helpers-react";
 import { IconFile, IconMap, IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 type Props = {
   jobOfferData: JobOfferTableRow & AttachmentTableRow;
   jobOfferStatus: string;
   setJobOfferStatus: Dispatch<SetStateAction<string>>;
+  applicationInformationFormslyId: string | null;
 };
 const JobOffer = ({
   jobOfferData,
   jobOfferStatus,
   setJobOfferStatus,
+  applicationInformationFormslyId,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -52,6 +60,15 @@ const JobOffer = ({
     reason: string;
   }>({ defaultValues: { reason: "" } });
 
+  const {
+    control,
+    formState: { errors: acceptErrors },
+    setValue: acceptSetValue,
+    handleSubmit: acceptHandleSubmit,
+  } = useForm<{
+    signedJobOffer: File | null;
+  }>({ defaultValues: { signedJobOffer: null } });
+
   useEffect(() => {
     const attachment_public_url = supabaseClient.storage
       .from(jobOfferData.attachment_bucket)
@@ -59,16 +76,42 @@ const JobOffer = ({
     setAttachmentUrl(attachment_public_url);
   }, [jobOfferData]);
 
-  const handleUpdateJobOffer = async (action: string, reason?: string) => {
+  const handleUpdateJobOffer = async (
+    action: string,
+    response: {
+      reason?: string;
+      signedJobOffer?: File | null;
+    }
+  ) => {
+    const { reason, signedJobOffer } = response;
+
     try {
       if (!user?.email) throw new Error("Missing user email");
+      if (!applicationInformationFormslyId) return;
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
+
+      let attachmentId = "";
+      if (signedJobOffer) {
+        const { data } = await createAttachment(supabaseClient, {
+          attachmentData: {
+            attachment_name: signedJobOffer.name,
+            attachment_bucket: "JOB_OFFER_ATTACHMENTS",
+            attachment_value: "",
+          },
+          file: signedJobOffer,
+          fileType: "sjo",
+          userId: "",
+          applicationInformationFormslyId,
+        });
+        attachmentId = data.attachment_id;
+      }
+
       await updateJobOfferStatus(supabaseClient, {
         status: newStatus,
         requestReferenceId: jobOfferData.job_offer_request_id,
         title: jobOfferData.job_offer_title as string,
-        attachmentId: jobOfferData.attachment_id,
+        attachmentId: attachmentId ?? jobOfferData.attachment_id,
         teamMemberId: jobOfferData.job_offer_team_member_id as string,
         projectAssignment: jobOfferData.job_offer_project_assignment as string,
         reason,
@@ -123,25 +166,78 @@ const JobOffer = ({
     }
   };
 
-  const approveModal = () =>
-    modals.openConfirmModal({
-      title: <Text>Please confirm your action.</Text>,
-      children: <Text>Are you sure you want to accept this job offer?</Text>,
-      labels: { confirm: "Confirm", cancel: "Cancel" },
+  const acceptModal = () =>
+    modals.open({
+      title: <Text>Are you sure you want to accept this job offer?</Text>,
+      children: (
+        <form
+          onSubmit={acceptHandleSubmit((data) =>
+            handleUpdateJobOffer("Accept", {
+              signedJobOffer: data.signedJobOffer,
+            })
+          )}
+        >
+          <Controller
+            control={control}
+            name="signedJobOffer"
+            render={({ field: { value, onChange } }) => (
+              <FileInput
+                label="Signed Job Offer"
+                placeholder="Upload signed job offer"
+                icon={<IconFile size={16} />}
+                value={value as File | null}
+                clearable
+                multiple={false}
+                onChange={onChange}
+                error={acceptErrors.signedJobOffer?.message}
+                required
+              />
+            )}
+            rules={{
+              required: {
+                value: true,
+                message: "Signed Job Offer is required",
+              },
+              validate: {
+                fileSize: (value) => {
+                  if (!value) return true;
+                  const formattedValue = value as File;
+                  return formattedValue.size !== undefined
+                    ? formattedValue.size <= MAX_FILE_SIZE ||
+                        `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`
+                    : true;
+                },
+              },
+            }}
+          />
+          <Group position="right" mt="xl">
+            <Button
+              onClick={() => {
+                acceptSetValue("signedJobOffer", null);
+                modals.closeAll();
+              }}
+              color="green"
+              variant="default"
+            >
+              Cancel
+            </Button>
+            <Button color="green" type="submit">
+              Confirm
+            </Button>
+          </Group>
+        </form>
+      ),
       centered: true,
-      confirmProps: { color: "green" },
-      onConfirm: async () => handleUpdateJobOffer("Accept"),
     });
 
   const rejectModal = () =>
     modals.open({
-      title: <Text>Please confirm your action.</Text>,
+      title: <Text>Are you sure you want to reject this job offer?</Text>,
       children: (
         <>
-          <Text>Are you sure you want to reject this job offer?</Text>
           <form
             onSubmit={handleSubmit((data) =>
-              handleUpdateJobOffer("Reject", data.reason)
+              handleUpdateJobOffer("Reject", { reason: data.reason })
             )}
           >
             <TextInput
@@ -241,7 +337,7 @@ const JobOffer = ({
           <Group>
             <Text>Action: </Text>
             <Group spacing="xs">
-              <Button color="green" w={100} onClick={() => approveModal()}>
+              <Button color="green" w={100} onClick={() => acceptModal()}>
                 Accept
               </Button>
               <Button color="red" w={100} onClick={() => rejectModal()}>

@@ -1,3 +1,4 @@
+import CreateBackgroundInvestigationRequestPage from "@/components/CreateBackgroundInvestigationRequestPage/CreateBackgroundInvestigationRequestPage";
 import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
 import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
 import CreateEvaluationResultRequestPage from "@/components/CreateEvaluationResultRequestPage/CreateEvaluationResultRequestPage";
@@ -209,6 +210,8 @@ const Page = ({
         );
       case "Evaluation Result":
         return <CreateEvaluationResultRequestPage form={form} />;
+      case "Background Investigation":
+        return <CreateBackgroundInvestigationRequestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

@@ -38,6 +38,7 @@ import {
   AttachmentTableRow,
   BackgroundCheckFilterFormValues,
   BackgroundCheckSpreadsheetData,
+  BackgroundCheckTableRow,
   CategoryTableRow,
   createEventFormvalues,
   CreateTicketFormValues,
@@ -7297,29 +7298,43 @@ export const getTechnicalOptionsItem = async (
 
   return data as unknown as QuestionnaireData;
 };
+
 export const getPositionTypeOptions = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; limit: number }
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("*")
-    .eq("position_team_id", params.teamId)
-    .order("position_alias");
+  const { teamId, limit } = params;
+  let start = 0;
+  let allData: OptionTableRow[] = [];
 
-  if (error) throw error;
+  while (true) {
+    const end = start + limit - 1;
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("*")
+      .eq("position_team_id", teamId)
+      .order("position_alias")
+      .range(start, end);
 
-  const returnData = data.map((item, index) => {
-    return {
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    const returnData = data.map((item, index) => ({
       option_value: item.position_alias,
       option_id: item.position_id,
       option_field_id: uuidv4(),
-      option_order: index,
-    };
-  });
+      option_order: start + index,
+    }));
 
-  return returnData as OptionTableRow[];
+    allData = allData.concat(returnData);
+    start += limit;
+  }
+
+  return allData;
 };
 
 export const getHRApplicantAnalytics = async (
@@ -7587,6 +7602,30 @@ export const getRequesterPrimarySignerList = async (
     data: RequesterPrimarySignerType[];
     count: number;
   };
+};
+
+export const getBackgroundCheckData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    backgroundCheckId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_background_check_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const formattedData = data as unknown as {
+    candidateFirstName: string;
+    candidateMiddleName: string;
+    candidateLastName: string;
+    candidateEmail: string;
+    position: string;
+    email: string;
+    backgroundCheckData: BackgroundCheckTableRow & {
+      request_formsly_id: string;
+    };
+  };
+  return formattedData;
 };
 
 export const getInventoryFormDetails = async (

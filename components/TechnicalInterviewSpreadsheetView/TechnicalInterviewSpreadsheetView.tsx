@@ -350,7 +350,7 @@ const TechnicalInterviewSpreadsheetView = ({
       const scheduledDate = new Date(schedule);
       const formattedDate = formatDate(scheduledDate);
       const formattedTime = formatTime(scheduledDate);
-      
+
       const emailNotificationProps: {
         to: string;
         subject: string;

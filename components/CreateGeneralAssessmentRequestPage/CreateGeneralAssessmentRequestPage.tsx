@@ -109,7 +109,7 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
       setIsLoading(true);
 
       let requestScore = 0;
-      const status = "APPROVED";
+      let status = "REJECTED";
       data.sections.forEach((section) => {
         section.section_field.forEach((field) => {
           if (
@@ -120,6 +120,7 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
           }
         });
       });
+      if (requestScore >= 5) status = "APPROVED";
 
       if (status === "APPROVED") {
         const applicantSection = data.sections.find(
