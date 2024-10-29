@@ -62,7 +62,7 @@ const Page = ({ securityGroupData, categoryOptions, field }: Props) => {
     <>
       <Meta
         description="Customer Setup Page"
-        url="/teamName/inventory/customer-setup"
+        url="/teamName/inventory/setup/customer-setup"
       />
       <CustomerSetupPage
         field={field}

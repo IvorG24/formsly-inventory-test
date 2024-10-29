@@ -121,7 +121,7 @@ const EventFormModal = ({
         if (!userId || !eventId) return;
 
         const params = { eventId, userId };
-
+        
         const form = await getInventoryFormDetails(supabaseClient, params);
 
         if (

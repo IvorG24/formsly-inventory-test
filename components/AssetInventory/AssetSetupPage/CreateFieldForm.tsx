@@ -39,7 +39,7 @@ type Props = {
   categoryList: OptionType[];
   canAddData: boolean;
   sectionId: string;
-  type: "employee" | "asset" | "customer";
+  type: "employee" | "asset" | "customer" | "maintenance" | "warranty";
 };
 const CreateFieldForm = ({
   setCustomFields,

@@ -616,6 +616,12 @@ export type InventoryHistoryRow =
 export type InventoryRequestRow =
   Database["inventory_request_schema"]["Tables"]["inventory_request_table"]["Row"];
 
+export type InventoryWarrantyRow =
+  Database["inventory_request_schema"]["Tables"]["inventory_warranty_table"]["Row"];
+
+export type InventoryMaintenanceRow =
+  Database["inventory_request_schema"]["Tables"]["inventory_maintenance_table"]["Row"];
+
 export type EventTableRow =
   Database["inventory_schema"]["Tables"]["inventory_event_table"]["Row"];
 
@@ -2875,7 +2881,14 @@ export type InventoryEmployeeList = SCICEmployeeTableRow & {
   department: string;
   [key: string]: string;
 };
-
 export type InventoryCustomerList = InventoryCustomerRow & {
+  [key: string]: string;
+};
+
+export type InventoryWarrantyList = InventoryWarrantyRow & {
+  [key: string]: string;
+};
+
+export type InventoryMaintenanceList = InventoryMaintenanceRow & {
   [key: string]: string;
 };

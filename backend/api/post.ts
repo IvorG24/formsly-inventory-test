@@ -45,6 +45,7 @@ import {
   InventoryCustomerRow,
   InventoryEmployeeList,
   InventoryFieldRow,
+  InventoryListType,
   InventoryRequestResponseInsert,
   InventoryRequestRow,
   InventoryResponseValues,
@@ -2779,7 +2780,7 @@ export const updateAssetRequest = async (
     requestId: string;
   }
 ) => {
-  const { InventoryFormValues, formId, teamMemberId, requestId } = params;
+  const { InventoryFormValues, teamMemberId, requestId } = params;
 
   const {
     csi_code,
@@ -3228,4 +3229,182 @@ export const checkCustomerName = async (
   }
 
   return isUnique;
+};
+
+export const uploadCSVFileAssetData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    parsedData: InventoryListType[];
+    teamId: string;
+    teamMemberId: string;
+  }
+) => {
+  const { parsedData, teamId, teamMemberId } = params;
+
+  const inputData = {
+    assetData: parsedData,
+    teamId,
+    teamMemberId,
+  };
+  const { data, error } = await supabaseClient.rpc("import_asset_data", {
+    input_data: inputData,
+  });
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const createInventoryWarranty = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    warrantyData: InventoryFormValues;
+    tagId: string;
+    teamMemberId: string;
+    selectedRow?: string;
+  }
+) => {
+  const { warrantyData, tagId, teamMemberId, selectedRow } = params;
+
+  const assetId = await getAssetId(supabaseClient, {
+    tagId: tagId,
+  });
+
+  const warrantyId = selectedRow ? selectedRow : uuidv4();
+  const warrantyResponse = [];
+  const fieldResponse: InventoryRequestResponseInsert[] = [];
+
+  for (const section of warrantyData.sections) {
+    for (const field of section.section_field) {
+      const responseValue =
+        typeof field.field_response === "string" ||
+        typeof field.field_response === "number"
+          ? String(field.field_response).trim() || ""
+          : field.field_response instanceof Date
+            ? field.field_response.toISOString()
+            : "";
+
+      if (field.field_is_custom_field) {
+        fieldResponse.push({
+          inventory_response_request_id: warrantyId,
+          inventory_response_field_id: field.field_id,
+          inventory_response_value: responseValue,
+        });
+        continue;
+      } else if (!field.field_is_custom_field) {
+        warrantyResponse.push({
+          response: responseValue,
+        });
+        continue;
+      }
+    }
+  }
+
+  const responseValues = fieldResponse
+    .map(
+      (response) =>
+        `('${capitalizeFirstWord(
+          response.inventory_response_value
+        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
+    )
+    .join(",");
+
+  const warrantyResponseValue = `('${warrantyId}', '${assetId}',${warrantyResponse
+    .map((warranty) => `'${warranty.response}'`)
+    .join(", ")})`;
+
+  const inputData = {
+    warrantyResponseValue,
+    responseValues,
+    requestId: assetId,
+    customResponseId: warrantyId,
+    teamMemberId,
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "create_update_warranty_data",
+    {
+      input_data: inputData,
+    }
+  );
+  if (error) throw error;
+
+  return data;
+};
+
+export const createInventoryMaitenance = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    maintenanceData: InventoryFormValues;
+    tagId: string;
+    teamMemberId: string;
+    selectedRow?: string;
+  }
+) => {
+  const { maintenanceData, tagId, teamMemberId, selectedRow } = params;
+
+  const assetId = await getAssetId(supabaseClient, {
+    tagId: tagId,
+  });
+
+  const maintenanceId = selectedRow ? selectedRow : uuidv4();
+  const maintenanceResponse = [];
+  const fieldResponse: InventoryRequestResponseInsert[] = [];
+
+  for (const section of maintenanceData.sections) {
+    for (const field of section.section_field) {
+      const responseValue =
+        typeof field.field_response === "string" ||
+        typeof field.field_response === "number"
+          ? String(field.field_response).trim()
+          : field.field_response instanceof Date
+            ? field.field_response.toISOString()
+            : "";
+
+      if (field.field_is_custom_field) {
+        fieldResponse.push({
+          inventory_response_request_id: maintenanceId,
+          inventory_response_field_id: field.field_id,
+          inventory_response_value: responseValue,
+        });
+        continue;
+      } else if (!field.field_is_custom_field) {
+        maintenanceResponse.push({
+          response: responseValue,
+        });
+        continue;
+      }
+    }
+  }
+
+  const responseValues = fieldResponse
+    .map(
+      (response) =>
+        `('${capitalizeFirstWord(
+          response.inventory_response_value
+        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
+    )
+    .join(",");
+
+  const maintenanceResponseValue = `('${maintenanceId}', '${assetId}',${maintenanceResponse
+    .map((maitenance) => `'${maitenance.response}'`)
+    .join(", ")})`;
+
+  const inputData = {
+    maintenanceResponseValue,
+    responseValues,
+    requestId: assetId,
+    customResponseId: maintenanceId,
+    teamMemberId,
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "create_update_maintenance_data",
+    {
+      input_data: inputData,
+    }
+  );
+  if (error) throw error;
+
+  return data;
 };

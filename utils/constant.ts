@@ -1475,4 +1475,28 @@ export const excludedKeys = [
   "inventory_request_serial_number",
   "inventory_request_si_number",
   "inventory_event_date_created",
+  "inventory_assignee_employee_id",
+];
+
+export const maintenanceOption = [
+  {
+    value: "SCHEDULED",
+    label: "Scheduled",
+  },
+  {
+    value: "COMPLETED",
+    label: "Completed",
+  },
+  {
+    value: "ON HOLD",
+    label: "On Hold",
+  },
+  {
+    value: "CANCELLED",
+    label: "Cancelled",
+  },
+  {
+    value: "IN PROGRESS",
+    label: "In Progress",
+  },
 ];

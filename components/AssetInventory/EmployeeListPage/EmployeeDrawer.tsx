@@ -100,6 +100,8 @@ const EmployeeDrawer = ({
           userId: userProfile?.user_id,
           formId: "93b73759-26b0-46ee-9003-d332391f07f2",
         });
+        setFormData(form);
+
         replaceSection(form.form_section);
         if (mode === "edit" && employeeData) {
           const sections = getValues("sections");
@@ -143,8 +145,6 @@ const EmployeeDrawer = ({
         } else if (mode === "create") {
           replaceSection(form.form_section);
         }
-
-        setFormData(form);
       } catch (e) {
         notifications.show({
           message: "Something went wrong",

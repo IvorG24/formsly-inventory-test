@@ -69,7 +69,9 @@ import {
   InventoryHistory,
   InventoryListType,
   InventoryLocationSiteRow,
+  InventoryMaintenanceList,
   InventoryRequestRow,
+  InventoryWarrantyList,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
@@ -8257,4 +8259,39 @@ export const getFormOnLoad = async (
   return data as {
     form: InventoryFormType;
   };
+};
+
+export const getInventoryWarranty = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { tagId?: string; limit: number; page: number; date: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_inventory_warranty", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as { data: InventoryWarrantyList[]; totalCount: 0 };
+};
+
+export const getInventoryMaintenance = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    tagId?: string;
+    limit: number;
+    page: number;
+    date: string;
+    status: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_inventory_maintenance",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as { data: InventoryMaintenanceList[]; totalCount: 0 };
 };

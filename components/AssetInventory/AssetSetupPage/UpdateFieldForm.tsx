@@ -41,7 +41,7 @@ type Props = {
   handleClickCustomField: (fieldId: string) => void;
   canEditData: boolean;
   sectionId: string;
-  type: "employee" | "asset" | "customer";
+  type: "employee" | "asset" | "customer" | "maintenance" | "warranty";
 };
 const UpdateFieldForm = ({
   setCustomFields,

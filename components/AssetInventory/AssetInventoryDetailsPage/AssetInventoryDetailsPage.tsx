@@ -43,6 +43,8 @@ import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
 import AssetLinkPanel from "./AssetLinkPanel";
 import EventPanel from "./EventPanel";
 import HistoryPanel from "./HistoryPanel";
+import MaintenancePanel from "./MaintenancePanel";
+import WarrantyPanel from "./WarrantyPanel";
 
 type Props = {
   asset_details: InventoryListType[];
@@ -461,6 +463,8 @@ const AssetInventoryDetailsPage = ({
                 <Tabs.Tab value="details">Additional Details</Tabs.Tab>
                 <Tabs.Tab value="events">Events</Tabs.Tab>
                 <Tabs.Tab value="asset-link">Asset Link</Tabs.Tab>
+                <Tabs.Tab value="maintenance">Maintenance</Tabs.Tab>
+                <Tabs.Tab value="warranty">Warranty</Tabs.Tab>
                 <Tabs.Tab value="history">History</Tabs.Tab>
               </Tabs.List>
 
@@ -478,6 +482,20 @@ const AssetInventoryDetailsPage = ({
               </Tabs.Panel>
               <Tabs.Panel value="asset-link" mt="md">
                 <AssetLinkPanel fetchHistory={fetchHistoryPanel} />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="maintenance" mt="md">
+                <MaintenancePanel
+                  fetchHistory={fetchHistoryPanel}
+                  activeTab={activeTab}
+                />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="warranty" mt="md">
+                <WarrantyPanel
+                  fetchHistory={fetchHistoryPanel}
+                  activeTab={activeTab}
+                />
               </Tabs.Panel>
 
               <Tabs.Panel value="history" mt="md">

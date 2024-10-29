@@ -230,6 +230,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
       centered: true,
     });
   };
+
   const handleCreate = () => {
     setSelectedEmployee(null);
     setDrawerMode("create");

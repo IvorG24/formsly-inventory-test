@@ -3,7 +3,11 @@ import {
   getLocationOption,
   getSubFieldOrCustomField,
 } from "@/backend/api/get";
-import { createAssetRequest, getItemOption } from "@/backend/api/post";
+import {
+  createAssetRequest,
+  getItemOption,
+  uploadCSVFileAssetData,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -13,6 +17,7 @@ import {
   FormType,
   InventoryFormResponseType,
   InventoryFormType,
+  InventoryListType,
   OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
@@ -20,14 +25,20 @@ import {
   Box,
   Button,
   Container,
+  FileInput,
+  Flex,
+  Group,
   LoadingOverlay,
   Space,
   Stack,
+  Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
+import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import InventoryFormSection from "./InventoryFormSection";
@@ -38,6 +49,9 @@ export type InventoryFormValues = {
   sections: Section[];
 };
 
+type FileValue = {
+  file?: File;
+};
 export type FieldWithResponseArray =
   FormType["form_section"][0]["section_field"][0] & {
     field_response: RequestResponseTableRow[];
@@ -56,6 +70,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   const requestorProfile = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [isLoading, setIsLoading] = useState(false);
+
   const formDetails = {
     form_name: form.form_name,
     form_description: form.form_description,
@@ -64,7 +79,13 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
   };
 
   const requestFormMethods = useForm<InventoryFormValues>();
+  const formMethodsForFile = useForm<FileValue>();
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const {
+    handleSubmit: submitForCSV,
+    register: fileRegister,
+    setValue: fileValue,
+  } = formMethodsForFile;
   const {
     fields: formSections,
     remove: removeSection,
@@ -316,12 +337,82 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
     fetchOptions();
   }, [activeTeam]);
 
+  const handleCSVSubmit = (data: FileValue) => {
+    const file = data.file ? data.file : null;
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (result) => {
+        const parsedData = result.data as unknown as InventoryListType[];
+
+        try {
+          setIsLoading(true);
+          await uploadCSVFileAssetData(supabaseClient, {
+            parsedData: parsedData,
+            teamMemberId: teamMember?.team_member_id ?? "",
+            teamId: activeTeam.team_id,
+          });
+          notifications.show({
+            message: "Asset imported successfully!",
+            color: "green",
+          });
+        } catch (error) {
+          notifications.show({
+            message: "Error importing employees.",
+            color: "red",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+        modals.close("importCsv");
+      },
+    });
+  };
+  // modal
+  const handleAction = () => {
+    modals.open({
+      modalId: "importCsv",
+      title: <Text>Please upload a CSV file.</Text>,
+      children: (
+        <form onSubmit={submitForCSV(handleCSVSubmit)}>
+          <FileInput
+            accept=".csv"
+            placeholder="Asset csv file"
+            label="CSV File"
+            withAsterisk
+            {...fileRegister("file", { required: true })}
+            onChange={(file) => fileValue("file", file ?? undefined)}
+          />
+          <Flex mt="md" align="center" justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              color="dimmed"
+              onClick={() => modals.close("importCsv")}
+            >
+              Cancel
+            </Button>
+            <Button color="blue" type="submit">
+              Upload
+            </Button>
+          </Flex>
+        </form>
+      ),
+      centered: true,
+    });
+  };
   return (
     <Container>
       <LoadingOverlay visible={isLoading} />
-      <Title order={3} color="dimmed">
-        Create Asset Form
-      </Title>
+      <Group position="apart">
+        <Title order={3} color="dimmed">
+          Create Asset Form
+        </Title>
+        <Button variant="outline" onClick={handleAction}>
+          Import
+        </Button>
+      </Group>
       <Space h="md" />
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleCreateRequest)}>
