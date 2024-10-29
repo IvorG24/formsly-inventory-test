@@ -106,6 +106,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
     setFieldId(fieldId);
     setModalOpened(true);
   };
+  
   const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
     try {
       await updateRequiredField(supabaseClient, {

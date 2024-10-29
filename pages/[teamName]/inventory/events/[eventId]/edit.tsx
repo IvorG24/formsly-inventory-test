@@ -18,6 +18,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       const eventFormDefaultValues = await getEventFormDetails(supabaseClient, {
         eventId: context.query.eventId as string,
       });
+      
       const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
         userId: user.id,
         teamId: userActiveTeam.team_id,

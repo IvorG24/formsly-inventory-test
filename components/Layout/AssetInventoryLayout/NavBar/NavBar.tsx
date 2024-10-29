@@ -1,5 +1,6 @@
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
@@ -50,12 +51,17 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   const teamList = useTeamList();
   const router = useRouter();
   const activeTeam = useActiveTeam();
-  //   const teamMember = useUserTeamMember();
+  const teamMember = useUserTeamMember();
 
   const securityGroup = useSecurityGroup();
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
+
+  const isOwnerOrAdmin = ["OWNER", "ADMIN"].includes(
+    teamMember?.team_member_role ?? ""
+  );
+
   const canAddAsset =
     securityGroup?.asset?.permissions.find(
       (permission) => permission.key === "addAssets"
@@ -84,15 +90,25 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                 icon: IconPuzzle,
                 href: `/${formattedTeamName}/inventory`,
               },
-              ...securityGroup.asset.filter.event.map((event) => ({
-                id: event,
-                label: event.charAt(0).toUpperCase() + event.slice(1),
-                icon: IconTimelineEvent,
-                href: `/${formattedTeamName}/inventory/list/${
-                  event.charAt(0).toLowerCase() +
-                  event.slice(1).replace(/ /g, "-").toLowerCase()
-                }`,
-              })),
+              ...securityGroup.asset.filter.event
+                .filter((event) =>
+                  [
+                    "check in",
+                    "check out",
+                    "lease",
+                    "lease return",
+                    "dispose",
+                  ].includes(event.toLowerCase())
+                )
+                .map((event) => ({
+                  id: event,
+                  label: event.charAt(0).toUpperCase() + event.slice(1),
+                  icon: IconTimelineEvent,
+                  href: `/${formattedTeamName}/inventory/list/${
+                    event.charAt(0).toLowerCase() +
+                    event.slice(1).replace(/ /g, "-").toLowerCase()
+                  }`,
+                })),
             ],
           },
         ]
@@ -222,12 +238,16 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
             },
           ],
         },
-        {
-          id: "events",
-          label: "Events",
-          icon: IconCategory2,
-          href: `/${formattedTeamName}/inventory/events`,
-        },
+        ...(isOwnerOrAdmin
+          ? [
+              {
+                id: "events",
+                label: "Events",
+                icon: IconCategory2,
+                href: `/${formattedTeamName}/inventory/events`,
+              },
+            ]
+          : []),
       ],
     },
   ];
@@ -310,7 +330,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                                 color:
                                   theme.colorScheme === "dark"
                                     ? theme.colors.gray[0]
-                                    : theme.colors.blue[7],
+                                    : theme.colors.dark[7],
                               },
                               inner: {
                                 justifyContent: "flex-start",

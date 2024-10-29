@@ -106,7 +106,7 @@ const MaintenanceSetupPage = ({
     }
   };
 
-  const handleDelete = async (fieldId: string) => {
+const handleDelete = async (fieldId: string) => {
     setFieldId(fieldId);
     setModalOpened(true);
   };
@@ -149,7 +149,7 @@ const MaintenanceSetupPage = ({
         <Group position="apart" align="end">
           <Stack>
             <Title variant="dimmed" order={3}>
-              Maintenance Setup Page
+              Customer Setup Page
             </Title>
             <Text size="sm">List of default and custom fields</Text>
           </Stack>

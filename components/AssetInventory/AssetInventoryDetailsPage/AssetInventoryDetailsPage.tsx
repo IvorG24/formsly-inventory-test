@@ -43,6 +43,7 @@ import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
 import AssetLinkPanel from "./AssetLinkPanel";
 import EventPanel from "./EventPanel";
 import HistoryPanel from "./HistoryPanel";
+import ImageUpload from "./ImageUpload/ImageUpload";
 import MaintenancePanel from "./MaintenancePanel";
 import WarrantyPanel from "./WarrantyPanel";
 
@@ -77,7 +78,7 @@ const AssetInventoryDetailsPage = ({
   const [eventHistoryData, setEventHistoryData] =
     useState<InventoryDynamicRow[]>();
   const [totalRecords, setTotalRecords] = useState(0);
-
+  const [image, setImage] = useState(null);
   const [assetHistoryData, setAssetHistoryData] =
     useState<InventoryHistory[]>();
   const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
@@ -229,6 +230,8 @@ const AssetInventoryDetailsPage = ({
     } catch (e) {}
   };
 
+  // Handle image upload
+
   return (
     <Container size="lg">
       {selectedEventId && (
@@ -285,23 +288,7 @@ const AssetInventoryDetailsPage = ({
             </Group>
 
             <Grid>
-              <Grid.Col span={12} xs={6}>
-                <Box
-                  style={{
-                    width: "100%",
-                    height: "330px", // Adjust the height as needed
-                    backgroundColor: "gray",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    border: "1px solid #ccc",
-                  }}
-                >
-                  <Text color="dimmed" size="xl">
-                    Not Available
-                  </Text>
-                </Box>
-              </Grid.Col>
+              <ImageUpload />
 
               <Grid.Col span={12} xs={6}>
                 <Table striped highlightOnHover withBorder withColumnBorders>
@@ -329,7 +316,6 @@ const AssetInventoryDetailsPage = ({
                             "inventory_request_site",
                             "inventory_request_location",
                             "inventory_request_department",
-                            "inventory_request_old_asset_number",
                           ].includes(key)
                         ) {
                           acc.push(

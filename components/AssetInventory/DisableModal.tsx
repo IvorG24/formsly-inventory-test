@@ -1,4 +1,4 @@
-import { disableDrawerData } from "@/backend/api/update";
+import { disableDrawerData, updateDisableField } from "@/backend/api/update";
 import {
   CategoryTableRow,
   InventoryFieldRow,
@@ -86,9 +86,8 @@ const DisableModal = ({
 
         case "Custom Field":
           if (!setCurrentCustomFieldList) return;
-          await disableDrawerData(supabaseClient, {
-            type: "field",
-            typeId: typeId,
+          await updateDisableField(supabaseClient, {
+            fieldId: typeId,
           });
 
           setCurrentCustomFieldList((prev) =>

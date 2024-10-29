@@ -291,7 +291,10 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                               placeholder="Label"
                               {...labelField}
                               style={{ width: "100%" }}
-                              disabled={field?.field_name === "Signature"}
+                              disabled={
+                                field?.field_name === "Signature" ||
+                                field?.field_name === "Notes"
+                              }
                             />
                           )}
                         />

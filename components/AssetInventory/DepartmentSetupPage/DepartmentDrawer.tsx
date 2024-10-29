@@ -20,7 +20,6 @@ const DepartmentDrawer = ({ isOpen, close, handleDepartmentSubmit }: Props) => {
     <Drawer
       title="Create New Location"
       position="right"
-      overlayProps={{ opacity: 0.5, blur: 4 }}
       opened={isOpen}
       onClose={() => {
         reset(), close();

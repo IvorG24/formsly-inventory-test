@@ -176,6 +176,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
               control={control}
               render={({ field }) => (
                 <Select
+                  withinPortal
                   searchable
                   {...field}
                   placeholder="Search for an asset..."
@@ -242,6 +243,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
             {
               accessor: "inventory_request_id",
               title: "Asset Tag Id",
+              width: "40%",
               render: (event) => (
                 <Text>
                   <Anchor
@@ -255,9 +257,11 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
                 </Text>
               ),
             },
+
             {
               accessor: "inventory_request_serial_number",
               title: "Serial No",
+              width: "30%",
               render: (event) => (
                 <Text>{event.inventory_request_serial_number}</Text>
               ),
@@ -265,6 +269,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
             {
               accessor: "inventory_request_name",
               title: "Asset Name",
+              width: "40%",
               render: (event) => <Text>{event.inventory_request_name}</Text>,
             },
           ]}
