@@ -23,10 +23,19 @@ export default async function handler(
     if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
       return res.status(405).json({ error: "Jira env variables undefined" });
     }
+    const wavFormslyIdCustomField = "10458";
+    const defaultFormslyIdCustomField = "10297";
+    const requestType = req.body.requestType;
 
     // Check for duplicate ticket
     const duplicateResponse = await fetch(
-      `${jiraConfig.api_url}/search?maxResults=1&jql=cf[10010]["requestType"]="${req.body.requestType}"+and+cf[10297]~"${req.body.formslyId}"`,
+      `${
+        jiraConfig.api_url
+      }/search?maxResults=1&jql=cf[10010]["requestType"]="${requestType}"+and+cf[${
+        requestType === "Petty Cash Voucher"
+          ? wavFormslyIdCustomField
+          : defaultFormslyIdCustomField
+      }]~"${req.body.formslyId}"`,
       {
         method: "GET",
         headers: {

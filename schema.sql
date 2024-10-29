@@ -307,8 +307,8 @@ CREATE TABLE form_schema.signer_table (
   signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
-  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,            
-  signer_is_requester_signer BOOLEAN DEFAULT FALSE NOT NULL,                                                            
+  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  signer_is_requester_signer BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
@@ -379,7 +379,7 @@ CREATE TABLE form_schema.form_team_group_table (
 );
 
 CREATE TABLE form_schema.requester_primary_signer_table (
-  requester_primary_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,                                               
+  requester_primary_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   requester_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
   requester_primary_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
@@ -1912,7 +1912,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.technical_interview_table
-          SET technical_interview_evaluation_request_id = '${requestId}' 
+          SET technical_interview_evaluation_request_id = '${requestId}'
           WHERE
             technical_interview_id = '${interviewParams.technicalInterviewId}'
         `
@@ -1923,7 +1923,7 @@ AS $$
       plv8.execute(
         `
           UPDATE hr_schema.background_check_table
-          SET background_check_evaluation_request_id = '${requestId}' 
+          SET background_check_evaluation_request_id = '${requestId}'
           WHERE
             background_check_id = '${backgroundCheckParams.backgroundCheckId}'
         `
@@ -4009,15 +4009,15 @@ AS $$
 
     if (!request.form_is_formsly_form || (
         request.form_is_formsly_form && [
-            'Subcon', 'Request For Payment v1', 
-            'Petty Cash Voucher', 
-            'Petty Cash Voucher Balance', 
-            'Application Information v1', 
+            'Subcon', 'Request For Payment v1',
+            'Petty Cash Voucher',
+            'Petty Cash Voucher Balance',
+            'Application Information v1',
             'Application Information',
             'General Assessment v1',
             'General Assessment',
-            'Technical Assessment', 
-            'Evaluation Result', 
+            'Technical Assessment',
+            'Evaluation Result',
             'Background Investigation'
           ].includes(request.form_name)
         )
@@ -4966,6 +4966,7 @@ AS $$
           signer_is_disabled = false
           AND signer_team_project_id IS null
           AND signer_form_id = '${formId}'
+          AND signer_is_requester_signer = false
       `
     );
 
@@ -6284,159 +6285,217 @@ AS $$
         }
       } else if (form.form_name === "Petty Cash Voucher Balance") {
         if (connectedRequestFormslyId) {
-          const splitFormslyId = connectedRequestFormslyId.split('-');
-          const connectedRequest = plv8.execute(`
-            SELECT
-              request_id,
-              request_form_id,
-              request_project_id
-            FROM
-              request_schema.request_table
-            WHERE
-              request_formsly_id_prefix = '${splitFormslyId[0]}'
-              AND request_formsly_id_serial = '${splitFormslyId[1]}'
-            LIMIT 1;
-          `)[0];
+            const splitFormslyId = connectedRequestFormslyId.split('-');
+            const connectedRequest = plv8.execute(`
+                SELECT
+                    request_id,
+                    request_form_id,
+                    request_project_id
+                FROM
+                    request_schema.request_table
+                WHERE
+                    request_formsly_id_prefix = '${splitFormslyId[0]}'
+                    AND request_formsly_id_serial = '${splitFormslyId[1]}'
+                LIMIT 1;
+            `)[0];
 
-          if (!connectedRequest) {
-            throw new Error('Request id not found');
-          }
+            if (!connectedRequest) {
+                throw new Error('Request id not found');
+            }
 
-          const connectedRequestSectionId = plv8.execute(`
-            SELECT
-              section_id
-            FROM
-              form_schema.section_table
-            WHERE
-              section_form_id = '${connectedRequest.request_form_id}'
-          `)[0].section_id;
+            const connectedRequestSectionId = plv8.execute(`
+                SELECT
+                    section_id
+                FROM
+                    form_schema.section_table
+                WHERE
+                    section_form_id = '${connectedRequest.request_form_id}'
+            `)[0].section_id;
 
-          let connectedRequestChargeToProjectId = "";
+            let connectedRequestChargeToProjectId = "";
 
-          const parentRequestIdField = plv8.execute(`
-            SELECT request_response
-            FROM request_schema.request_response_table
-            WHERE
-              request_response_request_id = '${connectedRequest.request_id}'
-              AND request_response_field_id IN (
-                '9a112d6f-a34e-4767-b3c1-7f30af858f8f',
-                '2bac0084-53f4-419f-aba7-fb1f77403e00'
-              )
-          `)[0];
-
-          if (parentRequestIdField) {
-            const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
-
-            const isUUID = (str) => {
-              const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-              return uuidPattern.test(str);
-            };
-
-            if (isUUID(parentRequestIdFieldResponse)) {
-              const connectedRequestChargeToProjectName = plv8.execute(`
+            const parentRequestIdField = plv8.execute(`
                 SELECT request_response
                 FROM request_schema.request_response_table
                 WHERE
-                  request_response_request_id = '${parentRequestIdFieldResponse}'
-                  AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
-              `)[0];
+                    request_response_request_id = '${connectedRequest.request_id}'
+                    AND request_response_field_id IN (
+                        '9a112d6f-a34e-4767-b3c1-7f30af858f8f',
+                        '2bac0084-53f4-419f-aba7-fb1f77403e00'
+                    )
+            `)[0];
 
-              if (connectedRequestChargeToProjectName) {
-                const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
-                const connectedRequestChargeToProject = plv8.execute(`
-                  SELECT team_project_id
-                  FROM team_schema.team_project_table
-                  WHERE team_project_name = '${parseProjectName}'
-                `)[0];
+            if (parentRequestIdField) {
+                const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
+                const isUUID = (str) => {
+                    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+                    return uuidPattern.test(str);
+                };
 
-                if (connectedRequestChargeToProject) {
-                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
+                if (isUUID(parentRequestIdFieldResponse)) {
+                    const connectedRequestChargeToProjectName = plv8.execute(`
+                        SELECT request_response
+                        FROM request_schema.request_response_table
+                        WHERE
+                            request_response_request_id = '${parentRequestIdFieldResponse}'
+                            AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
+                    `)[0];
+
+                    if (connectedRequestChargeToProjectName) {
+                        const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
+                        const connectedRequestChargeToProject = plv8.execute(`
+                            SELECT team_project_id
+                            FROM team_schema.team_project_table
+                            WHERE team_project_name = '${parseProjectName}'
+                        `)[0];
+
+                        if (connectedRequestChargeToProject) {
+                            connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
+                        }
+                    }
+                } else {
+                    const connectedRequestChargeToProject = plv8.execute(`
+                        SELECT team_project_id
+                        FROM team_schema.team_project_table
+                        WHERE team_project_name = '${parentRequestIdFieldResponse}'
+                    `)[0];
+
+                    if (connectedRequestChargeToProject) {
+                        connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
+                    }
                 }
-              }
+            }
+
+            const chargeToProjectField = plv8.execute(`
+                SELECT
+                    request_response
+                FROM request_schema.request_response_table
+                WHERE
+                    request_response_field_id = '9cde1e79-646d-4a9f-9e76-3a6494bff6e2'
+                    AND request_response_request_id = $1
+            `, [connectedRequest.request_id])[0];
+
+            const isChargeToProject = chargeToProjectField ? Boolean(chargeToProjectField.request_response) : false;
+            let signerList = [];
+
+            if (isChargeToProject && connectedRequestChargeToProjectId !== "") {
+                signerList = plv8.execute(`
+                    SELECT
+                        signer_id,
+                        signer_is_primary_signer,
+                        signer_action,
+                        signer_order,
+                        team_member_id,
+                        user_id,
+                        user_first_name,
+                        user_last_name,
+                        user_avatar
+                    FROM form_schema.signer_table
+                    INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+                    INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+                    WHERE
+                        signer_is_disabled = false
+                        AND signer_form_id = '${form.form_id}'
+                        AND signer_team_project_id = $1
+                    ORDER BY signer_order
+                `, [connectedRequestChargeToProjectId]);
             } else {
-              const connectedRequestChargeToProject = plv8.execute(`
-                SELECT team_project_id
-                FROM team_schema.team_project_table
-                WHERE team_project_name = '${parentRequestIdFieldResponse}'
-              `)[0];
+                const pcvWavField = plv8.execute(`
+                    SELECT
+                        request_response
+                    FROM request_schema.request_response_table
+                    WHERE
+                        request_response_field_id = '694465de-8aa9-4361-be52-f8c091c13fde'
+                        AND request_response_request_id = $1
+                `, [connectedRequest.request_id])[0];
 
-              if (connectedRequestChargeToProject) {
-                connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
-              }
-            }
-          }
+                const isPED = pcvWavField ? JSON.parse(pcvWavField.request_response) === 'Plants and Equipment' : false;
 
-          const signerTeamProjectList = [connectedRequest.request_project_id]
-
-          if (connectedRequestChargeToProjectId !== "") {
-            signerTeamProjectList.push(connectedRequestChargeToProjectId)
-          }
-
-          const teamProjectQuery = signerTeamProjectList.map(project => `'${project}'`).join(", ");
-
-          const signerList = plv8.execute(`
-            SELECT
-              signer_id,
-              signer_is_primary_signer,
-              signer_action,
-              signer_order,
-              team_member_id,
-              user_id,
-              user_first_name,
-              user_last_name,
-              user_avatar
-            FROM form_schema.signer_table
-            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-            WHERE
-              signer_is_disabled = false
-              AND signer_form_id = '${form.form_id}'
-              AND signer_team_project_id IN (${teamProjectQuery})
-            ORDER BY signer_order
-          `);
-
-          const formattedSignerList = signerList.map(signer => {
-            return {
-              signer_id: signer.signer_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer,
-              signer_action: signer.signer_action,
-              signer_order: signer.signer_order,
-              signer_team_member: {
-                team_member_id: signer.team_member_id,
-                team_member_user: {
-                  user_id: signer.user_id,
-                  user_first_name: signer.user_first_name,
-                  user_last_name: signer.user_last_name,
-                  user_avatar: signer.user_avatar,
+                if (isPED) {
+                    const pedSignerProjectId = '38acb52d-98a7-401f-af04-080a3fd56cfd';
+                    signerList = plv8.execute(`
+                        SELECT
+                            signer_id,
+                            signer_is_primary_signer,
+                            signer_action,
+                            signer_order,
+                            team_member_id,
+                            user_id,
+                            user_first_name,
+                            user_last_name,
+                            user_avatar
+                        FROM form_schema.signer_table
+                        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+                        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+                        WHERE
+                            signer_is_disabled = false
+                            AND signer_form_id = '${form.form_id}'
+                            AND signer_team_project_id = $1
+                        ORDER BY signer_order
+                    `, [pedSignerProjectId]);
+                } else {
+                    signerList = plv8.execute(`
+                        SELECT
+                            signer_id,
+                            signer_is_primary_signer,
+                            signer_action,
+                            signer_order,
+                            team_member_id,
+                            user_id,
+                            user_first_name,
+                            user_last_name,
+                            user_avatar
+                        FROM form_schema.signer_table
+                        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+                        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+                        WHERE
+                            signer_is_disabled = false
+                            AND signer_form_id = '${form.form_id}'
+                            AND signer_team_project_id = $1
+                        ORDER BY signer_order
+                    `, [connectedRequest.request_project_id]);
                 }
-              }
             }
-          });
 
-        const uniqueSignerList = [];
+            const formattedSignerList = signerList.map(signer => ({
+                signer_id: signer.signer_id,
+                signer_is_primary_signer: signer.signer_is_primary_signer,
+                signer_action: signer.signer_action,
+                signer_order: signer.signer_order,
+                signer_team_member: {
+                    team_member_id: signer.team_member_id,
+                    team_member_user: {
+                        user_id: signer.user_id,
+                        user_first_name: signer.user_first_name,
+                        user_last_name: signer.user_last_name,
+                        user_avatar: signer.user_avatar,
+                    }
+                }
+            }));
 
-        formattedSignerList.forEach((signer) => {
-            const signerIsDuplicate = uniqueSignerList.some((uniqueSigner) => uniqueSigner.signer_team_member.team_member_id === signer.signer_team_member.team_member_id);
-            if (!signerIsDuplicate) {
-            uniqueSignerList.push(signer)
-            }
+            const uniqueSignerList = [];
+            formattedSignerList.forEach((signer) => {
+                const signerIsDuplicate = uniqueSignerList.some(
+                    uniqueSigner => uniqueSigner.signer_team_member.team_member_id === signer.signer_team_member.team_member_id
+                );
+                if (!signerIsDuplicate) {
+                    uniqueSignerList.push(signer);
+                }
+            });
+
+            returnData = {
+                form: {
+                    ...form,
+                    form_signer: uniqueSignerList
+                },
+                connectedRequest: {
+                    ...connectedRequest,
+                    form_section: [connectedRequestSectionId]
+                },
+            };
             return;
-        })
-
-        returnData = {
-            form: {
-                ...form,
-                form_signer: uniqueSignerList
-            },
-            connectedRequest: {
-                ...connectedRequest,
-                form_section: [connectedRequestSectionId]
-            },
-        };
         } else {
-          returnData = {
-            form
-          }
+            returnData = { form };
         }
       } else if (form.form_name === "Evaluation Result") {
         const projects = plv8.execute(
@@ -11874,6 +11933,7 @@ plv8.subtransaction(function() {
         signer_form_id = '${formId}'
         AND signer_is_disabled = false
         AND signer_team_project_id IS NULL
+        AND signer_is_requester_signer = false
     `
   );
 
@@ -12401,8 +12461,8 @@ plv8.subtransaction(function() {
         condition += ` AND signer_team_department_id = $3`;
         params.push(departmentId);
         signerData = fetchSignerData(condition, params);
-    } 
-    
+    }
+
     if (signerData.length <= 0) {
         signerData = fetchSignerData(`
             WHERE signer_team_project_id = $1
@@ -17308,14 +17368,14 @@ AS $$
 
     const userData = plv8.execute(
       `
-        SELECT 
+        SELECT
           user_id,
           user_first_name,
           user_last_name,
           user_email
-        FROM user_schema.user_table 
-        WHERE 
-          user_email = '${data.application_information_email.toLowerCase()}' 
+        FROM user_schema.user_table
+        WHERE
+          user_email = '${data.application_information_email.toLowerCase()}'
         LIMIT 1
       `
     );
@@ -19382,7 +19442,7 @@ plv8.subtransaction(function() {
         q.questionnaire_team_id = $1
         ${creator}
         ${search}
-      ORDER BY q.questionnaire_date_created ${isAscendingSort}
+      ORDER BY ${isAscendingSort}
       LIMIT $2 OFFSET $3
       `, [teamId, limit, offset]);
 
@@ -20285,11 +20345,11 @@ plv8.subtransaction(function() {
         const signerOrder = 1;
 
         signerData = plv8.execute(`
-            INSERT INTO form_schema.signer_table 
+            INSERT INTO form_schema.signer_table
                 (signer_is_primary_signer, signer_action, signer_is_requester_signer, signer_form_id, signer_team_member_id, signer_order)
             VALUES
                 ($1, $2, $3, $4, $5, $6)
-            RETURNING *;  
+            RETURNING *;
         `, [signerIsPrimary, signerAction, signerIsRequesterSigner, formId, signerTeamMemberId, signerOrder])[0];
     }
 
@@ -20304,7 +20364,7 @@ plv8.subtransaction(function() {
 
         if (Number(duplicateCount) === 0) {
             plv8.execute(`
-                INSERT INTO form_schema.requester_primary_signer_table 
+                INSERT INTO form_schema.requester_primary_signer_table
                     (requester_team_member_id, requester_primary_signer_signer_id)
                 VALUES
                     ($1, $2)
@@ -20334,22 +20394,22 @@ plv8.subtransaction(function() {
     const requesterSignerCount = plv8.execute(`SELECT COUNT(*) FROM form_schema.requester_primary_signer_table`)[0].count;
 
     let query = `
-        SELECT
-            requester_primary_signer_id,
-            requester_team_member_id,
-            requester_primary_signer_signer_id,
-            signer_team_member_id AS requester_primary_signer_signer_team_member_id
-        FROM form_schema.requester_primary_signer_table
-        INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
-        INNER JOIN team_schema.team_member_table signer_team_member ON signer_team_member.team_member_id = signer_team_member_id
-        INNER JOIN user_schema.user_table signer_user ON signer_user.user_id = signer_team_member.team_member_user_id
-        INNER JOIN team_schema.team_member_table requester_team_member ON requester_team_member.team_member_id = requester_team_member_id
-        INNER JOIN user_schema.user_table requester_user ON requester_user.user_id = requester_team_member.team_member_user_id
-        WHERE
-            signer_form_id = $1
-            AND signer_is_disabled = false
-            AND signer_is_requester_signer = true
-        `;
+      SELECT
+          requester_primary_signer_id,
+          requester_team_member_id,
+          requester_primary_signer_signer_id,
+          signer_team_member_id AS requester_primary_signer_signer_team_member_id
+      FROM form_schema.requester_primary_signer_table
+      INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+      INNER JOIN team_schema.team_member_table signer_team_member ON signer_team_member.team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table signer_user ON signer_user.user_id = signer_team_member.team_member_user_id
+      INNER JOIN team_schema.team_member_table requester_team_member ON requester_team_member.team_member_id = requester_team_member_id
+      INNER JOIN user_schema.user_table requester_user ON requester_user.user_id = requester_team_member.team_member_user_id
+      WHERE
+          signer_form_id = $1
+          AND signer_is_disabled = false
+          AND signer_is_requester_signer = true
+    `;
     let params = [formId, limit, start];
     if (search) {
         query += ` AND (CONCAT(signer_user.user_first_name, ' ', signer_user.user_last_name) ILIKE $4 OR CONCAT(requester_user.user_first_name, ' ', requester_user.user_last_name) ILIKE $4)`;

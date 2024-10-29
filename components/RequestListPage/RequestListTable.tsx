@@ -1,7 +1,4 @@
-import {
-  getFieldResponseByRequestId,
-  getRequestTypeFieldResponse,
-} from "@/backend/api/get";
+import { getFieldResponseByRequestId } from "@/backend/api/get";
 import { updateRequestOtpId } from "@/backend/api/update";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -316,7 +313,7 @@ const RequestListTable = ({
               return pedEquipmentNumber;
             }
 
-            const requestTypeResponse = await getRequestTypeFieldResponse(
+            const requestTypeResponse = await getFieldResponseByRequestId(
               supabaseClient,
               {
                 requestId: request.request_id,
@@ -325,9 +322,10 @@ const RequestListTable = ({
             );
 
             const isRequestTypeBulk =
-              requestTypeResponse &&
-              safeParse(requestTypeResponse.request_response).toLowerCase() ===
-                "bulk";
+              requestTypeResponse[0] &&
+              safeParse(
+                requestTypeResponse[0].request_response
+              ).toLowerCase() === "bulk";
 
             if (isRequestTypeBulk) {
               pedEquipmentNumber = {

@@ -107,7 +107,7 @@ type RequestFormSectionProps = {
     ) => void;
   };
   liquidationReimbursementFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+    onProjectOrDepartmentNameChange: () => void;
     onRequestTypeChange: (value: string | null) => void;
     onPayeeVatBooleanChange: (
       value: boolean,

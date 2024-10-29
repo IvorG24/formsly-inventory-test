@@ -183,30 +183,100 @@ const CreateLiquidationReimbursementRequestPage = ({
     );
   };
 
-  const handleProjectNameChange = async (value: string | null) => {
+  const handleProjectOrDepartmentNameChange = async () => {
     try {
       setIsFetchingSigner(true);
-      if (value) {
-        const projectId = projectOptions.find(
-          (option) => option.option_value === value
-        )?.option_id;
-        if (projectId) {
-          const data = await getProjectSignerWithTeamMember(supabaseClient, {
-            projectId,
-            formId,
-            requesterTeamMemberId: `${teamMember?.team_member_id}`,
-          });
-          if (data.length !== 0) {
-            setSignerList(data as unknown as FormType["form_signer"]);
-          } else {
-            resetSigner();
-          }
+      const selectedProject = getValues(
+        `sections.0.section_field.0.field_response`
+      );
+      const selectedDepartment = getValues(
+        `sections.0.section_field.2.field_response`
+      );
+      const isPED = selectedDepartment === "Plants and Equipment";
+
+      const projectId = projectOptions.find(
+        (option) => option.option_value === selectedProject
+      )?.option_id;
+
+      if (projectId) {
+        // if PED, use BOQ form approver
+        const data = await getProjectSignerWithTeamMember(supabaseClient, {
+          projectId,
+          formId: isPED ? "e10abdce-e012-45b6-bec4-e0133f1a8467" : form.form_id,
+          requesterTeamMemberId: `${teamMember?.team_member_id}`,
+        });
+        if (data.length !== 0) {
+          setSignerList(data as unknown as FormType["form_signer"]);
+        } else {
+          resetSigner();
         }
-      } else {
-        resetSigner();
       }
+
+      // add equipment code to all payee section with Materials type of request
+      let currentSectionList = getValues(`sections`);
+      const paymentSection = currentSectionList.find(
+        (section) => section.section_name === "Payment"
+      );
+      const payeeSectionList = currentSectionList.filter(
+        (section) => section.section_name === "Payee"
+      );
+      const combinedPayeeSectionList = payeeSectionList.flatMap(
+        (section) => section.section_field
+      );
+      const equipmentCodeFieldExists = combinedPayeeSectionList.some(
+        (field) => field.field_name === "Equipment Code"
+      );
+
+      if (isPED && !equipmentCodeFieldExists) {
+        const equipmentCodeField = initialFormSectionList[1].section_field.find(
+          (field) => field.field_name === "Equipment Code"
+        );
+        if (!equipmentCodeField) return;
+        const payeeSectionListWithEquipmentCode = payeeSectionList.map(
+          (section) => ({
+            ...section,
+            section_field:
+              section.section_field[2].field_response === "Materials"
+                ? [
+                    ...section.section_field,
+                    {
+                      ...equipmentCodeField,
+                      field_option: equipmentCodeOptionList,
+                      field_section_duplicatable_id:
+                        section.section_field[0].field_section_duplicatable_id,
+                    },
+                  ]
+                : section.section_field,
+          })
+        );
+
+        currentSectionList = [
+          currentSectionList[0],
+          ...payeeSectionListWithEquipmentCode,
+        ];
+      } else if (!isPED && equipmentCodeFieldExists) {
+        const payeeSectionListWithoutEquipmentCode = payeeSectionList.map(
+          (section) => ({
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => field.field_name !== "Equipment Code"
+            ),
+          })
+        );
+        currentSectionList = [
+          currentSectionList[0],
+          ...payeeSectionListWithoutEquipmentCode,
+        ];
+      }
+
+      if (paymentSection) {
+        currentSectionList = [...currentSectionList, paymentSection];
+      }
+
+      replaceSection(currentSectionList);
     } catch (e) {
       setValue(`sections.0.section_field.0.field_response`, "");
+      setValue(`sections.0.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -214,57 +284,6 @@ const CreateLiquidationReimbursementRequestPage = ({
     } finally {
       setIsFetchingSigner(false);
     }
-  };
-
-  const handleAddOrRemoveRIRField = (value: string | null) => {
-    // remove RIR field in Payee sections if value is not liquidation
-    let currentSectionList = getValues(`sections`);
-    const paymentSection = currentSectionList.find(
-      (section) => section.section_name === "Payment"
-    );
-    const payeeSections = currentSectionList.filter(
-      (section) => section.section_name === "Payee"
-    );
-    const combinedPayeeSectionFields = payeeSections.flatMap(
-      (section) => section.section_field
-    );
-    const rirFieldExists = combinedPayeeSectionFields.some(
-      (field) => field.field_name === "RIR Number"
-    );
-    if (!value?.toLowerCase().includes("liquidation") && rirFieldExists) {
-      const payeeSectionWithoutRIRField = payeeSections.map((section) => ({
-        ...section,
-        section_field: section.section_field.filter(
-          (field) => field.field_name !== "RIR Number"
-        ),
-      }));
-
-      currentSectionList = [
-        currentSectionList[0],
-        ...payeeSectionWithoutRIRField,
-      ];
-    } else if (
-      value?.toLowerCase().includes("liquidation") &&
-      !rirFieldExists
-    ) {
-      // add RIR field in Payee sections if value is liquidation
-      const rirField = initialFormSectionList[1].section_field[8];
-      const payeeSectionWithRIRField = payeeSections.map((section) => ({
-        ...section,
-        section_field:
-          section.section_field[2].field_response === "Materials"
-            ? [...section.section_field, rirField]
-            : section.section_field,
-      }));
-      currentSectionList = [currentSectionList[0], ...payeeSectionWithRIRField];
-      replaceSection([formSections[0], ...payeeSectionWithRIRField]);
-    }
-
-    if (paymentSection) {
-      currentSectionList = [...currentSectionList, paymentSection];
-    }
-
-    replaceSection(currentSectionList);
   };
 
   const handleAddOrRemovePaymentSection = (value: string | null) => {
@@ -379,7 +398,6 @@ const CreateLiquidationReimbursementRequestPage = ({
 
   const handleRequestTypeChange = async (value: string | null) => {
     try {
-      handleAddOrRemoveRIRField(value);
       handleAddOrRemoveRequestDetailsConditionalField(value);
       handleAddOrRemovePaymentSection(value);
     } catch (e) {
@@ -676,15 +694,12 @@ const CreateLiquidationReimbursementRequestPage = ({
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
       } else if (value === "Materials") {
-        const requestTypeValue = getValues(`sections`)[0].section_field[4]
-          .field_response as string;
-        const isLiquidation = requestTypeValue.includes("Liquidation");
         const rirNumberDoesNotExistInSection =
           !currentPayeeSectionFieldList.some(
             (field) => field.field_name === "RIR Number"
           );
         // add rir number if true
-        if (isLiquidation && rirNumberDoesNotExistInSection) {
+        if (rirNumberDoesNotExistInSection) {
           addField(8);
         }
 
@@ -918,7 +933,8 @@ const CreateLiquidationReimbursementRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     liquidationReimbursementFormMethods={{
-                      onProjectNameChange: handleProjectNameChange,
+                      onProjectOrDepartmentNameChange:
+                        handleProjectOrDepartmentNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
                       onTypeOfRequestChange: handleTypeOfRequestChange,
                       onPayeeVatBooleanChange: handlePayeeVatBooleanChange,

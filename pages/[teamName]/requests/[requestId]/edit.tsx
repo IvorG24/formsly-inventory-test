@@ -2,7 +2,7 @@ import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditBillOfQuantityRequestPage from "@/components/EditBillOfQuantityRequestPage/EditBillOfQuantityRequestPage";
 import EditITAssetRequestPage from "@/components/EditITAssetRequestPage/EditITAssetRequestPage";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
-import EditLiquidReimbursementRequestPage from "@/components/EditLiquidReimbursementRequestPage/EditLiquidReimbursementRequestPage";
+import EditLiquidReimbursementRequestPage from "@/components/EditLiquidationReimbursementRequestPage/EditLiquidationReimbursementRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";

@@ -1,8 +1,10 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getExistingConnectedRequest,
+  getFieldResponseByRequestId,
   getJiraAutomationDataByProjectId,
   getRequestComment,
+  getRequestIdFromFormslyId,
   getSectionInRequestPage,
 } from "@/backend/api/get";
 import { insertError } from "@/backend/api/post";
@@ -154,11 +156,14 @@ const LiquidationReimbursementRequestPage = ({
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
   const requestProjectName = request.request_project.team_project_name;
-  const isBOQNotRequired = costCodeExemptionList.some((exemption) =>
-    requestProjectName.toLowerCase().includes(exemption.toLowerCase())
-  );
+  const isPED = selectedDepartment === "Plants and Equipment";
+  const isBOQNotRequired =
+    costCodeExemptionList.some((exemption) =>
+      requestProjectName.toLowerCase().includes(exemption.toLowerCase())
+    ) || isPED;
 
   const [canCreateBOQ, setCanCreateBOQ] = useState(false);
+  const [isTicketACSM, setIsTicketACSM] = useState(false);
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -407,7 +412,11 @@ const LiquidationReimbursementRequestPage = ({
         throw new Error("Error fetching Jira project data.");
       }
 
-      const isPED = selectedDepartment === "Plants and Equipment";
+      let isPED = selectedDepartment === "Plants and Equipment";
+
+      if (isTicketACSM) {
+        isPED = false;
+      }
 
       const response = await fetch(
         `/api/jira/get-form?serviceDeskId=${isPED ? "27" : "23"}&requestType=${
@@ -706,6 +715,47 @@ const LiquidationReimbursementRequestPage = ({
       fetchJiraTicketStatus(requestJira.id);
     }
   }, [requestJira.id]);
+
+  useEffect(() => {
+    const ticketIdField =
+      request.request_form.form_section[0].section_field.find(
+        (field) => field.field_name === "Ticket ID"
+      );
+    if (!ticketIdField?.field_response[0]) return;
+
+    const ticketIdFieldResponse = safeParse(
+      ticketIdField.field_response[0].request_response
+    );
+    const isTicketPCV = ticketIdFieldResponse.includes("PCV-");
+
+    const checkIfPCVIsChargeToProject = async () => {
+      const ticketUUID = await getRequestIdFromFormslyId(supabaseClient, {
+        formslyId: ticketIdFieldResponse,
+        requestFormId: "1d6a4651-6ebd-4d57-9abe-61ae95b5a346",
+      });
+
+      if (!ticketUUID) return;
+
+      const chargeToProjectFieldResponse = await getFieldResponseByRequestId(
+        supabaseClient,
+        {
+          requestId: ticketUUID,
+          fieldId: "9cde1e79-646d-4a9f-9e76-3a6494bff6e2",
+        }
+      );
+      if (!chargeToProjectFieldResponse[0]) return;
+
+      const parsedChargeToProjectFieldResponse = safeParse(
+        chargeToProjectFieldResponse[0].request_response
+      );
+
+      setIsTicketACSM(parsedChargeToProjectFieldResponse);
+    };
+
+    if (isTicketPCV) {
+      checkIfPCVIsChargeToProject();
+    }
+  }, []);
 
   return (
     <Container>

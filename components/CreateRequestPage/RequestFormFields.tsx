@@ -149,7 +149,7 @@ type RequestFormFieldsProps = {
     ) => void;
   };
   liquidationReimbursementFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+    onProjectOrDepartmentNameChange: () => void;
     onRequestTypeChange: (value: string | null) => void;
     onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
     onPayeeVatBooleanChange: (
@@ -957,9 +957,7 @@ const RequestFormFields = ({
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
-                      liquidationReimbursementFormMethods?.onProjectNameChange(
-                        value
-                      );
+                      liquidationReimbursementFormMethods?.onProjectOrDepartmentNameChange();
                       pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       equipmentServiceReportMethods?.onProjectNameChange(value);
                       requestForPaymentFormMethods?.onProjectNameChange(value);
@@ -1065,6 +1063,7 @@ const RequestFormFields = ({
                         prevValue as string | null
                       );
                       pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
+                      liquidationReimbursementFormMethods?.onProjectOrDepartmentNameChange();
                       break;
                     case "Type of Transfer":
                       personnelTransferRequisitionMethods?.onTypeOfTransferChange(

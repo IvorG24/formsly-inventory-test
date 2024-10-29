@@ -107,6 +107,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const costCodeSection = request.request_form.form_section[2];
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable;
@@ -383,7 +384,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       });
 
       const jiraTicket = await createJiraTicket({
-        requestType: "Working Advance Voucher",
+        requestType: "Petty Cash Voucher",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
@@ -457,7 +458,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
   useEffect(() => {
     try {
-      const costCodeSection = request.request_form.form_section[2];
       if (costCodeSection.section_field[0].field_response.length > 0) {
         const isValidBoqCode =
           safeParse(
@@ -471,13 +471,12 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         const updatedCostCodeSection = generateSectionWithDuplicateList([
           costCodeSection,
         ])[0];
-        setSectionWithDuplicateList([
+
+        const updatedFormSection = [
           ...sectionWithDuplicateList,
           updatedCostCodeSection,
-        ]);
-        setCanCostEngineerTakeAction(
-          isUserCostEngineer && requestStatus === "PENDING"
-        );
+        ];
+        setSectionWithDuplicateList(updatedFormSection);
       } else {
         setSectionWithDuplicateList((prev) =>
           prev.filter((section) => section.section_name !== "Cost Code")
@@ -500,7 +499,15 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isUserCostEngineer, requestStatus]);
+  }, []);
+
+  useEffect(() => {
+    if (costCodeSection.section_field[0].field_response.length > 0) {
+      setCanCostEngineerTakeAction(
+        isUserCostEngineer && requestStatus === "PENDING"
+      );
+    }
+  }, [requestStatus, isUserCostEngineer]);
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {

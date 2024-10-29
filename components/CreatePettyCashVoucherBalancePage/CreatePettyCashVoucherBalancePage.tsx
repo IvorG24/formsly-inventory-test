@@ -256,74 +256,41 @@ const CreatePettyCashVoucherBalancePage = ({
           },
         ];
 
-        const requestingProjectId = "a1fdfcbb-5a2f-4b9d-8c6a-8c45e64e1d3b";
-        const requestingDepartmentFieldId =
-          "694465de-8aa9-4361-be52-f8c091c13fde";
         const chargeToBooleanFieldId = "9cde1e79-646d-4a9f-9e76-3a6494bff6e2";
 
         const fieldResponseList = await getRequestFieldResponse(
           supabaseClient,
           {
             requestId: connectedRequest.request_id,
-            fieldId: [
-              requestingProjectId,
-              requestingDepartmentFieldId,
-              chargeToBooleanFieldId,
-            ],
+            fieldId: [chargeToBooleanFieldId],
           }
         );
 
-        const requestingProjectField = fieldResponseList.find(
-          (field) => field.request_response_field_id === requestingProjectId
-        );
-        const requestingProjectName = safeParse(
-          requestingProjectField ? requestingProjectField.request_response : ""
-        );
-        const isProjectExempted = checkIfProjectIsExempted(
-          requestingProjectName
-        );
-
-        const departmentField = fieldResponseList.find(
-          (field) =>
-            field.request_response_field_id === requestingDepartmentFieldId
-        );
-        const isPED =
-          safeParse(departmentField ? departmentField.request_response : "") ===
-          "Plants and Equipment";
-
-        const isChargeToProjectField = fieldResponseList.find(
-          (field) => field.request_response_field_id === chargeToBooleanFieldId
-        );
+        const isChargeToProjectField = fieldResponseList[0];
         const isChargeToProject = safeParse(
           isChargeToProjectField ? isChargeToProjectField.request_response : ""
         );
 
-        let addCostCode = false;
+        // if charged to project, require cost code
+        if (isChargeToProject) {
+          const chargeToProjectField = await getRequestFieldResponse(
+            supabaseClient,
+            {
+              requestId: connectedRequest.request_id,
+              fieldId: ["2bac0084-53f4-419f-aba7-fb1f77403e00"],
+            }
+          );
+          const chargeToProjectName = safeParse(
+            chargeToProjectField[0]
+              ? chargeToProjectField[0].request_response
+              : ""
+          );
+          const isChargeToProjectExempted =
+            checkIfProjectIsExempted(chargeToProjectName);
 
-        if (isPED) {
-          // if project is not exempted, add cost code
-          addCostCode = !isProjectExempted;
+          setRequireCostEngineer(!isChargeToProjectExempted);
 
-          // if charge to project, check if requires cost code
-          if (isChargeToProject) {
-            const chargeToProjectField = await getRequestFieldResponse(
-              supabaseClient,
-              {
-                requestId: connectedRequest.request_id,
-                fieldId: ["2bac0084-53f4-419f-aba7-fb1f77403e00"],
-              }
-            );
-            const chargeToProjectName = safeParse(
-              chargeToProjectField[0]
-                ? chargeToProjectField[0].request_response
-                : ""
-            );
-            const isChargeToProjectExempted =
-              checkIfProjectIsExempted(chargeToProjectName);
-            addCostCode = !isChargeToProjectExempted;
-          }
-
-          if (addCostCode) {
+          if (!isChargeToProjectExempted) {
             formSectionList.push({
               ...form.form_section[2],
               section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
@@ -339,7 +306,6 @@ const CreatePettyCashVoucherBalancePage = ({
         }
 
         replaceSection(formSectionList);
-        setRequireCostEngineer(addCostCode);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

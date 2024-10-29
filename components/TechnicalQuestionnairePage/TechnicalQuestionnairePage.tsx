@@ -126,7 +126,8 @@ const TechnicalQuestionnairePage = () => {
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         page: page,
         search: search,
-        isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
+        isAscendingSort: isAscendingSort,
         creator: creator ? creator : "",
       };
 

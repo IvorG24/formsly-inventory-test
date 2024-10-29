@@ -137,7 +137,7 @@ const TechnicalQuestionnaireTable = ({
           },
         },
         {
-          accessor: "questionnaire_name",
+          accessor: "q.questionnaire_name",
           title: "Questionnaire Name",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
@@ -160,7 +160,7 @@ const TechnicalQuestionnaireTable = ({
           ),
         },
         {
-          accessor: "questionnaire_date_created",
+          accessor: "q.questionnaire_date_created",
           title: "Date Created",
           hidden: checkIfColumnIsHidden("questionnaire_date_created"),
           sortable: true,
@@ -171,7 +171,7 @@ const TechnicalQuestionnaireTable = ({
           ),
         },
         {
-          accessor: "questionnaire_created_by",
+          accessor: "u.user_first_name",
           title: "Created By",
           sortable: true,
           hidden: checkIfColumnIsHidden("questionnaire_created_by"),
@@ -208,7 +208,7 @@ const TechnicalQuestionnaireTable = ({
           },
         },
         {
-          accessor: "questionnaire_date_updated",
+          accessor: "q.questionnaire_date_updated",
           title: "Date Updated",
           hidden: checkIfColumnIsHidden("questionnaire_date_updated"),
           sortable: true,
@@ -221,7 +221,7 @@ const TechnicalQuestionnaireTable = ({
           },
         },
         {
-          accessor: "questionnaire_updated_by",
+          accessor: "u2.user_first_name",
           title: "Updated By",
           sortable: true,
           hidden: checkIfColumnIsHidden("questionnaire_updated_by"),
