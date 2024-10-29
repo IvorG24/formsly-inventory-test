@@ -69,7 +69,11 @@ const EventPanel = ({
                         : typeof value === "string" &&
                             key.toLowerCase().includes("date")
                           ? formatDate(new Date(value))
-                          : value || "N/A"}
+                          : typeof value === "boolean"
+                            ? value
+                              ? "Yes"
+                              : "No"
+                            : value || "N/A"}
                     </Text>
                   </Group>
                 </Grid.Col>

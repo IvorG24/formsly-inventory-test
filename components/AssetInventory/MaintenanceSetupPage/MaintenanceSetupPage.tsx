@@ -1,4 +1,5 @@
 import { getCustomFieldData, getCustomFieldDetails } from "@/backend/api/get";
+import { updateRequiredField } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   CategoryTableRow,
@@ -51,6 +52,7 @@ const MaintenanceSetupPage = ({
   const canDeleteData = securityGroup.privileges.customField.delete === true;
   const canEditData = securityGroup.privileges.customField.edit === true;
   const sectionId = "5650b808-c68d-49fd-ad89-eff305d037d3";
+
   useEffect(() => {
     const fetchCustomCategory = async () => {
       try {
@@ -103,13 +105,19 @@ const MaintenanceSetupPage = ({
       });
     }
   };
+
   const handleDelete = async (fieldId: string) => {
     setFieldId(fieldId);
     setModalOpened(true);
   };
 
-  const handleRequiredChange = (fieldId: string, isChecked: boolean) => {
+  const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
     try {
+      await updateRequiredField(supabaseClient, {
+        fieldId: fieldId,
+        isRequired: isChecked,
+      });
+
       setDefaultField((prevFields) =>
         prevFields.map((field) =>
           field.field_id === fieldId
@@ -117,7 +125,12 @@ const MaintenanceSetupPage = ({
             : field
         )
       );
-    } catch (e) {}
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   return (
@@ -136,7 +149,7 @@ const MaintenanceSetupPage = ({
         <Group position="apart" align="end">
           <Stack>
             <Title variant="dimmed" order={3}>
-              Customer Setup Page
+              Maintenance Setup Page
             </Title>
             <Text size="sm">List of default and custom fields</Text>
           </Stack>
@@ -153,7 +166,7 @@ const MaintenanceSetupPage = ({
               minHeight: "300px",
             }}
             withBorder
-            idAccessor="id"
+            idAccessor="field_id"
             page={activePage}
             totalRecords={defaultField.length}
             recordsPerPage={ROW_PER_PAGE}
@@ -217,7 +230,7 @@ const MaintenanceSetupPage = ({
                 minHeight: "300px",
               }}
               withBorder
-              idAccessor="id"
+              idAccessor="field_id"
               page={activePage}
               totalRecords={totalFields}
               recordsPerPage={ROW_PER_PAGE}

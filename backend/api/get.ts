@@ -63,6 +63,7 @@ import {
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   InventoryCustomerList,
+  InventoryCustomerRow,
   InventoryDynamicRow,
   InventoryEmployeeList,
   InventoryFieldRow,
@@ -7712,6 +7713,22 @@ export const getCategoryOptions = async (
   return { data: data as CategoryTableRow[], totalCount: count ?? 0 };
 };
 
+export const getCustomerOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("customer_table")
+    .select("*")
+    .eq("customer_team_id", teamId);
+
+  if (error) throw error;
+
+  return data as unknown as InventoryCustomerRow[];
+};
+
 export const getSubCategoryList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { page: number; limit: number; search?: string }
@@ -7913,6 +7930,7 @@ export const getAssetSpreadsheetView = async (
     status?: string;
     assignedToPerson?: string[];
     assignedToSite?: string[];
+    assignedToCustomer?: string[];
     teamId: string;
   }
 ) => {
@@ -7958,11 +7976,16 @@ export const getAssetListFilterOptions = async (
 
   const { data: eventList } = await getEventDetails(supabaseClient, { teamId });
 
+  const customerList = await getCustomerOption(supabaseClient, {
+    teamId,
+  });
+
   return {
     siteList,
     departmentList,
     categoryList,
     eventList,
+    customerList,
   };
 };
 

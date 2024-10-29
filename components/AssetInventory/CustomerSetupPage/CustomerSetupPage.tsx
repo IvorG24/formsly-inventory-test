@@ -1,4 +1,5 @@
 import { getCustomFieldData, getCustomFieldDetails } from "@/backend/api/get";
+import { updateRequiredField } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   CategoryTableRow,
@@ -8,6 +9,7 @@ import {
 } from "@/utils/types";
 import {
   Button,
+  Checkbox,
   Container,
   Group,
   LoadingOverlay,
@@ -45,7 +47,7 @@ const CustomerSetupPage = ({
   const [isLoading, setIsloading] = useState(false);
   const [fieldId, setFieldId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
-
+  const [defaultField, setDefaultField] = useState<InventoryFieldRow[]>(field);
   const canAddData = securityGroup.privileges.customField.add === true;
   const canDeleteData = securityGroup.privileges.customField.delete === true;
   const canEditData = securityGroup.privileges.customField.edit === true;
@@ -102,9 +104,32 @@ const CustomerSetupPage = ({
       });
     }
   };
+
   const handleDelete = async (fieldId: string) => {
     setFieldId(fieldId);
     setModalOpened(true);
+  };
+
+  const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
+    try {
+      await updateRequiredField(supabaseClient, {
+        fieldId: fieldId,
+        isRequired: isChecked,
+      });
+
+      setDefaultField((prevFields) =>
+        prevFields.map((field) =>
+          field.field_id === fieldId
+            ? { ...field, field_is_required: isChecked }
+            : field
+        )
+      );
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
   return (
     <Container>
@@ -139,16 +164,16 @@ const CustomerSetupPage = ({
               minHeight: "300px",
             }}
             withBorder
-            idAccessor="id"
+            idAccessor="field_id"
             page={activePage}
-            totalRecords={field.length}
+            totalRecords={defaultField.length}
             recordsPerPage={ROW_PER_PAGE}
             onPageChange={setActivePage}
-            records={field}
+            records={defaultField}
             columns={[
               {
                 accessor: "label",
-                width: "30%",
+                width: "40%",
                 title: "Field Label",
                 render: (field) => (
                   <Text sx={{ cursor: "pointer" }}>{field.field_name}</Text>
@@ -156,7 +181,7 @@ const CustomerSetupPage = ({
               },
               {
                 accessor: "type",
-                width: "20%",
+                width: "40%",
                 title: "Field Type",
                 render: (field) => <Text>{field.field_type}</Text>,
               },
@@ -165,7 +190,15 @@ const CustomerSetupPage = ({
                 width: "30%",
                 title: "Field Is Required",
                 render: (field) => (
-                  <Text>{String(field.field_is_required ? "Yes" : "No")}</Text>
+                  <Checkbox
+                    checked={field.field_is_required}
+                    label="Required"
+                    value={field.field_is_required ? "true" : "false"}
+                    onChange={(e) => {
+                      const isChecked = e.currentTarget.checked;
+                      handleRequiredChange(field.field_id, isChecked);
+                    }}
+                  />
                 ),
               },
             ]}

@@ -280,7 +280,29 @@ const InventoryFormFields = ({
             rules={{ ...fieldRules }}
           />
         );
-
+      case "CHECKBOX":
+        return (
+          <Controller
+            defaultValue={false}
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Checkbox
+                checked={value as boolean}
+                onChange={(e) => {
+                  const value = e.currentTarget.checked;
+                  onChange(value);
+                }}
+                {...inputProps}
+                mt="xs"
+                sx={{ label: { cursor: "pointer" } }}
+                error={fieldError}
+                disabled={field.field_is_read_only}
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
       case "DROPDOWN":
         const dropdownOption = dropdownOptionValue.map((option) => {
           return {

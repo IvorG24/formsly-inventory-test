@@ -2957,6 +2957,7 @@ export const createCustomFields = async (
     .from("field_table")
     .select("field_order")
     .order("field_order", { ascending: false })
+    .eq("field_section_id", sectionId)
     .limit(1);
 
   if (fieldError) throw new Error();

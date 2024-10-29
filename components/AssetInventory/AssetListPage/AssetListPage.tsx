@@ -9,6 +9,7 @@ import {
 import {
   CategoryTableRow,
   EventTableRow,
+  InventoryCustomerList,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -28,6 +29,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  customerTableList: InventoryCustomerList[];
   userId: string;
   eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
@@ -47,11 +49,13 @@ type FilterSelectedValuesType = {
   isAscendingSort?: boolean;
   assignedToPerson?: string[];
   assignedToSite?: string[];
+  assignedToCustomer?: string[];
 };
 
 const AssetListPage = ({
   userId,
   siteList,
+  customerTableList,
   departmentList,
   categoryList,
   eventList,
@@ -79,6 +83,7 @@ const AssetListPage = ({
         status: "",
         assignedToPerson: [],
         assignedToSite: [],
+        assignedToCustomer: [],
         isAscendingSort: false,
       },
     });
@@ -150,6 +155,7 @@ const AssetListPage = ({
         locations,
         status,
         assignedToSite,
+        assignedToCustomer,
         department,
         sites,
         category,
@@ -164,6 +170,7 @@ const AssetListPage = ({
         status,
         assignedToPerson,
         assignedToSite,
+        assignedToCustomer,
         department:
           securityGroupData.asset.filter.department.length > 0
             ? securityGroupData.asset.filter.department
@@ -228,6 +235,7 @@ const AssetListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              customerList={customerTableList}
               securityGroupData={securityGroupData}
               inventoryList={inventoryList}
               selectedRow={selectedRows}

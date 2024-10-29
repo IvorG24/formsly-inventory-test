@@ -2,6 +2,7 @@ import { useEmployeeList } from "@/stores/useEmployeeStore";
 import {
   CategoryTableRow,
   EventTableRow,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -28,6 +29,7 @@ import EventFormModal from "../EventFormModal";
 type RequestListFilterProps = {
   formList: { label: string; value: string }[];
   siteList: SiteTableRow[];
+  customerList: InventoryCustomerRow[];
   eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
@@ -53,6 +55,7 @@ export type FilterSelectedValuesType = {
   status?: string;
   assignedToPerson?: string[];
   assignedToSite?: string[];
+  assignedToCustomer?: string[];
   isAscendingSort?: boolean;
 };
 
@@ -61,6 +64,7 @@ const AssetListFilter = ({
   inventoryList,
   departmentList,
   siteList,
+  customerList,
   categoryList,
   handleFilterForms,
   localFilter,
@@ -83,6 +87,7 @@ const AssetListFilter = ({
   const employeeList = useEmployeeList();
   const { ref: assignedToRef, focused: assignedToRefFocused } =
     useFocusWithin();
+
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
@@ -102,6 +107,11 @@ const AssetListFilter = ({
   const eventOptions = eventList.map((event) => ({
     label: event.event_status,
     value: event.event_status,
+  }));
+
+  const customerOptions = customerList.map((customer) => ({
+    label: customer.customer_name,
+    value: customer.customer_name,
   }));
   const eventSecurity = securityGroupData.asset.filter.event
     ? securityGroupData.asset.filter.event
@@ -433,6 +443,30 @@ const AssetListFilter = ({
                 }}
                 onDropdownClose={() =>
                   handleFilterChange("assignedToSite", value)
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="assignedToCustomer"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                placeholder="Assigned To Customer"
+                ref={assignedToRef}
+                data={customerOptions}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (assignedToRefFocused)
+                    handleFilterChange("assignedToCustomer", value);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("assignedToCustomer", value)
                 }
                 {...inputFilterProps}
                 sx={{ flex: 1 }}

@@ -1,6 +1,7 @@
 import { createCustomEvent } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { createEventFormvalues } from "@/utils/types";
 import {
   Button,
@@ -21,17 +22,20 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 const EventCreatePage = () => {
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
   const teamMember = useUserTeamMember();
   const [isLoading, setIsLoading] = useState(false);
   const {
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<createEventFormvalues>({
     defaultValues: {
@@ -171,6 +175,9 @@ const EventCreatePage = () => {
         message: "Event created successfully",
         color: "green",
       });
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events`
+      );
       setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
@@ -187,9 +194,9 @@ const EventCreatePage = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack>
           <Title order={3}>Create custom event</Title>
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <Stack>
-              <Title order={3}>Event Name</Title>
+              <Title order={3}>Event Details</Title>
               <Controller
                 name="event.eventName"
                 control={control}
@@ -273,7 +280,7 @@ const EventCreatePage = () => {
             </Stack>
           </Paper>
 
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <ScrollArea style={{ width: "100%" }} mx="auto">
               <Table striped highlightOnHover miw={1000}>
                 <thead>
@@ -366,16 +373,25 @@ const EventCreatePage = () => {
                         <Controller
                           name={`fields.${index}.field_is_required`}
                           control={control}
-                          render={({ field: requiredField }) => (
-                            <Checkbox
-                              label="Required"
-                              {...requiredField}
-                              value={
-                                field?.field_is_required ? "true" : "false"
-                              }
-                              disabled={field?.field_name === "Signature"}
-                            />
-                          )}
+                          render={({ field: requiredField }) => {
+                            const fieldIncluded = watch(
+                              `fields.${index}.field_is_included`
+                            );
+
+                            return (
+                              <Checkbox
+                                label="Required"
+                                {...requiredField}
+                                value={
+                                  field?.field_is_required ? "true" : "false"
+                                }
+                                disabled={
+                                  !fieldIncluded ||
+                                  field?.field_name === "Signature"
+                                }
+                              />
+                            );
+                          }}
                         />
                       </td>
                     </tr>
@@ -385,7 +401,7 @@ const EventCreatePage = () => {
             </ScrollArea>
           </Paper>
 
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <Stack>
               <Title order={3}>
                 Assign Assets to Persons, Locations or Customers

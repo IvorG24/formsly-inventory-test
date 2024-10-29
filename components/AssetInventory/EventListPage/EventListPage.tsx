@@ -116,7 +116,7 @@ const EventsListPage = () => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="center">
             <TextInput
-              placeholder="Search by site name"
+              placeholder="Search by event name"
               {...register("search")}
               rightSection={
                 <ActionIcon size="xs" type="submit">
@@ -184,7 +184,7 @@ const EventsListPage = () => {
             {
               accessor: "event_is_disabled",
               width: "15%",
-              title: "Is Disabled ?",
+              title: "Disabled",
               render: (event) => (
                 <Text>{event.event_is_disabled ? "Yes" : " "}</Text> // Show "False" if event_is_disabled is false
               ),
@@ -192,7 +192,7 @@ const EventsListPage = () => {
             {
               accessor: "event_is_custom",
               width: "15%",
-              title: "Is Custom Event ?",
+              title: "Custom Event",
               render: (event) => (
                 <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
               ),

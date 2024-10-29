@@ -1778,6 +1778,12 @@ export const updateEvent = async (
         if (field.field_type === "FILE" && fieldResponse instanceof File) {
           responseValue = signatureUrl || "";
         }
+        if (
+          field.field_type === "CHECKBOX" &&
+          fieldResponse instanceof Boolean
+        ) {
+          responseValue = fieldResponse ? "true" : "false";
+        }
 
         fieldResponsesArray.push({
           name: fieldName,
@@ -1907,6 +1913,27 @@ export const updateCustomEvent = async (
   const { data, error } = await supabaseClient.rpc("edit_custom_event", {
     input_data: params,
   });
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const updateRequiredField = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldId: string;
+    isRequired: boolean;
+  }
+) => {
+  const { fieldId, isRequired } = params;
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("field_table")
+    .update({
+      field_is_required: isRequired,
+    })
+    .eq("field_id", fieldId);
 
   if (error) throw error;
 

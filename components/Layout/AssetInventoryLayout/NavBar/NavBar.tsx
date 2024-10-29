@@ -291,8 +291,12 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
               {link.subLinks?.map((subLink) => {
                 if (subLink && "id" in subLink && subLink.id === "databases") {
                   return (
-                    <Box key={subLink.id} h="fit-content">
-                      <Menu withinPortal position="right-start">
+                    <Box key={subLink.id}>
+                      <Menu
+                        position={
+                          isSmallScreen ? "bottom-start" : "right-start"
+                        }
+                      >
                         <Menu.Target>
                           <Button
                             variant="subtle"
@@ -309,7 +313,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                                     : theme.colors.blue[7],
                               },
                               inner: {
-                                justifyContent: "flex-start", // Align text and icon to the left
+                                justifyContent: "flex-start",
                               },
                             })}
                           >

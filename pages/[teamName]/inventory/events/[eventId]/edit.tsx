@@ -1,5 +1,5 @@
 // Imports
-import { getEventFormDetails } from "@/backend/api/get";
+import { checkIfOwnerOrAdmin, getEventFormDetails } from "@/backend/api/get";
 import EventEditPage from "@/components/AssetInventory/EventListPage/EventEditPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -7,12 +7,30 @@ import { createEventFormvalues, SecurityGroupData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ securityGroupData, supabaseClient, context }) => {
+  async ({
+    securityGroupData,
+    supabaseClient,
+    context,
+    user,
+    userActiveTeam,
+  }) => {
     try {
       const eventFormDefaultValues = await getEventFormDetails(supabaseClient, {
         eventId: context.query.eventId as string,
       });
+      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
+      });
 
+      if (!isOwnerOrAdmin) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
           securityGroupData,

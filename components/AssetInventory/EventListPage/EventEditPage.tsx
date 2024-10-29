@@ -1,6 +1,7 @@
 import { updateCustomEvent } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { createEventFormvalues, eventFormField } from "@/utils/types";
 import {
   Button,
@@ -37,6 +38,7 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
   const {
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<createEventFormvalues>({
     defaultValues: eventFormDefaultValues,
@@ -125,7 +127,9 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
         message: "Event updated successfully",
         color: "green",
       });
-
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events`
+      );
       setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
@@ -141,9 +145,9 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
       <LoadingOverlay visible={isLoading} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack>
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <Stack>
-              <Title order={3}>Event Name</Title>
+              <Title order={3}>Event Details</Title>
               <Controller
                 name="event.eventName"
                 control={control}
@@ -227,7 +231,7 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
             </Stack>
           </Paper>
 
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <ScrollArea style={{ width: "100%" }} mx="auto">
               <Table striped highlightOnHover miw={1000}>
                 <thead>
@@ -314,17 +318,26 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                         <Controller
                           name={`fields.${index}.field_is_required`}
                           control={control}
-                          render={({ field: requiredField }) => (
-                            <Checkbox
-                              label="Required"
-                              {...requiredField}
-                              value={
-                                field?.field_is_required ? "true" : "false"
-                              }
-                              defaultChecked={field?.field_is_required}
-                              disabled={field?.field_name === "Signature"}
-                            />
-                          )}
+                          render={({ field: requiredField }) => {
+                            const fieldIncluded = watch(
+                              `fields.${index}.field_is_included`
+                            );
+
+                            return (
+                              <Checkbox
+                                label="Required"
+                                {...requiredField}
+                                value={
+                                  field?.field_is_required ? "true" : "false"
+                                }
+                                defaultChecked={field?.field_is_required}
+                                disabled={
+                                  !fieldIncluded ||
+                                  field?.field_name === "Signature"
+                                }
+                              />
+                            );
+                          }}
                         />
                       </td>
                     </tr>
@@ -334,7 +347,7 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
             </ScrollArea>
           </Paper>
 
-          <Paper p="md">
+          <Paper withBorder shadow="sm" p="md">
             <Stack>
               <Title order={3}>
                 Assign Assets to Persons, Locations or Customers

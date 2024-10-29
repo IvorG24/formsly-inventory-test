@@ -7,6 +7,7 @@ import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
   EventTableRow,
+  InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -56,6 +57,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 type Props = {
   userId: string;
   siteList: SiteTableRow[];
+  customerList: InventoryCustomerRow[];
   departmentList: Department[];
   eventList: EventTableRow[];
   categoryList: CategoryTableRow[];
@@ -69,6 +71,7 @@ type Props = {
 const Page = ({
   userId,
   siteList,
+  customerList,
   departmentList,
   categoryList,
   eventList,
@@ -79,6 +82,7 @@ const Page = ({
     <>
       <Meta description="Asset List Page" url="/teamName/inventory" />
       <AssetListPage
+        customerTableList={customerList}
         eventList={eventList}
         securityGroupData={securityGroupData}
         siteList={siteList}

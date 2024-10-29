@@ -9,6 +9,7 @@ import {
 import {
   CategoryTableRow,
   EventTableRow,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -30,6 +31,7 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroup: SecurityGroupData;
+  customerList: InventoryCustomerRow[];
   eventList: EventTableRow[];
   tableColumnList: {
     label: string;
@@ -54,6 +56,7 @@ const DynamicListPage = ({
   userId,
   siteList,
   eventList,
+  customerList,
   departmentList,
   tableColumnList,
   categoryList,
@@ -229,6 +232,7 @@ const DynamicListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <AssetListFilter
+              customerList={customerList}
               securityGroupData={securityGroup}
               inventoryList={inventoryList}
               type={"dynamic page"}

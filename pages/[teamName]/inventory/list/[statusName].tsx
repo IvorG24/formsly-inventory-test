@@ -7,6 +7,7 @@ import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
   EventTableRow,
+  InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -57,6 +58,7 @@ type Props = {
   userId: string;
   siteList: SiteTableRow[];
   departmentList: Department[];
+  customerList: InventoryCustomerRow[];
   categoryList: CategoryTableRow[];
   eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
@@ -70,6 +72,7 @@ const Page = ({
   userId,
   siteList,
   departmentList,
+  customerList,
   categoryList,
   fields,
   eventList,
@@ -82,6 +85,7 @@ const Page = ({
         url="/teamName/inventory/list/[statusName]"
       />
       <DynamicListPage
+        customerList={customerList}
         eventList={eventList}
         securityGroup={securityGroupData}
         siteList={siteList}

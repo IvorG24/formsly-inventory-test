@@ -1,4 +1,5 @@
 import { getCustomFieldData, getCustomFieldDetails } from "@/backend/api/get";
+import { updateRequiredField } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   CategoryTableRow,
@@ -108,8 +109,13 @@ const WarrantySetupPage = ({
     setModalOpened(true);
   };
 
-  const handleRequiredChange = (fieldId: string, isChecked: boolean) => {
+  const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
     try {
+      await updateRequiredField(supabaseClient, {
+        fieldId: fieldId,
+        isRequired: isChecked,
+      });
+
       setDefaultField((prevFields) =>
         prevFields.map((field) =>
           field.field_id === fieldId
@@ -117,7 +123,12 @@ const WarrantySetupPage = ({
             : field
         )
       );
-    } catch (e) {}
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
   };
 
   return (
@@ -136,7 +147,7 @@ const WarrantySetupPage = ({
         <Group position="apart" align="end">
           <Stack>
             <Title variant="dimmed" order={3}>
-              Customer Setup Page
+              Warranty Setup Page
             </Title>
             <Text size="sm">List of default and custom fields</Text>
           </Stack>
@@ -153,7 +164,7 @@ const WarrantySetupPage = ({
               minHeight: "300px",
             }}
             withBorder
-            idAccessor="id"
+            idAccessor="field_id"
             page={activePage}
             totalRecords={defaultField.length}
             recordsPerPage={ROW_PER_PAGE}
@@ -217,7 +228,7 @@ const WarrantySetupPage = ({
                 minHeight: "300px",
               }}
               withBorder
-              idAccessor="id"
+              idAccessor="field_id"
               page={activePage}
               totalRecords={totalFields}
               recordsPerPage={ROW_PER_PAGE}
