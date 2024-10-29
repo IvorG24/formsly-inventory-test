@@ -103,9 +103,11 @@ const AssetListTable = ({
         column.value !== "inventory_request_tag_id"
     )
     .map((column) => ({
-      accessor: column.value,
+      accessor: `r.${column.value}`,
       title: column.label,
-      sortable: true,
+      sortable:
+        column.value.startsWith("inventory_request") &&
+        column.value !== "inventory_request_notes",
       width: 180,
       render: (record: Record<string, unknown>) => {
         const value =
@@ -175,9 +177,10 @@ const AssetListTable = ({
           },
         },
         {
-          accessor: "inventory_request_tag_id",
+          accessor: "r.inventory_request_tag_id",
           title: "Asset Tag ID",
           width: 180,
+          sortable: true,
           hidden: checkIfColumnIsHidden("inventory_request_tag_id"),
           render: ({ inventory_request_tag_id }) => {
             return (
@@ -218,9 +221,10 @@ const AssetListTable = ({
           },
         },
         {
-          accessor: "inventory_request_status",
+          accessor: "r.inventory_request_status",
           title: "Status",
           width: 180,
+          sortable: true,
           hidden: checkIfColumnIsHidden("inventory_request_status"),
           render: ({
             inventory_request_status,
@@ -239,16 +243,17 @@ const AssetListTable = ({
           },
         },
         {
-          accessor: "inventory_request_name",
+          accessor: "r.inventory_request_name",
           title: "Asset",
           width: 180,
+          sortable: true,
           hidden: checkIfColumnIsHidden("inventory_request_name"),
           render: ({ inventory_request_name }) => {
             return <Text>{String(inventory_request_name)}</Text>;
           },
         },
         {
-          accessor: "assignee_first_name",
+          accessor: "inventory_request_id",
           title: "Assigned To",
           sortable: true,
           width: 180,
@@ -290,7 +295,7 @@ const AssetListTable = ({
         },
         ...dynamicColumns,
         {
-          accessor: "request_creator_user_id",
+          accessor: "u.user_first_name",
           title: "Created By",
           sortable: true,
           width: 200,

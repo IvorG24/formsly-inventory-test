@@ -7922,6 +7922,7 @@ export const getAssetSpreadsheetView = async (
     limit?: number;
     page?: number;
     sort?: boolean;
+    columnAccessor?: string;
     search?: string;
     sites?: string[];
     locations?: string;

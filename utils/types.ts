@@ -643,7 +643,8 @@ export type AttachmentBucketType =
   | "TEAM_PROJECT_ATTACHMENTS"
   | "TICKET_ATTACHMENTS"
   | "JOB_OFFER_ATTACHMENTS"
-  | "SSS_ID_ATTACHMENTS";
+  | "SSS_ID_ATTACHMENTS"
+  | "ASSET_IMAGE_ATTACHMENT";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =

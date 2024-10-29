@@ -105,7 +105,7 @@ const AssetListPage = ({
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "request_date_created",
+    columnAccessor: "inventory_request_created",
     direction: "desc",
   });
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
@@ -166,6 +166,7 @@ const AssetListPage = ({
         page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
         search,
         status,
         assignedToPerson,

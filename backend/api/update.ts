@@ -1959,3 +1959,24 @@ export const updateDisableField = async (
 
   return data;
 };
+
+export const updateAssetImage = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    url: string;
+    tagId: number;
+  }
+) => {
+  const { url, tagId } = params;
+  const { data, error } = await supabaseClient
+    .schema("inventory_request_schema")
+    .from("inventory_request_table")
+    .update({
+      inventory_request_image_url: url,
+    })
+    .eq("inventory_request_tag_id", tagId);
+
+  if (error) throw error;
+
+  return data;
+};

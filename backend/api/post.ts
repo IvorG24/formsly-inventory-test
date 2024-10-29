@@ -3047,6 +3047,37 @@ export const handleSignatureUpload = async (
   }
 };
 
+export const handleAssetImageUpload = async (
+  supabaseClient: SupabaseClient<Database>,
+  file: File,
+  field: string,
+  userId: string
+) => {
+  const fileType = getFileType(field);
+  const uploadParams = {
+    bucket: "ASSET_IMAGE_ATTACHMENTS" as AttachmentBucketType,
+    fileType,
+    userId,
+  };
+
+  const isImage = file.type.split("/")[0] === "image";
+
+  if (isImage) {
+    const editedFile = await editImageWithUUID(file);
+    const uploadResponse = await uploadImage(supabaseClient, {
+      ...uploadParams,
+      image: editedFile,
+    });
+    return uploadResponse.publicUrl;
+  } else {
+    const uploadResponse = await uploadFile(supabaseClient, {
+      ...uploadParams,
+      file,
+    });
+    return uploadResponse.publicUrl;
+  }
+};
+
 export const createInventoryEmployee = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

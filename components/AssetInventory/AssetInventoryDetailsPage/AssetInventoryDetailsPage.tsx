@@ -78,7 +78,6 @@ const AssetInventoryDetailsPage = ({
   const [eventHistoryData, setEventHistoryData] =
     useState<InventoryDynamicRow[]>();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [image, setImage] = useState(null);
   const [assetHistoryData, setAssetHistoryData] =
     useState<InventoryHistory[]>();
   const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
@@ -288,7 +287,10 @@ const AssetInventoryDetailsPage = ({
             </Group>
 
             <Grid>
-              <ImageUpload />
+              <ImageUpload
+                tagId={assetId}
+                imageUrl={detail.inventory_request_image_url}
+              />
 
               <Grid.Col span={12} xs={6}>
                 <Table striped highlightOnHover withBorder withColumnBorders>
