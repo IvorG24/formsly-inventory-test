@@ -197,7 +197,7 @@ const DepartmentSetupPage = ({ securityGroup }: Props) => {
               width: "90%",
               title: "Department Name",
               render: (department) => (
-                <Text>{department.team_department_name}</Text>
+                <Text fw={600}>{department.team_department_name}</Text>
               ),
             },
           ]}

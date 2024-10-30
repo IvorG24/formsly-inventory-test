@@ -154,7 +154,7 @@ const MaintenanceSetupPage = ({
             <Text size="sm">List of default and custom fields</Text>
           </Stack>
         </Group>
-        <Paper p={20}>
+        <Paper shadow="md" withBorder p={20}>
           <Text weight={500} size="lg" mb="sm">
             Default Fields
           </Text>
@@ -177,9 +177,7 @@ const MaintenanceSetupPage = ({
                 accessor: "label",
                 width: "40%",
                 title: "Field Label",
-                render: (field) => (
-                  <Text sx={{ cursor: "pointer" }}>{field.field_name}</Text>
-                ),
+                render: (field) => <Text fw={600}>{field.field_name}</Text>,
               },
               {
                 accessor: "type",
@@ -207,7 +205,7 @@ const MaintenanceSetupPage = ({
           />
         </Paper>
         {!showCustomForm && (
-          <Paper p={20}>
+          <Paper shadow="md" withBorder p={20}>
             <Group position="apart" align="start" mb="sm">
               <Text weight={500} size="lg">
                 Custom Fields
@@ -241,9 +239,7 @@ const MaintenanceSetupPage = ({
                   accessor: "label",
                   width: "30%",
                   title: "Custom Field Label",
-                  render: (field) => (
-                    <Text sx={{ cursor: "pointer" }}>{field.field_name}</Text>
-                  ),
+                  render: (field) => <Text fw={600}>{field.field_name}</Text>,
                 },
                 {
                   accessor: "type",

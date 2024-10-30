@@ -412,6 +412,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       centered: true,
     });
   };
+  
   return (
     <Container>
       <LoadingOverlay visible={isLoading} />
