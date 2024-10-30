@@ -779,6 +779,7 @@ const RequestFormFields = ({
                       "Cost",
                       "VAT",
                       "Expected Monthly Salary (PHP)",
+                      "Capacity",
                     ].includes(field.field_name)
                       ? 2
                       : 0
