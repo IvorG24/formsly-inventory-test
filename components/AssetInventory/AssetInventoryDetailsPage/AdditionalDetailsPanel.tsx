@@ -1,4 +1,5 @@
-import { formatDate } from "@/utils/constant";
+import { excludedKeys, formatDate } from "@/utils/constant";
+import { formatLabel } from "@/utils/functions";
 import { InventoryListType } from "@/utils/types";
 import { Card, Stack, Table, Text } from "@mantine/core";
 type Props = {
@@ -79,6 +80,34 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
                 <td>{detail.inventory_request_old_asset_number}</td>
               </tr>
             )}
+          </tbody>
+        </Table>
+      </Card>
+
+      <Card withBorder shadow="sm">
+        <Text size="lg" weight={500}>
+          Custom Field
+        </Text>
+        <Table striped highlightOnHover withBorder withColumnBorders>
+          <tbody>
+            {Object.entries(detail)
+              .filter(([key, value]) => !excludedKeys.includes(key) && value)
+              .reduce<JSX.Element[]>((acc, [key, value]) => {
+                if (
+                  !key.startsWith("inventory_request_") &&
+                  !key.startsWith("relationship_type")
+                ) {
+                  acc.push(
+                    <tr key={key}>
+                      <td>
+                        <Text weight={500}>{formatLabel(key)}</Text>
+                      </td>
+                      <td>{value ?? "N/A"}</td>
+                    </tr>
+                  );
+                }
+                return acc;
+              }, [])}
           </tbody>
         </Table>
       </Card>

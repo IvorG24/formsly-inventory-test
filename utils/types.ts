@@ -2736,6 +2736,7 @@ export type SubCategoryData = {
 export type InventoryListType = InventoryRequestRow & {
   site_name?: string;
   customer_name?: string;
+  relationship_type: string;
   inventory_request_status_color: string;
   inventory_request_due_date: string;
   request_creator_team_member_id?: string;

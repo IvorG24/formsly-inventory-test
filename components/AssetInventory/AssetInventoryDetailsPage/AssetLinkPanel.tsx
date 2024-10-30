@@ -30,8 +30,9 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 type Props = {
   fetchHistory: (page: number) => void;
+  relationType: string;
 };
-const AssetLinkPanel = ({ fetchHistory }: Props) => {
+const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
@@ -45,7 +46,11 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
       inventory_request_serial_number: string;
     }[]
   >([]);
-
+  const [parentAsset, setParentAsset] = useState<{
+    parent_asset_id: string;
+    parent_tag_id: string;
+    parent_name: string;
+  }>();
   const [totalCount, setTotalCount] = useState(0);
   const [childAssetOption, setChildAssetOption] = useState<OptionType[]>([]);
   const [linkedAssets, setLinkedAssets] = useState<OptionType[]>([]);
@@ -63,13 +68,17 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
     const fetchChildAsset = async () => {
       try {
         if (!assetId || !activeTeam.team_id) return;
-        const { data, totalCount } = await getChildAssetData(supabaseClient, {
-          assetId: assetId,
-          page: activePage,
-          limit: ROW_PER_PAGE,
-        });
+        const { data, totalCount, parentAsset } = await getChildAssetData(
+          supabaseClient,
+          {
+            assetId: assetId,
+            page: activePage,
+            limit: ROW_PER_PAGE,
+          }
+        );
 
         setChildAsset(data);
+        setParentAsset(parentAsset);
         setTotalCount(totalCount);
         const option = await getChildAssetOptionLinking(supabaseClient, {
           teamId: activeTeam.team_id,
@@ -80,7 +89,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
 
         const optionData = option.map((option) => ({
           value: option.inventory_request_id,
-          label: option.inventory_request_name,
+          label: `${option.inventory_request_tag_id} -- ${option.inventory_request_name}`,
         }));
         setChildAssetOption(optionData);
       } catch (e) {
@@ -159,6 +168,8 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
       });
     }
   };
+
+  const isChild = String(relationType) === "child";
   return (
     <Stack spacing="sm">
       <Modal
@@ -242,7 +253,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
           columns={[
             {
               accessor: "inventory_request_id",
-              title: "Asset Tag Id",
+              title: "Asset Tag ID",
               width: "40%",
               render: (event) => (
                 <Text>
@@ -260,7 +271,7 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
 
             {
               accessor: "inventory_request_serial_number",
-              title: "Serial No",
+              title: "Serial Number",
               width: "30%",
               render: (event) => (
                 <Text>{event.inventory_request_serial_number}</Text>
@@ -276,12 +287,25 @@ const AssetLinkPanel = ({ fetchHistory }: Props) => {
         />
       )}
       <Group position="center">
-        {hasEditOnlyPermission && (
+        {hasEditOnlyPermission && !isChild && (
           <Button fullWidth onClick={() => setOpened(true)}>
             Open Asset Link
           </Button>
         )}
       </Group>
+      {parentAsset && (
+        <Text>
+          The parent asset of this asset is
+          <Anchor
+            href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${parentAsset.parent_tag_id ?? ""}`}
+            target="_blank"
+          >
+            {" "}
+            {String(parentAsset.parent_tag_id ?? "")} -
+            {String(parentAsset.parent_name ?? "")}
+          </Anchor>
+        </Text>
+      )}
     </Stack>
   );
 };

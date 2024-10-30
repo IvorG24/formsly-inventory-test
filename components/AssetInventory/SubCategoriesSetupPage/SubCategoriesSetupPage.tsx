@@ -160,7 +160,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
     try {
       if (!activeTeam.team_id || !canAddData) return;
       const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
-        type: "field",
+        type: "sub_category",
         typeValue: data.sub_category?.trim() || "",
       });
       if (checkIfUniqueValue) {
@@ -170,6 +170,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
         });
         return;
       }
+
       const result = await createDataDrawer(supabaseClient, {
         type: "sub-category",
         InventoryFormValues: data,

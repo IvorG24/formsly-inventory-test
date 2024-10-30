@@ -2721,13 +2721,13 @@ export const createAssetRequest = async (
     for (const field of section.section_field) {
       const responseValue = field.field_response;
 
-      if (field.field_is_sub_category || field.field_is_custom_field) {
+      if (field.field_is_custom_field) {
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
           inventory_response_value: String(responseValue),
           inventory_response_request_id: requestId,
         });
-      } else if (!field.field_is_sub_category || !field.field_is_custom_field) {
+      } else if (!field.field_is_custom_field) {
         const formattedResponse =
           typeof responseValue === "string" || typeof responseValue === "number"
             ? capitalizeFirstWord(String(responseValue))
@@ -2762,6 +2762,7 @@ export const createAssetRequest = async (
   const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
     .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
     .join(", ")})`;
+  console.log(assetResponseValue);
 
   const requestData = {
     responseValues,

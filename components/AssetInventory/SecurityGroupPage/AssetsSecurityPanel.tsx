@@ -104,7 +104,6 @@ const AssetsSecurityPanel = ({
             Set user permission to add / edit / delete / view assets:
           </Text>
 
-     
           <SimpleGrid
             cols={3}
             spacing="md"
@@ -166,7 +165,7 @@ const AssetsSecurityPanel = ({
               <Title order={4} size="h6" mb="sm">
                 Sites
               </Title>
-              <ScrollArea mih={100} mah={400}>
+              <ScrollArea h={400}>
                 <Stack>
                   <Controller
                     name="site"
@@ -222,7 +221,7 @@ const AssetsSecurityPanel = ({
               <Title order={4} size="h6" mb="sm">
                 Departments
               </Title>
-              <ScrollArea mih={100} mah={400}>
+              <ScrollArea h={400}>
                 <Stack>
                   <Controller
                     name="department"
@@ -281,7 +280,7 @@ const AssetsSecurityPanel = ({
               <Title order={4} size="h6" mb="sm">
                 Categories
               </Title>
-              <ScrollArea mih={100} mah={400}>
+              <ScrollArea h={400}>
                 <Stack>
                   <Controller
                     name="category"
@@ -349,7 +348,7 @@ const AssetsSecurityPanel = ({
             breakpoints={[
               { maxWidth: "lg", cols: 3 },
               { maxWidth: "md", cols: 2 },
-              { maxWidth: "sm", cols: 1 }
+              { maxWidth: "sm", cols: 1 },
             ]}
           >
             <Controller

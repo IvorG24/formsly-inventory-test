@@ -1817,7 +1817,7 @@ export const disableDrawerData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     typeId: string;
-    type: "site" | "location" | "field" | "category";
+    type: "site" | "location" | "field" | "category" | "sub_category";
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("disable_drawer_data", {

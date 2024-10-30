@@ -347,20 +347,20 @@ const AssetInventoryDetailsPage = ({
                       </td>
                     </tr>
                     {Object.entries(detail)
-                      .filter(
-                        ([key, value]) => !excludedKeys.includes(key) && value
-                      )
+                      .filter(([key]) => !excludedKeys.includes(key))
                       .reduce<JSX.Element[]>((acc, [key, value]) => {
                         if (
-                          ["inventory_request_category"].includes(key) ||
-                          !key.startsWith("inventory_request_")
+                          [
+                            "inventory_request_category",
+                            "inventory_request_sub_category",
+                          ].includes(key)
                         ) {
                           acc.push(
                             <tr key={key}>
                               <td>
                                 <Text weight={500}>{formatLabel(key)}</Text>
                               </td>
-                              <td>{value ?? "N/A"}</td>
+                              <td>{value ?? ""}</td>
                             </tr>
                           );
                         }
@@ -469,7 +469,7 @@ const AssetInventoryDetailsPage = ({
                 />
               </Tabs.Panel>
               <Tabs.Panel value="asset-link" mt="md">
-                <AssetLinkPanel fetchHistory={fetchHistoryPanel} />
+                <AssetLinkPanel relationType={detail.relationship_type} fetchHistory={fetchHistoryPanel} />
               </Tabs.Panel>
 
               <Tabs.Panel value="maintenance" mt="md">

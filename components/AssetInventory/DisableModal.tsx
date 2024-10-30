@@ -76,7 +76,7 @@ const DisableModal = ({
         case "Sub Category":
           if (!setCurrentSubCategoryList) return;
           await disableDrawerData(supabaseClient, {
-            type: "field",
+            type: "sub_category",
             typeId: typeId,
           });
 

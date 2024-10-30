@@ -191,16 +191,17 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         setValue(`sections.${index}.section_field.${0}.field_response`, "");
         updateSection(index, {
           ...categorySection,
-          section_field: form.form_section[1].section_field,
+          section_field: [form.form_section[1].section_field[0]],
         });
         return;
       }
-      const { subFields, customFields } = await getSubFieldOrCustomField(
+      const { subFields = [], customFields } = await getSubFieldOrCustomField(
         supabaseClient,
         {
           categoryName: value,
         }
       );
+
       const newSectionField = [
         categorySection.section_field[0],
         ...subFields,
@@ -321,7 +322,14 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
               ...form.form_section[0].section_field.slice(1, 8),
             ],
           },
-          form.form_section[1],
+          {
+            ...form.form_section[1],
+            section_field: [
+              {
+                ...form.form_section[1].section_field[0],
+              },
+            ],
+          },
           form.form_section[2],
           form.form_section[3],
         ]);

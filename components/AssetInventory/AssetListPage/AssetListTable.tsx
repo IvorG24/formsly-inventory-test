@@ -17,10 +17,17 @@ import {
   CopyButton,
   createStyles,
   Flex,
+  Group,
+  HoverCard,
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
+import {
+  IconArrowsMaximize,
+  IconCopy,
+  IconLayersLinked,
+  IconLinkOff,
+} from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
@@ -154,15 +161,16 @@ const AssetListTable = ({
           title: "",
           width: 40,
           render: (record) => {
-            const { inventory_request_id } = record as {
+            const { inventory_request_id, relationship_type } = record as {
               inventory_request_id: string;
               assignee_team_member_id: string;
+              relationship_type: string;
             };
 
             const isChecked = selectedRow.includes(
               String(inventory_request_id)
             );
-
+            const assetRelationship = String(relationship_type);
             return (
               <Checkbox
                 checked={isChecked}
@@ -172,6 +180,7 @@ const AssetListTable = ({
                     e.target.checked
                   )
                 }
+                disabled={assetRelationship === "child"}
               />
             );
           },
@@ -182,22 +191,43 @@ const AssetListTable = ({
           width: 180,
           sortable: true,
           hidden: checkIfColumnIsHidden("inventory_request_tag_id"),
-          render: ({ inventory_request_tag_id }) => {
+          render: ({ inventory_request_tag_id, relationship_type }) => {
             return (
               <Flex
                 key={String(inventory_request_tag_id)}
                 justify="space-between"
               >
-                <Text truncate maw={150}>
-                  <Anchor
-                    href={`/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/inventory/${inventory_request_tag_id}`}
-                    target="_blank"
-                  >
-                    {String(inventory_request_tag_id)}
-                  </Anchor>
-                </Text>
+                <Group>
+                  <Text truncate maw={150}>
+                    <Anchor
+                      href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${inventory_request_tag_id}`}
+                      target="_blank"
+                    >
+                      {String(inventory_request_tag_id)}
+                    </Anchor>
+                  </Text>
+
+                  {String(relationship_type) && (
+                    <HoverCard width={280} shadow="md">
+                      <HoverCard.Target>
+                        <ActionIcon>
+                          {relationship_type === "parent" ? (
+                            <IconLayersLinked color="green" size={16} />
+                          ) : relationship_type === "child" ? (
+                            <IconLinkOff color="red" size={16} />
+                          ) : null}
+                        </ActionIcon>
+                      </HoverCard.Target>
+                      <HoverCard.Dropdown>
+                        <Text size="sm">
+                          {relationship_type === "parent"
+                            ? "This asset is a parent asset."
+                            : "This asset is a child asset."}
+                        </Text>
+                      </HoverCard.Dropdown>
+                    </HoverCard>
+                  )}
+                </Group>
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
