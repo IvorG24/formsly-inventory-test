@@ -116,13 +116,14 @@ const EditAssetPage = ({ form, formslyFormName = "" }: Props) => {
         });
         return;
       }
-      const { subFields, customFields } = await getSubFieldOrCustomField(
+      const { subFields = [], customFields } = await getSubFieldOrCustomField(
         supabaseClient,
         {
           categoryName: value,
           assetId: router.query.assetId as string,
         }
       );
+
       const newSectionField = [
         categorySection.section_field[0],
         ...subFields,

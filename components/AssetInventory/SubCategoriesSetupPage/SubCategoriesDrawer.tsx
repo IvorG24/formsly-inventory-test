@@ -41,7 +41,7 @@ const SubCategoryDrawer = ({
             render={({ field }) => (
               <Select
                 label="Category Name"
-                placeholder="Search by location name"
+                placeholder="Search by category name"
                 withAsterisk
                 data={categoryList}
                 searchable
