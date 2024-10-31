@@ -2,9 +2,18 @@ import {
   checkSpreadsheetRowStatus,
   getTradeTestSummaryData,
 } from "@/backend/api/get";
-import { overrideStep, updateTradeTestStatus } from "@/backend/api/update";
+import {
+  overrideStep,
+  updatePracticalTestEvaluator,
+  updateTradeTestStatus,
+} from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import {
+  BASE_URL,
+  DEFAULT_NUMBER_SSOT_ROWS,
+  formatDate,
+  formatTime,
+} from "@/utils/constant";
 import {
   OptionType,
   TradeTestFilterFormValues,
@@ -20,7 +29,9 @@ import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
 
-import { startCase } from "@/utils/string";
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import TradeTestFilterMenu from "./TradeTestFilterMenu";
 import TradeTestSpreadsheetTable from "./TradeTestSpreadsheetTable/TradeTestSpreadsheetTable";
 
@@ -74,6 +85,7 @@ const TradeTestSpreadsheetView = ({
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
+  const team = useActiveTeam();
   const [data, setData] = useState<TradeTestSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -294,6 +306,123 @@ const TradeTestSpreadsheetView = ({
     }
   };
 
+  const handleAssignEvaluator = async (
+    data: { evaluatorId: string; evaluatorName: string },
+    practicalTestId: string,
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    },
+    meetingLink: string,
+    schedule: string
+  ) => {
+    try {
+      setIsLoading(true);
+      const link = `${BASE_URL}/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/55af2040-4905-4a42-810e-21aae916171b/create?practicalTestId=${practicalTestId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+      const notificationLink = `/${formatTeamNameToUrlKey(
+        team.team_name
+      )}/forms/55af2040-4905-4a42-810e-21aae916171b/create?practicalTestId=${practicalTestId}&teamMemberId=${
+        data.evaluatorId
+      }`;
+
+      const evaluatorUserData = await updatePracticalTestEvaluator(
+        supabaseClient,
+        {
+          link,
+          notificationLink,
+          teamMemberId: data.evaluatorId,
+          practicalTestId,
+          formslyId,
+        }
+      );
+
+      const scheduledDate = new Date(schedule);
+      const formattedDate = formatDate(scheduledDate);
+      const formattedTime = formatTime(scheduledDate);
+
+      const emailNotificationProps: {
+        to: string;
+        subject: string;
+      } & EmailNotificationTemplateProps = {
+        to: evaluatorUserData.user_email,
+        subject: `Practical Test Evaluation - ${formattedDate} ${formattedTime} - ${startCase(
+          candidateData.name
+        )} - ${candidateData.position}`,
+        greetingPhrase: `Dear ${startCase(
+          evaluatorUserData.user_first_name
+        )} ${startCase(evaluatorUserData.user_last_name)},`,
+        message: `
+              <p>
+                This is to inform you that a practical test with ${startCase(
+                  candidateData.name
+                )} for the position of ${
+          candidateData.position
+        } has been scheduled with the following details below:
+              </p>
+              <p>
+                <b>Date: </b>${formattedDate}
+              </p>
+              <p>
+                <b>Time: </b>${formattedTime}
+              </p>
+              <p>
+                <b>Meeting Link: </b><a href=${meetingLink}>${meetingLink}</a>
+              </p>
+              <p>
+                Following the test, we kindly request your prompt insights and evaluation of the candidate to facilitate the next steps in the hiring process. Please complete the evaluation form through your Formsly account, or you can click the link below to proceed:
+              </p>
+              <p>
+                <a href=${link}>${link}</a>
+              </p>
+              <p>
+                Should you require any further information or adjustments, please don't hesitate to reach out to the Recruitment Team.
+              </p>
+              <p>
+                Please note that this is an automated email; do not reply to this message.
+              </p>
+          `,
+        closingPhrase: "Best regards,",
+        signature: "Sta. Clara International Corporation Recruitment Team",
+      };
+      await fetch("/api/resend/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailNotificationProps),
+      });
+
+      setData((prev) =>
+        prev.map((prevData) => {
+          if (prevData.trade_test_id !== practicalTestId) return prevData;
+
+          return {
+            ...prevData,
+            trade_test_assigned_evaluator: data.evaluatorName,
+            trade_test_evaluator_team_member_id: data.evaluatorId,
+            trade_test_evaluation_link: link,
+          };
+        })
+      );
+      notifications.show({
+        message: "Evaluation updated.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -338,6 +467,7 @@ const TradeTestSpreadsheetView = ({
         hiddenColumnList={hiddenColumnList}
         handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
         handleCheckRow={handleCheckRow}
+        handleAssignEvaluator={handleAssignEvaluator}
         handleOverride={handleOverride}
       />
     </Stack>

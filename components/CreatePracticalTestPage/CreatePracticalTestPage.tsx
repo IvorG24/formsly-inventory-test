@@ -1,11 +1,14 @@
-import { getEvaluationResultAutomaticResponse } from "@/backend/api/get";
+import {
+  getPracticalTestAutomaticResponse,
+  getPracticalTestFieldList,
+} from "@/backend/api/get";
 import { createRequest, insertError } from "@/backend/api/post";
+import { updateTradeTestStatus } from "@/backend/api/update";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -13,7 +16,8 @@ import {
   FormType,
   FormWithResponseType,
   RequestResponseTableRow,
-  TechnicalInterviewTableRow,
+  TradeTestSpreadsheetData,
+  TradeTestTableRow,
 } from "@/utils/types";
 import {
   Box,
@@ -24,9 +28,9 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -46,15 +50,17 @@ type Props = {
   form: FormType;
 };
 
-const CreateEvaluationResultRequestPage = ({ form }: Props) => {
+const CreatePracticalTestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const requestorProfile = useUserProfile();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
 
-  const [interviewData, setInterviewData] = useState<
-    | (TechnicalInterviewTableRow & {
+  const [passingScore, setPassingScore] = useState(0);
+
+  const [tradeTestData, setTradeTestData] = useState<
+    | (TradeTestTableRow & {
         request_formsly_id: string;
         email: string;
       })
@@ -71,7 +77,7 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
@@ -83,8 +89,8 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
       if (!requestorProfile) return;
       try {
         if (
-          !router.query.interviewId ||
-          typeof router.query.interviewId !== "string"
+          !router.query.practicalTestId ||
+          typeof router.query.practicalTestId !== "string"
         )
           throw new Error("Invalid Request ID");
 
@@ -96,100 +102,109 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
           await router.push("/");
         }
 
-        const data = await getEvaluationResultAutomaticResponse(
-          supabaseClient,
-          {
-            interviewId: router.query.interviewId,
-          }
-        );
-        setInterviewData({
-          ...data.interviewData,
+        const data = await getPracticalTestAutomaticResponse(supabaseClient, {
+          practicalTestId: router.query.practicalTestId,
+        });
+
+        setTradeTestData({
+          ...data.tradeTestData,
           email: data.email,
         });
 
-        if (data.interviewData.technical_interview_status !== "PENDING") {
+        if (data.tradeTestData.trade_test_status !== "PENDING") {
           notifications.show({
             message: "Applicant is already evaluated",
             color: "orange",
           });
           await router.push("/");
         }
-        if (!data.interviewData.technical_interview_schedule)
+        if (!data.tradeTestData.trade_test_schedule)
           throw new Error("Missing schedule");
-        const schedule = new Date(
-          data.interviewData.technical_interview_schedule
-        );
+        const schedule = new Date(data.tradeTestData.trade_test_schedule);
         const formattedTime = schedule.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false, // Ensure 24-hour format
         });
 
+        const quantitativeFields = await getPracticalTestFieldList(
+          supabaseClient,
+          { position: data.position }
+        );
+
+        const applicantSectionFieldList = [
+          {
+            ...form.form_section[0].section_field[0],
+            field_response: data.candidateFirstName,
+          },
+          {
+            ...form.form_section[0].section_field[1],
+            field_response: data.candidateMiddleName,
+          },
+          {
+            ...form.form_section[0].section_field[2],
+            field_response: data.candidateLastName,
+          },
+          {
+            ...form.form_section[0].section_field[3],
+            field_response: data.position,
+          },
+          {
+            ...form.form_section[0].section_field[4],
+            field_response: schedule,
+          },
+          {
+            ...form.form_section[0].section_field[5],
+            field_response: formattedTime,
+          },
+        ];
+
+        if (!quantitativeFields) {
+          notifications.show({
+            color: "orange",
+            message:
+              "A Practical Test has not yet been assigned to the selected position. Please contact an HR Admin to request that a practical test be assigned.",
+            autoClose: false,
+          });
+          replaceSection([
+            {
+              ...form.form_section[0],
+              section_field: applicantSectionFieldList,
+            },
+            ...form.form_section.slice(1),
+          ]);
+          return;
+        }
+        setPassingScore(quantitativeFields.practical_test_passing_score);
+
         replaceSection([
           {
             ...form.form_section[0],
-            section_field: [
-              {
-                ...form.form_section[0].section_field[0],
-                field_response: data.candidateFirstName,
-              },
-              {
-                ...form.form_section[0].section_field[1],
-                field_response: data.candidateMiddleName,
-              },
-              {
-                ...form.form_section[0].section_field[2],
-                field_response: data.candidateLastName,
-              },
-              {
-                ...form.form_section[0].section_field[3],
-                field_response: data.position,
-              },
-              {
-                ...form.form_section[0].section_field[4],
-                field_response: schedule,
-              },
-              {
-                ...form.form_section[0].section_field[5],
-                field_response: formattedTime,
-              },
-            ],
+            section_field: applicantSectionFieldList,
+          },
+          form.form_section[1],
+          {
+            ...form.form_section[2],
+            section_field: quantitativeFields.practicalTestQuestionList.map(
+              (fieldQuestion) => {
+                return {
+                  ...fieldQuestion,
+                  field_option: [],
+                };
+              }
+            ),
           },
           {
-            ...form.form_section[1],
+            ...form.form_section[3],
             section_field: [
               {
-                ...form.form_section[1].section_field[0],
-                field_response: requestorProfile.user_first_name,
+                ...form.form_section[3].section_field[0],
+                field_name: `${form.form_section[3].section_field[0].field_name} (Passing Score: ${quantitativeFields.practical_test_passing_score})`,
               },
-              {
-                ...form.form_section[1].section_field[1],
-                field_response: requestorProfile.user_last_name,
-              },
-              {
-                ...form.form_section[1].section_field[2],
-                field_response: requestorProfile.user_job_title,
-              },
-              ...form.form_section[1].section_field.slice(3),
+              form.form_section[3].section_field[1],
             ],
           },
-          ...form.form_section.slice(2),
         ]);
-
-        if (!requestorProfile.user_job_title) {
-          notifications.show({
-            title: "Position is required",
-            message: (
-              <Text>
-                Go to{" "}
-                <Link href={`${BASE_URL}/user/settings`}>User Settings</Link> to
-                update your Job Title.
-              </Text>
-            ),
-            color: "blue",
-            autoClose: false,
-          });
-        }
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -216,9 +231,9 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
     try {
       setIsLoading(true);
 
-      if (!requestorProfile || !teamMember || !interviewData) return;
+      if (!requestorProfile || !teamMember || !tradeTestData) return;
 
-      const interviewStatus = data.sections[2].section_field[3].field_response;
+      const interviewStatus = data.sections[3].section_field[1].field_response;
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
@@ -233,22 +248,19 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
         userId: requestorProfile.user_id,
         status: "APPROVED",
-        interviewParams: {
+        tradeTestParams: {
           status: (interviewStatus as string).toUpperCase(),
-          teamMemberId:
-            interviewData.technical_interview_team_member_id as string,
+          teamMemberId: tradeTestData.trade_test_team_member_id as string,
           data: {
-            ...interviewData,
-            hr_request_reference_id:
-              interviewData.technical_interview_request_id,
-            application_information_email: interviewData.email,
+            ...tradeTestData,
+            hr_request_reference_id: tradeTestData.trade_test_request_id,
+            application_information_email: tradeTestData.email,
             application_information_request_id:
-              interviewData.request_formsly_id,
+              tradeTestData.request_formsly_id,
             position: data.sections[0].section_field[3]
               .field_response as string,
           },
-          technicalInterviewNumber: interviewData.technical_interview_number,
-          technicalInterviewId: interviewData.technical_interview_id,
+          tradeTestId: tradeTestData.trade_test_id,
         },
       });
 
@@ -282,6 +294,68 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
     }
   };
 
+  const handleScoreChange = () => {
+    let totalScore = 0;
+    let status = "NOT QUALIFIED";
+
+    getValues("sections.2.section_field").forEach(
+      (field) =>
+        (totalScore += field.field_response ? Number(field.field_response) : 0)
+    );
+    if (totalScore >= passingScore) status = "QUALIFIED";
+
+    setValue("sections.3.section_field.0.field_response", totalScore);
+    setValue("sections.3.section_field.1.field_response", status);
+  };
+
+  const handleNotResponsive = async () => {
+    try {
+      setIsLoading(true);
+      if (!requestorProfile || !teamMember || !tradeTestData) return;
+      const positionData = getValues(
+        "sections.0.section_field.3.field_response"
+      );
+
+      await updateTradeTestStatus(supabaseClient, {
+        status: "NOT RESPONSIVE",
+        teamMemberId: teamMember.team_member_id,
+        data: {
+          hr_request_reference_id: tradeTestData.trade_test_request_id,
+          application_information_email: tradeTestData.email,
+          application_information_request_id: tradeTestData.request_formsly_id,
+          position: positionData as string,
+        } as TradeTestSpreadsheetData,
+      });
+      notifications.show({
+        message: "Trade test status updated.",
+        color: "green",
+      });
+      await router.push(`/`);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openPromptNotResponsiveModal = () =>
+    modals.openConfirmModal({
+      title: "Are you sure the applicant is not responsive?",
+      children: (
+        <Text size="sm">
+          This action is so important that you are required to confirm it with a
+          modal. Please click one of these buttons to proceed.
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      confirmProps: { color: "gray" },
+      onConfirm: async () => await handleNotResponsive(),
+    });
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -301,12 +375,20 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
                     sectionIndex={idx}
                     formslyFormName={form.form_name}
                     isPublicRequest={true}
+                    practicalTestFormMethods={{
+                      onScoreChange: handleScoreChange,
+                    }}
                   />
                 </Box>
               );
             })}
             {/* <RequestFormSigner signerList={signerList} /> */}
-            <Button type="submit">Submit</Button>
+            <Stack spacing="xs">
+              <Button color="gray" onClick={openPromptNotResponsiveModal}>
+                Not Responsive
+              </Button>
+              <Button type="submit">Submit</Button>
+            </Stack>
           </Stack>
         </form>
       </FormProvider>
@@ -314,4 +396,4 @@ const CreateEvaluationResultRequestPage = ({ form }: Props) => {
   );
 };
 
-export default CreateEvaluationResultRequestPage;
+export default CreatePracticalTestPage;

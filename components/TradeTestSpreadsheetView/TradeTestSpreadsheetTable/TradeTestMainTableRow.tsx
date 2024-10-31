@@ -1,3 +1,4 @@
+import { getTeamGroupMember } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   useUserTeamMember,
@@ -16,10 +17,18 @@ import {
   CopyButton,
   createStyles,
   Flex,
+  Group,
+  Select,
+  Stack,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCopy, IconSquareCheck, IconVideo } from "@tabler/icons-react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -37,6 +46,17 @@ type Props = {
     data: TradeTestSpreadsheetData
   ) => void;
   handleCheckRow: (item: TradeTestSpreadsheetData) => Promise<boolean>;
+  handleAssignEvaluator: (
+    data: { evaluatorId: string; evaluatorName: string },
+    practicalTestId: string,
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    },
+    meetingLink: string,
+    schedule: string
+  ) => Promise<void>;
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
@@ -45,12 +65,31 @@ const TradeTestMainTableRow = ({
   hiddenColumnList,
   handleUpdateTradeTestStatus,
   handleCheckRow,
+  handleAssignEvaluator,
   handleOverride,
 }: Props) => {
   const { classes } = useStyles();
+  const supabaseClient = useSupabaseClient();
+
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const teamMemberGroupList = useUserTeamMemberGroupList();
+
+  const [isFetching, setIsFetching] = useState(false);
+  const [evaluatorOptions, setEvaluatorOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { isSubmitting },
+  } = useForm<{
+    evaluatorId: string;
+    evaluatorName: string;
+  }>({ defaultValues: { evaluatorId: "", evaluatorName: "" } });
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -69,6 +108,112 @@ const TradeTestMainTableRow = ({
       confirmProps: { color: statusColor[action] },
       onConfirm: async () => handleUpdateTradeTestStatus(action, item),
     });
+
+  const assignEvaluatorModal = (options: { label: string; value: string }[]) =>
+    modals.open({
+      title: <Text>Assign Evaluator</Text>,
+      onClose: () => {
+        reset();
+      },
+      children: (
+        <>
+          <form
+            onSubmit={handleSubmit(async (data) => {
+              modals.closeAll();
+              await handleAssignEvaluator(
+                data,
+                item.trade_test_id,
+                item.application_information_request_id,
+                {
+                  name: item.application_information_full_name,
+                  position: item.position,
+                },
+                item.meeting_link,
+                item.trade_test_schedule
+              );
+            })}
+          >
+            <Controller
+              name="evaluatorId"
+              control={control}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Evaluator is required.",
+                },
+              }}
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  label="Evaluator"
+                  searchable
+                  placeholder="Select Evaluator"
+                  data={options}
+                  value={value}
+                  onChange={(value) => {
+                    if (value) {
+                      const evaluator = options.find(
+                        (data) => data.value === value
+                      );
+                      if (!evaluator) return;
+                      setValue("evaluatorName", evaluator.label);
+                    }
+                    onChange(value);
+                  }}
+                  required
+                  withinPortal
+                />
+              )}
+            />
+            <Group position="right" mt="xl">
+              <Button
+                color="red"
+                variant="default"
+                onClick={() => modals.closeAll()}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button color="blue" type="submit" disabled={isSubmitting}>
+                Confirm
+              </Button>
+            </Group>
+          </form>
+        </>
+      ),
+      centered: true,
+    });
+
+  const handleOpenEvaluatorModal = async () => {
+    try {
+      setIsFetching(true);
+      let options = evaluatorOptions;
+      if (!options.length) {
+        const data = await getTeamGroupMember(supabaseClient, {
+          groupId: "fb2bdd4f-c2dd-4dd8-ab02-25deee7ca13d",
+        });
+        const groupMemberList = data.map((evaluator) => {
+          return {
+            value: evaluator.team_member_id,
+            label: [
+              evaluator.team_member_user.user_first_name,
+              evaluator.team_member_user.user_last_name,
+            ].join(" "),
+          };
+        });
+        setEvaluatorOptions(groupMemberList);
+        options = groupMemberList;
+      }
+
+      assignEvaluatorModal(options);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   if (!team.team_name) return null;
   return (
@@ -215,6 +360,101 @@ const TradeTestMainTableRow = ({
           )}
         </td>
       )}
+      {!hiddenColumnList.includes("evaluation") && (
+        <td>
+          {item.trade_test_evaluator_team_member_id &&
+            !item.trade_test_evaluation_request_id &&
+            item.trade_test_status === "PENDING" && (
+              <Stack spacing="xs">
+                <Flex align="center" gap="xs">
+                  <Text sx={{ whiteSpace: "nowrap" }}>
+                    Evaluator: <b>{item.trade_test_assigned_evaluator}</b>
+                  </Text>
+                  <CopyButton value={item.trade_test_evaluation_link}>
+                    {({ copied, copy }) =>
+                      copied ? (
+                        <ActionIcon
+                          onClick={copy}
+                          color="green"
+                          variant="light"
+                        >
+                          <IconSquareCheck size={14} />
+                        </ActionIcon>
+                      ) : (
+                        <Tooltip label="Copy evaluation form link">
+                          <ActionIcon
+                            onClick={copy}
+                            color="blue"
+                            variant="light"
+                          >
+                            <IconCopy size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )
+                    }
+                  </CopyButton>
+                </Flex>
+                <Button
+                  variant="outline"
+                  onClick={handleOpenEvaluatorModal}
+                  loading={isFetching}
+                >
+                  Change Evaluator
+                </Button>
+              </Stack>
+            )}
+          {item.trade_test_evaluation_request_id ? (
+            <Anchor
+              target="_blank"
+              href={`/${formatTeamNameToUrlKey(team.team_name)}/requests/${
+                item.trade_test_evaluation_request_id
+              }`}
+            >
+              {item.trade_test_evaluation_request_id}
+            </Anchor>
+          ) : null}
+          {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+            teamMemberGroupList.includes("HUMAN RESOURCES") &&
+            item.trade_test_status === "PENDING" &&
+            !item.trade_test_evaluator_team_member_id && (
+              <Button
+                w={140}
+                onClick={() =>
+                  modals.openConfirmModal({
+                    title: "Confirm Override",
+                    centered: true,
+                    children: (
+                      <Text size="sm">
+                        Are you sure you want to override this application?
+                      </Text>
+                    ),
+                    labels: { confirm: "Confirm", cancel: "Cancel" },
+                    onConfirm: async () => {
+                      const result = await handleCheckRow(item);
+                      if (result && teamMember) {
+                        handleOverride(
+                          teamMember.team_member_id,
+                          item.trade_test_id
+                        );
+                      }
+                    },
+                  })
+                }
+              >
+                Override
+              </Button>
+            )}
+          {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
+            item.trade_test_status === "PENDING" &&
+            !item.trade_test_evaluator_team_member_id && (
+              <Flex align="center" justify="center" gap="xs" wrap="wrap">
+                <Button onClick={handleOpenEvaluatorModal} loading={isFetching}>
+                  Assign Evaluator
+                </Button>
+              </Flex>
+            )}
+        </td>
+      )}
       <td>
         {item.trade_test_status === "PENDING" &&
           teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
@@ -247,7 +487,8 @@ const TradeTestMainTableRow = ({
             </Button>
           )}
         {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
-          item.trade_test_status === "PENDING" && (
+          item.trade_test_status === "PENDING" &&
+          !item.trade_test_evaluator_team_member_id && (
             <Flex align="center" justify="center" gap="xs" wrap="wrap">
               <Button
                 color="green"

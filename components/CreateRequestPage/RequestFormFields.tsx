@@ -54,6 +54,7 @@ type RequestFormFieldsProps = {
     field_section_duplicatable_id: string | undefined;
     field_description?: string;
     field_prefix?: string | null;
+    field_weight?: number;
   };
   sectionIndex: number;
   fieldIndex: number;
@@ -287,6 +288,9 @@ type RequestFormFieldsProps = {
     onHighestEducationalAttainmentChange: (value: string | null) => void;
     onFieldOfStudyChange: (value: string | null) => void;
   };
+  practicalTestFormMethods?: {
+    onScoreChange: () => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -312,6 +316,7 @@ const RequestFormFields = ({
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
   applicationInformationFormMethods,
+  practicalTestFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -768,6 +773,9 @@ const RequestFormFields = ({
                   onChange={onChange}
                   withAsterisk={field.field_is_required}
                   {...inputProps}
+                  label={`${inputProps.label} ${
+                    field.field_weight ? `(Max: ${field.field_weight})` : ""
+                  }`}
                   error={fieldError}
                   maxLength={10}
                   precision={
@@ -816,9 +824,12 @@ const RequestFormFields = ({
                         );
                         break;
                     }
+                    if (practicalTestFormMethods && sectionIndex === 2) {
+                      practicalTestFormMethods.onScoreChange();
+                    }
                   }}
                   min={0}
-                  max={MAX_INT}
+                  max={field.field_weight ?? MAX_INT}
                   readOnly={field.field_is_read_only}
                 />
               )}

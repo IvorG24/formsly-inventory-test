@@ -3,7 +3,7 @@ import {
   fetchCity,
   fetchProvince,
   fetchRegion,
-  getApplicationInformationPositionOptions,
+  getAllApplicationInformationPositionOptions,
   getDegreeNameOptions,
   getFieldOfStudyOptions,
 } from "@/backend/api/get";
@@ -107,14 +107,12 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         const positionOptionList: OptionTableRow[] = [];
         const positionList: PositionTableRow[] = [];
         while (1) {
-          const positionData = await getApplicationInformationPositionOptions(
-            supabaseClient,
-            {
+          const positionData =
+            await getAllApplicationInformationPositionOptions(supabaseClient, {
               teamId: form.form_team_member.team_member_team_id,
               index,
               limit: FETCH_OPTION_LIMIT,
-            }
-          );
+            });
 
           const positionOptions = positionData.map((position, index) => {
             return {

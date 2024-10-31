@@ -12,6 +12,7 @@ import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/Crea
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
 import CreatePettyCashVoucherBalancePage from "@/components/CreatePettyCashVoucherBalancePage/CreatePettyCashVoucherBalancePage";
 import CreatePettyCashVoucherRequestPage from "@/components/CreatePettyCashVoucherRequestPage/CreatePettyCashVoucherRequestPage";
+import CreatePracticalTestPage from "@/components/CreatePracticalTestPage/CreatePracticalTestPage";
 import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
@@ -212,6 +213,8 @@ const Page = ({
         return <CreateEvaluationResultRequestPage form={form} />;
       case "Background Investigation":
         return <CreateBackgroundInvestigationRequestPage form={form} />;
+      case "Practical Test":
+        return <CreatePracticalTestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

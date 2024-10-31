@@ -137,7 +137,7 @@ const TechnicalQuestionnairePage = () => {
       setQuestionnnaireListCount(data.count);
     } catch (e) {
       notifications.show({
-        message: "Failed to fetch request list.",
+        message: "Failed to fetch questionnaire list.",
         color: "red",
       });
     } finally {
@@ -315,7 +315,6 @@ const TechnicalQuestionnairePage = () => {
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
           <Title order={4}>Questionnaire List Page</Title>
-          <Text>Manage your team requests here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
@@ -342,8 +341,8 @@ const TechnicalQuestionnairePage = () => {
           <TechnicalQuestionnaireTable
             handleAction={handleAction}
             setValue={setValue}
-            questionnairList={questionnnaireList}
-            questionnairListCount={questionnnaireListCount}
+            questionnaireList={questionnnaireList}
+            questionnaireListCount={questionnnaireListCount}
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}

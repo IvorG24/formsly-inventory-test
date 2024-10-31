@@ -94,6 +94,7 @@ const columnList = [
     field_type: "TEXT",
   },
   { field_id: "meeting_link", field_name: "Meeting Link" },
+  { field_id: "evaluation", field_name: "Evaluation" },
   {
     field_id: "action",
     field_name: "Action",
@@ -115,6 +116,17 @@ type Props = {
     data: TradeTestSpreadsheetData
   ) => void;
   handleCheckRow: (item: TradeTestSpreadsheetData) => Promise<boolean>;
+  handleAssignEvaluator: (
+    data: { evaluatorId: string; evaluatorName: string },
+    practicalTestId: string,
+    formslyId: string,
+    candidateData: {
+      name: string;
+      position: string;
+    },
+    meetingLink: string,
+    schedule: string
+  ) => Promise<void>;
   handleOverride: (hrTeamMemberId: string, rowId: string) => void;
 };
 
@@ -129,7 +141,8 @@ const TradeTestSpreadsheetTable = ({
   hiddenColumnList,
   handleUpdateTradeTestStatus,
   handleCheckRow,
-  handleOverride
+  handleAssignEvaluator,
+  handleOverride,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -208,6 +221,7 @@ const TradeTestSpreadsheetTable = ({
                   hiddenColumnList={hiddenColumnList}
                   handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
                   handleCheckRow={handleCheckRow}
+                  handleAssignEvaluator={handleAssignEvaluator}
                   handleOverride={handleOverride}
                 />
               ))}

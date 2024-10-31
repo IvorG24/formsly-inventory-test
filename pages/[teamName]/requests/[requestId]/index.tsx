@@ -16,6 +16,7 @@ import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPa
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
 import PettyCashVoucherBalanceRequestPage from "@/components/PettyCashVoucherBalanceRequestPage/PettyCashVoucherBalanceRequestPage";
 import PettyCashVoucherRequestPage from "@/components/PettyCashVoucherRequestPage/PettyCashVoucherRequestPage";
+import PracticalTestRequestPage from "@/components/PracticalTestRequestPage/PracticalTestRequestPage";
 import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
 import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
@@ -190,6 +191,8 @@ const Page = ({
       return <EvaluationResultRequestPage request={request} />;
     } else if (request.request_form.form_name === "Background Investigation") {
       return <BackgroundInvestigationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Practical Test") {
+      return <PracticalTestRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

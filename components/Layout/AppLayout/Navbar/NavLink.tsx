@@ -28,6 +28,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconClipboard,
   IconBox,
   IconCode,
   IconDashboard,
@@ -547,6 +548,19 @@ const ReviewAppNavLink = () => {
               </Box>
             ),
             href: `/${activeTeamNameToUrl}/technical-question`,
+          },
+        ]
+      : []),
+    ...(userTeamMemberData?.team_member_role === "ADMIN"
+      ? [
+          {
+            label: `Pactical Test Form`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconClipboard {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/practical-test-form`,
           },
         ]
       : []),

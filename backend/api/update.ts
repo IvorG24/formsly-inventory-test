@@ -1732,6 +1732,27 @@ export const overrideStep = async (
   if (error) throw error;
 };
 
+export const updatePracticalTestEvaluator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    link: string;
+    notificationLink: string;
+    teamMemberId: string;
+    practicalTestId: string;
+    formslyId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_practical_test_evaluator", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  return data as UserTableRow;
+};
+
 export const updateEvent = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

@@ -1,7 +1,7 @@
 // Imports
 import { checkIfGroupMember } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
-import TechnicalQuestionnairePage from "@/components/TechnicalQuestionnairePage/TechnicalQuestionnairePage";
+import PracticalTestFormPage from "@/components/PracticalTestFormPage/PracticalTestFormPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
@@ -39,10 +39,10 @@ const Page = () => {
   return (
     <>
       <Meta
-        description="Technical Question Page"
-        url="/teamName/technical-question"
+        description="Practical Test Form List Page"
+        url="/teamName/practical-test-form"
       />
-      <TechnicalQuestionnairePage />
+      <PracticalTestFormPage />
     </>
   );
 };

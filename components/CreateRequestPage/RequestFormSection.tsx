@@ -245,6 +245,9 @@ type RequestFormSectionProps = {
     onHighestEducationalAttainmentChange: (value: string | null) => void;
     onFieldOfStudyChange: (value: string | null) => void;
   };
+  practicalTestFormMethods?: {
+    onScoreChange: () => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -270,9 +273,10 @@ const RequestFormSection = ({
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
   applicationInformationFormMethods,
+  practicalTestFormMethods
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
-    section.section_field[0].field_section_duplicatable_id;
+    section.section_field[0]?.field_section_duplicatable_id;
 
   return (
     <Paper p="xl" shadow="xs">
@@ -342,6 +346,7 @@ const RequestFormSection = ({
               applicationInformationFormMethods={
                 applicationInformationFormMethods
               }
+              practicalTestFormMethods={practicalTestFormMethods}
             />
           );
         })}

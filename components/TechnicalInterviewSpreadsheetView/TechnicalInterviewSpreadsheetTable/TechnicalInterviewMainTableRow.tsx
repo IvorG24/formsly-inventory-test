@@ -80,7 +80,13 @@ const TechnicalInterviewMainTableRow = ({
     { label: string; value: string }[]
   >([]);
 
-  const { control, handleSubmit, reset, setValue } = useForm<{
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { isSubmitting },
+  } = useForm<{
     evaluatorId: string;
     evaluatorName: string;
   }>({ defaultValues: { evaluatorId: "", evaluatorName: "" } });
@@ -113,6 +119,7 @@ const TechnicalInterviewMainTableRow = ({
         <>
           <form
             onSubmit={handleSubmit(async (data) => {
+              modals.closeAll();
               await handleAssignEvaluator(
                 data,
                 item.technical_interview_id,
@@ -124,7 +131,6 @@ const TechnicalInterviewMainTableRow = ({
                 item.meeting_link,
                 item.technical_interview_schedule
               );
-              modals.closeAll();
             })}
           >
             <Controller
@@ -163,10 +169,11 @@ const TechnicalInterviewMainTableRow = ({
                 color="red"
                 variant="default"
                 onClick={() => modals.closeAll()}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button color="blue" type="submit">
+              <Button color="blue" type="submit" disabled={isSubmitting}>
                 Confirm
               </Button>
             </Group>
@@ -200,7 +207,7 @@ const TechnicalInterviewMainTableRow = ({
       assignEvaluatorModal(options);
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
@@ -481,7 +488,6 @@ const TechnicalInterviewMainTableRow = ({
               Override
             </Button>
           )}
-
         {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
           item.technical_interview_status === "PENDING" &&
           !item.technical_interview_evaluator_team_member_id && (

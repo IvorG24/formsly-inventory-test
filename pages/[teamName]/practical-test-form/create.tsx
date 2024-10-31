@@ -1,7 +1,6 @@
-// Imports
 import { checkIfGroupMember } from "@/backend/api/get";
+import CreatePracticalTestFormPage from "@/components/CreatePracticalTestFormPage/CreatePracticalTestFormPage";
 import Meta from "@/components/Meta/Meta";
-import TechnicalQuestionnairePage from "@/components/TechnicalQuestionnairePage/TechnicalQuestionnairePage";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { GetServerSideProps } from "next";
 
@@ -21,9 +20,8 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
-      return {
-        props: {},
-      };
+
+      return { props: {} };
     } catch (e) {
       return {
         redirect: {
@@ -39,10 +37,10 @@ const Page = () => {
   return (
     <>
       <Meta
-        description="Technical Question Page"
-        url="/teamName/technical-question"
+        description="Create Practical Test Form Page"
+        url="/teamName/practical-test-form/create"
       />
-      <TechnicalQuestionnairePage />
+      <CreatePracticalTestFormPage />
     </>
   );
 };

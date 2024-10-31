@@ -22,6 +22,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         {
           input_data: {
             requestId: `${context.query.requestId}`,
+            userEmail: user.email,
           },
         }
       );
@@ -32,6 +33,15 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       };
     } catch (e) {
       if (isError(e)) {
+        if (e.message === "403") {
+          return {
+            redirect: {
+              destination: "/403",
+              permanent: false,
+            },
+          };
+        }
+
         await insertError(supabaseClient, {
           errorTableRow: {
             error_message: e.message,

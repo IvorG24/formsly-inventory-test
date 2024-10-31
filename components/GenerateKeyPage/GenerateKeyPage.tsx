@@ -81,7 +81,7 @@ const GenerateKeyPage = ({ teamName, apiKeyData: initialApiData }: Props) => {
       setLabelVisible(false);
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "orange",
       });
     } finally {
@@ -113,7 +113,7 @@ const GenerateKeyPage = ({ teamName, apiKeyData: initialApiData }: Props) => {
       });
     } catch (e) {
       notifications.show({
-        message: "Something went wrong",
+        message: "Something went wrong. Please try again later.",
         color: "orange",
       });
     } finally {

@@ -7,8 +7,8 @@ import {
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import {
+  PracticalTestType,
   TechnicalAssessmentFilterValues,
-  TechnicalAssessmentTableRow,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -20,32 +20,12 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconArrowsMaximize, IconCopy, IconEdit } from "@tabler/icons-react";
+import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormSetValue } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
-
-type Props = {
-  questionnaireList: TechnicalAssessmentTableRow[];
-  questionnaireListCount: number;
-  activePage: number;
-  isFetchingRequestList: boolean;
-  handlePagination: (p: number) => void;
-  sortStatus: DataTableSortStatus;
-  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  setValue: UseFormSetValue<TechnicalAssessmentFilterValues>;
-  checkIfColumnIsHidden: (column: string) => boolean;
-  handleAction: (id: string, name: string) => void;
-  showTableColumnFilter: boolean;
-  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
-  listTableColumnFilter: string[];
-  setListTableColumnFilter: (
-    val: string[] | ((prevState: string[]) => string[])
-  ) => void;
-  tableColumnList: { value: string; label: string }[];
-};
 
 const useStyles = createStyles(() => ({
   creator: {
@@ -59,14 +39,32 @@ const useStyles = createStyles(() => ({
 
 const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
 
-const TechnicalQuestionnaireTable = ({
-  questionnaireList,
-  questionnaireListCount,
+type Props = {
+  practicalTestList: PracticalTestType[];
+  practicalTestCount: number;
+  activePage: number;
+  isFetchingRequestList: boolean;
+  handlePagination: (p: number) => void;
+  sortStatus: DataTableSortStatus;
+  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
+  setValue: UseFormSetValue<TechnicalAssessmentFilterValues>;
+  checkIfColumnIsHidden: (column: string) => boolean;
+  showTableColumnFilter: boolean;
+  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
+  listTableColumnFilter: string[];
+  setListTableColumnFilter: (
+    val: string[] | ((prevState: string[]) => string[])
+  ) => void;
+  tableColumnList: { value: string; label: string }[];
+};
+
+const PracticalTestFormTable = ({
+  practicalTestList,
+  practicalTestCount,
   activePage,
   isFetchingRequestList,
   handlePagination,
   sortStatus,
-  handleAction,
   setSortStatus,
   setValue,
   checkIfColumnIsHidden,
@@ -86,44 +84,44 @@ const TechnicalQuestionnaireTable = ({
 
   return (
     <ListTable
-      idAccessor="questionnaire_id"
-      records={questionnaireList}
+      idAccessor="practical_test_id"
+      records={practicalTestList}
       fetching={isFetchingRequestList}
       page={activePage}
       onPageChange={(page) => {
         handlePagination(page);
       }}
-      totalRecords={questionnaireListCount}
+      totalRecords={practicalTestCount}
       recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
       sortStatus={sortStatus}
       onSortStatusChange={setSortStatus}
       columns={[
         {
-          accessor: "questionnaire_id",
-          title: "Questionnaire ID",
+          accessor: "practical_test_id",
+          title: "ID",
           width: 180,
-          hidden: checkIfColumnIsHidden("questionnaire_id"),
-          render: ({ questionnaire_id }) => {
+          hidden: checkIfColumnIsHidden("practical_test_id"),
+          render: ({ practical_test_id }) => {
             return (
-              <Flex key={String(questionnaire_id)} justify="space-between">
+              <Flex key={String(practical_test_id)} justify="space-between">
                 <Text truncate maw={150}>
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/technical-question/${questionnaire_id}`}
+                    )}/practical-test-form/${practical_test_id}`}
                     target="_blank"
                   >
-                    {String(questionnaire_id)}
+                    {String(practical_test_id)}
                   </Anchor>
                 </Text>
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/technical-question/${questionnaire_id}`}
+                  )}/practical-test-form/${practical_test_id}`}
                 >
                   {({ copied, copy }) => (
                     <Tooltip
-                      label={copied ? "Copied" : `Copy ${questionnaire_id}`}
+                      label={copied ? "Copied" : `Copy ${practical_test_id}`}
                       onClick={copy}
                     >
                       <ActionIcon>
@@ -137,46 +135,41 @@ const TechnicalQuestionnaireTable = ({
           },
         },
         {
-          accessor: "q.questionnaire_name",
-          title: "Questionnaire Name",
+          accessor: "practical_test_label",
+          title: "Label",
           sortable: true,
-          hidden: checkIfColumnIsHidden("questionnaire_name"),
-          render: ({ questionnaire_name, questionnaire_id }) => (
-            <Flex justify="space-between">
-              <Text>{String(questionnaire_name)}</Text>
-              <ActionIcon
-                onClick={() => {
-                  handleAction(
-                    String(questionnaire_id),
-                    String(questionnaire_name)
-                  );
-                }}
-                maw={120}
-                color="blue"
-              >
-                <IconEdit size={16} />
-              </ActionIcon>
-            </Flex>
+          hidden: checkIfColumnIsHidden("practical_test_label"),
+          render: ({ practical_test_label }) => (
+            <Text>{String(practical_test_label)}</Text>
           ),
         },
         {
-          accessor: "q.questionnaire_date_created",
-          title: "Date Created",
-          hidden: checkIfColumnIsHidden("questionnaire_date_created"),
+          accessor: "practical_test_passing_score",
+          title: "Passing Score",
           sortable: true,
-          render: ({ questionnaire_date_created }) => (
+          hidden: checkIfColumnIsHidden("practical_test_passing_score"),
+          render: ({ practical_test_passing_score }) => (
+            <Text>{String(practical_test_passing_score)}</Text>
+          ),
+        },
+        {
+          accessor: "practical_test_date_created",
+          title: "Date Created",
+          hidden: checkIfColumnIsHidden("practical_test_date_created"),
+          sortable: true,
+          render: ({ practical_test_date_created }) => (
             <Text>
-              {formatDate(new Date(String(questionnaire_date_created)))}
+              {formatDate(new Date(String(practical_test_date_created)))}
             </Text>
           ),
         },
         {
-          accessor: "u.user_first_name",
+          accessor: "practical_test_created_by",
           title: "Created By",
           sortable: true,
-          hidden: checkIfColumnIsHidden("questionnaire_created_by"),
-          render: (questionnaire) => {
-            if (!questionnaire) {
+          hidden: checkIfColumnIsHidden("practical_test_created_by"),
+          render: (practical_test) => {
+            if (!practical_test) {
               return null;
             }
             const {
@@ -184,7 +177,7 @@ const TechnicalQuestionnaireTable = ({
               user_first_name: user_first_name,
               user_last_name: user_last_name,
               team_member_id,
-            } = questionnaire.questionnaire_created_by as {
+            } = practical_test.practical_test_created_by_user as {
               user_id: string;
               user_first_name: string;
               user_last_name: string;
@@ -208,25 +201,25 @@ const TechnicalQuestionnaireTable = ({
           },
         },
         {
-          accessor: "q.questionnaire_date_updated",
+          accessor: "practical_test_date_updated",
           title: "Date Updated",
-          hidden: checkIfColumnIsHidden("questionnaire_date_updated"),
+          hidden: checkIfColumnIsHidden("practical_test_date_updated"),
           sortable: true,
-          render: ({ questionnaire_date_updated }) => {
+          render: ({ practical_test_date_updated }) => {
             // Check if the date is a valid date string
-            const dateUpdated = questionnaire_date_updated
-              ? new Date(String(questionnaire_date_updated))
+            const dateUpdated = practical_test_date_updated
+              ? new Date(String(practical_test_date_updated))
               : null;
             return <Text>{dateUpdated ? formatDate(dateUpdated) : null}</Text>;
           },
         },
         {
-          accessor: "u2.user_first_name",
+          accessor: "practical_test_updated_by_user",
           title: "Updated By",
           sortable: true,
-          hidden: checkIfColumnIsHidden("questionnaire_updated_by"),
-          render: (questionnaire) => {
-            if (!questionnaire.questionnaire_updated_by) {
+          hidden: checkIfColumnIsHidden("practical_test_updated_by"),
+          render: (practical_test) => {
+            if (!practical_test.practical_test_updated_by_user) {
               return null;
             }
             const {
@@ -234,7 +227,7 @@ const TechnicalQuestionnaireTable = ({
               user_first_name: user_first_name,
               user_last_name: user_last_name,
               team_member_id,
-            } = questionnaire.questionnaire_updated_by as {
+            } = practical_test.practical_test_updated_by_user as {
               user_id: string;
               user_first_name: string;
               user_last_name: string;
@@ -262,7 +255,7 @@ const TechnicalQuestionnaireTable = ({
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
           textAlignment: "center",
-          render: ({ questionnaire_id }) => {
+          render: ({ practical_test_id }) => {
             return (
               <ActionIcon
                 maw={120}
@@ -272,7 +265,7 @@ const TechnicalQuestionnaireTable = ({
                   await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
-                    )}/technical-question/${questionnaire_id}`
+                    )}/practical-test-form/${practical_test_id}`
                   )
                 }
               >
@@ -291,4 +284,4 @@ const TechnicalQuestionnaireTable = ({
   );
 };
 
-export default TechnicalQuestionnaireTable;
+export default PracticalTestFormTable;
