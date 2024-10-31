@@ -185,7 +185,9 @@ const Layout = ({ children }: LayoutProps) => {
       styles={{
         main: {
           background:
-            theme.colorScheme === "dark" ? theme.colors.dark[8] : "#fff",
+            theme.colorScheme === "dark"
+              ? theme.colors.dark[8]
+              : theme.colors.gray[0],
           position: "relative",
           width: "0",
         },

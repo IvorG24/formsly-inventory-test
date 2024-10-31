@@ -12,6 +12,7 @@ import {
   Button,
   Container,
   Flex,
+  Group,
   Paper,
   Text,
   Title,
@@ -171,13 +172,13 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
             render: (record: Record<string, unknown>) => {
               const isActive = record[active] === "ACTIVE";
               return (
-                <>
+                <Group position="center">
                   {isActive ? (
                     <IconCheck size={16} color="green" />
                   ) : (
                     <IconX size={16} color="red" />
                   )}
-                </>
+                </Group>
               );
             },
           },

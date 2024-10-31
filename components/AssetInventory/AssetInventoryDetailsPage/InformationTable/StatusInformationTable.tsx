@@ -17,6 +17,7 @@ const filterStatusDetails = (detail: InventoryListType) => {
         "inventory_request_created_by",
         "inventory_request_assigned_to",
         "inventory_request_status",
+        "inventory_request_notes",
       ].includes(key)
   );
 };

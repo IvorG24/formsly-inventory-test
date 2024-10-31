@@ -1,9 +1,9 @@
 import { useEmployeeList } from "@/stores/useEmployeeStore";
+import { limitOption } from "@/utils/constant";
 import {
   CategoryTableRow,
   EventTableRow,
   InventoryCustomerRow,
-  InventoryListType,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -13,18 +13,16 @@ import {
   Divider,
   Flex,
   Group,
-  Menu,
   MultiSelect,
   Select,
   Switch,
   TextInput,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
-import { IconDotsVertical, IconReload, IconSearch } from "@tabler/icons-react";
+import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import EventFormModal from "../EventFormModal";
 
 type RequestListFilterProps = {
   siteList: SiteTableRow[];
@@ -32,12 +30,9 @@ type RequestListFilterProps = {
   eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  inventoryList: InventoryListType[];
-  userId: string;
   handleFilterForms: () => void;
   localFilter: FilterSelectedValuesType;
   setLocalFilter: Dispatch<SetStateAction<FilterSelectedValuesType>>;
-  selectedRow: string[];
   type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
@@ -49,18 +44,17 @@ export type FilterSelectedValuesType = {
   sites?: string[];
   locations?: string;
   category?: string[];
+  limit?: string;
   department?: string[];
   status?: string;
-  limit?: string;
   assignedToPerson?: string[];
   assignedToSite?: string[];
   assignedToCustomer?: string[];
   isAscendingSort?: boolean;
 };
 
-const AssetListFilter = ({
+const AssetReportsListFilter = ({
   eventList,
-  inventoryList,
   departmentList,
   siteList,
   customerList,
@@ -68,8 +62,6 @@ const AssetListFilter = ({
   handleFilterForms,
   localFilter,
   setLocalFilter,
-  userId,
-  selectedRow,
   showTableColumnFilter,
   setShowTableColumnFilter,
   securityGroupData,
@@ -90,19 +82,10 @@ const AssetListFilter = ({
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+  const { ref: limitRef, focused: limitRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const handleSelectChange = (value: string | null) => {
-    if (selectedEventId === value) {
-      setSelectedEventId(null);
-      setTimeout(() => {
-        setSelectedEventId(value);
-      }, 0);
-    } else {
-      setSelectedEventId(value);
-    }
-  };
+
   const eventOptions = eventList.map((event) => ({
     label: event.event_status,
     value: event.event_status,
@@ -112,16 +95,6 @@ const AssetListFilter = ({
     label: customer.customer_name,
     value: customer.customer_name,
   }));
-  const eventSecurity = securityGroupData.asset.filter.event
-    ? securityGroupData.asset.filter.event
-    : [];
-  const eventActions = eventList.map((event) => ({
-    label: event.event_name,
-    value: event.event_id,
-  }));
-  const filteredEvents = eventActions.filter((event) =>
-    eventSecurity.includes(event.label)
-  );
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -130,6 +103,7 @@ const AssetListFilter = ({
       locations: "",
       department: [],
       category: [],
+      limit: "",
       status: "",
       assignedToPerson: [],
       assignedToSite: [],
@@ -186,16 +160,6 @@ const AssetListFilter = ({
 
   return (
     <>
-      {selectedEventId && (
-        <EventFormModal
-          handleFilterForms={handleFilterForms}
-          teamMemberList={employeeList}
-          selectedRow={selectedRow}
-          key={selectedEventId}
-          userId={userId}
-          eventId={selectedEventId}
-        />
-      )}
       <Flex
         gap="sm"
         wrap="wrap"
@@ -248,54 +212,29 @@ const AssetListFilter = ({
             />
           </Flex>
         </Group>
-        <Group>
-          {selectedRow.length > 0 && inventoryList && (
-            <Menu>
-              <Menu.Target>
-                <Button rightIcon={<IconDotsVertical size={16} />}>
-                  More Actions
-                </Button>
-              </Menu.Target>
-
-              <Menu.Dropdown>
-                <Menu.Label>Actions</Menu.Label>
-                {filteredEvents
-                  .filter((option) => {
-                    const selectedItems = inventoryList.filter((row) =>
-                      selectedRow.includes(row.inventory_request_id)
-                    );
-
-                    if (selectedItems.length === 0) return true;
-
-                    const hasCheckedOutItem = selectedItems.some(
-                      (item) => item.inventory_request_status === "CHECKED OUT"
-                    );
-                    const hasAvailableItem = selectedItems.some(
-                      (item) => item.inventory_request_status === "AVAILABLE"
-                    );
-
-                    if (hasCheckedOutItem && option.label === "Check Out") {
-                      return false;
-                    }
-
-                    if (hasAvailableItem && option.label === "Check In") {
-                      return false;
-                    }
-
-                    return true;
-                  })
-                  .map((event) => (
-                    <Menu.Item
-                      key={event.value}
-                      onClick={() => handleSelectChange(event.value)}
-                    >
-                      {event.label}
-                    </Menu.Item>
-                  ))}
-              </Menu.Dropdown>
-            </Menu>
+        <Controller
+          control={control}
+          name="limit"
+          render={({ field: { value, onChange } }) => (
+            <Select
+              data={limitOption}
+              label="Limit"
+              placeholder="limit"
+              ref={limitRef}
+              value={value}
+              onChange={(value) => {
+                onChange(value);
+                if (limitRefFocused)
+                  handleFilterChange("limit", value as string | undefined);
+              }}
+              onDropdownClose={() =>
+                handleFilterChange("limit", value as string | undefined)
+              }
+              sx={{ flex: 1 }}
+              maw={100}
+            />
           )}
-        </Group>
+        />
       </Flex>
       <Divider my="md" />
 
@@ -352,6 +291,7 @@ const AssetListFilter = ({
               )}
             />
           )}
+
           {securityGroupData.asset.filter.category.length === 0 && (
             <Controller
               control={control}
@@ -480,4 +420,4 @@ const AssetListFilter = ({
   );
 };
 
-export default AssetListFilter;
+export default AssetReportsListFilter;
