@@ -8034,7 +8034,6 @@ export const getChildAssetData = async (
     input_data: params,
   });
 
-  console.log(data);
   if (error) throw error;
 
   return data as {
@@ -8240,6 +8239,8 @@ export const getAssetHistoryData = async (
     assetId: string;
     date?: string;
     actionBy?: string[];
+    isAscendingSort?: boolean;
+    columnAccessor?: string;
     event?: string[];
   }
 ) => {
@@ -8348,8 +8349,20 @@ export const getFormOnLoad = async (
 
 export const getInventoryWarranty = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { tagId?: string; limit: number; page: number; date: string }
+  params: {
+    tagId?: string;
+    limit: number;
+    page: number;
+    date?: string;
+    isAscendingSort?: boolean;
+    columnAccessor?: string;
+    status?: string[];
+    search?: string;
+    teamId: string;
+  }
 ) => {
+
+
   const { data, error } = await supabaseClient.rpc("get_inventory_warranty", {
     input_data: params,
   });
@@ -8365,8 +8378,12 @@ export const getInventoryMaintenance = async (
     tagId?: string;
     limit: number;
     page: number;
-    date: string;
-    status: string[];
+    date?: string;
+    search?: string;
+    teamId: string;
+    status?: string[];
+    columnAccessor?: string;
+    isAscendingSort?: boolean;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

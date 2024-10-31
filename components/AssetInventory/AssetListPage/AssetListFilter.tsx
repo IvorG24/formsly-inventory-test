@@ -27,7 +27,6 @@ import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 import EventFormModal from "../EventFormModal";
 
 type RequestListFilterProps = {
-  formList: { label: string; value: string }[];
   siteList: SiteTableRow[];
   customerList: InventoryCustomerRow[];
   eventList: EventTableRow[];
@@ -38,7 +37,6 @@ type RequestListFilterProps = {
   handleFilterForms: () => void;
   localFilter: FilterSelectedValuesType;
   setLocalFilter: Dispatch<SetStateAction<FilterSelectedValuesType>>;
-
   selectedRow: string[];
   type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;

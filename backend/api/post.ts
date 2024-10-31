@@ -2762,7 +2762,6 @@ export const createAssetRequest = async (
   const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
     .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
     .join(", ")})`;
-  console.log(assetResponseValue);
 
   const requestData = {
     responseValues,
@@ -3326,8 +3325,10 @@ export const createInventoryWarranty = async (
     for (const field of section.section_field) {
       const responseValue =
         typeof field.field_response === "string" ||
-        typeof field.field_response === "number"
-          ? String(field.field_response).trim() || ""
+        (typeof field.field_response === "number" &&
+          field.field_response !== null &&
+          field.field_response !== undefined)
+          ? String(field.field_response || 0).trim()
           : field.field_response instanceof Date
             ? field.field_response.toISOString()
             : "";
@@ -3348,24 +3349,15 @@ export const createInventoryWarranty = async (
     }
   }
 
-  const responseValues = fieldResponse
-    .map(
-      (response) =>
-        `('${capitalizeFirstWord(
-          response.inventory_response_value
-        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
-    )
-    .join(",");
-
   const warrantyResponseValue = `('${warrantyId}', '${assetId}',${warrantyResponse
-    .map((warranty) => `'${warranty.response}'`)
+    .map((warranty) => `'${warranty.response || ""}'`)
     .join(", ")})`;
 
   const inputData = {
     warrantyResponseValue,
-    responseValues,
     requestId: assetId,
     customResponseId: warrantyId,
+    fieldResponse,
     teamMemberId,
   };
 
@@ -3384,7 +3376,7 @@ export const createInventoryMaitenance = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     maintenanceData: InventoryFormValues;
-    tagId: string;
+    tagId?: string;
     teamMemberId: string;
     selectedRow?: string;
   }
@@ -3392,7 +3384,7 @@ export const createInventoryMaitenance = async (
   const { maintenanceData, tagId, teamMemberId, selectedRow } = params;
 
   const assetId = await getAssetId(supabaseClient, {
-    tagId: tagId,
+    tagId: tagId || "",
   });
 
   const maintenanceId = selectedRow ? selectedRow : uuidv4();
@@ -3403,8 +3395,10 @@ export const createInventoryMaitenance = async (
     for (const field of section.section_field) {
       const responseValue =
         typeof field.field_response === "string" ||
-        typeof field.field_response === "number"
-          ? String(field.field_response).trim()
+        (typeof field.field_response === "number" &&
+          field.field_response !== null &&
+          field.field_response !== undefined)
+          ? String(field.field_response || 0).trim()
           : field.field_response instanceof Date
             ? field.field_response.toISOString()
             : "";
@@ -3425,22 +3419,13 @@ export const createInventoryMaitenance = async (
     }
   }
 
-  const responseValues = fieldResponse
-    .map(
-      (response) =>
-        `('${capitalizeFirstWord(
-          response.inventory_response_value
-        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
-    )
-    .join(",");
-
   const maintenanceResponseValue = `('${maintenanceId}', '${assetId}',${maintenanceResponse
-    .map((maitenance) => `'${maitenance.response}'`)
+    .map((maitenance) => `'${maitenance.response || ""}'`)
     .join(", ")})`;
 
   const inputData = {
     maintenanceResponseValue,
-    responseValues,
+    fieldResponse,
     requestId: assetId,
     customResponseId: maintenanceId,
     teamMemberId,

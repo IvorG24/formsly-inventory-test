@@ -48,20 +48,26 @@ const FormModal = ({
   const [formData, setFormData] = useState<InventoryFormType>();
   const { handleSubmit, control, formState, reset, getValues, setValue } =
     requestFormMethods;
+  const [loading, setLoading] = useState(false); // Loading state
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
   });
 
   useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+      return;
+    }
     const getInventoryForm = async () => {
       try {
+        setLoading(true);
         if (!userId || !formId) return;
 
         const params = { formId, userId };
 
         const { form } = await getFormOnLoad(supabaseClient, params);
-
+        replaceSection(form.form_section);
         if (mode === "edit" && selectedRow) {
           const sections = getValues("sections");
           Object.keys(selectedRow).forEach((key) => {
@@ -104,11 +110,13 @@ const FormModal = ({
         }
 
         setFormData(form);
+        setLoading(false);
       } catch (e) {
         notifications.show({
           message: "Something went wrong",
           color: "red",
         });
+        setLoading(false);
       }
     };
 
@@ -117,41 +125,48 @@ const FormModal = ({
 
   useEffect(() => {
     if (formState.isSubmitted) {
-      reset();
+      if (mode === "create") {
+        reset();
+      }
+
       onClose();
     }
-  }, [formState.isSubmitted, reset]);
+  }, [formState.isSubmitted, reset, mode]);
   return (
     <>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || loading} />
       <Modal withinPortal opened={isOpen} onClose={onClose} size="xl" centered>
-        <Title order={3}>{formData?.form_name} Form</Title>
-        <FormProvider {...requestFormMethods}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {formSections.map((section, idx) => {
-              const sectionFields = section.section_field || [];
+        {loading ? null : ( // Show form only when loading is complete
+          <>
+            <Title order={3}>{formData?.form_name} Form</Title>
+            <FormProvider {...requestFormMethods}>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                {formSections.map((section, idx) => {
+                  const sectionFields = section.section_field || [];
 
-              return (
-                <Box key={section.section_id}>
-                  <InventoryFormSection
-                    type="Modal"
-                    key={section.section_id}
-                    section={{
-                      ...section,
-                      section_field: sectionFields,
-                    }}
-                    sectionIndex={idx}
-                  />
-                </Box>
-              );
-            })}
-            <Group position="right" mt="md">
-              <Button fullWidth type="submit">
-                Submit
-              </Button>
-            </Group>
-          </form>
-        </FormProvider>
+                  return (
+                    <Box key={section.section_id}>
+                      <InventoryFormSection
+                        type="Modal"
+                        key={section.section_id}
+                        section={{
+                          ...section,
+                          section_field: sectionFields,
+                        }}
+                        sectionIndex={idx}
+                      />
+                    </Box>
+                  );
+                })}
+                <Group position="right" mt="md">
+                  <Button fullWidth type="submit">
+                    Submit
+                  </Button>
+                </Group>
+              </form>
+            </FormProvider>
+          </>
+        )}
       </Modal>
     </>
   );

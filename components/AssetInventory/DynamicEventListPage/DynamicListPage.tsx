@@ -1,10 +1,6 @@
 import { getAssetSpreadsheetView, getEventDetails } from "@/backend/api/get";
-import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  DEFAULT_REQUEST_LIST_LIMIT,
-  REQUEST_LIST_HIDDEN_FORMS,
-} from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 
 import {
   CategoryTableRow,
@@ -65,7 +61,6 @@ const DynamicListPage = ({
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
 
-  const formList = useFormList();
   const router = useRouter();
   const status = router.query.statusName as string;
   const [activePage, setActivePage] = useState(1);
@@ -93,14 +88,6 @@ const DynamicListPage = ({
     defaultValues: localFilter,
     mode: "onChange",
   });
-
-  const filteredFormList = formList
-    .filter(
-      ({ form_name, form_is_public_form }) =>
-        !REQUEST_LIST_HIDDEN_FORMS.includes(form_name) && !form_is_public_form
-    )
-    .map(({ form_name: label, form_id: value }) => ({ label, value }))
-    .sort((a, b) => a.label.localeCompare(b.label));
 
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
@@ -243,7 +230,6 @@ const DynamicListPage = ({
               categoryList={categoryList}
               departmentList={departmentList}
               handleFilterForms={handleFilterForms}
-              formList={filteredFormList}
               localFilter={localFilter}
               setLocalFilter={setLocalFilter}
               showTableColumnFilter={showTableColumnFilter}

@@ -2776,6 +2776,7 @@ export type InventoryHistory = {
   inventory_history_event: string;
   inventory_history_changed_from: string;
   inventory_history_changed_to: string;
+  inventory_history_field: string;
   user_id: string;
   user_first_name: string;
   user_last_name: string;
@@ -2890,9 +2891,20 @@ export type InventoryCustomerList = InventoryCustomerRow & {
 };
 
 export type InventoryWarrantyList = InventoryWarrantyRow & {
+  inventory_request_tag_id: string;
+  inventory_request_name: string;
   [key: string]: string;
 };
 
 export type InventoryMaintenanceList = InventoryMaintenanceRow & {
+  inventory_request_tag_id: string;
+  inventory_request_name: string;
   [key: string]: string;
+};
+
+export type Column = {
+  accessor: string;
+  title: string;
+  sortable: boolean;
+  render: (record: Record<string, unknown>, index: number) => JSX.Element;
 };

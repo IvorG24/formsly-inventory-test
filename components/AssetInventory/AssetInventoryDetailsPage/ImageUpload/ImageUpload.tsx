@@ -35,9 +35,7 @@ const ImageUpload = ({ tagId, imageUrl }: Props) => {
         };
         reader.readAsDataURL(file);
       }
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   };
 
   return (

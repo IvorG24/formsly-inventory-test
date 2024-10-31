@@ -1,58 +1,54 @@
-import { getInventoryMaintenance } from "@/backend/api/get";
-import { createInventoryMaitenance } from "@/backend/api/post";
+import { getInventoryWarranty } from "@/backend/api/get";
+import { createInventoryWarranty } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { formatDate, maintenanceOption, ROW_PER_PAGE } from "@/utils/constant";
-import { InventoryMaintenanceList } from "@/utils/types";
-import { Button, Flex, Group, MultiSelect, Stack, Text } from "@mantine/core";
+import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { InventoryWarrantyList } from "@/utils/types";
+import { Button, Flex, Group, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconX } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { InventoryFormValues } from "../EventFormModal";
-import FormModal from "../FormModal";
+import { InventoryFormValues } from "../../EventFormModal";
+import FormModal from "../../FormModal";
 
 type FormValues = {
   date: Date;
-  status: string[];
 };
 
 type Column = {
   accessor: string;
   title: string;
-  render: (row: InventoryMaintenanceList) => JSX.Element;
+  render: (row: InventoryWarrantyList) => JSX.Element;
 };
 type Props = {
   activeTab: string;
   fetchHistory: (page: number) => void;
 };
-const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
+const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const userProfile = useUserProfile();
   const router = useRouter();
   const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
-  const [formMode, setFormMode] = useState<"create" | "edit">("create");
-  const [maintenanceList, setMaintenanceList] = useState<
-    InventoryMaintenanceList[]
-  >([]);
+  const [warrantyList, setWarrantyList] = useState<InventoryWarrantyList[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
-  const [maintenanceCount, setMaintenanceCount] = useState(0);
+  const [warrantyCount, setWarrantyCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMaintenance, setSelectedMaintenance] =
-    useState<InventoryMaintenanceList | null>(null);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [selectedWarranty, setSelectedWarranty] =
+    useState<InventoryWarrantyList | null>(null);
   const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
   const formMethods = useForm<FormValues>({
     defaultValues: {
       date: undefined,
-      status: [],
     },
   });
 
@@ -63,10 +59,10 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
     handlePagination(activePage);
   }, [activePage, activeTeam.team_id, activeTab]);
 
-  const handleFetchMaitenanceList = async (page: number) => {
+  const handleFetchWarrantyList = async (page: number) => {
     try {
-      if (!activeTeam.team_id || activeTab !== "maintenance") return;
-      const { date, status } = getValues();
+      if (!activeTeam.team_id || activeTab !== "warranty") return;
+      const { date } = getValues();
       const updatedDate = date
         ? (() => {
             const newDate = new Date(date);
@@ -76,39 +72,38 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
           })()
         : "";
 
-      const { data, totalCount } = await getInventoryMaintenance(
-        supabaseClient,
-        {
-          date: String(updatedDate),
-          tagId: assetId,
-          page,
-          limit: ROW_PER_PAGE,
-          status: status,
-        }
-      );
+      const { data, totalCount } = await getInventoryWarranty(supabaseClient, {
+        date: String(updatedDate),
+        tagId: assetId,
+        page,
+        limit: ROW_PER_PAGE,
+        teamId: activeTeam.team_id,
+      });
 
       if (data.length > 0) {
         const generatedColumns = Object.keys(data[0])
           .filter(
             (key) =>
-              key !== "inventory_maintenance_id" &&
-              key !== "inventory_maintenance_request_id" &&
-              key !== "inventory_maintenance_date_created"
+              key !== "inventory_warranty_id" &&
+              key !== "inventory_warranty_request_id" &&
+              key !== "inventory_warranty_date_created" &&
+              key !== "inventory_warranty_status"
           )
           .map((key) => ({
             accessor: key,
+            // Capitalize the first letter of each word in the title
             title: key
               .replace(/_/g, " ")
               .replace("inventory", "")
               .replace(/\b\w/g, (char) => char.toUpperCase()),
 
-            render: (row: InventoryMaintenanceList) => {
+            // Format the row value if it's a date
+            render: (row: InventoryWarrantyList) => {
               const value = row[key];
 
-              const isDate =
-                !isNaN(Date.parse(value)) && typeof value === "string";
+              const isDate = key.includes("date");
 
-              const isNumber = typeof value === "number";
+              const isNumber = key.includes("Cost");
 
               return (
                 <Text size="sm">
@@ -118,7 +113,7 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
                       ? new Intl.NumberFormat("en-PH", {
                           style: "currency",
                           currency: "PHP",
-                        }).format(value)
+                        }).format(Number(value))
                       : value}
                 </Text>
               );
@@ -127,7 +122,7 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
         generatedColumns.push({
           accessor: "actions",
           title: "Actions",
-          render: (row: InventoryMaintenanceList) => (
+          render: (row: InventoryWarrantyList) => (
             <>
               <Button
                 onClick={() => handleEdit(row)}
@@ -141,10 +136,28 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
             </>
           ),
         });
+        generatedColumns.unshift({
+          accessor: "active",
+          title: "Warranty Active",
+          render: (row: InventoryWarrantyList) => {
+            const warrantyStatus = row.inventory_warranty_status;
+            const isExpired = warrantyStatus === "ACTIVE";
+
+            return (
+              <>
+                {isExpired ? (
+                  <IconCheck size={16} color="green" />
+                ) : (
+                  <IconX size={16} color="red" />
+                )}
+              </>
+            );
+          },
+        });
         setColumns(generatedColumns);
       }
-      setMaintenanceList(data);
-      setMaintenanceCount(totalCount);
+      setWarrantyList(data);
+      setWarrantyCount(totalCount);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -157,7 +170,7 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
     try {
       setActivePage(1);
       setIsLoading(true);
-      await handleFetchMaitenanceList(1);
+      await handleFetchWarrantyList(1);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -172,7 +185,7 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
     try {
       setActivePage(page);
       setIsLoading(true);
-      await handleFetchMaitenanceList(page);
+      await handleFetchWarrantyList(page);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -183,98 +196,76 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
     }
   };
 
-  const handleEdit = (warranty: InventoryMaintenanceList) => {
-    setSelectedMaintenance(null);
+  const handleEdit = (warranty: InventoryWarrantyList) => {
+    setSelectedWarranty(null);
     setFormMode("edit");
-    setSelectedMaintenance(warranty);
+    setSelectedWarranty(warranty);
     open();
   };
 
   const handleOnSubmit = async (data: InventoryFormValues) => {
     try {
-      await createInventoryMaitenance(supabaseClient, {
-        maintenanceData: data,
+      await createInventoryWarranty(supabaseClient, {
+        warrantyData: data,
         tagId: assetId,
         teamMemberId: teamMember?.team_member_id ?? "",
-        selectedRow: selectedMaintenance?.inventory_maintenance_id,
+        selectedRow: selectedWarranty?.inventory_warranty_id,
       });
       notifications.show({
         message: "Warranty added successfully",
         color: "green",
       });
       close();
-      handleFetchMaitenanceList(activePage);
+      handleFetchWarrantyList(activePage);
       fetchHistory(1);
     } catch (e) {
       notifications.show({
-        message: "Warranty added successfully",
-        color: "green",
+        message: "Something went wrong",
+        color: "red",
       });
     }
   };
 
   return (
     <Stack>
-      {activeTab === "maintenance" && (
+      {activeTab === "warranty" && (
         <FormModal
           isOpen={opened}
           onClose={close}
-          formId="ffb70d77-05e7-46de-abbf-1513002d079a"
-          userId={userProfile?.user_id ?? ""}
-          selectedRow={selectedMaintenance}
-          onSubmit={handleOnSubmit}
+          selectedRow={selectedWarranty}
           mode={formMode}
+          formId="dd3d9787-ba92-4ef7-bc9f-8c6f374cd477"
+          userId={userProfile?.user_id ?? ""}
+          onSubmit={handleOnSubmit}
         />
       )}
 
       <Flex direction="column" gap="sm">
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="end">
-            <Group>
-              <DatePickerInput
-                label="Maintenance Completion"
-                placeholder="Maintenance Completion Date"
-                {...register("date", { required: false })}
-                miw={250}
-                maw={320}
-                clearable
-                onChange={(value) => {
-                  register("date").onChange({
-                    target: {
-                      name: "date",
-                      value,
-                    },
-                  });
-
-                  handleFetchMaitenanceList(activePage);
-                }}
-              />
-              <MultiSelect
-                data={maintenanceOption}
-                label="Maintenance Status"
-                placeholder="Maintenance Status"
-                {...register("date", { required: false })}
-                miw={250}
-                maw={320}
-                clearable
-                onChange={(value: string[]) => {
-                  register("status").onChange({
-                    target: {
-                      name: "status",
-                      value,
-                    },
-                  });
-                }}
-                onDropdownClose={() => handleFetchMaitenanceList(activePage)}
-              />
-            </Group>
+            <DatePickerInput
+              label="Expiration Date"
+              placeholder="Warranty Date Expiration"
+              {...register("date", { required: false })}
+              miw={250}
+              maw={320}
+              clearable
+              onChange={(value) => {
+                register("date").onChange({
+                  target: {
+                    name: "date",
+                    value,
+                  },
+                });
+                handleFetchWarrantyList(activePage);
+              }}
+            />
             <Button
-              leftIcon=<IconPlus size={16} />
               onClick={() => {
-                open(), setFormMode("create"), setSelectedMaintenance(null);
+                open(), setFormMode("create"), setSelectedWarranty(null);
               }}
             >
-              Add Maintenance
+              Add warranty
             </Button>
           </Group>
         </form>
@@ -286,12 +277,12 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
             minHeight: "300px",
           }}
           withBorder
-          idAccessor="invventory_maintenance_id"
+          idAccessor="inventory_warranty_id"
           page={activePage}
-          totalRecords={maintenanceCount}
+          totalRecords={warrantyCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
-          records={maintenanceList}
+          records={warrantyList}
           fetching={isLoading}
           columns={columns}
         />
@@ -300,4 +291,4 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
   );
 };
 
-export default MaintenancePanel;
+export default WarrantyPanel;

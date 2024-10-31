@@ -1,10 +1,6 @@
 import { getAssetSpreadsheetView } from "@/backend/api/get";
-import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  DEFAULT_REQUEST_LIST_LIMIT,
-  REQUEST_LIST_HIDDEN_FORMS,
-} from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 
 import {
   CategoryTableRow,
@@ -64,7 +60,6 @@ const AssetListPage = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const formList = useFormList();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
@@ -94,20 +89,13 @@ const AssetListPage = ({
     mode: "onChange",
   });
 
-  const filteredFormList = formList
-    .filter(
-      ({ form_name, form_is_public_form }) =>
-        !REQUEST_LIST_HIDDEN_FORMS.includes(form_name) && !form_is_public_form
-    )
-    .map(({ form_name: label, form_id: value }) => ({ label, value }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "inventory_request_created",
     direction: "desc",
   });
+
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
@@ -246,7 +234,6 @@ const AssetListPage = ({
               categoryList={categoryList}
               departmentList={departmentList}
               handleFilterForms={handleFilterForms}
-              formList={filteredFormList}
               localFilter={localFilter}
               setLocalFilter={setLocalFilter}
               showTableColumnFilter={showTableColumnFilter}

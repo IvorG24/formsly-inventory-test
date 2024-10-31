@@ -5,14 +5,13 @@ import {
   Button,
   Card,
   Divider,
-  Flex,
   Grid,
   Group,
   Pagination,
   Text,
 } from "@mantine/core";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   fetchEventsPanel: (page: number) => void;
@@ -21,12 +20,29 @@ type Props = {
   activeTab: string;
 };
 
-const formatTitle = (key: string, eventName: string) => {
-  return key
+const formatTitle = (key: string, eventName: string) =>
+  key
     .replace("event", "")
     .replace(/_/g, " ")
     .replace(eventName.toLowerCase(), " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatValue = (key: string, value: string) => {
+  if (typeof value === "number") {
+    return key.toLowerCase().includes("date")
+      ? formatDate(new Date(value))
+      : new Intl.NumberFormat("en-PH", {
+          style: "currency",
+          currency: "PHP",
+        }).format(value);
+  }
+  if (typeof value === "string" && key.toLowerCase().includes("date")) {
+    return formatDate(new Date(value));
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  return value || "N/A";
 };
 
 const EventPanel = ({
@@ -39,6 +55,11 @@ const EventPanel = ({
   const activeTeam = useActiveTeam();
   const router = useRouter();
 
+  const totalPages = useMemo(
+    () => Math.ceil(totalRecords / ROW_PER_PAGE),
+    [totalRecords]
+  );
+
   useEffect(() => {
     if (!activeTeam.team_id || activeTab !== "events") return;
     fetchEventsPanel(activePage);
@@ -50,7 +71,7 @@ const EventPanel = ({
         <Card shadow="md" p="lg" withBorder key={index} mb="lg" radius="md">
           <Grid gutter="lg">
             {Object.entries(event).map(([key, value]) => {
-              if (key === "event_id" || key === "event_signature") return null;
+              if (["event_id", "event_signature"].includes(key)) return null;
 
               return (
                 <Grid.Col span={6} key={key}>
@@ -58,23 +79,7 @@ const EventPanel = ({
                     <Text size="sm" weight={600}>
                       {formatTitle(key, event.event_name)}:
                     </Text>
-                    <Text size="sm">
-                      {typeof value === "number"
-                        ? key.toLowerCase().includes("date")
-                          ? formatDate(new Date(value))
-                          : new Intl.NumberFormat("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            }).format(value)
-                        : typeof value === "string" &&
-                            key.toLowerCase().includes("date")
-                          ? formatDate(new Date(value))
-                          : typeof value === "boolean"
-                            ? value
-                              ? "Yes"
-                              : "No"
-                            : value || "N/A"}
-                    </Text>
+                    <Text size="sm">{formatValue(key, value)}</Text>
                   </Group>
                 </Grid.Col>
               );
@@ -83,23 +88,23 @@ const EventPanel = ({
 
           <Divider my="md" />
 
-          <Flex justify="flex-end">
-            <Button
-              size="sm"
-              onClick={() => {
-                router.push(event.event_signature);
-              }}
-            >
-              Signature
-            </Button>
-          </Flex>
+          <Group position="right">
+            {event.event_signature && (
+              <Button
+                size="sm"
+                onClick={() => router.push(event.event_signature)}
+              >
+                Signature
+              </Button>
+            )}
+          </Group>
         </Card>
       ))}
 
       <Pagination
         value={activePage}
         onChange={setActivePage}
-        total={Math.ceil(totalRecords / ROW_PER_PAGE)}
+        total={totalPages}
         position="center"
         mt="md"
         size="sm"

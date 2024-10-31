@@ -1501,3 +1501,14 @@ export const maintenanceOption = [
     label: "In Progress",
   },
 ];
+
+export const warrantyOption = [
+  {
+    value: "ACTIVE",
+    label: "Active",
+  },
+  {
+    value: "EXPIRED",
+    label: "Expired",
+  },
+];

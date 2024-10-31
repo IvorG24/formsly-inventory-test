@@ -8,8 +8,7 @@ import { useEmployeeList } from "@/stores/useEmployeeStore";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
-import { excludedKeys, ROW_PER_PAGE } from "@/utils/constant";
-import { formatLabel } from "@/utils/functions";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   InventoryDynamicRow,
@@ -18,7 +17,6 @@ import {
   OptionType,
 } from "@/utils/types";
 import {
-  Badge,
   Box,
   Button,
   Container,
@@ -27,25 +25,27 @@ import {
   LoadingOverlay,
   Menu,
   Paper,
-  Table,
   Tabs,
-  Text,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconDotsVertical, IconEdit } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import EventFormModal from "../EventFormModal";
-import AdditionalDetailsPanel from "./AdditionalDetailsPanel";
-import AssetLinkPanel from "./AssetLinkPanel";
-import EventPanel from "./EventPanel";
-import HistoryPanel from "./HistoryPanel";
+import AdditionalDetailsPanel from "./DetailsPanel/AdditionalDetailsPanel";
+import AssetLinkPanel from "./DetailsPanel/AssetLinkPanel";
+import EventPanel from "./DetailsPanel/EventPanel";
+import HistoryPanel from "./DetailsPanel/HistoryPanel";
+import MaintenancePanel from "./DetailsPanel/MaintenancePanel";
+import WarrantyPanel from "./DetailsPanel/WarrantyPanel";
 import ImageUpload from "./ImageUpload/ImageUpload";
-import MaintenancePanel from "./MaintenancePanel";
-import WarrantyPanel from "./WarrantyPanel";
+import AssetInformationTable from "./InformationTable/AssetInformationTable";
+import CategoryInformationTable from "./InformationTable/CategoryInformationTable";
+import StatusInformationTable from "./InformationTable/StatusInformationTable";
 
 type Props = {
   asset_details: InventoryListType[];
@@ -55,6 +55,7 @@ export type historyFilterForms = {
   event: string[];
   date: string;
   actionBy: string[];
+  isAscendingSort: boolean;
 };
 
 const AssetInventoryDetailsPage = ({
@@ -83,6 +84,10 @@ const AssetInventoryDetailsPage = ({
   const [assetHistoryRecord, setAssetHistoryRecord] = useState(0);
   const [activeTab, setActiveTab] = useState<string>("details");
 
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "inventory_history_date_created",
+    direction: "desc",
+  });
   const canEdit =
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
@@ -137,6 +142,7 @@ const AssetInventoryDetailsPage = ({
   const handleMenuClick = (eventId: string) => {
     setSelectedEventId(eventId);
   };
+
   const filterFormMethods = useForm<historyFilterForms>({
     defaultValues: {
       event: [],
@@ -190,8 +196,7 @@ const AssetInventoryDetailsPage = ({
     try {
       if (!assetId) return;
       setIsloading(true);
-      const { actionBy, event, date } = getValues();
-
+      const { actionBy, event, date, isAscendingSort } = getValues();
       const { data, totalCount } = await getAssetHistoryData(supabaseClient, {
         assetId,
         page: page ? page : 0,
@@ -199,6 +204,8 @@ const AssetInventoryDetailsPage = ({
         actionBy: actionBy ?? [],
         event: event ?? [],
         date: date ?? "",
+        columnAccessor: sortStatus.columnAccessor,
+        isAscendingSort: isAscendingSort,
       });
 
       setIsloading(false);
@@ -219,9 +226,7 @@ const AssetInventoryDetailsPage = ({
     fetchHistoryPanel(1);
   };
 
-  const handleTabChange = (tabValue: string) => {
-    setActiveTab(tabValue);
-  };
+  const handleTabChange = (tabValue: string) => setActiveTab(tabValue);
 
   const handleFilterForms = async () => {
     try {
@@ -291,155 +296,9 @@ const AssetInventoryDetailsPage = ({
                 tagId={assetId}
                 imageUrl={detail.inventory_request_image_url}
               />
-
-              <Grid.Col span={12} xs={6}>
-                <Table striped highlightOnHover withBorder withColumnBorders>
-                  <tbody>
-                    {/* Asset Information Section */}
-                    <tr>
-                      <td colSpan={2}>
-                        <Text weight={600} align="center">
-                          Asset Information
-                        </Text>
-                      </td>
-                    </tr>
-                    {Object.entries(detail)
-                      .filter(
-                        ([key, value]) => !excludedKeys.includes(key) && value
-                      )
-                      .reduce<JSX.Element[]>((acc, [key, value]) => {
-                        if (
-                          [
-                            "inventory_request_tag_id",
-                            "inventory_request_description",
-                            "inventory_request_equipment_type",
-                            "inventory_request_brand",
-                            "inventory_request_model",
-                            "inventory_request_site",
-                            "inventory_request_location",
-                            "inventory_request_department",
-                          ].includes(key)
-                        ) {
-                          acc.push(
-                            <tr key={key}>
-                              <td>
-                                <Text weight={500}>{formatLabel(key)}</Text>
-                              </td>
-                              <td>{value || "N/A"}</td>
-                            </tr>
-                          );
-                        }
-                        return acc;
-                      }, [])}
-                  </tbody>
-                </Table>
-              </Grid.Col>
-
-              <Grid.Col span={12} xs={6}>
-                <Table striped highlightOnHover withBorder withColumnBorders>
-                  <tbody>
-                    {/* Category Information Section */}
-                    <tr>
-                      <td colSpan={2}>
-                        <Text weight={600} align="center">
-                          Category Information
-                        </Text>
-                      </td>
-                    </tr>
-                    {Object.entries(detail)
-                      .filter(([key]) => !excludedKeys.includes(key))
-                      .reduce<JSX.Element[]>((acc, [key, value]) => {
-                        if (
-                          [
-                            "inventory_request_category",
-                            "inventory_request_sub_category",
-                          ].includes(key)
-                        ) {
-                          acc.push(
-                            <tr key={key}>
-                              <td>
-                                <Text weight={500}>{formatLabel(key)}</Text>
-                              </td>
-                              <td>{value ?? ""}</td>
-                            </tr>
-                          );
-                        }
-                        return acc;
-                      }, [])}
-                  </tbody>
-                </Table>
-              </Grid.Col>
-
-              <Grid.Col span={12} xs={6}>
-                <Table striped highlightOnHover withBorder withColumnBorders>
-                  <tbody>
-                    <tr>
-                      <td colSpan={2}>
-                        <Text weight={600} align="center">
-                          Status Information
-                        </Text>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Text weight={500}>Created By</Text>
-                      </td>
-                      <td>
-                        {detail.request_creator_first_name || "N/A"}{" "}
-                        {detail.request_creator_last_name || "N/A"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Text weight={500}>Assigned To</Text>
-                      </td>
-                      <td>
-                        {detail.site_name || ""}
-                        {detail.customer_name || ""}
-                        {`${detail.assignee_first_name || ""} ${detail.assignee_last_name || ""}`}
-                      </td>
-                    </tr>
-                    {Object.entries(detail)
-                      .filter(
-                        ([key, value]) => !excludedKeys.includes(key) && value
-                      )
-                      .reduce<JSX.Element[]>((acc, [key, value]) => {
-                        if (
-                          [
-                            "inventory_request_created_by",
-                            "inventory_request_assigned_to",
-                            "inventory_request_status",
-                          ].includes(key)
-                        ) {
-                          acc.push(
-                            <tr key={key}>
-                              <td>
-                                <Text weight={500}>{formatLabel(key)}</Text>
-                              </td>
-                              <td>
-                                {key === "inventory_request_status" ? (
-                                  <Badge
-                                    sx={{
-                                      backgroundColor:
-                                        detail.inventory_request_status_color ||
-                                        "gray",
-                                      color: "#fff",
-                                    }}
-                                  >
-                                    {value || "N/A"}
-                                  </Badge>
-                                ) : (
-                                  value || "N/A"
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        }
-                        return acc;
-                      }, [])}
-                  </tbody>
-                </Table>
-              </Grid.Col>
+              <AssetInformationTable asset_details={detail} />
+              <CategoryInformationTable asset_details={detail} />
+              <StatusInformationTable asset_details={detail} />
             </Grid>
 
             <Tabs
@@ -448,57 +307,89 @@ const AssetInventoryDetailsPage = ({
               onTabChange={handleTabChange}
             >
               <Tabs.List>
-                <Tabs.Tab value="details">Additional Details</Tabs.Tab>
-                <Tabs.Tab value="events">Events</Tabs.Tab>
-                <Tabs.Tab value="asset-link">Asset Link</Tabs.Tab>
-                <Tabs.Tab value="maintenance">Maintenance</Tabs.Tab>
-                <Tabs.Tab value="warranty">Warranty</Tabs.Tab>
-                <Tabs.Tab value="history">History</Tabs.Tab>
+                {[
+                  { value: "details", label: "Additional Details" },
+                  { value: "events", label: "Events" },
+                  { value: "asset-link", label: "Asset Link" },
+                  { value: "maintenance", label: "Maintenance" },
+                  { value: "warranty", label: "Warranty" },
+                  { value: "history", label: "History" },
+                ].map((tab) => (
+                  <Tabs.Tab key={tab.value} value={tab.value}>
+                    {tab.label}
+                  </Tabs.Tab>
+                ))}
               </Tabs.List>
-
-              <Tabs.Panel value="details" mt="md">
-                <AdditionalDetailsPanel detail={detail} />
-              </Tabs.Panel>
-
-              <Tabs.Panel value="events" mt="md">
-                <EventPanel
-                  activeTab={activeTab}
-                  totalRecords={totalRecords}
-                  eventHistoryData={eventHistoryData || []}
-                  fetchEventsPanel={fetchEventsPanel}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="asset-link" mt="md">
-                <AssetLinkPanel relationType={detail.relationship_type} fetchHistory={fetchHistoryPanel} />
-              </Tabs.Panel>
-
-              <Tabs.Panel value="maintenance" mt="md">
-                <MaintenancePanel
-                  fetchHistory={fetchHistoryPanel}
-                  activeTab={activeTab}
-                />
-              </Tabs.Panel>
-
-              <Tabs.Panel value="warranty" mt="md">
-                <WarrantyPanel
-                  fetchHistory={fetchHistoryPanel}
-                  activeTab={activeTab}
-                />
-              </Tabs.Panel>
-
-              <Tabs.Panel value="history" mt="md">
-                <FormProvider {...filterFormMethods}>
-                  <form onSubmit={handleSubmit(handleFilterForms)}>
-                    <HistoryPanel
-                      statusList={statusList}
-                      activeTab={activeTab}
-                      fetchHistoryPanel={fetchHistoryPanel}
-                      totalRecord={assetHistoryRecord}
-                      asset_history={assetHistoryData || []}
+              {[
+                {
+                  value: "details",
+                  component: <AdditionalDetailsPanel detail={detail} />,
+                },
+                {
+                  value: "events",
+                  component: (
+                    <EventPanel
+                      {...{
+                        activeTab,
+                        totalRecords,
+                        eventHistoryData: eventHistoryData || [],
+                        fetchEventsPanel,
+                      }}
                     />
-                  </form>
-                </FormProvider>
-              </Tabs.Panel>
+                  ),
+                },
+                {
+                  value: "asset-link",
+                  component: (
+                    <AssetLinkPanel
+                      relationType={detail.relationship_type}
+                      fetchHistory={fetchHistoryPanel}
+                    />
+                  ),
+                },
+                {
+                  value: "maintenance",
+                  component: (
+                    <MaintenancePanel
+                      fetchHistory={fetchHistoryPanel}
+                      activeTab={activeTab}
+                    />
+                  ),
+                },
+                {
+                  value: "warranty",
+                  component: (
+                    <WarrantyPanel
+                      fetchHistory={fetchHistoryPanel}
+                      activeTab={activeTab}
+                    />
+                  ),
+                },
+                {
+                  value: "history",
+                  component: (
+                    <FormProvider {...filterFormMethods}>
+                      <form onSubmit={handleSubmit(handleFilterForms)}>
+                        <HistoryPanel
+                          {...{
+                            setSortStatus,
+                            sortStatus,
+                            statusList,
+                            activeTab,
+                            fetchHistoryPanel,
+                            totalRecord: assetHistoryRecord,
+                            asset_history: assetHistoryData || [],
+                          }}
+                        />
+                      </form>
+                    </FormProvider>
+                  ),
+                },
+              ].map((panel) => (
+                <Tabs.Panel key={panel.value} value={panel.value} mt="md">
+                  {panel.component}
+                </Tabs.Panel>
+              ))}
             </Tabs>
           </Box>
         ))}

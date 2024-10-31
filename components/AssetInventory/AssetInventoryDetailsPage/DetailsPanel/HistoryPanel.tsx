@@ -5,16 +5,18 @@ import { InventoryHistory, OptionType } from "@/utils/types";
 import { Avatar, Flex, MultiSelect, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useFocusWithin } from "@mantine/hooks";
-import { DataTable } from "mantine-datatable";
-import { useEffect, useState } from "react";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { historyFilterForms } from "./AssetInventoryDetailsPage";
+import { historyFilterForms } from "../AssetInventoryDetailsPage";
 
 type Props = {
   asset_history: InventoryHistory[] | null;
   totalRecord: number;
   statusList: OptionType[];
   fetchHistoryPanel: (page: number) => void;
+  sortStatus: DataTableSortStatus;
+  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
   activeTab: string;
 };
 
@@ -22,7 +24,9 @@ const HistoryPanel = ({
   asset_history: historyDetails = [],
   totalRecord,
   fetchHistoryPanel,
+  sortStatus,
   statusList,
+  setSortStatus,
   activeTab,
 }: Props) => {
   const [activePage, setActivePage] = useState(1);
@@ -32,6 +36,7 @@ const HistoryPanel = ({
       event: [],
       date: "",
       actionBy: [],
+      isAscendingSort: false,
     });
 
   useEffect(() => {
@@ -42,7 +47,7 @@ const HistoryPanel = ({
   const { ref: eventRef, focused: event } = useFocusWithin();
   const { ref: acionByRef, focused: actionBy } = useFocusWithin();
   const { ref: dateRef, focused: date } = useFocusWithin();
-  const { control } = useFormContext<historyFilterForms>();
+  const { control, setValue } = useFormContext<historyFilterForms>();
 
   const handleFilterChange = async (
     key: keyof historyFilterForms,
@@ -59,6 +64,11 @@ const HistoryPanel = ({
     value: member.team_member_id,
     label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
   }));
+
+  useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
+    fetchHistoryPanel(activePage);
+  }, [sortStatus]);
 
   return (
     <Stack>
@@ -143,11 +153,14 @@ const HistoryPanel = ({
         totalRecords={totalRecord}
         recordsPerPage={ROW_PER_PAGE}
         records={historyDetails || []}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
         onPageChange={setActivePage}
         columns={[
           {
-            accessor: "inventory_history_date_created",
+            accessor: "h.inventory_history_date_created",
             title: "Date",
+            sortable: true,
             render: (record) => (
               <Text>
                 {formatDate(
@@ -157,8 +170,9 @@ const HistoryPanel = ({
             ),
           },
           {
-            accessor: "inventory_history_event",
+            accessor: "h.inventory_history_event",
             title: "Event",
+            sortable: true,
             render: (record) => (
               <Text>
                 {String(record.inventory_history_event).toUpperCase()}
@@ -166,8 +180,21 @@ const HistoryPanel = ({
             ),
           },
           {
-            accessor: "inventory_history_changed_from",
+            accessor: "h.inventory_history_field",
+            title: "Field",
+            sortable: true,
+            render: (record) => (
+              <Text>
+                {record.inventory_history_field !== null
+                  ? String(record.inventory_history_field)
+                  : null}
+              </Text>
+            ),
+          },
+          {
+            accessor: "h.inventory_history_changed_from",
             title: "Changed From",
+            sortable: true,
             render: (record) => (
               <Text>
                 {record.inventory_history_changed_from
@@ -177,8 +204,9 @@ const HistoryPanel = ({
             ),
           },
           {
-            accessor: "inventory_history_changed_to",
+            accessor: "h.inventory_history_changed_to",
             title: "Changed To",
+            sortable: true,
             render: (record) => (
               <Text>
                 {record.inventory_history_changed_to
@@ -188,8 +216,9 @@ const HistoryPanel = ({
             ),
           },
           {
-            accessor: "request_creator_user_id",
+            accessor: "u.user_id",
             title: "Action By",
+            sortable: true,
             render: (record) => {
               if (!record) return;
               const {

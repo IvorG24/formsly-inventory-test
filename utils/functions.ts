@@ -592,3 +592,9 @@ export const setFileInputFromUrl = async (url: string) => {
   const file = new File([blob], fileName, { type: blob.type });
   return file;
 };
+
+export const formatCurrency = (value: number) =>
+  `₱${value.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;

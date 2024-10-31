@@ -23,10 +23,13 @@ import {
   IconGps,
   IconListDetails,
   IconLocation,
+  IconPaperclip,
   IconPuzzle,
   IconSettings,
   IconSettingsUp,
+  IconTableColumn,
   IconTimelineEvent,
+  IconTooltip,
   IconUserCancel,
   IconUserCode,
   TablerIconsProps,
@@ -113,6 +116,26 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           },
         ]
       : []),
+    {
+      id: "list",
+      icon: IconTableColumn,
+      label: "List",
+      subLinks: [
+        {
+          id: "maintenance",
+          label: "Maintenance",
+          icon: IconTooltip,
+          href: `/${formattedTeamName}/inventory/list/maintenance`,
+        },
+
+        {
+          id: "warranty",
+          label: "Warranty",
+          icon: IconPaperclip,
+          href: `/${formattedTeamName}/inventory/list/warranty`,
+        },
+      ],
+    },
     {
       id: "advanced",
       icon: IconBriefcaseOff,

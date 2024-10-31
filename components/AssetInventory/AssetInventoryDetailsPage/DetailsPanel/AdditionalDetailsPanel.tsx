@@ -2,10 +2,36 @@ import { excludedKeys, formatDate } from "@/utils/constant";
 import { formatLabel } from "@/utils/functions";
 import { InventoryListType } from "@/utils/types";
 import { Card, Stack, Table, Text } from "@mantine/core";
+import { useMemo } from "react";
+
 type Props = {
   detail: InventoryListType;
 };
+
+const filterCustomFields = ([key, value]: [string, unknown]) =>
+  !excludedKeys.includes(key) &&
+  value &&
+  !key.startsWith("inventory_request_") &&
+  !key.startsWith("relationship_type") &&
+  !key.startsWith("site_name") &&
+  !key.startsWith("customer_name");
+
 const AdditionalDetailsPanel = ({ detail }: Props) => {
+  const customFields = useMemo(
+    () =>
+      Object.entries(detail)
+        .filter(filterCustomFields)
+        .map(([key, value]) => (
+          <tr key={key}>
+            <td>
+              <Text weight={500}>{formatLabel(key)}</Text>
+            </td>
+            <td>{value ?? "N/A"}</td>
+          </tr>
+        )),
+    [detail]
+  );
+
   return (
     <Stack>
       <Card withBorder shadow="sm">
@@ -35,7 +61,6 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
               <td>
                 <Text weight={500}>Cost</Text>
               </td>
-
               <td>
                 ₱
                 {Number(detail.inventory_request_cost).toLocaleString("en-PH", {
@@ -89,26 +114,7 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
           Custom Field
         </Text>
         <Table striped highlightOnHover withBorder withColumnBorders>
-          <tbody>
-            {Object.entries(detail)
-              .filter(([key, value]) => !excludedKeys.includes(key) && value)
-              .reduce<JSX.Element[]>((acc, [key, value]) => {
-                if (
-                  !key.startsWith("inventory_request_") &&
-                  !key.startsWith("relationship_type")
-                ) {
-                  acc.push(
-                    <tr key={key}>
-                      <td>
-                        <Text weight={500}>{formatLabel(key)}</Text>
-                      </td>
-                      <td>{value ?? "N/A"}</td>
-                    </tr>
-                  );
-                }
-                return acc;
-              }, [])}
-          </tbody>
+          <tbody>{customFields}</tbody>
         </Table>
       </Card>
     </Stack>
