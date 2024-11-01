@@ -5,7 +5,11 @@ import { getInventoryMaintenance } from "@/backend/api/get";
 import { createInventoryMaitenance } from "@/backend/api/post";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryMaintenanceList, SecurityGroupData } from "@/utils/types";
+import {
+  Column,
+  InventoryMaintenanceList,
+  SecurityGroupData,
+} from "@/utils/types";
 import {
   Anchor,
   Box,
@@ -29,13 +33,6 @@ import MaintenanceListTable from "./MaintenanceListTable";
 
 type Props = {
   securityGroupData: SecurityGroupData;
-};
-
-type Column = {
-  accessor: string;
-  title: string;
-  sortable: boolean;
-  render: (record: Record<string, unknown>, index: number) => JSX.Element;
 };
 
 type FilterSelectedValuesType = {
@@ -65,6 +62,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
         isAscendingSort: false,
       },
     });
+
   const [selectedMaintenance, setSelectedMaintenance] =
     useState<InventoryMaintenanceList | null>(null);
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
@@ -156,7 +154,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
         const generatedColumns = [
           {
             accessor: tagId,
-            title: "Tag ID", // Ensure "ID" is uppercase
+            title: "Tag ID",
             sortable: true,
             hidden: checkIfColumnIsHidden(tagId),
             render: (record: Record<string, unknown>) => (

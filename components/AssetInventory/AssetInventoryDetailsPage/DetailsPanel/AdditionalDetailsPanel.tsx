@@ -1,4 +1,4 @@
-import { excludedKeys, formatDate } from "@/utils/constant";
+import { formatDate, isExcludedKey } from "@/utils/constant";
 import { formatLabel } from "@/utils/functions";
 import { InventoryListType } from "@/utils/types";
 import { Card, Stack, Table, Text } from "@mantine/core";
@@ -9,7 +9,7 @@ type Props = {
 };
 
 const filterCustomFields = ([key, value]: [string, unknown]) =>
-  !excludedKeys.includes(key) &&
+  !isExcludedKey(key) &&
   value &&
   !key.startsWith("inventory_request_") &&
   !key.startsWith("relationship_type") &&

@@ -1,4 +1,4 @@
-import { excludedKeys } from "@/utils/constant";
+import { isExcludedKey } from "@/utils/constant";
 import { formatLabel } from "@/utils/functions";
 import { InventoryListType } from "@/utils/types";
 import { Grid, Table, Text } from "@mantine/core";
@@ -11,7 +11,7 @@ type Props = {
 const filterCategoryDetails = (detail: InventoryListType) => {
   return Object.entries(detail).filter(
     ([key, value]) =>
-      !excludedKeys.includes(key) &&
+      !isExcludedKey(key) &&
       value &&
       ["inventory_request_category", "inventory_request_sub_category"].includes(
         key

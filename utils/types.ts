@@ -2793,6 +2793,7 @@ export type InventoryListType = InventoryRequestRow & {
   assignee_user_id?: string;
   assignee_first_name?: string;
   assignee_last_name?: string;
+  [key: string]: string | undefined;
 };
 
 export type InventoryAssetFormValues = {
@@ -2950,6 +2951,7 @@ export type InventoryMaintenanceList = InventoryMaintenanceRow & {
 export type Column = {
   accessor: string;
   title: string;
-  sortable: boolean;
+  sortable?: boolean;
+  hidden?: boolean;
   render: (record: Record<string, unknown>, index: number) => JSX.Element;
 };

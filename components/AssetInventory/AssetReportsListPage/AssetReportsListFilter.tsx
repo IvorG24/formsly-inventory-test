@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 
@@ -31,8 +31,6 @@ type RequestListFilterProps = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   handleFilterForms: () => void;
-  localFilter: FilterSelectedValuesType;
-  setLocalFilter: Dispatch<SetStateAction<FilterSelectedValuesType>>;
   type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
@@ -60,8 +58,6 @@ const AssetReportsListFilter = ({
   customerList,
   categoryList,
   handleFilterForms,
-  localFilter,
-  setLocalFilter,
   showTableColumnFilter,
   setShowTableColumnFilter,
   securityGroupData,
@@ -136,8 +132,7 @@ const AssetReportsListFilter = ({
     };
   });
 
-  const { register, control, setValue } =
-    useFormContext<FilterSelectedValuesType>();
+  const { register, control } = useFormContext<FilterSelectedValuesType>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
@@ -148,15 +143,8 @@ const AssetReportsListFilter = ({
     if (value !== filterMatch) {
       handleFilterForms();
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
-      setLocalFilter({ ...localFilter, [key]: value });
     }
   };
-
-  useEffect(() => {
-    Object.entries(localFilter).forEach(([key, value]) => {
-      setValue(key as keyof FilterSelectedValuesType, value);
-    });
-  }, [localFilter]);
 
   return (
     <>
@@ -244,7 +232,6 @@ const AssetReportsListFilter = ({
             <Controller
               control={control}
               name="sites"
-              defaultValue={localFilter.sites}
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
                   data={siteListchoices}

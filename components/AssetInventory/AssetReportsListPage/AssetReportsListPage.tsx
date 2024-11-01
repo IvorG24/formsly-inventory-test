@@ -63,27 +63,23 @@ const AssetReportsListPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
-  const [localFilter, setLocalFilter] =
-    useLocalStorage<FilterSelectedValuesType>({
-      key: "inventory-asset-report-list-table-filter",
-      defaultValue: {
-        search: "",
-        sites: [],
-        locations: "",
-        department: [],
-        category: [],
-        status: "",
-        limit: "",
-        assignedToPerson: [],
-        assignedToSite: [],
-        assignedToCustomer: [],
-        isAscendingSort: false,
-      },
-    });
+
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
   const filterFormMethods = useForm<FilterSelectedValuesType>({
-    defaultValues: localFilter,
+    defaultValues: {
+      search: "",
+      sites: [],
+      locations: "",
+      department: [],
+      category: [],
+      status: "",
+      limit: "",
+      assignedToPerson: [],
+      assignedToSite: [],
+      assignedToCustomer: [],
+      isAscendingSort: false,
+    },
     mode: "onChange",
   });
 
@@ -201,7 +197,7 @@ const AssetReportsListPage = ({
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={3}>Asset Rpoert List Page</Title>
+          <Title order={3}>Asset Report List Page</Title>
           <Text>Manage your assets reports here.</Text>
         </Box>
       </Flex>
@@ -216,8 +212,6 @@ const AssetReportsListPage = ({
               categoryList={categoryList}
               departmentList={departmentList}
               handleFilterForms={handleFilterForms}
-              localFilter={localFilter}
-              setLocalFilter={setLocalFilter}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
             />

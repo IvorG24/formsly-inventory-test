@@ -1,4 +1,5 @@
 import {
+  Button,
   createStyles,
   Drawer,
   Group,
@@ -26,6 +27,7 @@ type DataTableProps<T = Record<string, unknown>> = {
     columnAccessor: string;
     direction: "asc" | "desc";
   }) => void;
+  handleFetch?: (page: number) => void;
 
   // for table column
   showTableColumnFilter: boolean;
@@ -68,6 +70,7 @@ const ListTable = ({
   setShowTableColumnFilter,
   tableColumnList,
   listTableColumnFilter,
+  handleFetch,
   setListTableColumnFilter,
   ...props
 }: DataTableProps) => {
@@ -135,6 +138,15 @@ const ListTable = ({
               </Group>
             );
           })}
+          {handleFetch && (
+            <Button
+              onClick={() => {
+                setShowTableColumnFilter(false), handleFetch(1);
+              }}
+            >
+              Apply Changes
+            </Button>
+          )}
         </Stack>
       </Drawer>
     </>

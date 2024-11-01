@@ -79,6 +79,7 @@ const AssetReportsListTable = ({
   const { classes } = useStyles();
   const router = useRouter();
   const limit = getValues("limit");
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -87,12 +88,13 @@ const AssetReportsListTable = ({
   const dynamicColumns = tableColumnList
     .filter(
       (column) =>
-        !checkIfColumnIsHidden(column.value) &&
         column.value !== "inventory_request_id" &&
         column.value !== "inventory_request_status" &&
         column.value !== "inventory_request_name" &&
         column.value !== "inventory_request_tag_id" &&
-        column.value !== "inventory_request_cost"
+        column.value !== "inventory_request_cost" &&
+        column.value !== "inventory_request_created_by" &&
+        column.label === "inventory_request_id"
     )
     .map((column) => ({
       accessor: `r.${column.value}`,
@@ -101,6 +103,7 @@ const AssetReportsListTable = ({
         column.value.startsWith("inventory_request") &&
         column.value !== "inventory_request_notes",
       width: 180,
+      hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {
         const value =
           record[column.value] !== undefined && record[column.value] !== null
@@ -245,11 +248,11 @@ const AssetReportsListTable = ({
             },
           },
           {
-            accessor: "inventory_request_id",
+            accessor: "inventory_request_assigned_to",
             title: "Assigned To",
             sortable: true,
             width: 180,
-            hidden: checkIfColumnIsHidden("assignee_first_name"),
+            hidden: checkIfColumnIsHidden("inventory_request_assigned_to"),
             render: (record) => {
               const {
                 site_name,

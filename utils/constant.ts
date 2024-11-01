@@ -1449,35 +1449,38 @@ export const costCodeExemptionList = [
   "SANTISIMO LOGISTICS",
 ];
 
-export const excludedKeys = [
-  "inventory_request_name",
-  "request_creator_first_name",
-  "request_creator_last_name",
-  "site_name",
-  "inventory_assignee_team_member_id",
-  "request_creator_team_member_id",
-  "request_creator_user_id",
-  "assignee_user_id",
-  "inventory_assignee_asset_request_id",
-  "request_creator_avatar",
-  "assignee_team_member_id",
-  "assignee_first_name",
-  "assignee_last_name",
-  "inventory_request_purchase_date",
-  "inventory_request_purchase_from",
-  "inventory_request_purchase_order",
-  "inventory_request_created_by",
-  "inventory_request_created",
-  "inventory_request_cost",
-  "inventory_assignee_site_id",
-  "inventory_request_form_id",
-  "inventory_request_status_color",
-  "inventory_request_item_code",
-  "inventory_request_serial_number",
-  "inventory_request_si_number",
-  "inventory_event_date_created",
-  "inventory_assignee_employee_id",
-];
+export const isExcludedKey = (key?: string) => {
+  const excludedKeys = [
+    "inventory_request_name",
+    "request_creator_first_name",
+    "request_creator_last_name",
+    "site_name",
+    "inventory_assignee_team_member_id",
+    "request_creator_team_member_id",
+    "request_creator_user_id",
+    "assignee_user_id",
+    "inventory_assignee_asset_request_id",
+    "request_creator_avatar",
+    "assignee_team_member_id",
+    "assignee_first_name",
+    "assignee_last_name",
+    "inventory_request_purchase_date",
+    "inventory_request_purchase_from",
+    "inventory_request_purchase_order",
+    "inventory_request_created_by",
+    "inventory_request_created",
+    "inventory_request_cost",
+    "inventory_assignee_site_id",
+    "inventory_request_form_id",
+    "inventory_request_status_color",
+    "inventory_request_item_code",
+    "inventory_request_serial_number",
+    "inventory_request_si_number",
+    "inventory_event_date_created",
+    "inventory_assignee_employee_id",
+  ];
+  return excludedKeys.includes(key ?? "");
+};
 
 export const maintenanceOption = [
   {
@@ -1531,3 +1534,18 @@ export const limitOption = [
     label: "100",
   },
 ];
+
+export const assignedToOption = [
+    {
+      value: "Customer",
+      label: "Customer",
+    },
+    {
+      value: "Site",
+      label: "Site",
+    },
+    {
+      value: "Person",
+      label: "Person",
+    },
+  ];

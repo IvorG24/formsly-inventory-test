@@ -152,9 +152,9 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
 
         {
           id: "checked-out",
-          label: "Check Out Reports",
+          label: "Events Reports",
           icon: IconPaperclip,
-          href: `/${formattedTeamName}/inventory/reports/check-out`,
+          href: `/${formattedTeamName}/inventory/reports/events`,
         },
       ],
     },
@@ -447,9 +447,9 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
         },
       })}
       onMouseEnter={() => setIsCollapsed(false)}
-      onMouseLeave={() =>
-        isSmallScreen ? setIsCollapsed(false) : setIsCollapsed(true)
-      }
+      //   onMouseLeave={() =>
+      //     isSmallScreen ? setIsCollapsed(false) : setIsCollapsed(true)
+      //   }
     >
       <Stack p={16} spacing={12}>
         {teamList.length > 0 ? <SelectTeam isCollapsed={isCollapsed} /> : null}

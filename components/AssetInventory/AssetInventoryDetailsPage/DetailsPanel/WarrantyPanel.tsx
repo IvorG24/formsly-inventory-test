@@ -9,7 +9,7 @@ import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconCheck, IconEdit, IconX } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconPlus, IconX } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
@@ -261,6 +261,7 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
               }}
             />
             <Button
+              leftIcon={<IconPlus size={16} />}
               onClick={() => {
                 open(), setFormMode("create"), setSelectedWarranty(null);
               }}

@@ -123,7 +123,7 @@ const AssetListPage = ({
       .map((column) => column.value),
   });
 
-  const checkIfColumnIsHidden = (column: string) => {
+  const checkIfColumnIsHidden = (column: string) => {   
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
   };

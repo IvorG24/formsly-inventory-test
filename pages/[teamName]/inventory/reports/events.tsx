@@ -1,6 +1,6 @@
 // Imports
 import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
-import CheckOutReportListPage from "@/components/AssetInventory/CheckOutReportListPage/CheckOutReportListPage";
+import EventReportListpage from "@/components/AssetInventory/EventReportListPage/EventReportListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -82,10 +82,10 @@ const Page = ({
   return (
     <>
       <Meta
-        description="Check Out Report List Page"
-        url="/teamName/inventory/reports/check-out"
+        description="Events Report List Page"
+        url="/teamName/inventory/reports/events"
       />
-      <CheckOutReportListPage
+      <EventReportListpage
         customerTableList={customerList}
         eventList={eventList}
         securityGroupData={securityGroupData}

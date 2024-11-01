@@ -5,7 +5,11 @@ import { getInventoryWarranty } from "@/backend/api/get";
 import { createInventoryWarranty } from "@/backend/api/post";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryWarrantyList, SecurityGroupData } from "@/utils/types";
+import {
+  Column,
+  InventoryWarrantyList,
+  SecurityGroupData,
+} from "@/utils/types";
 import {
   Anchor,
   Box,
@@ -30,13 +34,6 @@ import WarrantyListTable from "./WarrantyListTable";
 
 type Props = {
   securityGroupData: SecurityGroupData;
-};
-
-type Column = {
-  accessor: string;
-  title: string;
-  sortable: boolean;
-  render: (record: Record<string, unknown>, index: number) => JSX.Element;
 };
 
 type FilterSelectedValuesType = {
@@ -100,7 +97,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
     return listTableColumnFilter.includes(column);
   };
 
-  const visibleColumns = columns.filter(
+  const displayedColumns = columns.filter(
     (col) => !checkIfColumnIsHidden(col.accessor)
   );
 
@@ -377,7 +374,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}
-            columns={visibleColumns}
+            columns={displayedColumns}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}
