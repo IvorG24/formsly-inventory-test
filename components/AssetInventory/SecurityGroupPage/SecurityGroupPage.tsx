@@ -6,20 +6,23 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import { TeamGroupTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
-import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -40,7 +43,7 @@ const SecurityGroupPage = () => {
   const isAdminOrOwner = ["OWNER", "ADMIN"].some((role) =>
     teamMember?.team_member_role.includes(role)
   );
-  const supabaseClient = createPagesBrowserClient<Database>();
+  const supabaseClient = useSupabaseClient();
   const [activePage, setActivePage] = useState(1);
   const [currentTeamGroup, setCurrentTeamGroup] = useState<TeamGroupTableRow[]>(
     []
@@ -108,70 +111,77 @@ const SecurityGroupPage = () => {
   };
 
   return (
-    <Container fluid>
-      <Flex direction="column" gap="sm">
-        <Title order={2}>List of Groups</Title>
-        <Text>
-          This is the list of Departments currently in the system, including
-          their descriptions and available actions. You can edit or delete each
-          site as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by Group Name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-          </Group>
-        </form>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="team_group_id"
-          page={activePage}
-          totalRecords={teamGroupCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={currentTeamGroup}
-          fetching={isFetchingGroupList}
-          columns={[
-            {
-              accessor: "team_group_id",
-              width: "90%",
-              title: "Group Name",
-              render: (department) => <Text>{department.team_group_name}</Text>,
-            },
-
-            {
-              accessor: "actions",
-              width: "30%",
-              title: "Actions",
-              render: (department) =>
-                isAdminOrOwner ? ( // Conditionally render the Edit button
-                  <Button
-                    variant="light"
-                    onClick={() => handleEditGroup(department.team_group_id)}
-                  >
-                    Edit Group
-                  </Button>
-                ) : null,
-            },
-          ]}
-        />
+    <Container maw={3840} h="100%">
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Groups</Title>
+          <Text>
+            This is the list of Groups currently in the system, including their
+            descriptions and available actions. You can edit or delete each site
+            as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by Group Name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+            </Group>
+          </form>
+          <Divider />
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="team_group_id"
+            page={activePage}
+            totalRecords={teamGroupCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={currentTeamGroup}
+            fetching={isFetchingGroupList}
+            columns={[
+              {
+                accessor: "team_group_id",
+                width: "90%",
+                title: "Group Name",
+                render: (department) => (
+                  <Text>{department.team_group_name}</Text>
+                ),
+              },
+
+              {
+                accessor: "actions",
+                width: "30%",
+                title: "Actions",
+                render: (department) =>
+                  isAdminOrOwner ? ( // Conditionally render the Edit button
+                    <Button
+                      variant="light"
+                      onClick={() => handleEditGroup(department.team_group_id)}
+                    >
+                      Edit Group
+                    </Button>
+                  ) : null,
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

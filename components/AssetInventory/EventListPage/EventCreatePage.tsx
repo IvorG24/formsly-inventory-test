@@ -4,11 +4,13 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { createEventFormvalues } from "@/utils/types";
 import {
+  Box,
   Button,
   Checkbox,
   ColorInput,
   Container,
   DEFAULT_THEME,
+  Flex,
   Group,
   LoadingOverlay,
   Paper,
@@ -190,286 +192,294 @@ const EventCreatePage = () => {
   };
 
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack>
-          <Title order={3}>Create custom event</Title>
-          <Paper withBorder shadow="sm" p="md">
-            <Stack>
-              <Title order={3}>Event Details</Title>
-              <Controller
-                name="event.eventName"
-                control={control}
-                rules={{
-                  required: "Event Name is required",
-                  pattern: {
-                    value: /^[a-zA-Z0-9 ]*$/,
-                    message: "Special characters are not allowed",
-                  },
-                }}
-                render={({ field }) => (
-                  <TextInput
-                    label="Event Name *"
-                    required
-                    placeholder="For example, Retired, End of Life, etc."
-                    {...field}
-                    aria-required
-                    error={
-                      errors.event?.eventName && errors.event?.eventName.message
-                    }
-                  />
-                )}
-              />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>Create Event Page</Title>
+        </Box>
+      </Flex>
+      <Paper p="md">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack>
+            <Paper withBorder shadow="md" p="md">
+              <Stack>
+                <Title order={4}>Event Details</Title>
+                <Controller
+                  name="event.eventName"
+                  control={control}
+                  rules={{
+                    required: "Event Name is required",
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]*$/,
+                      message: "Special characters are not allowed",
+                    },
+                  }}
+                  render={({ field }) => (
+                    <TextInput
+                      label="Event Name *"
+                      required
+                      placeholder="For example, Retired, End of Life, etc."
+                      {...field}
+                      aria-required
+                      error={
+                        errors.event?.eventName &&
+                        errors.event?.eventName.message
+                      }
+                    />
+                  )}
+                />
 
-              <Controller
-                name="event.eventColor"
-                control={control}
-                rules={{ required: "Event Color is required" }}
-                render={({ field }) => (
-                  <ColorInput
-                    label="Pick color"
-                    disallowInput
-                    required
-                    withPicker={false}
-                    swatches={[
-                      ...DEFAULT_THEME.colors.red,
-                      ...DEFAULT_THEME.colors.green,
-                      ...DEFAULT_THEME.colors.blue,
-                      ...DEFAULT_THEME.colors.yellow,
-                      ...DEFAULT_THEME.colors.orange,
-                      ...DEFAULT_THEME.colors.teal,
-                    ]}
-                    {...field}
-                  />
-                )}
-              />
-              <Controller
-                name="event.eventStatus"
-                control={control}
-                rules={{ required: "Event Status Is Required" }}
-                render={({ field }) => (
-                  <TextInput
-                    label="Event Status"
-                    required
-                    placeholder="For example, AVAILABLE , CHECKED OUT"
-                    {...field}
-                    error={
-                      errors.event?.eventStatus &&
-                      errors.event?.eventStatus.message
-                    }
-                  />
-                )}
-              />
-              <Controller
-                name="event.eventDescription"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    label="Event Description"
-                    required
-                    placeholder="Enter event description..."
-                    {...field}
-                  />
-                )}
-              />
+                <Controller
+                  name="event.eventColor"
+                  control={control}
+                  rules={{ required: "Event Color is required" }}
+                  render={({ field }) => (
+                    <ColorInput
+                      label="Pick color"
+                      disallowInput
+                      required
+                      withPicker={false}
+                      swatches={[
+                        ...DEFAULT_THEME.colors.red,
+                        ...DEFAULT_THEME.colors.green,
+                        ...DEFAULT_THEME.colors.blue,
+                        ...DEFAULT_THEME.colors.yellow,
+                        ...DEFAULT_THEME.colors.orange,
+                        ...DEFAULT_THEME.colors.teal,
+                      ]}
+                      {...field}
+                    />
+                  )}
+                />
+                <Controller
+                  name="event.eventStatus"
+                  control={control}
+                  rules={{ required: "Event Status Is Required" }}
+                  render={({ field }) => (
+                    <TextInput
+                      label="Event Status"
+                      required
+                      placeholder="For example, AVAILABLE , CHECKED OUT"
+                      {...field}
+                      error={
+                        errors.event?.eventStatus &&
+                        errors.event?.eventStatus.message
+                      }
+                    />
+                  )}
+                />
+                <Controller
+                  name="event.eventDescription"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      label="Event Description"
+                      required
+                      placeholder="Enter event description..."
+                      {...field}
+                    />
+                  )}
+                />
 
-              <Controller
-                name="event.enableEvent"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="Enable this Event?"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                  />
-                )}
-              />
-            </Stack>
-          </Paper>
+                <Controller
+                  name="event.enableEvent"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="Enable this Event?"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                    />
+                  )}
+                />
+              </Stack>
+            </Paper>
 
-          <Paper withBorder shadow="sm" p="md">
-            <ScrollArea style={{ width: "100%" }} mx="auto">
-              <Table striped highlightOnHover miw={1000}>
-                <thead>
-                  <tr>
-                    <th>Field</th>
-                    <th>Explanation</th>
-                    <th>Customize Label</th>
-                    <th>Example</th>
-                    <th>Data Required</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {control._defaultValues.fields?.map((field, index) => (
-                    <tr key={index}>
-                      <td>
-                        <Group>
+            <Paper withBorder shadow="md" p="md">
+              <Title order={4}>Event Fields</Title>
+              <ScrollArea style={{ width: "100%" }} mx="auto">
+                <Table striped highlightOnHover miw={1000}>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Explanation</th>
+                      <th>Customize Label</th>
+                      <th>Example</th>
+                      <th>Data Required</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {control._defaultValues.fields?.map((field, index) => (
+                      <tr key={index}>
+                        <td>
+                          <Group>
+                            <Controller
+                              name={`fields.${index}.field_is_included`}
+                              control={control}
+                              render={({ field: checkboxField }) => (
+                                <Checkbox
+                                  {...checkboxField}
+                                  value={
+                                    field?.field_is_included ? "true" : "false"
+                                  }
+                                  disabled={
+                                    field?.field_name === "Signature" ||
+                                    field?.field_name === "Notes"
+                                  }
+                                  error={
+                                    errors?.fields?.[index]?.field_is_included
+                                      ?.message
+                                  }
+                                />
+                              )}
+                            />
+                            <Text>{field?.field_type}</Text>
+                          </Group>
+                        </td>
+
+                        <td style={{ verticalAlign: "middle" }}>
+                          {field?.field_type === "DATE"
+                            ? "If you expect the user to return the assets by a specific due date, utilize Date 2 for that purpose."
+                            : field?.field_type === "TEXT"
+                              ? "The text field can hold up to 100 characters."
+                              : field?.field_type === "NUMBER"
+                                ? "Use the field to enter an amount. The currency symbol will be defined in the company setup."
+                                : field?.field_type === "CHECKBOX"
+                                  ? "A boolean field will present a check box to allow the user to select either Yes or No."
+                                  : field?.field_type === "TEXTAREA"
+                                    ? "A text area for the user to enter notes up to 1000 characters in length."
+                                    : field?.field_type === "FILE"
+                                      ? "A Signature file uploader"
+                                      : ""}
+                        </td>
+                        {/* Customize Label */}
+                        <td>
                           <Controller
-                            name={`fields.${index}.field_is_included`}
+                            name={`fields.${index}.field_label`}
                             control={control}
-                            render={({ field: checkboxField }) => (
-                              <Checkbox
-                                {...checkboxField}
-                                value={
-                                  field?.field_is_included ? "true" : "false"
-                                }
+                            rules={{
+                              pattern: {
+                                value: /^[a-zA-Z0-9 ]*$/,
+                                message: "Special characters are not allowed",
+                              },
+                            }}
+                            render={({ field: labelField }) => (
+                              <TextInput
+                                placeholder="Label"
+                                {...labelField}
+                                style={{ width: "100%" }}
                                 disabled={
                                   field?.field_name === "Signature" ||
                                   field?.field_name === "Notes"
                                 }
                                 error={
-                                  errors?.fields?.[index]?.field_is_included
-                                    ?.message
+                                  errors?.fields?.[index]?.field_label?.message
                                 }
                               />
                             )}
                           />
-                          <Text>{field?.field_type}</Text>
-                        </Group>
-                      </td>
+                        </td>
 
-                      <td style={{ verticalAlign: "middle" }}>
-                        {field?.field_type === "DATE"
-                          ? "If you expect the user to return the assets by a specific due date, utilize Date 2 for that purpose."
-                          : field?.field_type === "TEXT"
-                            ? "The text field can hold up to 100 characters."
-                            : field?.field_type === "NUMBER"
-                              ? "Use the field to enter an amount. The currency symbol will be defined in the company setup."
-                              : field?.field_type === "CHECKBOX"
-                                ? "A boolean field will present a check box to allow the user to select either Yes or No."
-                                : field?.field_type === "TEXTAREA"
-                                  ? "A text area for the user to enter notes up to 1000 characters in length."
-                                  : field?.field_type === "FILE"
-                                    ? "A Signature file uploader"
-                                    : ""}
-                      </td>
-                      {/* Customize Label */}
-                      <td>
-                        <Controller
-                          name={`fields.${index}.field_label`}
-                          control={control}
-                          rules={{
-                            pattern: {
-                              value: /^[a-zA-Z0-9 ]*$/,
-                              message: "Special characters are not allowed",
-                            },
-                          }}
-                          render={({ field: labelField }) => (
-                            <TextInput
-                              placeholder="Label"
-                              {...labelField}
-                              style={{ width: "100%" }}
-                              disabled={
-                                field?.field_name === "Signature" ||
-                                field?.field_name === "Notes"
-                              }
-                              error={
-                                errors?.fields?.[index]?.field_label?.message
-                              }
-                            />
-                          )}
-                        />
-                      </td>
+                        {/* Example Column */}
+                        <td style={{ verticalAlign: "middle" }}>
+                          {field?.field_type === "DATE"
+                            ? "Due date"
+                            : field?.field_type === "TEXT"
+                              ? "Text field"
+                              : field?.field_type === "NUMBER"
+                                ? "Amount spent"
+                                : field?.field_type === "CHECKBOX"
+                                  ? "Is the asset functioning properly?"
+                                  : field?.field_type === "TEXTAREA"
+                                    ? "Notes"
+                                    : field?.field_type === "FILE"
+                                      ? "Signature"
+                                      : ""}
+                        </td>
 
-                      {/* Example Column */}
-                      <td style={{ verticalAlign: "middle" }}>
-                        {field?.field_type === "DATE"
-                          ? "Due date"
-                          : field?.field_type === "TEXT"
-                            ? "Text field"
-                            : field?.field_type === "NUMBER"
-                              ? "Amount spent"
-                              : field?.field_type === "CHECKBOX"
-                                ? "Is the asset functioning properly?"
-                                : field?.field_type === "TEXTAREA"
-                                  ? "Notes"
-                                  : field?.field_type === "FILE"
-                                    ? "Signature"
-                                    : ""}
-                      </td>
+                        {/* Data Required Checkbox */}
+                        <td>
+                          <Controller
+                            name={`fields.${index}.field_is_required`}
+                            control={control}
+                            render={({ field: requiredField }) => {
+                              const fieldIncluded = watch(
+                                `fields.${index}.field_is_included`
+                              );
 
-                      {/* Data Required Checkbox */}
-                      <td>
-                        <Controller
-                          name={`fields.${index}.field_is_required`}
-                          control={control}
-                          render={({ field: requiredField }) => {
-                            const fieldIncluded = watch(
-                              `fields.${index}.field_is_included`
-                            );
+                              return (
+                                <Checkbox
+                                  label="Required"
+                                  {...requiredField}
+                                  value={
+                                    field?.field_is_required ? "true" : "false"
+                                  }
+                                  disabled={
+                                    !fieldIncluded ||
+                                    field?.field_name === "Signature"
+                                  }
+                                />
+                              );
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </ScrollArea>
+            </Paper>
 
-                            return (
-                              <Checkbox
-                                label="Required"
-                                {...requiredField}
-                                value={
-                                  field?.field_is_required ? "true" : "false"
-                                }
-                                disabled={
-                                  !fieldIncluded ||
-                                  field?.field_name === "Signature"
-                                }
-                              />
-                            );
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </ScrollArea>
-          </Paper>
+            <Paper withBorder shadow="md" p="md">
+              <Stack>
+                <Title order={4}>
+                  Assign Assets to Persons, Locations or Customers
+                </Title>
+                <Controller
+                  name="assignedTo.assignToPerson"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Persons"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                    />
+                  )}
+                />
+                <Controller
+                  name="assignedTo.assignToCustomer"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Customers"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                    />
+                  )}
+                />
+                <Controller
+                  name="assignedTo.assignToSite"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label="List of Sites/Locations"
+                      {...field}
+                      value={field.value ? "true" : "false"}
+                    />
+                  )}
+                />
+              </Stack>
+            </Paper>
 
-          <Paper withBorder shadow="sm" p="md">
-            <Stack>
-              <Title order={3}>
-                Assign Assets to Persons, Locations or Customers
-              </Title>
-              <Controller
-                name="assignedTo.assignToPerson"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Persons"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                  />
-                )}
-              />
-              <Controller
-                name="assignedTo.assignToCustomer"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Customers"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                  />
-                )}
-              />
-              <Controller
-                name="assignedTo.assignToSite"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="List of Sites/Locations"
-                    {...field}
-                    value={field.value ? "true" : "false"}
-                  />
-                )}
-              />
-            </Stack>
-          </Paper>
-
-          <Group position="right">
-            <Button fullWidth type="submit">
-              Save
-            </Button>
-          </Group>
-        </Stack>
-      </form>
+            <Group position="right">
+              <Button fullWidth type="submit">
+                Save
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Paper>
     </Container>
   );
 };

@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import CreateFieldForm from "../AssetSetupPage/CreateFieldForm";
@@ -66,6 +66,7 @@ const WarrantySetupPage = ({
   useEffect(() => {
     const fetchCustomCategory = async () => {
       try {
+        setIsloading(true);
         const { data, totalCount } = await getCustomFieldData(supabaseClient, {
           sectionId: sectionId,
           isCustomField: true,
@@ -77,6 +78,8 @@ const WarrantySetupPage = ({
           message: "Something went wrong",
           color: "orange",
         });
+      } finally {
+        setIsloading(false);
       }
     };
     fetchCustomCategory();
@@ -175,7 +178,7 @@ const WarrantySetupPage = ({
     }
   };
   return (
-    <Container>
+    <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
       <DisableModal
         setCurrentCustomFieldList={setCustomFields}
@@ -186,100 +189,21 @@ const WarrantySetupPage = ({
         opened={modalOpened}
         type="Custom Field"
       />
-      <Stack spacing="sm">
-        <Group position="apart" align="end">
-          <Stack>
-            <Title variant="dimmed" order={3}>
-              Warranty Setup Page
-            </Title>
-            <Text size="sm">List of default and custom fields</Text>
-          </Stack>
-        </Group>
-        <Paper shadow="md" withBorder p={20}>
-          <Text weight={500} size="lg" mb="sm">
-            Default Fields
-          </Text>
-
-          <DataTable
-            fontSize={16}
-            style={{
-              borderRadius: 4,
-              minHeight: "300px",
-            }}
-            withBorder
-            idAccessor="field_id"
-            page={activePage}
-            totalRecords={defaultField.length}
-            recordsPerPage={ROW_PER_PAGE}
-            onPageChange={setActivePage}
-            records={defaultField}
-            columns={[
-              {
-                accessor: "field_id",
-                width: "30%",
-                title: "Field Is Included",
-                render: (field) => (
-                  <Checkbox
-                    checked={checkedState[field.field_id]}
-                    label="Included"
-                    onChange={(e) => {
-                      handleIncludeField(
-                        field.field_id,
-                        e.currentTarget.checked
-                      );
-                    }}
-                  />
-                ),
-              },
-              {
-                accessor: "label",
-                width: "40%",
-                title: "Field Label",
-                render: (field) => <Text fw={600}>{field.field_name}</Text>,
-              },
-              {
-                accessor: "type",
-                width: "40%",
-                title: "Field Type",
-                render: (field) => <Text>{field.field_type}</Text>,
-              },
-              {
-                accessor: "required",
-                width: "30%",
-                title: "Field Is Required",
-                render: (field) => (
-                  <Checkbox
-                    checked={field.field_is_required}
-                    label="Required"
-                    value={field.field_is_required ? "true" : "false"}
-                    disabled={checkedState[field.field_id] === false}
-                    onChange={(e) => {
-                      const isChecked = e.currentTarget.checked;
-                      handleRequiredChange(field.field_id, isChecked);
-                    }}
-                  />
-                ),
-              },
-            ]}
-          />
-        </Paper>
-        {!showCustomForm && (
+      <Paper p="md">
+        <Stack spacing="sm">
+          <Group position="apart" align="end">
+            <Stack>
+              <Title variant="dimmed" order={3}>
+                Warranty Setup Page
+              </Title>
+              <Text>List of default and custom fields</Text>
+            </Stack>
+          </Group>
           <Paper shadow="md" withBorder p={20}>
-            <Group position="apart" align="start" mb="sm">
-              <Text weight={500} size="lg">
-                Custom Fields
-              </Text>
-              {canAddData && !showCustomForm && (
-                <Button
-                  leftIcon={<IconPlus size={16} />}
-                  onClick={() => {
-                    setShowUpdateForm(false), setShowCustomForm(true);
-                  }}
-                >
-                  Add Custom Field
-                </Button>
-              )}
-            </Group>
+            <Text weight={500} size="lg" mb="sm">
+              Default Fields
+            </Text>
+
             <DataTable
               fontSize={16}
               style={{
@@ -289,93 +213,176 @@ const WarrantySetupPage = ({
               withBorder
               idAccessor="field_id"
               page={activePage}
-              totalRecords={totalFields}
+              totalRecords={defaultField.length}
               recordsPerPage={ROW_PER_PAGE}
               onPageChange={setActivePage}
-              records={customFields}
+              records={defaultField}
               columns={[
                 {
-                  accessor: "label",
+                  accessor: "included",
+                  title: "Included",
                   width: "30%",
-                  title: "Custom Field Label",
+                  render: (field) => (
+                    <Group>
+                      <Checkbox
+                        checked={checkedState[field.field_id]}
+                        onChange={(e) => {
+                          handleIncludeField(
+                            field.field_id,
+                            e.currentTarget.checked
+                          );
+                        }}
+                      />
+                    </Group>
+                  ),
+                },
+                {
+                  accessor: "label",
+                  width: "40%",
+                  title: "Field Label",
                   render: (field) => <Text fw={600}>{field.field_name}</Text>,
                 },
                 {
                   accessor: "type",
-                  width: "20%",
+                  width: "40%",
                   title: "Field Type",
                   render: (field) => <Text>{field.field_type}</Text>,
                 },
                 {
                   accessor: "required",
                   width: "30%",
-                  title: "Field Is Required",
+                  title: "Required",
                   render: (field) => (
-                    <Text>
-                      {String(field.field_is_required ? "Yes" : "No")}
-                    </Text>
-                  ),
-                },
-
-                {
-                  accessor: "actions",
-                  title: "Actions",
-                  render: (field) => (
-                    <Group spacing="xs" noWrap>
-                      {canEditData && (
-                        <Button
-                          onClick={() => {
-                            handleClickCustomField(field.field_id);
-                          }}
-                          size="xs"
-                          variant="outline"
-                          color="blue"
-                          rightIcon={<IconEdit size={16} />}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                      {canDeleteData && (
-                        <Button
-                          onClick={() => handleDelete(field.field_id)}
-                          size="xs"
-                          variant="outline"
-                          color="red"
-                        >
-                          Delete
-                        </Button>
-                      )}
+                    <Group position="center">
+                      <Checkbox
+                        checked={field.field_is_required}
+                        value={field.field_is_required ? "true" : "false"}
+                        disabled={checkedState[field.field_id] === false}
+                        onChange={(e) => {
+                          const isChecked = e.currentTarget.checked;
+                          handleRequiredChange(field.field_id, isChecked);
+                        }}
+                      />
                     </Group>
                   ),
                 },
               ]}
             />
           </Paper>
-        )}
-        {canAddData && showCustomForm && (
-          <CreateFieldForm
-            setShowCustomForm={setShowCustomForm}
-            categoryList={categoryListChoices}
-            setCustomFields={setCustomFields}
-            canAddData={canAddData}
-            setTotalRecords={setTotalFields}
-            sectionId={sectionId}
-            type="warranty"
-          />
-        )}
-        {canEditData && showUpdateForm && customFieldsDefaultValue && (
-          <UpdateFieldForm
-            handleClickCustomField={handleClickCustomField}
-            setShowUpdateForm={setShowUpdateForm}
-            categoryList={categoryListChoices}
-            setCustomFields={setCustomFields}
-            customFieldForm={customFieldsDefaultValue}
-            canEditData={canEditData}
-            sectionId={sectionId}
-            type="warranty"
-          />
-        )}
-      </Stack>
+          {!showCustomForm && (
+            <Paper shadow="md" withBorder p="md">
+              <Group position="apart" align="start" mb="sm">
+                <Text weight={600} size="lg">
+                  Custom Fields
+                </Text>
+                {canAddData && !showCustomForm && (
+                  <Button
+                    leftIcon={<IconPlus size={16} />}
+                    onClick={() => {
+                      setShowUpdateForm(false), setShowCustomForm(true);
+                    }}
+                  >
+                    Add Custom Field
+                  </Button>
+                )}
+              </Group>
+              <DataTable
+                fontSize={16}
+                style={{
+                  borderRadius: 4,
+                  minHeight: "300px",
+                }}
+                withBorder
+                fetching={isLoading}
+                idAccessor="field_id"
+                page={activePage}
+                totalRecords={totalFields}
+                recordsPerPage={ROW_PER_PAGE}
+                onPageChange={setActivePage}
+                records={customFields}
+                columns={[
+                  {
+                    accessor: "label",
+                    width: "30%",
+                    title: "Custom Field Label",
+                    render: (field) => <Text fw={600}>{field.field_name}</Text>,
+                  },
+                  {
+                    accessor: "type",
+                    width: "20%",
+                    title: "Field Type",
+                    render: (field) => <Text>{field.field_type}</Text>,
+                  },
+                  {
+                    accessor: "required",
+                    width: "30%",
+                    title: "Field Is Required",
+                    render: (field) => (
+                      <Text>
+                        {String(field.field_is_required ? "Yes" : "No")}
+                      </Text>
+                    ),
+                  },
+
+                  {
+                    accessor: "actions",
+                    title: "Actions",
+                    render: (field) => (
+                      <Group spacing="xs" noWrap>
+                        {canEditData && (
+                          <Button
+                            onClick={() => {
+                              handleClickCustomField(field.field_id);
+                            }}
+                            size="xs"
+                            variant="outline"
+                            color="blue"
+                          >
+                            Edit
+                          </Button>
+                        )}
+                        {canDeleteData && (
+                          <Button
+                            onClick={() => handleDelete(field.field_id)}
+                            size="xs"
+                            variant="outline"
+                            color="red"
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </Group>
+                    ),
+                  },
+                ]}
+              />
+            </Paper>
+          )}
+          {canAddData && showCustomForm && (
+            <CreateFieldForm
+              setShowCustomForm={setShowCustomForm}
+              categoryList={categoryListChoices}
+              setCustomFields={setCustomFields}
+              canAddData={canAddData}
+              setTotalRecords={setTotalFields}
+              sectionId={sectionId}
+              type="warranty"
+            />
+          )}
+          {canEditData && showUpdateForm && customFieldsDefaultValue && (
+            <UpdateFieldForm
+              handleClickCustomField={handleClickCustomField}
+              setShowUpdateForm={setShowUpdateForm}
+              categoryList={categoryListChoices}
+              setCustomFields={setCustomFields}
+              customFieldForm={customFieldsDefaultValue}
+              canEditData={canEditData}
+              sectionId={sectionId}
+              type="warranty"
+            />
+          )}
+        </Stack>
+      </Paper>
     </Container>
   );
 };

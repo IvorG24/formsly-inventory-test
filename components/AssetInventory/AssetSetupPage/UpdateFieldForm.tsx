@@ -124,7 +124,7 @@ const UpdateFieldForm = ({
   const [newOption, setNewOption] = useState<string>("");
 
   return (
-    <Paper p={20}>
+    <Paper withBorder shadow="md" p="md">
       <Group position="right">
         <ActionIcon
           onClick={() => {

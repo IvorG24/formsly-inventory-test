@@ -5,10 +5,14 @@ import { ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryAssetFormValues, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -139,70 +143,75 @@ const DepartmentSetupPage = ({ securityGroup }: Props) => {
   };
 
   return (
-    <Container fluid>
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Departments</Title>
-        <Text>
-          This is the list of Departments currently in the system, including
-          their descriptions and available actions. You can edit or delete each
-          site as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by department name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-            {canAddData && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Department
-              </Button>
-            )}
-          </Group>
-        </form>
-
-        <FormProvider {...formMethods}>
-          <DepartmentDrawer
-            handleDepartmentSubmit={handleDepartmentSubmit}
-            isOpen={opened}
-            close={close}
-          />
-        </FormProvider>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="team_department_id"
-          page={activePage}
-          totalRecords={departmentCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={currentDepartment}
-          fetching={isFetchingSiteList}
-          columns={[
-            {
-              accessor: "team_department_id",
-              width: "90%",
-              title: "Department Name",
-              render: (department) => (
-                <Text fw={600}>{department.team_department_name}</Text>
-              ),
-            },
-          ]}
-        />
+    <Container maw={3840} h="100%">
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Departments</Title>
+          <Text>
+            This is the list of Departments currently in the system, including
+            their descriptions and available actions. You can edit or delete
+            each site as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by department name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+              {canAddData && (
+                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                  Add New Department
+                </Button>
+              )}
+            </Group>
+          </form>
+
+          <FormProvider {...formMethods}>
+            <DepartmentDrawer
+              handleDepartmentSubmit={handleDepartmentSubmit}
+              isOpen={opened}
+              close={close}
+            />
+          </FormProvider>
+          <Divider />
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="team_department_id"
+            page={activePage}
+            totalRecords={departmentCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={currentDepartment}
+            fetching={isFetchingSiteList}
+            columns={[
+              {
+                accessor: "team_department_id",
+                width: "90%",
+                title: "Department Name",
+                render: (department) => (
+                  <Text fw={600}>{department.team_department_name}</Text>
+                ),
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

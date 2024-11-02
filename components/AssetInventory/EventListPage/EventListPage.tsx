@@ -7,12 +7,16 @@ import { EventTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
   Checkbox,
   Container,
+  Divider,
   Flex,
   Group,
   LoadingOverlay,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -153,140 +157,145 @@ const EventsListPage = () => {
     handlePagination(activePage);
   }, [sortStatus]);
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Events</Title>
-        <Text size="sm">
-          This is the list of Events currently in the system, including their
-          descriptions and available actions. You can edit or delete each site
-          as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by event name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-            <Button
-              leftIcon={<IconPlus size={16} />}
-              onClick={() => {
-                router.push(
-                  `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events/create`
-                );
-              }}
-            >
-              Create Custom Event
-            </Button>
-          </Group>
-        </form>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="event_id"
-          page={activePage}
-          totalRecords={eventCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onSortStatusChange={setSortStatus}
-          sortStatus={sortStatus}
-          onPageChange={handlePagination}
-          records={currentEventList}
-          fetching={isFetchingSiteList}
-          columns={[
-            {
-              accessor: "event_name",
-              width: "20%",
-              title: "Event Name",
-              sortable: true,
-              render: (event) => <Text fw={600}>{event.event_name}</Text>,
-            },
-            {
-              accessor: "event_description",
-              width: "30%",
-              title: "Event Description",
-              sortable: true,
-              render: (event) => <Text>{event.event_description}</Text>,
-            },
-            {
-              accessor: "event_status",
-              width: "20%",
-              title: "Event Status",
-              sortable: true,
-              render: (event) => (
-                <Badge
-                  sx={{
-                    backgroundColor: event.event_color || "transparent",
-                    color: "#fff",
-                  }}
-                >
-                  {event.event_status}
-                </Badge>
-              ),
-            },
-
-            {
-              accessor: "event_is_custom_event",
-              width: "15%",
-              title: "Custom Event",
-              sortable: true,
-              render: (event) => (
-                <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
-              ),
-            },
-            {
-              accessor: "event_is_disabled",
-              width: "15%",
-              title: "Event Disabled",
-              sortable: true,
-              render: (event) => (
-                <Group position="center">
-                  <Checkbox
-                    checked={checkedState[event.event_id]}
-                    onChange={(e) => {
-                      handleIncludeEvent(
-                        event.event_id,
-                        e.currentTarget.checked
-                      );
-                    }}
-                  />
-                </Group>
-              ),
-            },
-            {
-              accessor: "actions",
-              title: "Actions",
-              render: (event) => (
-                <Group spacing="xs" noWrap>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => {
-                      router.push(
-                        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events/${event.event_id}/edit`
-                      );
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Events</Title>
+          <Text>
+            This is the list of Events currently in the system, including their
+            descriptions and available actions. You can edit or delete each site
+            as needed.
+          </Text>
+        </Box>
+      </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by event name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+              <Button
+                leftIcon={<IconPlus size={16} />}
+                onClick={() => {
+                  router.push(
+                    `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events/create`
+                  );
+                }}
+              >
+                Create Custom Event
+              </Button>
+            </Group>
+          </form>
+          <Divider />
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="event_id"
+            page={activePage}
+            totalRecords={eventCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onSortStatusChange={setSortStatus}
+            sortStatus={sortStatus}
+            onPageChange={handlePagination}
+            records={currentEventList}
+            fetching={isFetchingSiteList}
+            columns={[
+              {
+                accessor: "event_name",
+                width: "20%",
+                title: "Event Name",
+                sortable: true,
+                render: (event) => <Text fw={600}>{event.event_name}</Text>,
+              },
+              {
+                accessor: "event_description",
+                width: "30%",
+                title: "Event Description",
+                sortable: true,
+                render: (event) => <Text>{event.event_description}</Text>,
+              },
+              {
+                accessor: "event_status",
+                width: "20%",
+                title: "Event Status",
+                sortable: true,
+                render: (event) => (
+                  <Badge
+                    sx={{
+                      backgroundColor: event.event_color || "transparent",
+                      color: "#fff",
                     }}
                   >
-                    Customize Event
-                  </Button>
-                </Group>
-              ),
-            },
-          ]}
-        />
-      </Flex>
+                    {event.event_status}
+                  </Badge>
+                ),
+              },
+
+              {
+                accessor: "event_is_custom_event",
+                width: "15%",
+                title: "Custom Event",
+                sortable: true,
+                render: (event) => (
+                  <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
+                ),
+              },
+              {
+                accessor: "event_is_disabled",
+                width: "15%",
+                title: "Event Disabled",
+                sortable: true,
+                render: (event) => (
+                  <Group position="center">
+                    <Checkbox
+                      checked={checkedState[event.event_id]}
+                      onChange={(e) => {
+                        handleIncludeEvent(
+                          event.event_id,
+                          e.currentTarget.checked
+                        );
+                      }}
+                    />
+                  </Group>
+                ),
+              },
+              {
+                accessor: "actions",
+                title: "Actions",
+                render: (event) => (
+                  <Group spacing="xs" noWrap>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => {
+                        router.push(
+                          `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/events/${event.event_id}/edit`
+                        );
+                      }}
+                    >
+                      Customize Event
+                    </Button>
+                  </Group>
+                ),
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

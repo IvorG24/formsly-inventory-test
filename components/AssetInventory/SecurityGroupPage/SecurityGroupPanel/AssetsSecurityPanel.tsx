@@ -25,7 +25,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Department } from "./SecurityGroupPage";
+import { Department } from "../SecurityGroupPage";
 
 type Props = {
   siteList: SiteTableRow[];
@@ -95,11 +95,9 @@ const AssetsSecurityPanel = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <LoadingOverlay visible={isLoading} />
-      <Paper shadow="xs" p="md" withBorder>
+      <Paper shadow="md" p="md" withBorder>
         <Stack>
-          <Title order={3} size="h4">
-            View and Edit Assets
-          </Title>
+          <Title order={4}>View and Edit Assets</Title>
           <Text size="sm">
             Set user permission to add / edit / delete / view assets:
           </Text>
@@ -153,16 +151,14 @@ const AssetsSecurityPanel = ({
 
           <Divider />
 
-          <Title order={3} size="h4">
-            Filter Assets
-          </Title>
+          <Title order={4}>Filter Assets</Title>
           <Text size="sm">
             Allow access of assets by site, department or category :
           </Text>
 
           <Grid>
             <Grid.Col xs={12} sm={6} md={4}>
-              <Title order={4} size="h6" mb="sm">
+              <Title order={6} mb="sm">
                 Sites
               </Title>
               <ScrollArea h={400}>
@@ -218,7 +214,7 @@ const AssetsSecurityPanel = ({
             </Grid.Col>
 
             <Grid.Col xs={12} sm={6} md={4}>
-              <Title order={4} size="h6" mb="sm">
+              <Title order={6} mb="sm">
                 Departments
               </Title>
               <ScrollArea h={400}>
@@ -277,7 +273,7 @@ const AssetsSecurityPanel = ({
             </Grid.Col>
 
             <Grid.Col xs={12} sm={6} md={4}>
-              <Title order={4} size="h6" mb="sm">
+              <Title order={6} mb="sm">
                 Categories
               </Title>
               <ScrollArea h={400}>
@@ -337,9 +333,7 @@ const AssetsSecurityPanel = ({
 
           <Divider />
 
-          <Title order={3} size="h4">
-            Assets Events
-          </Title>
+          <Title order={4}>Assets Events</Title>
           <Text size="sm">Allowed actions of assets :</Text>
 
           <SimpleGrid

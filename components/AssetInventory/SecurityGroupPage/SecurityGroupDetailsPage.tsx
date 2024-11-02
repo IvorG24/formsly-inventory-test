@@ -6,9 +6,9 @@ import {
   TeamGroupTableRow,
 } from "@/utils/types";
 import { Container, Tabs, Title } from "@mantine/core";
-import AssetsSecurityPanel from "./AssetsSecurityPanel";
-import PrivilegesSecurityPanel from "./PrivilegesSecurityPanel";
 import { Department } from "./SecurityGroupPage";
+import AssetsSecurityPanel from "./SecurityGroupPanel/AssetsSecurityPanel";
+import PrivilegesSecurityPanel from "./SecurityGroupPanel/PrivilegesSecurityPanel";
 type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
@@ -26,7 +26,7 @@ const SecurityGroupDetailsPage = ({
   const eventList = useEventList();
   return (
     <Container>
-      <Title order={2}>{group.team_group_name} GROUP </Title>
+      <Title order={3}>{group.team_group_name} GROUP </Title>
 
       <Tabs defaultValue="assets">
         <Tabs.List>

@@ -82,11 +82,9 @@ const PrivilegesSecurityPanel = ({ privilegesGroupdata }: Props) => {
   return (
     <form onSubmit={handleSubmit(handlePrivilegesSubmit)}>
       <LoadingOverlay visible={isLoading} />
-      <Paper shadow="xs" p="md" withBorder>
+      <Paper shadow="md" p="md" withBorder>
         <Stack>
-          <Title order={3} size="h4">
-            View and Edit Tables
-          </Title>
+          <Title order={4}>View and Edit Tables</Title>
           <Text size="sm">
             Set user permission to add / edit / delete / view records:
           </Text>

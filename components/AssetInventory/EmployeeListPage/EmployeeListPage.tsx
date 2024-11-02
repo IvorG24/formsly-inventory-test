@@ -5,11 +5,15 @@ import { ROW_PER_PAGE } from "@/utils/constant";
 import { InventoryEmployeeList, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   FileInput,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -255,7 +259,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     handlePagination(activePage);
   }, [sortStatus]);
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <EmployeeDrawer
         mode={drawerMode}
         isOpen={opened}
@@ -265,66 +269,73 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         employeeData={selectedEmployee ?? undefined}
       />
 
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Employees</Title>
-        <Text>
-          This is the list of Employee currently in the system, including their
-          descriptions and available actions. You can edit or delete each site
-          as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by hris id"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-            {canAddData && (
-              <Group>
-                <Button
-                  leftIcon={<IconFileImport size={16} />}
-                  onClick={() => handleAction()}
-                  variant="outline"
-                >
-                  Import
-                </Button>
-                <Button
-                  leftIcon={<IconPlus size={16} />}
-                  onClick={handleCreate}
-                >
-                  Add New Employee
-                </Button>
-              </Group>
-            )}
-          </Group>
-        </form>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="site_id"
-          page={activePage}
-          sortStatus={sortStatus}
-          onSortStatusChange={setSortStatus}
-          totalRecords={currentEmployeeCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={currentEmployeeList}
-          fetching={isLoading}
-          columns={columns}
-        />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>Employee List Page</Title>
+          <Text>
+            {" "}
+            This is the list of Employee currently in the system, including
+            their descriptions and available actions. You can edit or delete
+            each site as needed.
+          </Text>
+        </Box>
       </Flex>
+
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by hris id"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+              {canAddData && (
+                <Group>
+                  <Button
+                    leftIcon={<IconFileImport size={16} />}
+                    onClick={() => handleAction()}
+                    variant="outline"
+                  >
+                    Import
+                  </Button>
+                  <Button
+                    leftIcon={<IconPlus size={16} />}
+                    onClick={handleCreate}
+                  >
+                    Add New Employee
+                  </Button>
+                </Group>
+              )}
+            </Group>
+          </form>
+          <Divider />
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="site_id"
+            page={activePage}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
+            totalRecords={currentEmployeeCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={currentEmployeeList}
+            fetching={isLoading}
+            columns={columns}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

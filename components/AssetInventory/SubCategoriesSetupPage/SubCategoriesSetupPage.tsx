@@ -11,11 +11,15 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   Flex,
   Group,
+  Paper,
   Select,
+  Stack,
   Text,
   Title,
 } from "@mantine/core";
@@ -203,7 +207,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
   }, [activePage]);
 
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <DisableModal
         handleFetch={handlePagination}
         activePage={activePage}
@@ -223,118 +227,127 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
         opened={updateModalOpened}
         type="field"
       />
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Sub Categories</Title>
-        <Text>
-          This is the list of sub categories currently in the system. You can
-          edit or delete each sub category as needed.
-        </Text>
-
-        <form
-          onSubmit={handleSubmit((data) =>
-            handleFilterForms(data.category_name)
-          )}
-        >
-          <Group position="apart" align="center">
-            <Controller
-              name="category_id"
-              control={control}
-              defaultValue={getValues("category_name")}
-              render={({ field }) => (
-                <Select
-                  placeholder="Search by category name"
-                  data={categoryOptionList}
-                  searchable
-                  value={field.value}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    handleFilterForms(value);
-                  }}
-                  rightSection={
-                    <ActionIcon size="xs" type="submit">
-                      <IconCategory />
-                    </ActionIcon>
-                  }
-                />
-              )}
-            />
-            {canAddData && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Sub Category
-              </Button>
-            )}
-          </Group>
-        </form>
-
-        <FormProvider {...formMethods}>
-          <SubCategoryDrawer
-            handleFetchCategoryList={handleFetchCategoryList}
-            categoryList={categoryOptionList}
-            handleSubCategory={handleSubCategorySubmit}
-            isOpen={opened}
-            close={close}
-          />
-        </FormProvider>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="sub_category_id"
-          page={activePage}
-          totalRecords={subCategoryCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={subCategory}
-          fetching={isFetchingCategoryList}
-          columns={[
-            {
-              accessor: "sub_category_id",
-              width: "40%",
-              title: "Sub Category Name",
-              render: (subCategory) => (
-                <Text>{subCategory.sub_category_name}</Text>
-              ),
-            },
-            {
-              accessor: "category_name",
-              width: "40%",
-              title: "Category Name",
-              render: (subCategory) => <Text>{subCategory.category_name}</Text>,
-            },
-            {
-              accessor: "actions",
-              title: "Actions",
-              render: (subCategory) => (
-                <Group spacing="xs" noWrap>
-                  {canEditData && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => handleEdit(subCategory.sub_category_id)}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  {canDeleteData && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      color="red"
-                      onClick={() => handleDelete(subCategory.sub_category_id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </Group>
-              ),
-            },
-          ]}
-        />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Sub Categories</Title>
+          <Text>
+            This is the list of sub categories currently in the system. You can
+            edit or delete each sub category as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form
+            onSubmit={handleSubmit((data) =>
+              handleFilterForms(data.category_name)
+            )}
+          >
+            <Group position="apart" align="center">
+              <Controller
+                name="category_id"
+                control={control}
+                defaultValue={getValues("category_name")}
+                render={({ field }) => (
+                  <Select
+                    placeholder="Search by category name"
+                    data={categoryOptionList}
+                    searchable
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      handleFilterForms(value);
+                    }}
+                    rightSection={
+                      <ActionIcon size="xs" type="submit">
+                        <IconCategory />
+                      </ActionIcon>
+                    }
+                  />
+                )}
+              />
+              {canAddData && (
+                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                  Add New Sub Category
+                </Button>
+              )}
+            </Group>
+          </form>
+          <Divider />
+          <FormProvider {...formMethods}>
+            <SubCategoryDrawer
+              handleFetchCategoryList={handleFetchCategoryList}
+              categoryList={categoryOptionList}
+              handleSubCategory={handleSubCategorySubmit}
+              isOpen={opened}
+              close={close}
+            />
+          </FormProvider>
+
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="sub_category_id"
+            page={activePage}
+            totalRecords={subCategoryCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={subCategory}
+            fetching={isFetchingCategoryList}
+            columns={[
+              {
+                accessor: "sub_category_id",
+                width: "40%",
+                title: "Sub Category Name",
+                render: (subCategory) => (
+                  <Text>{subCategory.sub_category_name}</Text>
+                ),
+              },
+              {
+                accessor: "category_name",
+                width: "40%",
+                title: "Category Name",
+                render: (subCategory) => (
+                  <Text>{subCategory.category_name}</Text>
+                ),
+              },
+              {
+                accessor: "actions",
+                title: "Actions",
+                render: (subCategory) => (
+                  <Group spacing="xs" noWrap>
+                    {canEditData && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => handleEdit(subCategory.sub_category_id)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {canDeleteData && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        color="red"
+                        onClick={() =>
+                          handleDelete(subCategory.sub_category_id)
+                        }
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </Group>
+                ),
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

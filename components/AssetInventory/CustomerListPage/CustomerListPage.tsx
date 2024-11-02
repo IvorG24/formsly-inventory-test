@@ -10,11 +10,15 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   FileInput,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -278,7 +282,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   }, [sortStatus]);
 
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <CustomerDrawer
         isOpen={opened}
         close={close}
@@ -298,69 +302,74 @@ const CustomerListPage = ({ securityGroup }: Props) => {
         activePage={activePage}
       />
 
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Customers</Title>
-        <Text>
-          This is the list of Customer currently in the system, including their
-          descriptions and available actions. You can edit or delete each site
-          as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by customer name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-            {canAddData && (
-              <Group>
-                <Button
-                  leftIcon={<IconFileImport size={16} />}
-                  onClick={() => handleAction()}
-                  variant="outline"
-                >
-                  Import
-                </Button>
-
-                <Button
-                  leftIcon={<IconPlus size={16} />}
-                  onClick={handleCreate}
-                >
-                  Add New Customer
-                </Button>
-              </Group>
-            )}
-          </Group>
-        </form>
-
-        {/* <FormProvider {...formMethods}></FormProvider> */}
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="customer_id"
-          page={activePage}
-          totalRecords={customerCount}
-          sortStatus={sortStatus}
-          onSortStatusChange={setSortStatus}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={customerList}
-          fetching={isLoading}
-          columns={columns}
-        />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Customers</Title>
+          <Text>
+            This is the list of Customer currently in the system, including
+            their descriptions and available actions. You can edit or delete
+            each site as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by customer name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+              {canAddData && (
+                <Group>
+                  <Button
+                    leftIcon={<IconFileImport size={16} />}
+                    onClick={() => handleAction()}
+                    variant="outline"
+                  >
+                    Import
+                  </Button>
+
+                  <Button
+                    leftIcon={<IconPlus size={16} />}
+                    onClick={handleCreate}
+                  >
+                    Add New Customer
+                  </Button>
+                </Group>
+              )}
+            </Group>
+          </form>
+
+          <Divider />
+
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="customer_id"
+            page={activePage}
+            totalRecords={customerCount}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={customerList}
+            fetching={isLoading}
+            columns={columns}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

@@ -9,10 +9,14 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -198,7 +202,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
   };
 
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <DisableModal
         handleFetch={handleFetchSiteList}
         activePage={activePage}
@@ -219,100 +223,108 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
         opened={updateModalOpened}
         type="site"
       />
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Sites</Title>
-        <Text>
-          This is the list of sites currently in the system, including their
-          descriptions and available actions. You can edit or delete each site
-          as needed.
-        </Text>
 
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by site name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-            {canAddData && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Site
-              </Button>
-            )}
-          </Group>
-        </form>
-
-        <FormProvider {...formMethods}>
-          <SiteDrawer
-            handleSiteSubmit={handleSiteSubmit}
-            isOpen={opened}
-            close={close}
-          />
-        </FormProvider>
-
-        <DataTable
-          fontSize={16}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="site_id"
-          page={activePage}
-          totalRecords={siteListCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={currentSiteList}
-          fetching={isFetchingSiteList}
-          columns={[
-            {
-              accessor: "site_name",
-              width: "20%",
-              title: "Site Name",
-              render: (site) => <Text>{site.site_name}</Text>,
-            },
-            {
-              accessor: "site_description",
-              width: "70%",
-              title: "Site Description",
-              render: (site) => <Text>{site.site_description}</Text>,
-            },
-            {
-              accessor: "actions",
-              title: "Actions",
-              render: (site) => (
-                <Group spacing="xs" noWrap>
-                  {canEditData && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => handleEdit(site.site_id)}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  {canDeleteData && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      color="red"
-                      onClick={() => handleDelete(site.site_id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </Group>
-              ),
-            },
-          ]}
-        />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Sites</Title>
+          <Text>
+            This is the list of sites currently in the system, including their
+            descriptions and available actions. You can edit or delete each site
+            as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by site name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+              {canAddData && (
+                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                  Add New Site
+                </Button>
+              )}
+            </Group>
+          </form>
+
+          <Divider />
+          
+          <FormProvider {...formMethods}>
+            <SiteDrawer
+              handleSiteSubmit={handleSiteSubmit}
+              isOpen={opened}
+              close={close}
+            />
+          </FormProvider>
+
+          <DataTable
+            fontSize={16}
+            style={{
+              borderRadius: 4,
+              minHeight: "300px",
+            }}
+            withBorder
+            idAccessor="site_id"
+            page={activePage}
+            totalRecords={siteListCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={currentSiteList}
+            fetching={isFetchingSiteList}
+            columns={[
+              {
+                accessor: "site_name",
+                width: "20%",
+                title: "Site Name",
+                render: (site) => <Text>{site.site_name}</Text>,
+              },
+              {
+                accessor: "site_description",
+                width: "70%",
+                title: "Site Description",
+                render: (site) => <Text>{site.site_description}</Text>,
+              },
+              {
+                accessor: "actions",
+                title: "Actions",
+                render: (site) => (
+                  <Group spacing="xs" noWrap>
+                    {canEditData && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => handleEdit(site.site_id)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {canDeleteData && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        color="red"
+                        onClick={() => handleDelete(site.site_id)}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </Group>
+                ),
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

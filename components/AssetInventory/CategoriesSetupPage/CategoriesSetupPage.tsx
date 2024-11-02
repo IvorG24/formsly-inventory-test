@@ -10,10 +10,14 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Container,
+  Divider,
   Flex,
   Group,
+  Paper,
+  Stack,
   Text,
   TextInput,
   Title,
@@ -188,7 +192,7 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
     handlePagination(activePage);
   }, [activePage, activeTeam.team_id]);
   return (
-    <Container fluid>
+    <Container maw={3840} h="100%">
       <DisableModal
         handleFetch={handleFetchCategoryList}
         activePage={activePage}
@@ -206,91 +210,98 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
         opened={updateModalOpened}
         type="category"
       />
-      <Flex direction="column" gap="sm">
-        <Title order={3}>List of Categories</Title>
-        <Text>
-          This is the list of categories currently in the system. You can edit
-          or delete each category as needed.
-        </Text>
-
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <Group position="apart" align="center">
-            <TextInput
-              placeholder="Search by category name"
-              {...register("search")}
-              rightSection={
-                <ActionIcon size="xs" type="submit">
-                  <IconSearch />
-                </ActionIcon>
-              }
-              miw={250}
-              maw={320}
-            />
-
-            {canAddData === true && (
-              <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-                Add New Category
-              </Button>
-            )}
-          </Group>
-        </form>
-
-        <FormProvider {...formMethods}>
-          <CategoryDrawer
-            handleCategorySubmit={handleCategorySubmit}
-            isOpen={opened}
-            close={close}
-          />
-        </FormProvider>
-
-        <DataTable
-          fontSize={16}
-          style={{ borderRadius: 4, minHeight: "300px" }}
-          withBorder
-          idAccessor="category_id"
-          page={activePage}
-          totalRecords={categoryCount}
-          recordsPerPage={ROW_PER_PAGE}
-          onPageChange={handlePagination}
-          records={currentCategoryList}
-          fetching={isFetchingCategoryList}
-          columns={[
-            {
-              accessor: "category_name",
-              width: "90%",
-              title: "Category Name",
-              render: (category) => <Text>{category.category_name}</Text>,
-            },
-            {
-              accessor: "actions",
-              title: "Actions",
-              render: (category) => (
-                <Group spacing="xs" noWrap>
-                  {canEditData === true && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => handleEdit(category.category_id)}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  {canDeleteData && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      color="red"
-                      onClick={() => handleDelete(category.category_id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </Group>
-              ),
-            },
-          ]}
-        />
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
+        <Box>
+          <Title order={3}>List of Categories</Title>
+          <Text>
+            This is the list of categories currently in the system. You can edit
+            or delete each category as needed.
+          </Text>
+        </Box>
       </Flex>
+      <Paper p="md">
+        <Stack>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <Group position="apart" align="center">
+              <TextInput
+                placeholder="Search by category name"
+                {...register("search")}
+                rightSection={
+                  <ActionIcon size="xs" type="submit">
+                    <IconSearch />
+                  </ActionIcon>
+                }
+                miw={250}
+                maw={320}
+              />
+
+              {canAddData === true && (
+                <Button leftIcon={<IconPlus size={16} />} onClick={open}>
+                  Add New Category
+                </Button>
+              )}
+            </Group>
+          </form>
+
+          <Divider />
+
+          <FormProvider {...formMethods}>
+            <CategoryDrawer
+              handleCategorySubmit={handleCategorySubmit}
+              isOpen={opened}
+              close={close}
+            />
+          </FormProvider>
+
+          <DataTable
+            fontSize={16}
+            style={{ borderRadius: 4, minHeight: "300px" }}
+            withBorder
+            idAccessor="category_id"
+            page={activePage}
+            totalRecords={categoryCount}
+            recordsPerPage={ROW_PER_PAGE}
+            onPageChange={handlePagination}
+            records={currentCategoryList}
+            fetching={isFetchingCategoryList}
+            columns={[
+              {
+                accessor: "category_name",
+                width: "90%",
+                title: "Category Name",
+                render: (category) => <Text>{category.category_name}</Text>,
+              },
+              {
+                accessor: "actions",
+                title: "Actions",
+                render: (category) => (
+                  <Group spacing="xs" noWrap>
+                    {canEditData === true && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => handleEdit(category.category_id)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {canDeleteData && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        color="red"
+                        onClick={() => handleDelete(category.category_id)}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </Group>
+                ),
+              },
+            ]}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };
