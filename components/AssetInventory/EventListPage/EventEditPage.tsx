@@ -151,7 +151,13 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
               <Controller
                 name="event.eventName"
                 control={control}
-                rules={{ required: "Event Name is required" }}
+                rules={{
+                  required: "Event Name is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9 ]*$/,
+                    message: "Special characters are not allowed",
+                  },
+                }}
                 render={({ field }) => (
                   <TextInput
                     label="Event Name *"
@@ -216,18 +222,6 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                   />
                 )}
               />
-              <Controller
-                name="event.enableEvent"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    required
-                    label="Enable this Event?"
-                    value={field?.value ? "true" : "false"}
-                    defaultChecked={field?.value}
-                  />
-                )}
-              />
             </Stack>
           </Paper>
 
@@ -256,7 +250,10 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                                 {...checkboxField}
                                 checked={checkboxField.value === true}
                                 value={checkboxField?.value ? "true" : "false"}
-                                disabled={field?.field_name === "Signature"}
+                                disabled={
+                                  field?.field_name === "Signature" ||
+                                  field?.field_name === "Notes"
+                                }
                               />
                             )}
                           />
@@ -286,6 +283,12 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                         <Controller
                           name={`fields.${index}.field_label`}
                           control={control}
+                          rules={{
+                            pattern: {
+                              value: /^[a-zA-Z0-9 ]*$/,
+                              message: "Special characters are not allowed",
+                            },
+                          }}
                           render={({ field: labelField }) => (
                             <TextInput
                               placeholder="Label"
@@ -294,6 +297,9 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                               disabled={
                                 field?.field_name === "Signature" ||
                                 field?.field_name === "Notes"
+                              }
+                              error={
+                                errors?.fields?.[index]?.field_label?.message
                               }
                             />
                           )}

@@ -32,6 +32,7 @@ const EventCreatePage = () => {
   const router = useRouter();
   const teamMember = useUserTeamMember();
   const [isLoading, setIsLoading] = useState(false);
+
   const {
     handleSubmit,
     control,
@@ -200,7 +201,13 @@ const EventCreatePage = () => {
               <Controller
                 name="event.eventName"
                 control={control}
-                rules={{ required: "Event Name is required" }}
+                rules={{
+                  required: "Event Name is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9 ]*$/,
+                    message: "Special characters are not allowed",
+                  },
+                }}
                 render={({ field }) => (
                   <TextInput
                     label="Event Name *"
@@ -248,7 +255,8 @@ const EventCreatePage = () => {
                     placeholder="For example, AVAILABLE , CHECKED OUT"
                     {...field}
                     error={
-                      errors.event?.eventName && errors.event?.eventName.message
+                      errors.event?.eventStatus &&
+                      errors.event?.eventStatus.message
                     }
                   />
                 )}
@@ -310,6 +318,10 @@ const EventCreatePage = () => {
                                   field?.field_name === "Signature" ||
                                   field?.field_name === "Notes"
                                 }
+                                error={
+                                  errors?.fields?.[index]?.field_is_included
+                                    ?.message
+                                }
                               />
                             )}
                           />
@@ -325,7 +337,7 @@ const EventCreatePage = () => {
                             : field?.field_type === "NUMBER"
                               ? "Use the field to enter an amount. The currency symbol will be defined in the company setup."
                               : field?.field_type === "CHECKBOX"
-                                ? "A boolean field will present a radio button to allow the user to select either Yes or No."
+                                ? "A boolean field will present a check box to allow the user to select either Yes or No."
                                 : field?.field_type === "TEXTAREA"
                                   ? "A text area for the user to enter notes up to 1000 characters in length."
                                   : field?.field_type === "FILE"
@@ -337,6 +349,12 @@ const EventCreatePage = () => {
                         <Controller
                           name={`fields.${index}.field_label`}
                           control={control}
+                          rules={{
+                            pattern: {
+                              value: /^[a-zA-Z0-9 ]*$/,
+                              message: "Special characters are not allowed",
+                            },
+                          }}
                           render={({ field: labelField }) => (
                             <TextInput
                               placeholder="Label"
@@ -345,6 +363,9 @@ const EventCreatePage = () => {
                               disabled={
                                 field?.field_name === "Signature" ||
                                 field?.field_name === "Notes"
+                              }
+                              error={
+                                errors?.fields?.[index]?.field_label?.message
                               }
                             />
                           )}

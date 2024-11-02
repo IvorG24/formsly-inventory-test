@@ -1,4 +1,5 @@
 import { getEventDetails } from "@/backend/api/get";
+import { updateDisabledEvent } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -7,9 +8,11 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Checkbox,
   Container,
   Flex,
   Group,
+  LoadingOverlay,
   Text,
   TextInput,
   Title,
@@ -24,8 +27,6 @@ import { useForm } from "react-hook-form";
 
 type FormValues = {
   search: string;
-  site_name: string;
-  site_description: string;
 };
 // type Props = {
 //   securityGroup: SecurityGroupData;
@@ -38,7 +39,9 @@ const EventsListPage = () => {
   const [activePage, setActivePage] = useState(1);
   const [currentEventList, setCurrentEventList] = useState<EventTableRow[]>([]);
   const [eventCount, setEventcount] = useState(0);
+  const [isLoading, setIsloading] = useState(false);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
+  const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
@@ -65,6 +68,14 @@ const EventsListPage = () => {
       });
       setEventcount(totalCount);
       setCurrentEventList(data);
+      const initialCheckedState = data.reduce(
+        (acc, event) => {
+          acc[event.event_id] = event.event_is_disabled;
+          return acc;
+        },
+        {} as Record<string, boolean>
+      );
+      setCheckedState(initialCheckedState);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -103,11 +114,37 @@ const EventsListPage = () => {
     }
   };
 
+  const handleIncludeEvent = async (eventId: string, isChecked: boolean) => {
+    try {
+      setIsloading(true);
+      await updateDisabledEvent(supabaseClient, {
+        eventId: eventId,
+        isDisabled: isChecked,
+      });
+      setCheckedState((prev) => ({
+        ...prev,
+        [eventId]: isChecked,
+      }));
+      notifications.show({
+        message: "Field edited successfully",
+        color: "green",
+      });
+      setIsloading(false);
+    } catch (e) {
+      setIsloading(false);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Container fluid>
+      <LoadingOverlay visible={isLoading} />
       <Flex direction="column" gap="sm">
         <Title order={3}>List of Events</Title>
-        <Text>
+        <Text size="sm">
           This is the list of Events currently in the system, including their
           descriptions and available actions. You can edit or delete each site
           as needed.
@@ -158,7 +195,7 @@ const EventsListPage = () => {
               accessor: "event_name",
               width: "20%",
               title: "Event Name",
-              render: (event) => <Text>{event.event_name}</Text>,
+              render: (event) => <Text fw={600}>{event.event_name}</Text>,
             },
             {
               accessor: "event_description",
@@ -181,20 +218,31 @@ const EventsListPage = () => {
                 </Badge>
               ),
             },
-            {
-              accessor: "event_is_disabled",
-              width: "15%",
-              title: "Disabled",
-              render: (event) => (
-                <Text>{event.event_is_disabled ? "Yes" : " "}</Text> // Show "False" if event_is_disabled is false
-              ),
-            },
+
             {
               accessor: "event_is_custom",
               width: "15%",
               title: "Custom Event",
               render: (event) => (
                 <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
+              ),
+            },
+            {
+              accessor: "event_is_disabled",
+              width: "15%",
+              title: "Event Disabled",
+              render: (event) => (
+                <Group position="center">
+                  <Checkbox
+                    checked={checkedState[event.event_id]}
+                    onChange={(e) => {
+                      handleIncludeEvent(
+                        event.event_id,
+                        e.currentTarget.checked
+                      );
+                    }}
+                  />
+                </Group>
               ),
             },
             {

@@ -1988,6 +1988,27 @@ export const updateIncludedField = async (
   return data;
 };
 
+export const updateDisabledEvent = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    eventId: string;
+    isDisabled: boolean;
+  }
+) => {
+  const { eventId, isDisabled } = params;
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("inventory_event_table")
+    .update({
+      event_is_disabled: isDisabled,
+    })
+    .eq("event_id", eventId);
+
+  if (error) throw error;
+
+  return data;
+};
+
 export const updateDisableField = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
