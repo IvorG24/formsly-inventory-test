@@ -7819,32 +7819,45 @@ export const getEventDetails = async (
     page?: number;
     teamId: string;
     type?: string;
+    columnAccessor?: string;
+    isAscendingSort?: boolean;
   }
 ) => {
-  const { search, limit, page, teamId, type = "option" } = params;
+  const {
+    search,
+    limit = 10,
+    page = 1,
+    teamId,
+    type = "option",
+    columnAccessor = "event_date_created",
+    isAscendingSort = false,
+  } = params;
 
-  const start = page && limit ? (page - 1) * limit : undefined;
-  const end = start !== undefined && limit ? start + limit - 1 : undefined;
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
+
   let query = supabaseClient
     .schema("inventory_schema")
     .from("inventory_event_table")
     .select("*", { count: "exact" })
-    .eq("event_team_id", teamId)
-    .order("event_date_created", { ascending: false });
+    .eq("event_team_id", teamId);
 
   if (type === "option") {
     query = query.eq("event_is_disabled", false);
   }
 
-  if (start !== undefined && end !== undefined) {
-    query = query.range(start, end);
-  }
   if (search) {
     query = query.ilike("event_name", `%${search}%`);
   }
 
+  query = query.order(columnAccessor, { ascending: isAscendingSort });
+
+  query = query.range(start, end);
+
   const { data, count, error } = await query;
+
   if (error) throw error;
+
   return {
     data: data as EventTableRow[],
     totalCount: count ?? 0,

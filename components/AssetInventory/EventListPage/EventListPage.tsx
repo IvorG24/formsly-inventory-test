@@ -20,13 +20,14 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormValues = {
   search: string;
+  isAscendingSort?: boolean;
 };
 // type Props = {
 //   securityGroup: SecurityGroupData;
@@ -42,14 +43,19 @@ const EventsListPage = () => {
   const [isLoading, setIsloading] = useState(false);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "event_date_created",
+    direction: "desc",
+  });
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
       search: "",
+      isAscendingSort: false,
     },
   });
 
-  const { register, handleSubmit, getValues } = formMethods;
+  const { register, handleSubmit, getValues, setValue } = formMethods;
 
   useEffect(() => {
     handlePagination(activePage);
@@ -58,13 +64,15 @@ const EventsListPage = () => {
   const handleFetchSiteList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
-      const { search } = getValues();
+      const { search, isAscendingSort } = getValues();
       const { data, totalCount } = await getEventDetails(supabaseClient, {
         search,
         type: "list",
         teamId: activeTeam.team_id,
         page,
         limit: ROW_PER_PAGE,
+        isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
       });
       setEventcount(totalCount);
       setCurrentEventList(data);
@@ -89,6 +97,7 @@ const EventsListPage = () => {
       setIsFetchingSiteList(true);
       setActivePage(1);
       await handleFetchSiteList(1);
+      setIsFetchingSiteList(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -104,6 +113,7 @@ const EventsListPage = () => {
       setIsFetchingSiteList(true);
       setActivePage(page);
       await handleFetchSiteList(page);
+      setIsFetchingSiteList(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong",
@@ -138,7 +148,10 @@ const EventsListPage = () => {
       });
     }
   };
-
+  useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
+    handlePagination(activePage);
+  }, [sortStatus]);
   return (
     <Container fluid>
       <LoadingOverlay visible={isLoading} />
@@ -187,6 +200,8 @@ const EventsListPage = () => {
           page={activePage}
           totalRecords={eventCount}
           recordsPerPage={ROW_PER_PAGE}
+          onSortStatusChange={setSortStatus}
+          sortStatus={sortStatus}
           onPageChange={handlePagination}
           records={currentEventList}
           fetching={isFetchingSiteList}
@@ -195,18 +210,21 @@ const EventsListPage = () => {
               accessor: "event_name",
               width: "20%",
               title: "Event Name",
+              sortable: true,
               render: (event) => <Text fw={600}>{event.event_name}</Text>,
             },
             {
               accessor: "event_description",
               width: "30%",
               title: "Event Description",
+              sortable: true,
               render: (event) => <Text>{event.event_description}</Text>,
             },
             {
-              accessor: "event_details",
+              accessor: "event_status",
               width: "20%",
               title: "Event Status",
+              sortable: true,
               render: (event) => (
                 <Badge
                   sx={{
@@ -220,9 +238,10 @@ const EventsListPage = () => {
             },
 
             {
-              accessor: "event_is_custom",
+              accessor: "event_is_custom_event",
               width: "15%",
               title: "Custom Event",
+              sortable: true,
               render: (event) => (
                 <Text>{event.event_is_custom_event ? "Yes" : ""}</Text>
               ),
@@ -231,6 +250,7 @@ const EventsListPage = () => {
               accessor: "event_is_disabled",
               width: "15%",
               title: "Event Disabled",
+              sortable: true,
               render: (event) => (
                 <Group position="center">
                   <Checkbox
