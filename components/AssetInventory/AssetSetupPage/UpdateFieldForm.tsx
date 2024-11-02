@@ -102,7 +102,7 @@ const UpdateFieldForm = ({
         message: "Custom field created",
         color: "green",
       });
-
+      setShowUpdateForm(false);
       reset();
     } catch (e) {
       notifications.show({

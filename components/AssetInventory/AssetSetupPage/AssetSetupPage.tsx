@@ -19,12 +19,12 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import DisableModal from "../DisableModal";
 
-import { updateRequiredField } from "@/backend/api/update";
+import { updateIncludedField, updateRequiredField } from "@/backend/api/update";
 import CreateFieldForm from "./CreateFieldForm";
 import UpdateFieldForm from "./UpdateFieldForm";
 
@@ -35,6 +35,7 @@ type Props = {
 };
 const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
   const supabaseClient = useSupabaseClient();
+
   const [customFields, setCustomFields] = useState<InventoryFieldRow[]>([]);
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
     useState<customFieldFormValues>();
@@ -45,10 +46,21 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
   const [fieldId, setFieldId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [defaultField, setDefaultField] = useState<InventoryFieldRow[]>(field);
+  const [checkedState, setCheckedState] = useState(
+    field.reduce(
+      (acc, field) => {
+        acc[field.field_id] = !field.field_is_disabled;
+        return acc;
+      },
+      {} as Record<string, boolean>
+    )
+  );
+
   const canAddData = securityGroup.privileges.customField.add === true;
   const canDeleteData = securityGroup.privileges.customField.delete === true;
   const canEditData = securityGroup.privileges.customField.edit === true;
   const sectionId = "80aedd40-a682-4390-9e82-0e9592f7f912";
+
   useEffect(() => {
     const fetchCustomCategory = async () => {
       try {
@@ -109,6 +121,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
 
   const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
     try {
+      setIsloading(true);
       await updateRequiredField(supabaseClient, {
         fieldId: fieldId,
         isRequired: isChecked,
@@ -121,7 +134,39 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
             : field
         )
       );
+      notifications.show({
+        message: "Required field changed",
+        color: "green",
+      });
+      setIsloading(false);
     } catch (e) {
+      setIsloading(false);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
+
+  const handleIncludeField = async (fieldId: string, isChecked: boolean) => {
+    try {
+      setIsloading(true);
+      await updateIncludedField(supabaseClient, {
+        fieldId: fieldId,
+        isRequired: isChecked,
+      });
+
+      setCheckedState((prev) => ({
+        ...prev,
+        [fieldId]: isChecked,
+      }));
+      notifications.show({
+        message: "Field edited successfully",
+        color: "green",
+      });
+      setIsloading(false);
+    } catch (e) {
+      setIsloading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -154,7 +199,6 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
           <Text weight={500} size="lg" mb="sm">
             Default Fields
           </Text>
-
           <DataTable
             fontSize={16}
             style={{
@@ -162,13 +206,30 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
               minHeight: "300px",
             }}
             withBorder
-            idAccessor="id"
+            idAccessor="field_id"
             page={activePage}
             totalRecords={defaultField.length}
             recordsPerPage={ROW_PER_PAGE}
             onPageChange={setActivePage}
             records={defaultField}
             columns={[
+              {
+                accessor: "included",
+                width: "30%",
+                title: "Field Is Included",
+                render: (field) => (
+                  <Checkbox
+                    checked={checkedState[field.field_id]}
+                    label="Included"
+                    onChange={(e) => {
+                      handleIncludeField(
+                        field.field_id,
+                        e.currentTarget.checked
+                      );
+                    }}
+                  />
+                ),
+              },
               {
                 accessor: "label",
                 width: "40%",
@@ -190,6 +251,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                     checked={field.field_is_required}
                     label="Required"
                     value={field.field_is_required ? "true" : "false"}
+                    disabled={checkedState[field.field_id] === false}
                     onChange={(e) => {
                       const isChecked = e.currentTarget.checked;
                       handleRequiredChange(field.field_id, isChecked);
@@ -224,7 +286,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                 minHeight: "300px",
               }}
               withBorder
-              idAccessor="id"
+              idAccessor="field_id"
               page={activePage}
               totalRecords={totalFields}
               recordsPerPage={ROW_PER_PAGE}
@@ -267,7 +329,6 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                           size="xs"
                           variant="outline"
                           color="blue"
-                          rightIcon={<IconEdit size={16} />}
                         >
                           Edit
                         </Button>
@@ -293,6 +354,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
           <CreateFieldForm
             setShowCustomForm={setShowCustomForm}
             categoryList={categoryListChoices}
+            setTotalRecords={setTotalFields}
             setCustomFields={setCustomFields}
             canAddData={canAddData}
             sectionId={sectionId}

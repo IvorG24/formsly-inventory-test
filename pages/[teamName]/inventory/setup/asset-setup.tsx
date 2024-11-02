@@ -19,9 +19,12 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
           teamId: userActiveTeam.team_id,
         }
       );
+      
       const { data: field } = await getCustomFieldData(supabaseClient, {
         sectionId: "74263b1b-af2d-44b7-849f-ea6bd62c392f",
+        mode: "default",
       });
+
       const hasViewOnlyPersmissions =
         securityGroupData.privileges.customField.view === true;
 

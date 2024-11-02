@@ -8269,7 +8269,7 @@ export const checkUniqueField = async (
     .schema("inventory_schema")
     .from("field_table")
     .select("field_name")
-    .ilike("field_name", fieldName.toLocaleLowerCase())
+    .ilike("field_name", fieldName.toLocaleLowerCase().trim())
     .eq("field_is_custom_field", true)
     .eq("field_is_disabled", false)
     .eq("field_section_id", sectionId)
@@ -8291,20 +8291,31 @@ export const getCustomFieldData = async (
     search?: string;
     sectionId: string;
     isCustomField?: boolean;
+    mode?: "default" | "custom";
   }
 ) => {
-  const { page, limit, search, sectionId, isCustomField } = params;
+  const {
+    page,
+    limit,
+    search,
+    sectionId,
+    isCustomField = false,
+    mode = "custom",
+  } = params;
   let query = supabaseClient
     .schema("inventory_schema")
     .from("field_table")
     .select("*", { count: "exact" })
-    .eq("field_is_disabled", false)
     .eq("field_section_id", sectionId)
-    .eq("field_is_custom_field", isCustomField ? isCustomField : false)
+    .eq("field_is_custom_field", isCustomField)
     .order("field_order", { ascending: true });
 
   if (search) {
     query = query.ilike("field_name", `%${search}%`);
+  }
+
+  if (mode === "custom") {
+    query = query.eq("field_is_disabled", false);
   }
 
   if (limit && limit > 0 && page && page > 0) {

@@ -39,6 +39,7 @@ type Props = {
   categoryList: OptionType[];
   canAddData: boolean;
   sectionId: string;
+  setTotalRecords: Dispatch<SetStateAction<number>>;
   type: "employee" | "asset" | "customer" | "maintenance" | "warranty";
 };
 const CreateFieldForm = ({
@@ -47,6 +48,7 @@ const CreateFieldForm = ({
   categoryList,
   canAddData,
   sectionId,
+  setTotalRecords,
   type = "asset",
 }: Props) => {
   const { control, handleSubmit, watch, reset } =
@@ -85,6 +87,7 @@ const CreateFieldForm = ({
         message: "Custom field created",
         color: "green",
       });
+      setTotalRecords((prevTotal) => prevTotal + 1);
       setShowCustomForm(false);
       reset();
     } catch (e) {

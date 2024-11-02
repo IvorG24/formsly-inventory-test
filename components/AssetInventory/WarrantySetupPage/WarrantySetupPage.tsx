@@ -1,5 +1,5 @@
 import { getCustomFieldData, getCustomFieldDetails } from "@/backend/api/get";
-import { updateRequiredField } from "@/backend/api/update";
+import { updateIncludedField, updateRequiredField } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   CategoryTableRow,
@@ -38,6 +38,7 @@ const WarrantySetupPage = ({
   field,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
+
   const [customFields, setCustomFields] = useState<InventoryFieldRow[]>([]);
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
     useState<customFieldFormValues>();
@@ -48,6 +49,16 @@ const WarrantySetupPage = ({
   const [fieldId, setFieldId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [defaultField, setDefaultField] = useState<InventoryFieldRow[]>(field);
+  const [checkedState, setCheckedState] = useState(
+    field.reduce(
+      (acc, field) => {
+        acc[field.field_id] = !field.field_is_disabled;
+        return acc;
+      },
+      {} as Record<string, boolean>
+    )
+  );
+
   const canAddData = securityGroup.privileges.customField.add === true;
   const canDeleteData = securityGroup.privileges.customField.delete === true;
   const canEditData = securityGroup.privileges.customField.edit === true;
@@ -111,6 +122,7 @@ const WarrantySetupPage = ({
 
   const handleRequiredChange = async (fieldId: string, isChecked: boolean) => {
     try {
+      setIsloading(true);
       await updateRequiredField(supabaseClient, {
         fieldId: fieldId,
         isRequired: isChecked,
@@ -123,7 +135,13 @@ const WarrantySetupPage = ({
             : field
         )
       );
+      notifications.show({
+        message: "Required field changed",
+        color: "green",
+      });
+      setIsloading(false);
     } catch (e) {
+      setIsloading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -131,8 +149,33 @@ const WarrantySetupPage = ({
     }
   };
 
+  const handleIncludeField = async (fieldId: string, isChecked: boolean) => {
+    try {
+      setIsloading(true);
+      await updateIncludedField(supabaseClient, {
+        fieldId: fieldId,
+        isRequired: isChecked,
+      });
+
+      setCheckedState((prev) => ({
+        ...prev,
+        [fieldId]: isChecked,
+      }));
+      notifications.show({
+        message: "Field edited successfully",
+        color: "green",
+      });
+      setIsloading(false);
+    } catch (e) {
+      setIsloading(false);
+      notifications.show({
+        message: "Something went wrong",
+        color: "red",
+      });
+    }
+  };
   return (
-    <Container >
+    <Container>
       <LoadingOverlay visible={isLoading} />
       <DisableModal
         setCurrentCustomFieldList={setCustomFields}
@@ -172,6 +215,23 @@ const WarrantySetupPage = ({
             records={defaultField}
             columns={[
               {
+                accessor: "field_id",
+                width: "30%",
+                title: "Field Is Included",
+                render: (field) => (
+                  <Checkbox
+                    checked={checkedState[field.field_id]}
+                    label="Included"
+                    onChange={(e) => {
+                      handleIncludeField(
+                        field.field_id,
+                        e.currentTarget.checked
+                      );
+                    }}
+                  />
+                ),
+              },
+              {
                 accessor: "label",
                 width: "40%",
                 title: "Field Label",
@@ -192,6 +252,7 @@ const WarrantySetupPage = ({
                     checked={field.field_is_required}
                     label="Required"
                     value={field.field_is_required ? "true" : "false"}
+                    disabled={checkedState[field.field_id] === false}
                     onChange={(e) => {
                       const isChecked = e.currentTarget.checked;
                       handleRequiredChange(field.field_id, isChecked);
@@ -297,6 +358,7 @@ const WarrantySetupPage = ({
             categoryList={categoryListChoices}
             setCustomFields={setCustomFields}
             canAddData={canAddData}
+            setTotalRecords={setTotalFields}
             sectionId={sectionId}
             type="warranty"
           />

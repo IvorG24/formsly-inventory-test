@@ -184,7 +184,7 @@ const DepartmentSetupPage = ({ securityGroup }: Props) => {
             minHeight: "300px",
           }}
           withBorder
-          idAccessor="department_id"
+          idAccessor="team_department_id"
           page={activePage}
           totalRecords={departmentCount}
           recordsPerPage={ROW_PER_PAGE}
@@ -193,7 +193,7 @@ const DepartmentSetupPage = ({ securityGroup }: Props) => {
           fetching={isFetchingSiteList}
           columns={[
             {
-              accessor: "department_id",
+              accessor: "team_department_id",
               width: "90%",
               title: "Department Name",
               render: (department) => (

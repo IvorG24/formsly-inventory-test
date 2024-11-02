@@ -1967,6 +1967,27 @@ export const updateRequiredField = async (
   return data;
 };
 
+export const updateIncludedField = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldId: string;
+    isRequired: boolean;
+  }
+) => {
+  const { fieldId, isRequired } = params;
+  const { data, error } = await supabaseClient
+    .schema("inventory_schema")
+    .from("field_table")
+    .update({
+      field_is_disabled: isRequired ? false : true,
+    })
+    .eq("field_id", fieldId);
+
+  if (error) throw error;
+
+  return data;
+};
+
 export const updateDisableField = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
