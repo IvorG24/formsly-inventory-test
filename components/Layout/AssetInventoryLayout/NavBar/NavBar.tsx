@@ -1,3 +1,4 @@
+import { useEventList } from "@/stores/useEventStore";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
@@ -57,7 +58,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
-
+  const eventList = useEventList();
   const securityGroup = useSecurityGroup();
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -81,6 +82,36 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
     return securityGroup.privileges[id]?.view ?? [];
   };
 
+  const nonCustomEvents = securityGroup.asset.filter.event
+    .filter((event) =>
+      ["check in", "check out", "lease", "lease return", "dispose"].includes(
+        event.toLowerCase()
+      )
+    )
+    .map((event) => ({
+      id: event,
+      label: event.charAt(0).toUpperCase() + event.slice(1),
+      icon: IconTimelineEvent,
+      href: `/${formattedTeamName}/inventory/list/${
+        event.charAt(0).toLowerCase() +
+        event.slice(1).replace(/ /g, "-").toLowerCase()
+      }`,
+    }));
+
+  const customEvents = eventList
+    .filter((event) => event.event_is_custom_event)
+    .map((customEvent) => ({
+      id: customEvent.event_name.toLowerCase().replace(/ /g, "-"),
+      label:
+        customEvent.event_name.charAt(0).toUpperCase() +
+        customEvent.event_name.slice(1),
+      icon: IconTimelineEvent,
+      href: `/${formattedTeamName}/inventory/list/${customEvent.event_name
+        .toLowerCase()
+        .replace(/ /g, "-")}`,
+    }));
+
+  const subLinks = [...nonCustomEvents, ...customEvents];
   const navlinkData: NavLink[] = [
     ...(canView
       ? [
@@ -95,25 +126,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                 icon: IconPuzzle,
                 href: `/${formattedTeamName}/inventory`,
               },
-              ...securityGroup.asset.filter.event
-                .filter((event) =>
-                  [
-                    "check in",
-                    "check out",
-                    "lease",
-                    "lease return",
-                    "dispose",
-                  ].includes(event.toLowerCase())
-                )
-                .map((event) => ({
-                  id: event,
-                  label: event.charAt(0).toUpperCase() + event.slice(1),
-                  icon: IconTimelineEvent,
-                  href: `/${formattedTeamName}/inventory/list/${
-                    event.charAt(0).toLowerCase() +
-                    event.slice(1).replace(/ /g, "-").toLowerCase()
-                  }`,
-                })),
+              ...subLinks,
             ],
           },
         ]
@@ -143,19 +156,23 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       icon: IconReport,
       label: "Report",
       subLinks: [
-        {
-          id: "maintenance",
-          label: "Assets Reports",
-          icon: IconFileReport,
-          href: `/${formattedTeamName}/inventory/reports/assets`,
-        },
+        ...(isOwnerOrAdmin
+          ? [
+              {
+                id: "maintenance",
+                label: "Assets Reports",
+                icon: IconFileReport,
+                href: `/${formattedTeamName}/inventory/reports/assets`,
+              },
 
-        {
-          id: "checked-out",
-          label: "Events Reports",
-          icon: IconPaperclip,
-          href: `/${formattedTeamName}/inventory/reports/events`,
-        },
+              {
+                id: "checked-out",
+                label: "Events Reports",
+                icon: IconPaperclip,
+                href: `/${formattedTeamName}/inventory/reports/events`,
+              },
+            ]
+          : []),
       ],
     },
     {

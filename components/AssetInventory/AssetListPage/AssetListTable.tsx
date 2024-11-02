@@ -107,7 +107,8 @@ const AssetListTable = ({
         column.value !== "inventory_request_id" &&
         column.value !== "inventory_request_status" &&
         column.value !== "inventory_request_name" &&
-        column.value !== "inventory_request_tag_id"
+        column.value !== "inventory_request_tag_id" &&
+        column.value !== "inventory_request_assigned_to"
     )
     .map((column) => ({
       accessor: `r.${column.value}`,
@@ -287,7 +288,7 @@ const AssetListTable = ({
           title: "Assigned To",
           sortable: true,
           width: 180,
-          hidden: checkIfColumnIsHidden("assignee_first_name"),
+          hidden: checkIfColumnIsHidden("inventory_request_assigned_to"),
           render: (record) => {
             const {
               site_name,

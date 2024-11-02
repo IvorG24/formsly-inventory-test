@@ -9,7 +9,6 @@ import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
-  EventTableRow,
   SecurityGroupData,
   SiteTableRow,
   TeamGroupTableRow,
@@ -62,7 +61,6 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   group: TeamGroupTableRow;
 };
@@ -70,7 +68,6 @@ const Page = ({
   siteList,
   departmentList,
   categoryList,
-  eventList,
   securityGroupData,
   group,
 }: Props) => {
@@ -86,7 +83,6 @@ const Page = ({
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
-        eventList={eventList}
       />
     </>
   );

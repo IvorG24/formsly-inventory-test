@@ -1,12 +1,12 @@
 import { getDynamicReportView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 
+import { useEventList } from "@/stores/useEventStore";
 import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CategoryTableRow,
   Column,
-  EventTableRow,
   InventoryCustomerList,
   InventoryListType,
   SecurityGroupData,
@@ -33,7 +33,6 @@ import EventReportListTable from "./EventReportListTable";
 
 type Props = {
   siteList: SiteTableRow[];
-  eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   customerTableList: InventoryCustomerList[];
@@ -59,7 +58,6 @@ type FilterSelectedValuesType = {
 
 const EventReportListpage = ({
   siteList,
-  eventList,
   customerTableList,
   departmentList,
   categoryList,
@@ -67,6 +65,7 @@ const EventReportListpage = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const eventList = useEventList();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);

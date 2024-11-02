@@ -6,7 +6,6 @@ import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
-  EventTableRow,
   InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
@@ -60,7 +59,6 @@ type Props = {
   departmentList: Department[];
   customerList: InventoryCustomerRow[];
   categoryList: CategoryTableRow[];
-  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   fields: {
     value: string;
@@ -75,7 +73,6 @@ const Page = ({
   customerList,
   categoryList,
   fields,
-  eventList,
   securityGroupData,
 }: Props) => {
   return (
@@ -86,7 +83,6 @@ const Page = ({
       />
       <DynamicListPage
         customerList={customerList}
-        eventList={eventList}
         securityGroup={securityGroupData}
         siteList={siteList}
         departmentList={departmentList}

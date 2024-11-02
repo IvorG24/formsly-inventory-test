@@ -2,9 +2,9 @@ import { getAssetSpreadsheetView, getEventDetails } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 
+import { useEventList } from "@/stores/useEventStore";
 import {
   CategoryTableRow,
-  EventTableRow,
   InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
@@ -28,7 +28,6 @@ type Props = {
   categoryList: CategoryTableRow[];
   securityGroup: SecurityGroupData;
   customerList: InventoryCustomerRow[];
-  eventList: EventTableRow[];
   tableColumnList: {
     label: string;
     value: string;
@@ -51,7 +50,6 @@ export type FilterSelectedValuesType = {
 const DynamicListPage = ({
   userId,
   siteList,
-  eventList,
   customerList,
   departmentList,
   tableColumnList,
@@ -60,7 +58,7 @@ const DynamicListPage = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-
+  const eventList = useEventList();
   const router = useRouter();
   const status = router.query.statusName as string;
   const [activePage, setActivePage] = useState(1);

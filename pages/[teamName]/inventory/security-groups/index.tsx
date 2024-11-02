@@ -1,5 +1,5 @@
 // Imports
-import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
+import { checkIfOwnerOrAdmin } from "@/backend/api/get";
 import SecurityGroupPage from "@/components/AssetInventory/SecurityGroupPage/SecurityGroupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -8,15 +8,21 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
   async ({ user, userActiveTeam, supabaseClient }) => {
     try {
-      const data = await getAssetListFilterOptions(supabaseClient, {
+      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
         teamId: userActiveTeam.team_id,
       });
-      const fields = await getColumnList(supabaseClient);
 
+      if (!isOwnerOrAdmin) {
+        return {
+          redirect: {
+            destination: "/500",
+            permanent: false,
+          },
+        };
+      }
       return {
         props: {
-          ...data,
-          fields,
           userId: user.id,
         },
       };

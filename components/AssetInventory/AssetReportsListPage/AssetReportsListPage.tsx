@@ -1,9 +1,9 @@
 import { getAssetSpreadsheetView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 
+import { useEventList } from "@/stores/useEventStore";
 import {
   CategoryTableRow,
-  EventTableRow,
   InventoryCustomerList,
   InventoryListType,
   SecurityGroupData,
@@ -22,7 +22,6 @@ import AssetReportsListTable from "./AssetReportsListTable";
 
 type Props = {
   siteList: SiteTableRow[];
-  eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   customerTableList: InventoryCustomerList[];
@@ -49,7 +48,6 @@ type FilterSelectedValuesType = {
 
 const AssetReportsListPage = ({
   siteList,
-  eventList,
   customerTableList,
   departmentList,
   categoryList,
@@ -58,6 +56,7 @@ const AssetReportsListPage = ({
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const eventList = useEventList();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);

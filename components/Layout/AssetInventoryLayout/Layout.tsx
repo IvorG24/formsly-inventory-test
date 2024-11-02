@@ -2,12 +2,14 @@ import {
   getActiveGroup,
   getAllTeamOfUser,
   getEmployeeInventoryList,
+  getEventDetails,
   getSecurityGroups,
   getTeamMemberList,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useEmployeeListActions } from "@/stores/useEmployeeStore";
+import { useEventListAction } from "@/stores/useEventStore";
 import { useSecurityAction } from "@/stores/useSecurityGroupStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
@@ -39,6 +41,7 @@ const Layout = ({ children }: LayoutProps) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setTeamMemberStore } = useTeamMemberListActions();
   const { setEmployeeList } = useEmployeeListActions();
+  const { setEventList } = useEventListAction();
   const { setTeamList, setActiveTeam } = useTeamActions();
   const { setUserAvatar, setUserInitials, setUserTeamMember, setUserProfile } =
     useUserActions();
@@ -165,7 +168,13 @@ const Layout = ({ children }: LayoutProps) => {
 
           const employeeList = await fetchEmployee(activeTeamId);
           setEmployeeList(employeeList);
+
+          const { data } = await getEventDetails(supabaseClient, {
+            teamId: activeTeamId,
+          });
+          setEventList(data);
         }
+
         setIsloading(false);
       } catch (e) {
         await router.push("/500");

@@ -8155,8 +8155,6 @@ export const getAssetListFilterOptions = async (
     teamId: teamId,
   });
 
-  const { data: eventList } = await getEventDetails(supabaseClient, { teamId });
-
   const customerList = await getCustomerOption(supabaseClient, {
     teamId,
   });
@@ -8165,7 +8163,6 @@ export const getAssetListFilterOptions = async (
     siteList,
     departmentList,
     categoryList,
-    eventList,
     customerList,
   };
 };

@@ -1,6 +1,6 @@
+import { useEventList } from "@/stores/useEventStore";
 import {
   CategoryTableRow,
-  EventTableRow,
   SecurityGroupData,
   SiteTableRow,
   TeamGroupTableRow,
@@ -13,7 +13,6 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   group: TeamGroupTableRow;
 };
@@ -21,10 +20,10 @@ const SecurityGroupDetailsPage = ({
   siteList,
   departmentList,
   categoryList,
-  eventList,
   securityGroupData,
   group,
 }: Props) => {
+  const eventList = useEventList();
   return (
     <Container>
       <Title order={2}>{group.team_group_name} GROUP </Title>

@@ -2,9 +2,9 @@ import { getAssetSpreadsheetView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 
+import { useEventList } from "@/stores/useEventStore";
 import {
   CategoryTableRow,
-  EventTableRow,
   InventoryCustomerList,
   InventoryListType,
   SecurityGroupData,
@@ -27,7 +27,6 @@ type Props = {
   categoryList: CategoryTableRow[];
   customerTableList: InventoryCustomerList[];
   userId: string;
-  eventList: EventTableRow[];
   securityGroupData: SecurityGroupData;
   tableColumnList: {
     label: string;
@@ -54,13 +53,12 @@ const AssetListPage = ({
   customerTableList,
   departmentList,
   categoryList,
-  eventList,
   tableColumnList,
   securityGroupData,
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-
+  const eventList = useEventList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
@@ -123,7 +121,7 @@ const AssetListPage = ({
       .map((column) => column.value),
   });
 
-  const checkIfColumnIsHidden = (column: string) => {   
+  const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
   };
