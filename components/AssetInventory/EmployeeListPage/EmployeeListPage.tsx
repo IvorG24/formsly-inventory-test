@@ -18,13 +18,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import {
-  IconEdit,
-  IconFileImport,
-  IconPlus,
-  IconSearch,
-} from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { IconFileImport, IconPlus, IconSearch } from "@tabler/icons-react";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
@@ -33,6 +28,8 @@ import EmployeeDrawer from "./EmployeeDrawer";
 
 type FormValues = {
   search: string;
+  isAscendingSort?: boolean;
+  columnAccessor?: string;
   file?: File;
 };
 type Props = {
@@ -66,6 +63,11 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     },
   });
 
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "scic_employee_id",
+    direction: "desc",
+  });
+
   const { register, handleSubmit, getValues, setValue } = formMethods;
 
   useEffect(() => {
@@ -75,7 +77,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
   const handleFetchEmployeeList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
-      const { search } = getValues();
+      const { search, isAscendingSort } = getValues();
       const { data, totalCount } = await getEmployeeInventoryList(
         supabaseClient,
         {
@@ -83,42 +85,51 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
           teamID: activeTeam.team_id,
           page,
           limit: ROW_PER_PAGE,
+          columnAccessor: sortStatus.columnAccessor,
+          isAscendingSort,
         }
       );
+
       if (data.length > 0) {
-        const generatedColumns = Object.keys(data[0])
-          .filter((key) => key !== "scic_employee_id")
-          .map((key) => ({
-            accessor: key,
-            title: key
-              .replace(/scic_employee_/gi, "")
-              .replace(/NAME/gi, " ")
-              .replace(/_/g, " ")
-              .toUpperCase(),
-            render: (row: InventoryEmployeeList) => <Text>{row[key]}</Text>,
-          }));
-        generatedColumns.push({
-          accessor: "actions",
-          title: "Actions",
-          render: (row: InventoryEmployeeList) => (
-            <>
-              {canEditData && (
-                <Button
-                  onClick={() => handleEdit(row)}
-                  color="blue"
-                  variant="outline"
-                  size="sm"
-                  rightIcon={<IconEdit size={16} />}
-                >
-                  Edit
-                </Button>
-              )}
-            </>
-          ),
-        });
+        const generatedColumns = [
+          ...Object.keys(data[0])
+            .filter((key) => key !== "scic_employee_id")
+            .map((key) => ({
+              accessor: key,
+              title: key
+                .replace(/scic_employee_/gi, "")
+                .replace(/NAME/gi, " ")
+                .replace(/_/g, " ")
+                .toUpperCase(),
+              sortable: ["employee", "site", "department", "location"].some(
+                (keyword) => key.includes(keyword)
+              ),
+              render: (row: InventoryEmployeeList) => <Text>{row[key]}</Text>,
+            })),
+
+          {
+            accessor: "actions",
+            title: "Actions",
+            sortable: false,
+            render: (row: InventoryEmployeeList) => (
+              <>
+                {canEditData && (
+                  <Button
+                    onClick={() => handleEdit(row)}
+                    color="blue"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </>
+            ),
+          },
+        ];
+
         setColumns(generatedColumns);
       }
-      console.log(data);
 
       setCurrentEmployeeList(data);
       setCurrentEmployeeCount(totalCount);
@@ -238,6 +249,11 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     setDrawerMode("create");
     open();
   };
+
+  useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
+    handlePagination(activePage);
+  }, [sortStatus]);
   return (
     <Container fluid>
       <EmployeeDrawer
@@ -283,19 +299,12 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
                   leftIcon={<IconPlus size={16} />}
                   onClick={handleCreate}
                 >
-                  Add New Site
+                  Add New Employee
                 </Button>
-                {/* {canAddData && (
-  <Button leftIcon={<IconPlus size={16} />} onClick={open}>
-    Add New Site
-  </Button>
-)} */}
               </Group>
             )}
           </Group>
         </form>
-
-        {/* <FormProvider {...formMethods}></FormProvider> */}
 
         <DataTable
           fontSize={16}
@@ -306,6 +315,8 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
           withBorder
           idAccessor="site_id"
           page={activePage}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
           totalRecords={currentEmployeeCount}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}

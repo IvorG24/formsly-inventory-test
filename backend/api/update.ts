@@ -1869,8 +1869,6 @@ export const updateDrawerData = async (
     type: "site" | "location" | "field" | "category" | "sub_category";
   }
 ) => {
-  console.log(params);
-
   const { data, error } = await supabaseClient.rpc("update_drawer_data", {
     input_data: params,
   });

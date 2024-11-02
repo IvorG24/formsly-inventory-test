@@ -23,13 +23,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import {
-  IconEdit,
-  IconFileImport,
-  IconPlus,
-  IconSearch,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconFileImport, IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
@@ -101,16 +95,20 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           .filter((key) => key !== "customer_id" && key !== "customer_team_id")
           .map((key) => ({
             accessor: key,
-            title: key.replace(/_/g, " ").toUpperCase(),
+            title: key
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase()),
             sortable: key.includes("customer"),
+            width: "100%",
             render: (record: Record<string, unknown>) => (
               <Text>{(record[key] as string) || ""}</Text>
             ),
           }));
         generatedColumns.push({
           accessor: "actions",
-          title: "ACTIONS",
+          title: "Actions",
           sortable: false,
+          width: "100%",
           render: (record: Record<string, unknown>) => (
             <Flex gap="md">
               {canEditData && (
@@ -119,7 +117,6 @@ const CustomerListPage = ({ securityGroup }: Props) => {
                   color="blue"
                   variant="outline"
                   size="sm"
-                  rightIcon={<IconEdit size={16} />}
                 >
                   Edit
                 </Button>
@@ -129,7 +126,6 @@ const CustomerListPage = ({ securityGroup }: Props) => {
                 color="red"
                 variant="outline"
                 size="sm"
-                rightIcon={<IconTrash size={16} />}
               >
                 Delete
               </Button>
@@ -313,7 +309,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="center">
             <TextInput
-              placeholder="Search by customer_name"
+              placeholder="Search by customer name"
               {...register("search")}
               rightSection={
                 <ActionIcon size="xs" type="submit">

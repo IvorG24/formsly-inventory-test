@@ -35,7 +35,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
           },
         };
       }
-      console.log(fields);
 
       return {
         props: {

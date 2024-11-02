@@ -1,7 +1,7 @@
 // Imports
 import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
-import EventReportListpage from "@/components/AssetInventory/EventReportListPage/EventReportListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
+import EventReportListpage from "@/components/AssetInventory/EventReportListPage/EventReportListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
@@ -35,7 +35,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
           },
         };
       }
-      console.log(fields);
 
       return {
         props: {
