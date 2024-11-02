@@ -2,6 +2,7 @@ import { getAssetSpreadsheetView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 
 import { useEventList } from "@/stores/useEventStore";
+import { limitOption } from "@/utils/constant";
 import {
   CategoryTableRow,
   InventoryCustomerList,
@@ -73,7 +74,7 @@ const AssetReportsListPage = ({
       department: [],
       category: [],
       status: "",
-      limit: "",
+      limit: limitOption[0].value,
       assignedToPerson: [],
       assignedToSite: [],
       assignedToCustomer: [],

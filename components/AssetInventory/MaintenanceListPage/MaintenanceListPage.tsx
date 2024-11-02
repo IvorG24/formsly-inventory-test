@@ -94,12 +94,9 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
   });
 
   const checkIfColumnIsHidden = (column: string) => {
-    return listTableColumnFilter.includes(column);
+    const isHidden = listTableColumnFilter.includes(column);
+    return isHidden;
   };
-
-  const visibleColumns = columns.filter(
-    (col) => !checkIfColumnIsHidden(col.accessor)
-  );
 
   const handleOnSubmit = async (data: InventoryFormValues) => {
     try {
@@ -172,6 +169,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
             accessor: name,
             title: "Name",
             sortable: true,
+            width: 180,
             hidden: checkIfColumnIsHidden(name),
             render: (record: Record<string, unknown>) => (
               <Text>
@@ -199,7 +197,8 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
                 .replace("inventory", "")
                 .replace("request", "")
                 .replace(/\b\w/g, (char) => char.toUpperCase()),
-              sortable: true,
+              sortable: key.includes("maintenance"),
+              width: 180,
               hidden: checkIfColumnIsHidden(key),
               render: (record: Record<string, unknown>) => {
                 const value = record[key];
@@ -338,7 +337,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}
-            columns={visibleColumns}
+            columns={columns}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}

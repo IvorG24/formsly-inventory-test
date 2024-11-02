@@ -38,7 +38,6 @@ const WarrantyListFilter = ({
   setLocalFilter,
   showTableColumnFilter,
   setShowTableColumnFilter,
-  securityGroupData,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -50,7 +49,6 @@ const WarrantyListFilter = ({
   };
 
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
-  console.log(securityGroupData);
 
   //   const eventSecurity = securityGroupData.asset.filter.event
   //     ? securityGroupData.asset.filter.event

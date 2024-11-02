@@ -200,12 +200,17 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
               },
             ]
           : []),
-        {
-          id: "security-groups",
-          label: "Security Group",
-          icon: IconUserCancel,
-          href: `/${formattedTeamName}/inventory/security-groups`,
-        },
+
+        ...(isOwnerOrAdmin
+          ? [
+              {
+                id: "security-groups",
+                label: "Security Group",
+                icon: IconUserCancel,
+                href: `/${formattedTeamName}/inventory/security-groups`,
+              },
+            ]
+          : []),
       ],
     },
     {

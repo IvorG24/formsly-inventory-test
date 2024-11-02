@@ -94,12 +94,10 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
   });
 
   const checkIfColumnIsHidden = (column: string) => {
-    return listTableColumnFilter.includes(column);
-  };
+    const isHidden = listTableColumnFilter.includes(column);
 
-  const displayedColumns = columns.filter(
-    (col) => !checkIfColumnIsHidden(col.accessor)
-  );
+    return isHidden;
+  };
 
   const handleOnSubmit = async (data: InventoryFormValues) => {
     try {
@@ -183,7 +181,6 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
             accessor: tagId,
             title: "Tag ID",
             sortable: true,
-            width: "10%",
             hidden: checkIfColumnIsHidden(tagId),
             render: (record: Record<string, unknown>) => (
               <Text>
@@ -200,7 +197,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
             accessor: name,
             title: "Name",
             sortable: true,
-            width: "10%",
+            width: 180,
             hidden: checkIfColumnIsHidden(name),
             render: (record: Record<string, unknown>) => (
               <Text>
@@ -229,7 +226,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
                 .replace("inventory", "")
                 .replace("request", "")
                 .replace(/\b\w/g, (char) => char.toUpperCase()),
-              sortable: true,
+              sortable: key.includes("warranty"),
               hidden: checkIfColumnIsHidden(key),
               render: (record: Record<string, unknown>) => {
                 const value = record[key];
@@ -330,7 +327,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
 
   useEffect(() => {
     handlePagination(activePage);
-  }, [activeTeam]);
+  }, [activeTeam, activePage]);
 
   return (
     <Container maw={3840} h="100%">
@@ -374,7 +371,7 @@ const WarrantyListPage = ({ securityGroupData }: Props) => {
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}
-            columns={displayedColumns}
+            columns={columns}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}

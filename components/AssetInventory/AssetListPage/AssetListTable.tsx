@@ -1,32 +1,32 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
-  BASE_URL,
-  DEFAULT_REQUEST_LIST_LIMIT,
-  formatDate,
+    BASE_URL,
+    DEFAULT_REQUEST_LIST_LIMIT,
+    formatDate,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InventoryListType } from "@/utils/types";
 import {
-  ActionIcon,
-  Anchor,
-  Avatar,
-  Badge,
-  Checkbox,
-  CopyButton,
-  createStyles,
-  Flex,
-  Group,
-  HoverCard,
-  Text,
-  Tooltip,
+    ActionIcon,
+    Anchor,
+    Avatar,
+    Badge,
+    Checkbox,
+    CopyButton,
+    createStyles,
+    Flex,
+    Group,
+    HoverCard,
+    Text,
+    Tooltip,
 } from "@mantine/core";
 import {
-  IconArrowsMaximize,
-  IconCopy,
-  IconLayersLinked,
-  IconLinkOff,
+    IconArrowsMaximize,
+    IconCopy,
+    IconLayersLinked,
+    IconLinkOff,
 } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
@@ -326,11 +326,11 @@ const AssetListTable = ({
         },
         ...dynamicColumns,
         {
-          accessor: "u.user_first_name",
+          accessor: "inventory_request_created_by",
           title: "Created By",
           sortable: true,
           width: 200,
-          hidden: checkIfColumnIsHidden("request_creator_user_id"),
+          hidden: checkIfColumnIsHidden("inventory_request_created_by"),
           render: (record) => {
             const {
               request_creator_user_id,

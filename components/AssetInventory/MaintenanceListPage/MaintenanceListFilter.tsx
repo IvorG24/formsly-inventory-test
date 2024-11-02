@@ -36,7 +36,6 @@ const MaintenanceListFilter = ({
   setLocalFilter,
   showTableColumnFilter,
   setShowTableColumnFilter,
-  securityGroupData,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -46,7 +45,6 @@ const MaintenanceListFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-  console.log(securityGroupData);
 
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   //   const eventSecurity = securityGroupData.asset.filter.event

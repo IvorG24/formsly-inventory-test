@@ -68,6 +68,7 @@ const WarrantyListTable = ({
       listTableColumnFilter={listTableColumnFilter}
       setListTableColumnFilter={setListTableColumnFilter}
       tableColumnList={tableColumnList}
+      handleFetch={handlePagination}
     />
   );
 };

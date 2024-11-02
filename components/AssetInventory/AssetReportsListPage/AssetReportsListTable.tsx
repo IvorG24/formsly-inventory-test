@@ -88,16 +88,18 @@ const AssetReportsListTable = ({
   const dynamicColumns = tableColumnList
     .filter(
       (column) =>
-        column.value !== "inventory_request_id" &&
-        column.value !== "inventory_request_status" &&
-        column.value !== "inventory_request_name" &&
-        column.value !== "inventory_request_tag_id" &&
-        column.value !== "inventory_request_cost" &&
-        column.value !== "inventory_request_created_by" &&
-        column.label === "inventory_request_id"
+        ![
+          "inventory_request_id",
+          "inventory_request_status",
+          "inventory_request_name",
+          "inventory_request_tag_id",
+          "inventory_request_cost",
+          "inventory_request_created_by",
+          "inventory_request_user_id",
+        ].includes(column.value)
     )
     .map((column) => ({
-      accessor: `r.${column.value}`,
+      accessor: column.value,
       title: column.label,
       sortable:
         column.value.startsWith("inventory_request") &&
@@ -109,7 +111,6 @@ const AssetReportsListTable = ({
           record[column.value] !== undefined && record[column.value] !== null
             ? String(record[column.value])
             : "";
-
         const fieldWithDate = [
           "inventory_request_purchase_date",
           "inventory_request_created",
@@ -117,10 +118,11 @@ const AssetReportsListTable = ({
           "inventory_event_date_created",
         ];
 
-        if (fieldWithDate.includes(column.value)) {
-          return <Text>{value ? formatDate(new Date(value)) : ""}</Text>;
-        }
-        return <Text>{value !== null ? String(value) : ""}</Text>;
+        return fieldWithDate.includes(column.value) ? (
+          <Text>{value ? formatDate(new Date(value)) : ""}</Text>
+        ) : (
+          <Text>{value}</Text>
+        );
       },
     }));
 
@@ -144,6 +146,7 @@ const AssetReportsListTable = ({
         recordsPerPage={Number(limit)}
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
+        handleFetch={handlePagination}
         columns={[
           {
             accessor: "r.inventory_request_tag_id",
@@ -248,7 +251,7 @@ const AssetReportsListTable = ({
             },
           },
           {
-            accessor: "inventory_request_assigned_to",
+            accessor: "inventory_request_id",
             title: "Assigned To",
             sortable: true,
             width: 180,
@@ -318,11 +321,11 @@ const AssetReportsListTable = ({
           },
           ...dynamicColumns,
           {
-            accessor: "u.user_first_name",
+            accessor: "inventory_request_created_by",
             title: "Created By",
             sortable: true,
             width: 200,
-            hidden: checkIfColumnIsHidden("request_creator_user_id"),
+            hidden: checkIfColumnIsHidden("inventory_request_created_by"),
             render: (record) => {
               const {
                 request_creator_user_id,
@@ -367,12 +370,10 @@ const AssetReportsListTable = ({
                       <Text>{`${request_creator_first_name} ${request_creator_last_name}`}</Text>
                     </Anchor>
                   )}
-                  {!request_creator_user_id && <Text>Public User</Text>}
                 </Flex>
               );
             },
           },
-
           {
             accessor: "view",
             title: "View",
