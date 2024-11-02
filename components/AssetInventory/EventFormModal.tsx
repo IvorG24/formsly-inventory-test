@@ -116,6 +116,10 @@ const EventFormModal = ({
   };
 
   useEffect(() => {
+    if (!opened) {
+      setIsloading(false);
+      return;
+    }
     const getInventoryForm = async () => {
       try {
         if (!userId || !eventId) return;

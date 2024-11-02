@@ -154,10 +154,12 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
   const handleLocationSubmit = async (data: InventoryAssetFormValues) => {
     try {
       if (!activeTeam.team_id) return;
+
       const checkIfUniqueValue = await checkUniqueValue(supabaseClient, {
         type: "location",
         typeValue: data.location_name?.trim() || "",
       });
+
       if (checkIfUniqueValue) {
         notifications.show({
           message: "Location already exist",
@@ -176,7 +178,7 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
         location_name: result.result_name,
         location_is_disabled: false,
         location_site_id: result.result_id,
-        site_name: data?.site_name || "",
+        site_name: result.result_site_name ?? "",
       };
 
       setCurrentLocationList((prev) => [...prev, newData]);
@@ -197,7 +199,8 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
   return (
     <Container fluid>
       <DisableModal
-        setCurrentLocationList={setCurrentLocationList}
+        handleFetch={handlePagination}
+        activePage={activePage}
         typeId={locationId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
@@ -206,7 +209,8 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
       <UpdateModal
         typeOption={siteOptionList}
         typeId={locationId}
-        setCurrentLocationList={setCurrentLocationList}
+        handleFetch={handlePagination}
+        activePage={activePage}
         initialtypeId={initialLocationData.site_id}
         initialData={initialLocationData.location_name}
         close={() => setUpdatedModalOpened(false)}

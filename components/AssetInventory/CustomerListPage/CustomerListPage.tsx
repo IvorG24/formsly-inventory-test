@@ -3,6 +3,7 @@ import { uploadCSVFileCustomer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
+  Column,
   InventoryCustomerList,
   InventoryCustomerRow,
   SecurityGroupData,
@@ -27,23 +28,20 @@ import {
   IconFileImport,
   IconPlus,
   IconSearch,
+  IconTrash,
 } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import DisableModal from "../DisableModal";
 import CustomerDrawer from "./CustomerDrawer";
 
 type FormValues = {
   search: string;
+  isAscendingSort: boolean;
   file?: File;
-};
-
-type Column = {
-  accessor: string;
-  title: string;
-  render: (row: InventoryCustomerList) => JSX.Element;
 };
 
 type Props = {
@@ -62,9 +60,11 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   const [selectedCustomer, setSelectedCustomer] =
     useState<InventoryCustomerList | null>(null);
   const [columns, setColumns] = useState<Column[]>([]); // Specify the type here
+  const [modalOpened, setModalOpened] = useState(false);
   const formMethods = useForm<FormValues>({
     defaultValues: {
       search: "",
+      isAscendingSort: false,
     },
   });
 
@@ -72,7 +72,12 @@ const CustomerListPage = ({ securityGroup }: Props) => {
 
   const canAddData = securityGroup.privileges.customer.add === true;
   const canEditData = securityGroup.privileges.customer.edit === true;
-//   const canDeleteData = securityGroup.privileges.customer.delete === true;
+  const canDeleteData = securityGroup.privileges.customer.delete === true;
+
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "customer_id",
+    direction: "desc",
+  });
 
   useEffect(() => {
     handlePagination(activePage);
@@ -81,29 +86,36 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   const handleFetchCustomerList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
-      const { search } = getValues();
+      const { search, isAscendingSort } = getValues();
       const { data, totalCount } = await getCustomerList(supabaseClient, {
         search,
         teamId: activeTeam.team_id,
         page,
         limit: ROW_PER_PAGE,
+        columnAccessor: sortStatus.columnAccessor,
+        isAscendingSort,
       });
+
       if (data.length > 0) {
         const generatedColumns = Object.keys(data[0])
           .filter((key) => key !== "customer_id" && key !== "customer_team_id")
           .map((key) => ({
             accessor: key,
             title: key.replace(/_/g, " ").toUpperCase(),
-            render: (row: InventoryCustomerList) => <Text>{row[key]}</Text>,
+            sortable: key.includes("customer"),
+            render: (record: Record<string, unknown>) => (
+              <Text>{(record[key] as string) || ""}</Text>
+            ),
           }));
         generatedColumns.push({
           accessor: "actions",
           title: "ACTIONS",
-          render: (row: InventoryCustomerRow) => (
-            <>
+          sortable: false,
+          render: (record: Record<string, unknown>) => (
+            <Flex gap="md">
               {canEditData && (
                 <Button
-                  onClick={() => handleEdit(row)}
+                  onClick={() => handleEdit(record as InventoryCustomerRow)}
                   color="blue"
                   variant="outline"
                   size="sm"
@@ -112,7 +124,16 @@ const CustomerListPage = ({ securityGroup }: Props) => {
                   Edit
                 </Button>
               )}
-            </>
+              <Button
+                onClick={() => handleDelete(record as InventoryCustomerRow)}
+                color="red"
+                variant="outline"
+                size="sm"
+                rightIcon={<IconTrash size={16} />}
+              >
+                Delete
+              </Button>
+            </Flex>
           ),
         });
         setColumns(generatedColumns);
@@ -226,6 +247,13 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   };
 
   const handleEdit = (customer: InventoryCustomerRow) => {
+    if (!canEditData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
     setSelectedCustomer(customer);
     setDrawerMode("edit");
     open();
@@ -236,6 +264,23 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     setDrawerMode("create");
     open();
   };
+
+  const handleDelete = (customer: InventoryCustomerRow) => {
+    if (!canDeleteData) {
+      notifications.show({
+        message: "Action not allowed",
+        color: "red",
+      });
+      return;
+    }
+    setSelectedCustomer(customer);
+    setModalOpened(true);
+  };
+  useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
+    handlePagination(activePage);
+  }, [sortStatus]);
+
   return (
     <Container fluid>
       <CustomerDrawer
@@ -247,6 +292,16 @@ const CustomerListPage = ({ securityGroup }: Props) => {
         customerData={selectedCustomer ?? undefined}
         setCustomerData={setSelectedCustomer}
       />
+
+      <DisableModal
+        typeId={selectedCustomer?.customer_id ?? ""}
+        close={() => setModalOpened(false)}
+        opened={modalOpened}
+        type="customer"
+        handleFetch={handlePagination}
+        activePage={activePage}
+      />
+
       <Flex direction="column" gap="sm">
         <Title order={3}>List of Customers</Title>
         <Text>
@@ -298,9 +353,11 @@ const CustomerListPage = ({ securityGroup }: Props) => {
             minHeight: "300px",
           }}
           withBorder
-          idAccessor="site_id"
+          idAccessor="customer_id"
           page={activePage}
           totalRecords={customerCount}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
           recordsPerPage={ROW_PER_PAGE}
           onPageChange={handlePagination}
           records={customerList}

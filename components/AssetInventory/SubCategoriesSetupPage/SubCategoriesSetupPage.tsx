@@ -201,10 +201,12 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
   useEffect(() => {
     handlePagination(1);
   }, [activePage]);
+
   return (
     <Container fluid>
       <DisableModal
-        setCurrentSubCategoryList={setSubCategory}
+        handleFetch={handlePagination}
+        activePage={activePage}
         typeId={subCategoryId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
@@ -212,7 +214,8 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
       />
       <UpdateModal
         typeId={subCategoryId}
-        setCurrentSubCategoryList={setSubCategory}
+        handleFetch={handlePagination}
+        activePage={activePage}
         typeOption={categoryOptionList}
         initialtypeId={initialData.category_id}
         initialData={initialData.subCategory_name}

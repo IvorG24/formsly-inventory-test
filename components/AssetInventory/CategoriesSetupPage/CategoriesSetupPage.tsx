@@ -190,7 +190,8 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
   return (
     <Container fluid>
       <DisableModal
-        setCurrentCategoryList={setCurrentCategoryList}
+        handleFetch={handleFetchCategoryList}
+        activePage={activePage}
         typeId={categoryId}
         close={() => setModalOpened(false)}
         opened={modalOpened}
@@ -198,7 +199,8 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
       />
       <UpdateModal
         typeId={categoryId}
-        setCurrentCategoryList={setCurrentCategoryList}
+        handleFetch={handleFetchCategoryList}
+        activePage={activePage}
         initialData={initialCategorydata.category_name}
         close={() => setUpdatedModalOpened(false)}
         opened={updateModalOpened}

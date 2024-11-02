@@ -3,7 +3,7 @@ import { checkCustomerName, createInventoryCustomer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { InventoryCustomerList, InventoryFormType } from "@/utils/types";
-import { Box, Button, Drawer, Group } from "@mantine/core";
+import { Box, Button, Drawer, Group, LoadingOverlay } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
@@ -36,7 +36,8 @@ const CustomerDrawer = ({
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
   const requestFormMethods = useForm<InventoryFormValues>();
-  const { handleSubmit, control, getValues, setValue, setError } =
+  const [isLoading, setIsLoading] = useState(false);
+  const { handleSubmit, control, getValues, setValue, setError, formState } =
     requestFormMethods;
   const {
     fields: formSections,
@@ -51,7 +52,7 @@ const CustomerDrawer = ({
     const getInventoryForm = async () => {
       try {
         if (!userProfile || !isOpen) return;
-
+        setIsLoading(true);
         const { form } = await getFormOnLoad(supabaseClient, {
           userId: userProfile?.user_id,
           formId: "b15e05e6-b8c9-4599-ab01-7e3afd0cdd68",
@@ -83,7 +84,9 @@ const CustomerDrawer = ({
         } else if (mode === "create") {
           replaceSection(form.form_section);
         }
+        setIsLoading(false);
       } catch (e) {
+        setIsLoading(false);
         notifications.show({
           message: "Something went wrong",
           color: "red",
@@ -174,6 +177,7 @@ const CustomerDrawer = ({
 
       await createInventoryCustomer(supabaseClient, {
         customerData: data,
+        customerExistingId: customerData?.customer_id,
         teamId: activeTeam.team_id,
       });
 
@@ -200,6 +204,7 @@ const CustomerDrawer = ({
         setCustomerData(null);
       }}
     >
+      <LoadingOverlay visible={isLoading || formState.isSubmitting} />
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           {formSections.map((section, idx) => {

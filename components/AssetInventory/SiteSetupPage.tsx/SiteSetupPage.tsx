@@ -200,7 +200,8 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
   return (
     <Container fluid>
       <DisableModal
-        setCurrentSiteList={setCurrentSiteList}
+        handleFetch={handleFetchSiteList}
+        activePage={activePage}
         typeId={siteId}
         close={() => {
           setModalOpened(false);
@@ -210,7 +211,8 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
       />
       <UpdateModal
         typeId={siteId}
-        setCurrentSiteList={setCurrentSiteList}
+        handleFetch={handleFetchSiteList}
+        activePage={activePage}
         initialData={initialSiteData.site_name}
         initialDescription={initialSiteData.site_description}
         close={() => setUpdatedModalOpened(false)}

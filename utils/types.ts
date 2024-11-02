@@ -2813,6 +2813,7 @@ export type InventoryResponseValues = {
   result_category_name: string;
   result_description: string;
   result_site_id: string;
+  result_site_name?: string;
   result_team_id: string;
 };
 

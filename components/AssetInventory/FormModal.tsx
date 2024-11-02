@@ -48,7 +48,7 @@ const FormModal = ({
   const [formData, setFormData] = useState<InventoryFormType>();
   const { handleSubmit, control, formState, reset, getValues, setValue } =
     requestFormMethods;
-  const [loading, setLoading] = useState(false); // Loading state
+  const [loading, setLoading] = useState(false);
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",

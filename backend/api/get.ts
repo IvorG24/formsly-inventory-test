@@ -8431,7 +8431,14 @@ export const getEventFormDetails = async (
 
 export const getCustomerList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { search?: string; page?: number; limit?: number; teamId: string }
+  params: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    teamId: string;
+    isAscendingSort?: boolean;
+    columnAccessor?: string;
+  }
 ) => {
   const { data, error } = await supabaseClient.rpc(
     "get_customer_inventory_list",

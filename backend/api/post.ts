@@ -28,8 +28,8 @@ import {
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
-  CreatePracticalTestFormType,
   createEventFormvalues,
+  CreatePracticalTestFormType,
   CreateTicketFormValues,
   customFieldFormValues,
   EquipmentDescriptionTableInsert,
@@ -101,8 +101,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import { getCurrentDate } from "./get";
-import { getAssetId } from "./get";
+import { getAssetId, getCurrentDate } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -649,7 +648,7 @@ export const createRequest = async (
     applicationInformationFormslyId,
     interviewParams,
     backgroundCheckParams,
-    tradeTestParams
+    tradeTestParams,
   } = params;
 
   const requestId = uuidv4();
@@ -798,7 +797,7 @@ export const createRequest = async (
         recruiter,
         interviewParams,
         backgroundCheckParams,
-        tradeTestParams
+        tradeTestParams,
       },
     })
     .select()
@@ -3191,10 +3190,11 @@ export const createInventoryEmployee = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     EmployeeData: InventoryFormValues;
+    EmployeeID?: string;
   }
 ) => {
-  const { EmployeeData } = params;
-  const employeeId = uuidv4();
+  const { EmployeeData, EmployeeID } = params;
+  const employeeId = EmployeeID ? EmployeeID : uuidv4();
   const employeeResponse = [];
   const fieldResponse: InventoryRequestResponseInsert[] = [];
   let siteName = null;
@@ -3255,6 +3255,7 @@ export const createInventoryEmployee = async (
     siteName,
     departmentName,
     locationName,
+    employeeId,
   };
 
   const { data, error } = await supabaseClient.rpc(
@@ -3300,11 +3301,12 @@ export const createInventoryCustomer = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     customerData: InventoryFormValues;
+    customerExistingId?: string;
     teamId: string;
   }
 ) => {
-  const { customerData, teamId } = params;
-  const customerId = uuidv4();
+  const { customerData, teamId, customerExistingId } = params;
+  const customerId = customerExistingId ? customerExistingId : uuidv4();
   const customerResponse = [];
   const fieldResponse: InventoryRequestResponseInsert[] = [];
 

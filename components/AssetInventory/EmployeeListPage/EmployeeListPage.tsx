@@ -118,6 +118,8 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
         });
         setColumns(generatedColumns);
       }
+      console.log(data);
+
       setCurrentEmployeeList(data);
       setCurrentEmployeeCount(totalCount);
     } catch (e) {

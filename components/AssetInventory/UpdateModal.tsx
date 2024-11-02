@@ -1,11 +1,5 @@
 import { checkUniqueValue } from "@/backend/api/get";
 import { updateDrawerData } from "@/backend/api/update";
-import {
-  CategoryTableRow,
-  InventoryLocationSiteRow,
-  SiteTableRow,
-  SubCategory,
-} from "@/utils/types";
 import { Button, Group, Modal, Select, Stack, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -21,16 +15,8 @@ type UpdateModalProps = {
   initialDescription?: string;
   initialtypeId?: string;
   typeOption?: { value: string; label: string }[];
-  setCurrentSiteList?: React.Dispatch<React.SetStateAction<SiteTableRow[]>>;
-  setCurrentLocationList?: React.Dispatch<
-    React.SetStateAction<InventoryLocationSiteRow[]>
-  >;
-  setCurrentCategoryList?: React.Dispatch<
-    React.SetStateAction<CategoryTableRow[]>
-  >;
-  setCurrentSubCategoryList?: React.Dispatch<
-    React.SetStateAction<SubCategory[]>
-  >;
+  handleFetch: (page: number) => void;
+  activePage: number;
 };
 
 type FormValues = {
@@ -45,10 +31,8 @@ const UpdateModal = ({
   close,
   type,
   typeId,
-  setCurrentSiteList,
-  setCurrentLocationList,
-  setCurrentCategoryList,
-  setCurrentSubCategoryList,
+  handleFetch,
+  activePage,
   typeOption,
   initialtypeId = "",
   initialData = "",
@@ -98,111 +82,33 @@ const UpdateModal = ({
       close();
       switch (type) {
         case "site":
-          const updatedSite = await updateDrawerData(supabaseClient, {
+          await updateDrawerData(supabaseClient, {
             typeId: typeId,
             typeData: data,
             type: type,
           });
-          if (setCurrentSiteList) {
-            setCurrentSiteList((prev) => {
-              const siteIndex = prev.findIndex(
-                (site) => site.site_id === typeId
-              );
-
-              if (siteIndex !== -1) {
-                const updatedList = [...prev];
-
-                updatedList[siteIndex] = {
-                  ...updatedList[siteIndex],
-                  site_name: updatedSite.type_name,
-                  site_description:
-                    updatedSite.type_description ||
-                    updatedList[siteIndex].site_description,
-                };
-
-                return updatedList;
-              }
-              return prev;
-            });
-          }
           break;
         case "location":
-          const updatedLocation = await updateDrawerData(supabaseClient, {
+          await updateDrawerData(supabaseClient, {
             typeId: typeId,
             typeData: data,
             type: type,
           });
-          if (setCurrentLocationList) {
-            setCurrentLocationList((prev) => {
-              const locationIndex = prev.findIndex(
-                (location) => location.location_id === typeId
-              );
-
-              if (locationIndex !== -1) {
-                const updatedList = [...prev];
-
-                updatedList[locationIndex] = {
-                  ...updatedList[locationIndex],
-                  location_name: updatedLocation.type_name,
-                };
-
-                return updatedList;
-              }
-              return prev;
-            });
-          }
           break;
         case "category":
-          const updatedCategory = await updateDrawerData(supabaseClient, {
+          await updateDrawerData(supabaseClient, {
             typeId: typeId,
             typeData: data,
             type: type,
           });
-          if (setCurrentCategoryList) {
-            setCurrentCategoryList((prev) => {
-              const categoryIndex = prev.findIndex(
-                (category) => category.category_id === typeId
-              );
 
-              if (categoryIndex !== -1) {
-                const updatedList = [...prev];
-
-                updatedList[categoryIndex] = {
-                  ...updatedList[categoryIndex],
-                  category_name: updatedCategory.type_name,
-                };
-
-                return updatedList;
-              }
-              return prev;
-            });
-          }
           break;
         case "field":
-          const updatedSubCategory = await updateDrawerData(supabaseClient, {
+          await updateDrawerData(supabaseClient, {
             typeId: typeId,
             typeData: data,
             type: type,
           });
-          if (setCurrentSubCategoryList) {
-            setCurrentSubCategoryList((prev) => {
-              const subCategoryIndexx = prev.findIndex(
-                (subCategory) => subCategory.sub_category_id === typeId
-              );
-
-              if (subCategoryIndexx !== -1) {
-                const updatedList = [...prev];
-
-                updatedList[subCategoryIndexx] = {
-                  ...updatedList[subCategoryIndexx],
-                  sub_category_name: updatedSubCategory.type_name,
-                };
-
-                return updatedList;
-              }
-              return prev;
-            });
-          }
           break;
       }
 
@@ -210,6 +116,7 @@ const UpdateModal = ({
         message: `${type} updated successfully`,
         color: "green",
       });
+      handleFetch(activePage);
     } catch (e) {
       notifications.show({
         message: `Something went wrong`,
