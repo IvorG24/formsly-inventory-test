@@ -10,7 +10,7 @@ type UpdateModalProps = {
   opened: boolean;
   close: () => void;
   typeId: string;
-  type: "site" | "location" | "team_department" | "category" | "field";
+  type: "site" | "location" | "team_department" | "category" | "sub_category";
   initialData?: string;
   initialDescription?: string;
   initialtypeId?: string;
@@ -155,7 +155,7 @@ const UpdateModal = ({
               )}
             />
           )}
-          {initialtypeId && type === "field" && (
+          {initialtypeId && type === "sub_category" && (
             <Controller
               name="categoryId"
               control={control}
@@ -180,7 +180,7 @@ const UpdateModal = ({
             rules={{ required: "This field is required" }}
             render={({ field }) => (
               <TextInput
-                label={`${type === "field" ? "Sub Category" : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()} Name`}
+                label={`${type === "sub_category" ? "Sub Category" : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()} Name`}
                 placeholder={`Enter new ${type} name`}
                 error={errors.typeName?.message}
                 required
