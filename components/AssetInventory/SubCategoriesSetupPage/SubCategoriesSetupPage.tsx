@@ -225,7 +225,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
         initialData={initialData.subCategory_name}
         close={() => setUpdatedModalOpened(false)}
         opened={updateModalOpened}
-        type="field"
+        type="sub_category"
       />
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>

@@ -103,7 +103,7 @@ const UpdateModal = ({
           });
 
           break;
-        case "field":
+        case "sub_category":
           await updateDrawerData(supabaseClient, {
             typeId: typeId,
             typeData: data,
