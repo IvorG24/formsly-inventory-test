@@ -33,7 +33,7 @@ import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import DisableModal from "../DisableModal";
+import DisableModal from "../FormModal/DisableModal";
 import CustomerDrawer from "./CustomerDrawer";
 
 type FormValues = {

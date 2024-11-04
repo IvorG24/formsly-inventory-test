@@ -25,7 +25,7 @@ import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import CreateFieldForm from "../AssetSetupPage/CreateFieldForm";
 import UpdateFieldForm from "../AssetSetupPage/UpdateFieldForm";
-import DisableModal from "../DisableModal";
+import DisableModal from "../FormModal/DisableModal";
 
 type Props = {
   categoryOptions: CategoryTableRow[];

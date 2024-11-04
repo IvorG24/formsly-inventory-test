@@ -29,8 +29,8 @@ import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import DisableModal from "../DisableModal";
-import UpdateModal from "../UpdateModal";
+import DisableModal from "../FormModal/DisableModal";
+import UpdateModal from "../FormModal/UpdateModal";
 import CategoryDrawer from "./CategoryDrawer";
 
 type FormValues = {

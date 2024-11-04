@@ -15,8 +15,8 @@ import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { InventoryFormValues } from "../../EventFormModal";
-import FormModal from "../../FormModal";
+import { InventoryFormValues } from "../../FormModal/EventFormModal";
+import FormModal from "../../FormModal/FormModal";
 
 type FormValues = {
   date: Date;

@@ -1,4 +1,4 @@
-import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
+import { InventoryFormValues } from "@/components/AssetInventory/FormModal/EventFormModal";
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
@@ -3162,28 +3162,21 @@ export const handleAssetImageUpload = async (
   supabaseClient: SupabaseClient<Database>,
   file: File,
   field: string,
-  userId: string
+  tagId: string
 ) => {
   const fileType = getFileType(field);
   const uploadParams = {
     bucket: "ASSET_IMAGE_ATTACHMENTS" as AttachmentBucketType,
     fileType,
-    userId,
   };
 
   const isImage = file.type.split("/")[0] === "image";
 
   if (isImage) {
-    const editedFile = await editImageWithUUID(file);
-    const uploadResponse = await uploadImage(supabaseClient, {
+    const uploadResponse = await uploadAssetFile(supabaseClient, {
       ...uploadParams,
-      image: editedFile,
-    });
-    return uploadResponse.publicUrl;
-  } else {
-    const uploadResponse = await uploadFile(supabaseClient, {
-      ...uploadParams,
-      file,
+      file: file,
+      tagId,
     });
     return uploadResponse.publicUrl;
   }
@@ -3552,4 +3545,35 @@ export const createInventoryMaitenance = async (
   if (error) throw error;
 
   return data;
+};
+
+export const uploadAssetFile = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    file: Blob | File;
+    bucket: AttachmentBucketType;
+    fileType: string;
+    tagId: string;
+  }
+) => {
+  const { file, bucket, fileType, tagId } = params;
+  const currentDate = await getCurrentDate(supabaseClient);
+
+  const formattedFileName = `${formatDate(
+    currentDate
+  )}-${tagId}-${fileType}-${shortId()}.${file.name.split(".").pop()}`;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from(bucket)
+    .upload(formattedFileName, file, { upsert: true });
+  if (uploadError) throw uploadError;
+
+  const { data } = supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(formattedFileName);
+
+  return {
+    fileName: formattedFileName,
+    publicUrl: data.publicUrl,
+  };
 };

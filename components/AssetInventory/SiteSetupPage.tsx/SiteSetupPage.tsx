@@ -29,8 +29,8 @@ import { DataTable } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import DisableModal from "../DisableModal";
-import UpdateModal from "../UpdateModal";
+import DisableModal from "../FormModal/DisableModal";
+import UpdateModal from "../FormModal/UpdateModal";
 import SiteDrawer from "./SiteDrawer";
 
 type FormValues = {
@@ -258,7 +258,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
           </form>
 
           <Divider />
-          
+
           <FormProvider {...formMethods}>
             <SiteDrawer
               handleSiteSubmit={handleSiteSubmit}

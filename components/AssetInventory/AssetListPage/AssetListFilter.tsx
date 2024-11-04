@@ -24,7 +24,7 @@ import { IconDotsVertical, IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import EventFormModal from "../EventFormModal";
+import EventFormModal from "../FormModal/EventFormModal";
 
 type RequestListFilterProps = {
   siteList: SiteTableRow[];

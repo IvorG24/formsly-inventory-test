@@ -22,7 +22,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
-import DisableModal from "../DisableModal";
+import DisableModal from "../FormModal/DisableModal";
 
 import { updateIncludedField, updateRequiredField } from "@/backend/api/update";
 import CreateFieldForm from "./CreateFieldForm";

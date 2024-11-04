@@ -1,7 +1,13 @@
 import { handleAssetImageUpload } from "@/backend/api/post";
 import { updateAssetImage } from "@/backend/api/update";
-import { useUserProfile } from "@/stores/useUserStore";
-import { ActionIcon, Box, Grid, Image, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Grid,
+  Image,
+  LoadingOverlay,
+  Text,
+} from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ChangeEvent, useState } from "react";
@@ -11,22 +17,23 @@ type Props = {
 };
 const ImageUpload = ({ tagId, imageUrl }: Props) => {
   const [image, setImage] = useState<string | null>(imageUrl);
+  const [isUploading, setIsUploading] = useState(false);
   const supabaseClient = useSupabaseClient();
-  const userProfile = useUserProfile();
 
   const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0];
       if (file) {
+        setIsUploading(true);
         const reader = new FileReader();
         const publicUrl = await handleAssetImageUpload(
           supabaseClient,
           file,
           file.name,
-          userProfile?.user_id ?? ""
+          tagId
         );
         await updateAssetImage(supabaseClient, {
-          url: publicUrl,
+          url: publicUrl ?? "",
           tagId: parseInt(tagId),
         });
 
@@ -35,7 +42,10 @@ const ImageUpload = ({ tagId, imageUrl }: Props) => {
         };
         reader.readAsDataURL(file);
       }
-    } catch (e) {}
+      setIsUploading(false);
+    } catch (e) {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -54,9 +64,11 @@ const ImageUpload = ({ tagId, imageUrl }: Props) => {
             overflow: "hidden",
           }}
         >
-          {image ? (
+          {isUploading ? (
+            <LoadingOverlay visible={isUploading} />
+          ) : image ? (
             <Image
-              src={image} // Dynamically loaded image
+              src={image}
               alt="Asset Image"
               style={{
                 objectFit: "cover",

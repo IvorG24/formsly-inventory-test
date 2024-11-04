@@ -35,7 +35,7 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import EventFormModal from "../EventFormModal";
+import EventFormModal from "../FormModal/EventFormModal";
 import AdditionalDetailsPanel from "./DetailsPanel/AdditionalDetailsPanel";
 import AssetLinkPanel from "./DetailsPanel/AssetLinkPanel";
 import EventPanel from "./DetailsPanel/EventPanel";

@@ -1,4 +1,4 @@
-import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
+import { InventoryFormValues } from "@/components/AssetInventory/FormModal/EventFormModal";
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";

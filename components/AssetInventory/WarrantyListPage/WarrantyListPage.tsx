@@ -28,7 +28,7 @@ import { IconCheck, IconEdit, IconX } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import FormModal, { InventoryFormValues } from "../FormModal";
+import FormModal, { InventoryFormValues } from "../FormModal/FormModal";
 import WarrantyListFilter from "./WarrantyListFilter";
 import WarrantyListTable from "./WarrantyListTable";
 

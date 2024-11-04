@@ -1,6 +1,6 @@
 import { FilterChartValues } from "@/components/AnalyticsPage/Analytics";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
-import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
+import { InventoryFormValues } from "@/components/AssetInventory/FormModal/EventFormModal";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -8123,7 +8123,6 @@ export const getAssetSpreadsheetView = async (
 
   return data as unknown as { data: InventoryListType[]; count: 0 };
 };
-
 
 export const getColumnList = async (
   supabaseClient: SupabaseClient<Database>

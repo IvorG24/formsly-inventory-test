@@ -26,7 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import InventoryFormSection from "./CreateAssetPage/InventoryFormSection";
+import InventoryFormSection from "../CreateAssetPage/InventoryFormSection";
 
 export type Section = InventoryFormResponseType["form_section"][0];
 

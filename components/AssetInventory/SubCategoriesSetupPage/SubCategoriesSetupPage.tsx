@@ -30,8 +30,8 @@ import { IconCategory, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import DisableModal from "../DisableModal";
-import UpdateModal from "../UpdateModal";
+import DisableModal from "../FormModal/DisableModal";
+import UpdateModal from "../FormModal/UpdateModal";
 import SubCategoryDrawer from "./SubCategoriesDrawer";
 type FormValues = {
   category_id: string;
