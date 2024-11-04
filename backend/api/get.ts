@@ -127,6 +127,7 @@ import {
   TeamOnLoad,
   TeamProjectTableRow,
   TeamTableRow,
+  TeamTeamMembershipRequest,
   TechnicalAssessmentTableRow,
   TechnicalInterviewFilterFormValues,
   TechnicalInterviewSpreadsheetData,
@@ -7619,6 +7620,57 @@ export const getRequesterPrimarySignerList = async (
   };
 };
 
+export const getExistingTeams = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { page: number; search?: string }
+) => {
+  const { page, search } = params;
+  const start = (page - 1) * ROW_PER_PAGE;
+  const end = start + ROW_PER_PAGE - 1;
+
+  let query = supabaseClient
+    .schema("team_schema")
+    .from("team_table")
+    .select("team_id, team_name, team_logo", { count: "exact" });
+
+  if (search) {
+    query = query.ilike("team_name", `%${search}%`);
+  }
+  query.range(start, end);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data,
+    count: Number(count),
+  };
+};
+
+export const getUserTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    offset: number;
+  }
+) => {
+  const { userId, offset } = params;
+  const start = offset * ROW_PER_PAGE;
+  const end = start + ROW_PER_PAGE;
+
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_membership_request_table")
+    .select("*")
+    .eq("team_membership_request_from_user_id", userId)
+    .range(start, end);
+
+  if (error) throw error;
+
+  return data;
+};
+
 export const getRequestIdFromFormslyId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -7660,6 +7712,26 @@ export const getBackgroundCheckData = async (
     };
   };
   return formattedData;
+};
+
+export const getTeamTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    page: number;
+    teamId: string;
+    search?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_team_team_membership_request",
+    {
+      input_data: { ...params, limit: ROW_PER_PAGE },
+    }
+  );
+
+  if (error) throw error;
+
+  return data as { data: TeamTeamMembershipRequest[]; count: number };
 };
 
 export const getPracticalTestList = async (

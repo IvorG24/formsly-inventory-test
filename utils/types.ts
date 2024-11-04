@@ -595,6 +595,12 @@ export type RequesterPrimarySignerTableInsert =
 export type RequesterPrimarySignerTableUpdate =
   Database["form_schema"]["Tables"]["requester_primary_signer_table"]["Update"];
 
+export type TeamMembershipRequestTableRow =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Row"];
+export type TeamMembershipRequestTableInsert =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Insert"];
+export type TeamMembershipRequestTableUpdate =
+  Database["team_schema"]["Tables"]["team_membership_request_table"]["Update"];
 export type PracticalTestTableRow =
   Database["hr_schema"]["Tables"]["practical_test_table"]["Row"];
 export type PracticalTestTableInsert =
@@ -2670,6 +2676,12 @@ export type RequesterPrimarySignerFormValues = {
 export type RequesterPrimarySignerType = RequesterPrimarySignerTableRow & {
   requester_primary_signer_signer_team_member_id: string;
 };
+
+export type TeamTeamMembershipRequest = Pick<
+  TeamMemberType["team_member_user"],
+  "user_first_name" | "user_last_name" | "user_id" | "user_email"
+> &
+  Pick<TeamMembershipRequestTableRow, "team_membership_request_id">;
 
 export type PracticalTestType = PracticalTestTableRow & {
   practical_test_created_by_user: {

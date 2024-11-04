@@ -222,6 +222,12 @@ CREATE TABLE team_schema.team_key_record_table (
     team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
 );
 
+CREATE TABLE team_schema.team_membership_request_table (
+    team_membership_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    team_membership_request_to_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
+    team_membership_request_from_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
+);
+
 CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -20598,7 +20604,13 @@ plv8.subtransaction(function() {
 
     const start = (page - 1) * limit;
 
-    const requesterSignerCount = plv8.execute(`SELECT COUNT(*) FROM form_schema.requester_primary_signer_table`)[0].count;
+    const requesterSignerCount = plv8.execute(`
+      SELECT COUNT(*) 
+      FROM form_schema.requester_primary_signer_table
+      INNER JOIN form_schema.signer_table ON signer_id = requester_primary_signer_signer_id
+      WHERE
+        signer_form_id = $1
+    `, [formId])[0].count;
 
     let query = `
       SELECT
@@ -21187,6 +21199,107 @@ AS $$
     returnData = commentData[0];
  });
  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_team_membership_request(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      page,
+      limit,
+      teamId,
+      search
+    } = input_data;
+
+    const start = (page - 1) * limit;
+    let params = [teamId, limit, start]
+    let query = `
+      SELECT
+        team_membership_request_id,
+        team_membership_request_from_user_id as user_id,
+        user_first_name,
+        user_last_name,
+        user_email
+      FROM
+        team_schema.team_membership_request_table
+      INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
+      WHERE 
+        team_membership_request_to_team_id = $1
+    `;
+
+    if (search) {
+      query += ` AND CONCAT(user_first_name, ' ', user_last_name) ILIKE $4 OR user_email ILIKE $4`
+      params.push(`%${search}%`);
+    };
+
+    query += ` LIMIT $2 OFFSET $3`;
+    const teamMembershipRequestList = plv8.execute(query, params);
+
+    const teamMembershipRequestCount = plv8.execute(`
+      SELECT COUNT(*)
+      FROM
+        team_schema.team_membership_request_table
+      INNER JOIN user_schema.user_table ON user_id = team_membership_request_from_user_id
+      WHERE 
+        team_membership_request_to_team_id = $1
+        ${search ? `AND (CONCAT(user_first_name, ' ', user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')` : ''}
+    `, [teamId])[0].count;
+
+
+    returnData = {
+      data: teamMembershipRequestList,
+      count: Number(teamMembershipRequestCount)
+    }
+    
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION accept_team_member_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      userIdList,
+      teamId,
+      memberRole
+    } = input_data;
+    
+    userIdList.forEach((userId) => {
+
+      const teamMembershipRequestCount = plv8.execute(`
+        SELECT COUNT(*)
+        FROM team_schema.team_membership_request_table
+        WHERE
+          team_membership_request_from_user_id = $1
+          AND team_membership_request_to_team_id = $2
+      `, [userId, teamId])[0].count;
+
+      if (Number(teamMembershipRequestCount) === 0) return;
+
+      plv8.execute(`
+        INSERT INTO team_schema.team_member_table 
+        (team_member_user_id, team_member_team_id, team_member_role) 
+        VALUES ($1, $2, $3)
+      `, [userId, teamId, memberRole]);
+
+      plv8.execute(`
+        DELETE FROM team_schema.team_membership_request_table
+        WHERE
+          team_membership_request_from_user_id = $1
+          AND team_membership_request_to_team_id = $2
+      `, [userId, teamId]);
+
+    })
+ });
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
@@ -24739,6 +24852,51 @@ USING (
     FROM team_schema.team_member_table
     WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- team_schema.team_membership_request_table
+ALTER TABLE team_schema.team_membership_request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_membership_request_table;
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_membership_request_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_membership_request_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role"
+ON team_schema.team_membership_request_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK(true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_membership_request_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role"
+ON team_schema.team_membership_request_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for request owners or members with OWNER or ADMIN role" ON team_schema.team_membership_request_table;
+CREATE POLICY "Allow DELETE for request owners or members with OWNER or ADMIN role"
+ON team_schema.team_membership_request_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  ) OR (
+    team_membership_request_from_user_id = auth.uid()
   )
 );
 

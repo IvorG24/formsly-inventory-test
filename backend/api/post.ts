@@ -2798,6 +2798,42 @@ export const createPracticalTestForm = async (
   if (error) throw error;
 };
 
+export const sendRequestToJoinTeam = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    userId: string;
+  }
+) => {
+  const { teamId, userId } = params;
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_membership_request_table")
+    .insert({
+      team_membership_request_to_team_id: teamId,
+      team_membership_request_from_user_id: userId,
+    })
+    .select("*");
+
+  if (error) throw error;
+
+  return data[0];
+};
+
+export const acceptTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userIdList: string[];
+    teamId: string;
+    memberRole: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("accept_team_member_request", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
 export const createAssetRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

@@ -220,3 +220,21 @@ export const removeRequesterSigner = async (
 
   if (error) throw error;
 };
+
+export const deleteTeamMembershipRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    userIdList: string[];
+  }
+) => {
+  const { teamId, userIdList } = params;
+  const { error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_membership_request_table")
+    .delete()
+    .eq("team_membership_request_to_team_id", teamId)
+    .in("team_membership_request_from_user_id", userIdList);
+
+  if (error) throw error;
+};

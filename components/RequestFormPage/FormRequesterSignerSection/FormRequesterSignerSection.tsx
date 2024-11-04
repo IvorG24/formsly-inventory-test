@@ -216,17 +216,13 @@ const FormRequesterSignerSection = ({ formId }: Props) => {
     <Paper p="xl" shadow="xs">
       <Stack>
         <Title order={3}>List of Requester Signers</Title>
-        <Flex justify="space-between" gap="sm">
+        <Flex justify="space-between" gap="sm" wrap="wrap">
           <Flex gap="sm" wrap="wrap">
             <TextInput
               miw={300}
               placeholder="Search requester or signer name"
               rightSection={
-                <ActionIcon
-                // onClick={() =>
-                //   handleFetchDepartmentSignerList(1, departmentSearch)
-                // }
-                >
+                <ActionIcon onClick={() => handleFetchRequesterSigner(1)}>
                   <IconSearch size={16} />
                 </ActionIcon>
               }
