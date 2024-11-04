@@ -37,10 +37,6 @@ type Props = {
   categoryList: CategoryTableRow[];
   customerTableList: InventoryCustomerList[];
   securityGroupData: SecurityGroupData;
-  tableColumnList: {
-    label: string;
-    value: string;
-  }[];
 };
 
 type FilterSelectedValuesType = {

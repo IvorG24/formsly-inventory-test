@@ -28,8 +28,8 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
-  IconClipboard,
   IconBox,
+  IconClipboard,
   IconCode,
   IconDashboard,
   IconFile,
@@ -702,7 +702,7 @@ const ReviewAppNavLink = () => {
         />
       )}
 
-      {!isEmpty(activeTeam) && hasTeam && (
+      {!isEmpty(activeTeam) && hasTeam && teamMemberGroups && (
         <NavLinkSection
           label={"Inventory"}
           links={inventorySection}

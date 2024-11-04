@@ -1,5 +1,8 @@
 // Imports
-import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
+import {
+  checkIfOwnerOrAdmin,
+  getAssetListFilterOptions,
+} from "@/backend/api/get";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import EventReportListpage from "@/components/AssetInventory/EventReportListPage/EventReportListPage";
 import Meta from "@/components/Meta/Meta";
@@ -19,14 +22,12 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         teamId: userActiveTeam.team_id,
       });
 
-      const fields = await getColumnList(supabaseClient);
+      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
+      });
 
-      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
-        (permission) =>
-          permission.key === "viewOnly" && permission.value === true
-      );
-
-      if (!hasViewOnlyPermission) {
+      if (!isOwnerOrAdmin) {
         return {
           redirect: {
             destination: "/500",
@@ -38,9 +39,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       return {
         props: {
           ...data,
-          fields,
           securityGroupData,
-          userId: user.id,
         },
       };
     } catch (e) {
@@ -55,16 +54,11 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 );
 
 type Props = {
-  userId: string;
   siteList: SiteTableRow[];
   customerList: InventoryCustomerRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroupData: SecurityGroupData;
-  fields: {
-    value: string;
-    label: string;
-  }[];
 };
 
 const Page = ({
@@ -72,7 +66,7 @@ const Page = ({
   customerList,
   departmentList,
   categoryList,
-  fields,
+
   securityGroupData,
 }: Props) => {
   return (
@@ -87,7 +81,6 @@ const Page = ({
         siteList={siteList}
         departmentList={departmentList}
         categoryList={categoryList}
-        tableColumnList={fields}
       />
     </>
   );

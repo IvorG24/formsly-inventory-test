@@ -1,5 +1,9 @@
 // Imports
-import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
+import {
+  checkIfOwnerOrAdmin,
+  getAssetListFilterOptions,
+  getColumnList,
+} from "@/backend/api/get";
 import AssetReportsListPage from "@/components/AssetInventory/AssetReportsListPage/AssetReportsListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
@@ -21,12 +25,12 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 
       const fields = await getColumnList(supabaseClient);
 
-      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
-        (permission) =>
-          permission.key === "viewOnly" && permission.value === true
-      );
+      const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
+      });
 
-      if (!hasViewOnlyPermission) {
+      if (!isOwnerOrAdmin) {
         return {
           redirect: {
             destination: "/500",

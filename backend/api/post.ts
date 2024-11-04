@@ -2855,7 +2855,7 @@ export const createAssetRequest = async (
 
   if (tagError) throw tagError;
 
-  const newTagId = tagId[0].inventory_request_tag_id + 1;
+  const newTagId = tagId.length > 0 ? tagId[0].inventory_request_tag_id + 1 : 1;
   const requestId = uuidv4();
   const fieldResponse: InventoryRequestResponseInsert[] = [];
   const fieldValue = [];
@@ -2905,6 +2905,7 @@ export const createAssetRequest = async (
   const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
     .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
     .join(", ")})`;
+  console.log(assetResponseValue);
 
   const requestData = {
     responseValues,

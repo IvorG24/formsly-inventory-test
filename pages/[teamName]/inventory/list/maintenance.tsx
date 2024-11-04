@@ -8,10 +8,12 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
   async ({ securityGroupData }) => {
     try {
-      const hasViewOnlyPersmissions =
-        securityGroupData.privileges.customer.view === true;
+      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
+        (permission) =>
+          permission.key === "viewOnly" && permission.value === true
+      );
 
-      if (!hasViewOnlyPersmissions) {
+      if (!hasViewOnlyPermission) {
         return {
           redirect: {
             destination: "/500",
