@@ -14,7 +14,7 @@ type Props = {
   asset_history: InventoryHistory[] | null;
   totalRecord: number;
   statusList: OptionType[];
-  fetchHistoryPanel: (page: number) => void;
+  fetchHistoryPanel: (page: number) => Promise<void>;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
   activeTab: string;
@@ -31,6 +31,7 @@ const HistoryPanel = ({
 }: Props) => {
   const [activePage, setActivePage] = useState(1);
   const teamMemberList = useTeamMemberList();
+  const [isLoading, setIsLoading] = useState(false);
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<historyFilterForms>({
       event: [],
@@ -41,7 +42,14 @@ const HistoryPanel = ({
 
   useEffect(() => {
     if (activeTab !== "history") return;
-    fetchHistoryPanel(activePage);
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      await fetchHistoryPanel(activePage); // Await the asynchronous function
+      setIsLoading(false);
+    };
+
+    fetchData();
   }, [activePage, activeTab]);
 
   const { ref: eventRef, focused: event } = useFocusWithin();
@@ -153,6 +161,7 @@ const HistoryPanel = ({
         totalRecords={totalRecord}
         recordsPerPage={ROW_PER_PAGE}
         records={historyDetails || []}
+        fetching={isLoading}
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
         onPageChange={setActivePage}

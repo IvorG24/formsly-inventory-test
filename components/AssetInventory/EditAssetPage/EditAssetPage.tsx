@@ -126,7 +126,10 @@ const EditAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       const newSectionField = [
         categorySection.section_field[0],
-        ...subFields,
+        {
+          ...categorySection.section_field[1],
+          field_option: subFields,
+        },
         ...customFields,
       ];
 

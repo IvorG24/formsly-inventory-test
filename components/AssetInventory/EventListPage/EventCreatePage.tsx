@@ -369,10 +369,7 @@ const EventCreatePage = () => {
                                 placeholder="Label"
                                 {...labelField}
                                 style={{ width: "100%" }}
-                                disabled={
-                                  field?.field_name === "Signature" ||
-                                  field?.field_name === "Notes"
-                                }
+                                disabled={field?.field_name === "Signature"}
                                 error={
                                   errors?.fields?.[index]?.field_label?.message
                                 }

@@ -13,7 +13,7 @@ import {
   ScrollArea,
   Stack,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks"; // Import Mantine's media query hook
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBriefcaseOff,
   IconBuilding,
@@ -61,6 +61,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   const teamMember = useUserTeamMember();
   const eventList = useEventList();
   const securityGroup = useSecurityGroup();
+
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
@@ -381,6 +382,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                   return (
                     <Box key={subLink.id}>
                       <Menu
+                        withinPortal
                         position={
                           isSmallScreen ? "bottom-start" : "right-start"
                         }
@@ -474,7 +476,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       //     isSmallScreen ? setIsCollapsed(false) : setIsCollapsed(true)
       //   }
     >
-      <ScrollArea offsetScrollbars={false} scrollbarSize={10}>
+      <ScrollArea scrollbarSize={10}>
         <Stack p={16} spacing={12}>
           {teamList.length > 0 ? (
             <SelectTeam isCollapsed={isCollapsed} />

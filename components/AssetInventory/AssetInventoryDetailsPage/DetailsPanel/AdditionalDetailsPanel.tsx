@@ -108,15 +108,16 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
           </tbody>
         </Table>
       </Card>
-
-      <Card withBorder shadow="sm">
-        <Text size="lg" weight={500}>
-          Custom Field
-        </Text>
-        <Table striped highlightOnHover withBorder withColumnBorders>
-          <tbody>{customFields}</tbody>
-        </Table>
-      </Card>
+      {customFields.length > 0 && (
+        <Card withBorder shadow="sm">
+          <Text size="lg" weight={500}>
+            Custom Field
+          </Text>
+          <Table striped highlightOnHover withBorder withColumnBorders>
+            <tbody>{customFields}</tbody>
+          </Table>
+        </Card>
+      )}
     </Stack>
   );
 };

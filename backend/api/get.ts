@@ -1,9 +1,6 @@
 import { FilterChartValues } from "@/components/AnalyticsPage/Analytics";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
-import {
-  FieldWithResponseArray,
-  InventoryFormValues,
-} from "@/components/AssetInventory/EventFormModal";
+import { InventoryFormValues } from "@/components/AssetInventory/EventFormModal";
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
@@ -8062,7 +8059,7 @@ export const getSubFieldOrCustomField = async (
 
   return data as {
     customFields: InventoryFormValues[];
-    subFields: FieldWithResponseArray[];
+    subFields: OptionTableRow[];
   };
 };
 
@@ -8126,6 +8123,7 @@ export const getAssetSpreadsheetView = async (
 
   return data as unknown as { data: InventoryListType[]; count: 0 };
 };
+
 
 export const getColumnList = async (
   supabaseClient: SupabaseClient<Database>
@@ -8223,7 +8221,7 @@ export const getChildAssetOptionLinking = async (
   params: {
     teamId: string;
     assetId: string;
-    page: number;
+    offset: number;
     limit: number;
   }
 ) => {

@@ -195,7 +195,7 @@ const AssetInventoryDetailsPage = ({
   const fetchHistoryPanel = async (page: number) => {
     try {
       if (!assetId) return;
-      setIsloading(true);
+
       const { actionBy, event, date, isAscendingSort } = getValues();
       const { data, totalCount } = await getAssetHistoryData(supabaseClient, {
         assetId,
@@ -208,11 +208,9 @@ const AssetInventoryDetailsPage = ({
         isAscendingSort: isAscendingSort,
       });
 
-      setIsloading(false);
       setAssetHistoryRecord(totalCount);
       setAssetHistoryData(data);
     } catch (e) {
-      setIsloading(false);
       notifications.show({
         message: "Something went wrong",
         color: "red",
@@ -342,6 +340,7 @@ const AssetInventoryDetailsPage = ({
                   value: "asset-link",
                   component: (
                     <AssetLinkPanel
+                      activeTab={activeTab}
                       relationType={detail.relationship_type}
                       fetchHistory={fetchHistoryPanel}
                     />

@@ -97,14 +97,13 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
               .replace("inventory", "")
               .replace(/\b\w/g, (char) => char.toUpperCase()),
 
-            // Format the row value if it's a date
             render: (row: InventoryWarrantyList) => {
               const value = row[key];
 
               const isDate = key.includes("date");
 
               const isNumber = key.includes("Cost");
-
+              const isMonth = key.includes("length");
               return (
                 <Text size="sm">
                   {isDate
@@ -114,7 +113,11 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
                           style: "currency",
                           currency: "PHP",
                         }).format(Number(value))
-                      : value}
+                      : isMonth
+                        ? Number(value) > 1
+                          ? `${value} Months`
+                          : `${value} Month`
+                        : value}
                 </Text>
               );
             },

@@ -204,7 +204,10 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
 
       const newSectionField = [
         categorySection.section_field[0],
-        ...subFields,
+        {
+          ...categorySection.section_field[1],
+          field_option: subFields,
+        },
         ...customFields,
       ];
 
@@ -336,6 +339,9 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
             section_field: [
               {
                 ...form.form_section[1].section_field[0],
+              },
+              {
+                ...form.form_section[1].section_field[1],
               },
             ],
           },

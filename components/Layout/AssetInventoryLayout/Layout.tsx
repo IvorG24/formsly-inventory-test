@@ -35,7 +35,6 @@ type LayoutProps = {
 const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
   const currentUser = useUser();
-
   const userId = currentUser?.id;
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();

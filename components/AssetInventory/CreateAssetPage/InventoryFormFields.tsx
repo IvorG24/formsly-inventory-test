@@ -369,6 +369,7 @@ const InventoryFormFields = ({
                 {...inputProps}
                 error={fieldError}
                 searchable
+                clearable
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
                 disabled={isEdit && field.field_name === "Requesting Project"}

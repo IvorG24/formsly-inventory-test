@@ -31,8 +31,9 @@ import { Controller, useForm } from "react-hook-form";
 type Props = {
   fetchHistory: (page: number) => void;
   relationType: string;
+  activeTab: string;
 };
-const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
+const AssetLinkPanel = ({ fetchHistory, relationType, activeTab }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const activeTeam = useActiveTeam();
@@ -55,6 +56,7 @@ const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
   const [childAssetOption, setChildAssetOption] = useState<OptionType[]>([]);
   const [linkedAssets, setLinkedAssets] = useState<OptionType[]>([]);
   const [opened, setOpened] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [activePage, setActivePage] = useState(1);
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -64,10 +66,52 @@ const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
   const hasEditOnlyPermission = securityGroup.asset.permissions.some(
     (permission) => permission.key === "editAssets" && permission.value === true
   );
+
   useEffect(() => {
     const fetchChildAsset = async () => {
       try {
         if (!assetId || !activeTeam.team_id) return;
+        const itemOptionList: OptionType[] = [];
+        const BATCH_SIZE = 1000;
+        let offset = 0;
+
+        while (true) {
+          const option = await getChildAssetOptionLinking(supabaseClient, {
+            teamId: activeTeam.team_id,
+            assetId,
+            offset: offset,
+            limit: BATCH_SIZE,
+          });
+
+          const optionData = option.map((option) => ({
+            value: option.inventory_request_id,
+            label: `${Number(option.inventory_request_tag_id)} - ${option.inventory_request_name}`,
+          }));
+
+          itemOptionList.push(...optionData);
+
+          if (optionData.length < BATCH_SIZE) break;
+
+          offset += BATCH_SIZE;
+        }
+
+        setChildAssetOption(itemOptionList);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong",
+          color: "red",
+        });
+      }
+    };
+    fetchChildAsset();
+  }, [assetId, activeTeam.team_id]);
+
+  useEffect(() => {
+    const fetchChildAsset = async () => {
+      try {
+        if (!assetId || !activeTeam.team_id || activeTab !== "asset-link")
+          return;
+        setIsLoading(true);
         const { data, totalCount, parentAsset } = await getChildAssetData(
           supabaseClient,
           {
@@ -80,28 +124,17 @@ const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
         setChildAsset(data);
         setParentAsset(parentAsset);
         setTotalCount(totalCount);
-        const option = await getChildAssetOptionLinking(supabaseClient, {
-          teamId: activeTeam.team_id,
-          assetId,
-          page: activePage,
-          limit: ROW_PER_PAGE,
-        });
-
-        const optionData = option.map((option) => ({
-          value: option.inventory_request_id,
-          label: `${option.inventory_request_tag_id} -- ${option.inventory_request_name}`,
-        }));
-        setChildAssetOption(optionData);
       } catch (e) {
         notifications.show({
           message: "Something went wrong",
           color: "red",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchChildAsset();
-  }, [assetId, activeTeam.team_id]);
-
+  }, [assetId, activeTeam.team_id, activeTab]);
   const handleAddAsset = (selectedAssetId: string) => {
     const selectedAsset = childAssetOption.find(
       (option) => option.value === selectedAssetId
@@ -235,57 +268,56 @@ const AssetLinkPanel = ({ fetchHistory, relationType }: Props) => {
         </form>
       </Modal>
 
-      {childAsset.length > 0 && (
-        <DataTable
-          fontSize={12}
-          style={{
-            borderRadius: 4,
-            minHeight: "300px",
-          }}
-          withBorder
-          idAccessor="inventory_request_id"
-          page={activePage}
-          totalRecords={totalCount}
-          recordsPerPage={ROW_PER_PAGE}
-          records={childAsset}
-          fetching={false}
-          onPageChange={setActivePage}
-          columns={[
-            {
-              accessor: "inventory_request_id",
-              title: "Asset Tag ID",
-              width: "40%",
-              render: (event) => (
-                <Text>
-                  <Anchor
-                    href={`/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/inventory/${event.inventory_request_tag_id}`}
-                    target="_blank"
-                  >
-                    {String(event.inventory_request_tag_id)}
-                  </Anchor>
-                </Text>
-              ),
-            },
+      <DataTable
+        fontSize={12}
+        style={{
+          borderRadius: 4,
+          minHeight: "300px",
+        }}
+        withBorder
+        idAccessor="inventory_request_id"
+        page={activePage}
+        totalRecords={totalCount}
+        recordsPerPage={ROW_PER_PAGE}
+        records={childAsset}
+        fetching={isLoading}
+        onPageChange={setActivePage}
+        columns={[
+          {
+            accessor: "inventory_request_id",
+            title: "Asset Tag ID",
+            width: "40%",
+            render: (event) => (
+              <Text>
+                <Anchor
+                  href={`/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/inventory/${event.inventory_request_tag_id}`}
+                  target="_blank"
+                >
+                  {String(event.inventory_request_tag_id)}
+                </Anchor>
+              </Text>
+            ),
+          },
 
-            {
-              accessor: "inventory_request_serial_number",
-              title: "Serial Number",
-              width: "30%",
-              render: (event) => (
-                <Text>{event.inventory_request_serial_number}</Text>
-              ),
-            },
-            {
-              accessor: "inventory_request_name",
-              title: "Asset Name",
-              width: "40%",
-              render: (event) => <Text>{event.inventory_request_name}</Text>,
-            },
-          ]}
-        />
-      )}
+          {
+            accessor: "inventory_request_serial_number",
+            title: "Serial Number",
+            width: "30%",
+            render: (event) => (
+              <Text>{event.inventory_request_serial_number}</Text>
+            ),
+          },
+          {
+            accessor: "inventory_request_name",
+            title: "Asset Name",
+            width: "40%",
+            render: (event) => <Text>{event.inventory_request_name}</Text>,
+          },
+        ]}
+      />
+
       <Group position="center">
         {hasEditOnlyPermission && !isChild && (
           <Button fullWidth onClick={() => setOpened(true)}>

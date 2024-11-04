@@ -483,6 +483,7 @@ export const withActiveGroup = <P extends { [key: string]: any }>(
       const userWithGroup = await getActiveGroup(supabaseClient, {
         userId: user.id,
       });
+
       if (!userWithGroup) {
         return {
           redirect: {

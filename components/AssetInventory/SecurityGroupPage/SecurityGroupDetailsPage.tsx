@@ -26,7 +26,10 @@ const SecurityGroupDetailsPage = ({
   const eventList = useEventList();
   return (
     <Container>
-      <Title order={3}>{group.team_group_name} GROUP </Title>
+      <Title order={3}>
+        {group.team_group_name}
+        GROUP{" "}
+      </Title>
 
       <Tabs defaultValue="assets">
         <Tabs.List>

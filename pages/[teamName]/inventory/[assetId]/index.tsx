@@ -1,5 +1,4 @@
 // Imports
-import { getAssetSpreadsheetView } from "@/backend/api/get";
 import AssetInventoryDetailsPage from "@/components/AssetInventory/AssetInventoryDetailsPage/AssetInventoryDetailsPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -9,10 +8,18 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
   async ({ supabaseClient, context, securityGroupData, userActiveTeam }) => {
     try {
-      const { data } = await getAssetSpreadsheetView(supabaseClient, {
-        search: context.query.assetId as string,
-        teamId: userActiveTeam.team_id,
-      });
+      const { data, error } = await supabaseClient.rpc(
+        "get_asset_details_on_load",
+        {
+          input_data: {
+            tagId: context.query.assetId as string,
+            teamId: userActiveTeam.team_id,
+          },
+        }
+      );
+
+      if (error) throw error;
+
       const hasViewOnlyPersmissions = securityGroupData.asset.permissions.some(
         (permission) =>
           permission.key === "viewOnly" && permission.value === true
