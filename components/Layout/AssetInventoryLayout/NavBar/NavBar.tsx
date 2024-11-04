@@ -10,6 +10,7 @@ import {
   Group,
   Navbar as MantineNavbar,
   Menu,
+  ScrollArea,
   Stack,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks"; // Import Mantine's media query hook
@@ -473,65 +474,69 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       //     isSmallScreen ? setIsCollapsed(false) : setIsCollapsed(true)
       //   }
     >
-      <Stack p={16} spacing={12}>
-        {teamList.length > 0 ? <SelectTeam isCollapsed={isCollapsed} /> : null}
-        <Group>
-          {canAddAsset && (
-            <Button
-              variant="subtle"
-              onClick={() => {
-                router.push(
-                  `/${formatTeamNameToUrlKey(
-                    activeTeam.team_name
-                  )}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
-                );
-                if (isSmallScreen) {
-                  setOpenNavbar(false);
-                }
-              }}
-              leftIcon={<IconCirclePlus size={26} />}
-              fw={400}
-              ml={4}
-              fullWidth
-              mih={50}
-              mah={50}
-              styles={(theme) => ({
-                root: {
-                  "&:hover": {
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[5]
-                        : theme.colors.blue[0],
-                    color:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.blue[2]
-                        : theme.colors.blue[7],
+      <ScrollArea offsetScrollbars={false} scrollbarSize={10}>
+        <Stack p={16} spacing={12}>
+          {teamList.length > 0 ? (
+            <SelectTeam isCollapsed={isCollapsed} />
+          ) : null}
+          <Group>
+            {canAddAsset && (
+              <Button
+                variant="subtle"
+                onClick={() => {
+                  router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/inventory-form/656a3009-7127-4960-9738-92afc42779a6/create`
+                  );
+                  if (isSmallScreen) {
+                    setOpenNavbar(false);
+                  }
+                }}
+                leftIcon={<IconCirclePlus size={26} />}
+                fw={400}
+                ml={4}
+                fullWidth
+                mih={50}
+                mah={50}
+                styles={(theme) => ({
+                  root: {
+                    "&:hover": {
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[5]
+                          : theme.colors.blue[0],
+                      color:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.blue[2]
+                          : theme.colors.blue[7],
+                    },
+                    "&[data-active]": {
+                      backgroundColor: "transparent",
+                      color:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.gray[5]
+                          : theme.colors.blue[7],
+                    },
                   },
-                  "&[data-active]": {
-                    backgroundColor: "transparent",
-                    color:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.gray[5]
-                        : theme.colors.blue[7],
+                  inner: {
+                    justifyContent: "flex-start",
                   },
-                },
-                inner: {
-                  justifyContent: "flex-start",
-                },
-              })}
-            >
-              {isCollapsed ? null : "Add Asset"}
-            </Button>
-          )}
-        </Group>
-        <Accordion
-          chevron={isCollapsed ? null : <IconChevronDown size={14} />}
-          value={isCollapsed ? null : undefined}
-          variant="filled"
-        >
-          <Group spacing={10}>{renderNavlinkData}</Group>
-        </Accordion>
-      </Stack>
+                })}
+              >
+                {isCollapsed ? null : "Add Asset"}
+              </Button>
+            )}
+          </Group>
+          <Accordion
+            chevron={isCollapsed ? null : <IconChevronDown size={14} />}
+            value={isCollapsed ? null : undefined}
+            variant="filled"
+          >
+            <Group spacing={10}>{renderNavlinkData}</Group>
+          </Accordion>
+        </Stack>
+      </ScrollArea>
     </MantineNavbar>
   );
 };

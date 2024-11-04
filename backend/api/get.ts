@@ -3466,8 +3466,7 @@ export const getMemoList = async (
       columnAccessor,
     },
   });
-
-  if (error) throw Error;
+  if (error) throw error;
 
   return data as { data: MemoListItemType[]; count: number };
 };
@@ -7825,16 +7824,13 @@ export const getEventDetails = async (
 ) => {
   const {
     search,
-    limit = 10,
-    page = 1,
+    limit,
+    page,
     teamId,
     type = "option",
     columnAccessor = "event_date_created",
     isAscendingSort = false,
   } = params;
-
-  const start = (page - 1) * limit;
-  const end = start + limit - 1;
 
   let query = supabaseClient
     .schema("inventory_schema")
@@ -7852,7 +7848,11 @@ export const getEventDetails = async (
 
   query = query.order(columnAccessor, { ascending: isAscendingSort });
 
-  query = query.range(start, end);
+  if (limit && page) {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    query = query.range(start, end);
+  }
 
   const { data, count, error } = await query;
 

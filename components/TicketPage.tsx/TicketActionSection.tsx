@@ -10,7 +10,6 @@ import {
   createItemDescriptionField,
   createItemDivision,
   createItemFromTicketRequest,
-  createNotification,
   createPedPartFromTicketRequest,
   createTicketComment,
 } from "@/backend/api/post";
@@ -86,17 +85,29 @@ const TicketActionSection = ({
         notificationType = "APPROVE";
       }
 
-      const { data: commentData, error } = await createTicketComment(
-        supabaseClient,
-        {
+      const commentData = await createTicketComment(supabaseClient, {
+        commentInput: {
           ticket_comment_id: newCommentId,
           ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} ${commentContent}`,
           ticket_comment_type: `ACTION_${status}`,
           ticket_comment_team_member_id: user.team_member_id,
           ticket_comment_ticket_id: ticket.ticket_id,
-        }
-      );
-      if (error) throw error;
+        },
+        notificationInput: [
+          {
+            notification_app: "REQUEST",
+            notification_type: notificationType,
+            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          },
+        ],
+      });
+
       setRequestCommentList((prev) => [
         {
           ...commentData,
@@ -113,23 +124,6 @@ const TicketActionSection = ({
         },
         ...prev,
       ]);
-      if (!error) {
-        if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
-          // create notification
-          await createNotification(supabaseClient, {
-            notification_app: "REQUEST",
-            notification_type: notificationType,
-            notification_content: `${`${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}`} ${notificationContent}`,
-            notification_redirect_url: `/${formatTeamNameToUrlKey(
-              activeTeam.team_name ?? ""
-            )}/tickets/${ticket.ticket_id}`,
-            notification_user_id:
-              ticket.ticket_requester.team_member_user.user_id,
-            notification_team_id: teamMember.team_member_team_id,
-          });
-        }
-      }
-
       setTicket((ticket) => ({ ...ticket, ticket_status: data.ticket_status }));
     } catch (e) {
       notifications.show({

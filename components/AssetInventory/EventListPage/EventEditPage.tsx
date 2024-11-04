@@ -141,7 +141,7 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
       });
     }
   };
-
+  const isCustomEvent = eventFormDefaultValues.event.customEvent;
   return (
     <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
@@ -368,50 +368,51 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                 </Table>
               </ScrollArea>
             </Paper>
-
-            <Paper withBorder shadow="md" p="md">
-              <Stack>
-                <Title order={4}>
-                  Assign Assets to Persons, Locations or Customers
-                </Title>
-                <Controller
-                  name="assignedTo.assignToPerson"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Persons"
-                      {...field}
-                      value={field?.value ? "true" : "false"}
-                      defaultChecked={field?.value}
-                    />
-                  )}
-                />
-                <Controller
-                  name="assignedTo.assignToCustomer"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Customers"
-                      {...field}
-                      value={field?.value ? "true" : "false"}
-                      defaultChecked={field?.value}
-                    />
-                  )}
-                />
-                <Controller
-                  name="assignedTo.assignToSite"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      label="List of Sites/Locations"
-                      {...field}
-                      value={field?.value ? "true" : "false"}
-                      defaultChecked={field?.value}
-                    />
-                  )}
-                />
-              </Stack>
-            </Paper>
+            {isCustomEvent && (
+              <Paper withBorder shadow="md" p="md">
+                <Stack>
+                  <Title order={4}>
+                    Assign Assets to Persons, Locations or Customers
+                  </Title>
+                  <Controller
+                    name="assignedTo.assignToPerson"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        label="List of Persons"
+                        {...field}
+                        value={field?.value ? "true" : "false"}
+                        defaultChecked={field?.value}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="assignedTo.assignToCustomer"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        label="List of Customers"
+                        {...field}
+                        value={field?.value ? "true" : "false"}
+                        defaultChecked={field?.value}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="assignedTo.assignToSite"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        label="List of Sites/Locations"
+                        {...field}
+                        value={field?.value ? "true" : "false"}
+                        defaultChecked={field?.value}
+                      />
+                    )}
+                  />
+                </Stack>
+              </Paper>
+            )}
 
             <Group position="right">
               <Button fullWidth type="submit">

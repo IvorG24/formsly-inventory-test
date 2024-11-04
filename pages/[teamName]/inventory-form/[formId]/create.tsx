@@ -12,15 +12,14 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         "create_inventory_request_page_on_load",
         {
           input_data: {
-            formId: context.query.formId,
+            formId: context.query.formId as string,
             userId: user.id,
           },
         }
       );
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+
       const hasAddAssetPermission = securityGroupData.asset.permissions.some(
         (permission) =>
           permission.key === "addAssets" && permission.value === true

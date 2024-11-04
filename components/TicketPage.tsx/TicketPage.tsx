@@ -1,5 +1,5 @@
 import { getTicketOnLoad } from "@/backend/api/get";
-import { createNotification, createTicketComment } from "@/backend/api/post";
+import { createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -110,14 +110,29 @@ const TicketPage = ({
       setTicket(updatedTicket);
 
       const newCommentId = uuidv4();
-      const { data, error } = await createTicketComment(supabaseClient, {
-        ticket_comment_id: newCommentId,
-        ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
-        ticket_comment_type: "ACTION_UNDER_REVIEW",
-        ticket_comment_team_member_id: user.team_member_id,
-        ticket_comment_ticket_id: ticket.ticket_id,
+      const data = await createTicketComment(supabaseClient, {
+        commentInput: {
+          ticket_comment_id: newCommentId,
+          ticket_comment_content: `${currentUserFullName} is reviewing this ticket`,
+          ticket_comment_type: "ACTION_UNDER_REVIEW",
+          ticket_comment_team_member_id: user.team_member_id,
+          ticket_comment_ticket_id: ticket.ticket_id,
+        },
+        notificationInput: [
+          {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `An approver, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: teamMember.team_member_team_id,
+          },
+        ],
       });
-      if (error) throw error;
+
       setRequestCommentList((prev) => [
         {
           ...data,
@@ -134,20 +149,6 @@ const TicketPage = ({
         },
         ...prev,
       ]);
-      if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
-        // create notification
-        await createNotification(supabaseClient, {
-          notification_app: "REQUEST",
-          notification_type: "COMMENT",
-          notification_content: `An approver, ${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name}, has self-assigned as the ticket approver`,
-          notification_redirect_url: `/${formatTeamNameToUrlKey(
-            activeTeam.team_name ?? ""
-          )}/tickets/${ticket.ticket_id}`,
-          notification_user_id:
-            ticket.ticket_requester.team_member_user.user_id,
-          notification_team_id: teamMember.team_member_team_id,
-        });
-      }
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

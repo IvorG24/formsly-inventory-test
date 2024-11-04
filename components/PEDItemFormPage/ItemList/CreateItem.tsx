@@ -9,6 +9,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { removeDuplicates } from "@/utils/functions";
 import { ItemForm } from "@/utils/types";
 import {
   Box,
@@ -164,7 +165,10 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
           divisionId: value,
         }
       );
-      const divisionDescriptionOption = data.map((description) => {
+      const divisionDescriptionOption = removeDuplicates(
+        data,
+        "csi_code_level_three_description"
+      ).map((description) => {
         return {
           label: description.csi_code_level_three_description,
           value: description.csi_code_level_three_description,
@@ -305,7 +309,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
                   value={value}
                   onChange={onChange}
                   data={divisionDescriptionOption}
-                  error={formState.errors.division?.message}
+                  error={formState.errors.divisionDescription?.message}
                   searchable
                   clearable
                   label="Division Description"
@@ -313,8 +317,15 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                  required
                 />
               )}
+              rules={{
+                required: {
+                  message: "Division Description is required",
+                  value: true,
+                },
+              }}
             />
             <Controller
               control={control}

@@ -1,8 +1,4 @@
-import {
-  createAttachment,
-  createNotification,
-  createTicketComment,
-} from "@/backend/api/post";
+import { createAttachment, createTicketComment } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
@@ -107,60 +103,74 @@ const TicketCommentSection = ({
         }
         setCommentAttachment([]);
       }
-      const { data: commentData, error } = await createTicketComment(
-        supabaseClient,
-        {
+      const commentData = await createTicketComment(supabaseClient, {
+        commentInput: {
           ticket_comment_id: newCommentId,
           ticket_comment_content: data.comment,
           ticket_comment_type: "ACTION_COMMENT",
           ticket_comment_team_member_id: teamMember?.team_member_id,
           ticket_comment_ticket_id: ticket.ticket_id,
-        }
-      );
-      if (error) throw error;
+        },
+        notificationInput: [
+          ...(ticket.ticket_requester.team_member_user.user_id !==
+          teamMember.team_member_user_id
+            ? [
+                {
+                  notification_app: "REQUEST",
+                  notification_type: "COMMENT",
+                  notification_content: `${`${userProfile.user_first_name} ${userProfile.user_last_name}`} commented on your ticket`,
+                  notification_redirect_url: `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/tickets/${ticket.ticket_id}`,
+                  notification_user_id:
+                    ticket.ticket_requester.team_member_user.user_id,
+                  notification_team_id: teamMember.team_member_team_id,
+                },
+              ]
+            : []),
+          ...(ticket.ticket_approver &&
+          ticket.ticket_approver.team_member_user.user_id !==
+            teamMember.team_member_user_id
+            ? [
+                {
+                  notification_app: "REQUEST",
+                  notification_type: "COMMENT",
+                  notification_content: `${`${userProfile.user_first_name} ${userProfile.user_last_name}`} commented on your assigned ticket`,
+                  notification_redirect_url: `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/tickets/${ticket.ticket_id}`,
+                  notification_user_id:
+                    ticket.ticket_approver.team_member_user.user_id,
+                  notification_team_id: teamMember.team_member_team_id,
+                },
+              ]
+            : []),
+        ],
+      });
 
-      if (!error) {
-        if (
-          ticket.ticket_requester_team_member_id !== teamMember.team_member_id
-        ) {
-          // create notification
-          await createNotification(supabaseClient, {
-            notification_app: "REQUEST",
-            notification_type: "COMMENT",
-            notification_content: `${`${userProfile.user_first_name} ${userProfile.user_last_name}`} commented on your request`,
-            notification_redirect_url: `/${formatTeamNameToUrlKey(
-              activeTeam.team_name ?? ""
-            )}/tickets/${ticket.ticket_id}`,
-            notification_user_id:
-              ticket.ticket_requester.team_member_user.user_id,
-            notification_team_id: teamMember.team_member_team_id,
-          });
-        }
-        notifications.show({
-          message: "Comment created.",
-          color: "green",
-        });
+      notifications.show({
+        message: "Comment created.",
+        color: "green",
+      });
 
-        setRequestCommentList((prev) => [
-          {
-            ...commentData,
-            ticket_comment_attachment: commentAttachmentList,
-            ticket_comment_team_member: {
-              team_member_user: {
-                user_id: `${currentUser?.user_id}`,
-                user_first_name: currentUser ? currentUser.user_first_name : "",
-                user_last_name: currentUser ? currentUser.user_last_name : "",
-                user_username: currentUser ? currentUser.user_username : "",
-                user_avatar: currentUser ? currentUser.user_avatar : "",
-              },
+      setRequestCommentList((prev) => [
+        {
+          ...commentData,
+          ticket_comment_attachment: commentAttachmentList,
+          ticket_comment_team_member: {
+            team_member_user: {
+              user_id: `${currentUser?.user_id}`,
+              user_first_name: currentUser ? currentUser.user_first_name : "",
+              user_last_name: currentUser ? currentUser.user_last_name : "",
+              user_username: currentUser ? currentUser.user_username : "",
+              user_avatar: currentUser ? currentUser.user_avatar : "",
             },
           },
-          ...prev,
-        ]);
-        // reset comment form
-        reset();
-        return;
-      }
+        },
+        ...prev,
+      ]);
+      // reset comment form
+      reset();
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

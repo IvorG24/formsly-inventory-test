@@ -1,32 +1,32 @@
 import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
-    BASE_URL,
-    DEFAULT_REQUEST_LIST_LIMIT,
-    formatDate,
+  BASE_URL,
+  DEFAULT_REQUEST_LIST_LIMIT,
+  formatDate,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InventoryListType } from "@/utils/types";
 import {
-    ActionIcon,
-    Anchor,
-    Avatar,
-    Badge,
-    Checkbox,
-    CopyButton,
-    createStyles,
-    Flex,
-    Group,
-    HoverCard,
-    Text,
-    Tooltip,
+  ActionIcon,
+  Anchor,
+  Avatar,
+  Badge,
+  Checkbox,
+  CopyButton,
+  createStyles,
+  Flex,
+  Group,
+  HoverCard,
+  Text,
+  Tooltip,
 } from "@mantine/core";
 import {
-    IconArrowsMaximize,
-    IconCopy,
-    IconLayersLinked,
-    IconLinkOff,
+  IconArrowsMaximize,
+  IconCopy,
+  IconLayersLinked,
+  IconLinkOff,
 } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";

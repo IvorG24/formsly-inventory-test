@@ -2900,6 +2900,7 @@ export type eventFormDetails = {
   eventStatus: string;
   eventDescription: string;
   enableEvent: boolean;
+  customEvent?: boolean;
 };
 
 export type eventFormAssignedTo = {

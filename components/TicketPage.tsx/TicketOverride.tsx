@@ -1,4 +1,4 @@
-import { createNotification, createTicketComment } from "@/backend/api/post";
+import { createTicketComment } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
@@ -193,14 +193,29 @@ const TicketOverride = ({
 
       if (!ticketChanges) return;
       setOldTicketForm(newFormValues);
-      const { data, error } = await createTicketComment(supabaseClient, {
-        ticket_comment_id: newCommentId,
-        ticket_comment_content: `<p>${user?.user_first_name} ${user?.user_last_name} has made the following changes on the ticket.</p>\n${ticketChanges}`,
-        ticket_comment_type: "ACTION_OVERRIDE",
-        ticket_comment_team_member_id: `${userMember?.team_member_id}`,
-        ticket_comment_ticket_id: ticket.ticket_id,
+      const data = await createTicketComment(supabaseClient, {
+        commentInput: {
+          ticket_comment_id: newCommentId,
+          ticket_comment_content: `<p>${user?.user_first_name} ${user?.user_last_name} has made the following changes on the ticket.</p>\n${ticketChanges}`,
+          ticket_comment_type: "ACTION_OVERRIDE",
+          ticket_comment_team_member_id: `${userMember?.team_member_id}`,
+          ticket_comment_ticket_id: ticket.ticket_id,
+        },
+        notificationInput: [
+          {
+            notification_app: "REQUEST",
+            notification_type: "COMMENT",
+            notification_content: `${`${user?.user_first_name} ${user?.user_last_name}`} overrode your ticket`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/tickets/${ticket.ticket_id}`,
+            notification_user_id:
+              ticket.ticket_requester.team_member_user.user_id,
+            notification_team_id: userMember?.team_member_team_id,
+          },
+        ],
       });
-      if (error) throw error;
+
       setRequestCommentList((prev) => [
         {
           ...data,
@@ -217,21 +232,6 @@ const TicketOverride = ({
         },
         ...prev,
       ]);
-      if (
-        ticket.ticket_requester_team_member_id !== userMember?.team_member_id
-      ) {
-        await createNotification(supabaseClient, {
-          notification_app: "REQUEST",
-          notification_type: "COMMENT",
-          notification_content: `${`${user?.user_first_name} ${user?.user_last_name}`} overrode your ticket`,
-          notification_redirect_url: `/${formatTeamNameToUrlKey(
-            activeTeam.team_name ?? ""
-          )}/tickets/${ticket.ticket_id}`,
-          notification_user_id:
-            ticket.ticket_requester.team_member_user.user_id,
-          notification_team_id: userMember?.team_member_team_id,
-        });
-      }
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

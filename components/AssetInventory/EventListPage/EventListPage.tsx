@@ -156,6 +156,7 @@ const EventsListPage = () => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
+
   return (
     <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />

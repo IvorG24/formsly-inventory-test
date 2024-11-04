@@ -11,7 +11,6 @@ import {
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -140,7 +139,7 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         setValue(`sections.${index}.section_field.${0}.field_response`, "");
         updateSection(index, {
           ...categorySection,
-          section_field: form.form_section[1].section_field,
+          section_field: form.form_section[0].section_field,
         });
         return;
       }
@@ -154,7 +153,8 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         if (field.field_name === "CSI Item Code") {
           return {
             ...field,
-            field_response: item?.item_level_three_description_csi_code || "",
+            field_response:
+              item?.item_level_three_description_csi_code_section || "",
           };
         }
         if (field.field_name === "Description") {
@@ -294,21 +294,30 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
       try {
         if (!activeTeam.team_id) return;
         const itemOptionList: OptionTableRow[] = [];
-        while (1) {
+        const BATCH_SIZE = 1000;
+        let offset = 0;
+
+        while (true) {
           const itemData = await getItemOption(supabaseClient, {
             teamId: activeTeam.team_id,
+            limit: BATCH_SIZE,
+            offset: offset,
           });
+
           const itemOptions = itemData.map((item, index) => {
             return {
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: item.item_id,
-              option_order: index,
+              option_order: index + offset, // Use global order to avoid overlap
               option_value: item.value,
             };
           });
+
           itemOptionList.push(...itemOptions);
 
-          if (itemData.length < FETCH_OPTION_LIMIT) break;
+          if (itemData.length < BATCH_SIZE) break;
+
+          offset += BATCH_SIZE;
         }
 
         replaceSection([

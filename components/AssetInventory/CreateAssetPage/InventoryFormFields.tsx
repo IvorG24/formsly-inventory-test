@@ -367,9 +367,8 @@ const InventoryFormFields = ({
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
-                clearable
                 error={fieldError}
-                searchable={formslyFormName !== ""}
+                searchable
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
                 disabled={isEdit && field.field_name === "Requesting Project"}
