@@ -5,7 +5,7 @@ import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { useEventList } from "@/stores/useEventStore";
 import {
   CategoryTableRow,
-  InventoryCustomerList,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -25,7 +25,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  customerTableList: InventoryCustomerList[];
+  customerTableList: InventoryCustomerRow[];
   userId: string;
   securityGroupData: SecurityGroupData;
   tableColumnList: {

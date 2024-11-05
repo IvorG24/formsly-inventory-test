@@ -88,8 +88,8 @@ const AssetReportsListFilter = ({
   }));
 
   const customerOptions = customerList.map((customer) => ({
-    label: customer.customer_name,
-    value: customer.customer_name,
+    label: `${customer.customer_first_name} ${customer.customer_last_name}`,
+    value: customer.customer_id,
   }));
 
   const [filterSelectedValues, setFilterSelectedValues] =

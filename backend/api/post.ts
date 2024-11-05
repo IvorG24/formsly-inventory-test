@@ -3434,17 +3434,17 @@ export const createInventoryCustomer = async (
 export const checkCustomerName = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    customerName: string;
+    customerEmail: string;
   }
 ) => {
-  const { customerName } = params;
+  const { customerEmail } = params;
   let isUnique = false;
 
   const { data, error } = await supabaseClient
     .schema("inventory_schema")
     .from("customer_table")
-    .select("customer_name")
-    .eq("customer_name", customerName)
+    .select("customer_email")
+    .eq("customer_email", customerEmail)
     .limit(1);
   if (error) throw error;
 

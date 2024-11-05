@@ -1852,6 +1852,8 @@ export const disableDrawerData = async (
       | "customer";
   }
 ) => {
+  console.log(params);
+
   const { data, error } = await supabaseClient.rpc("disable_drawer_data", {
     input_data: params,
   });

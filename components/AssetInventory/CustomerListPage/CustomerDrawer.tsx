@@ -150,12 +150,12 @@ const CustomerDrawer = ({
 
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
-      const customerName = data.sections[0].section_field[0].field_response;
+      const customerName = data.sections[0].section_field[4].field_response;
       const isEditMode = mode === "edit";
       const isCreateMode = mode === "create";
 
       const originalHRISNumber = isEditMode
-        ? customerData?.customer_name
+        ? customerData?.customer_email
         : null;
 
       if (
@@ -163,13 +163,13 @@ const CustomerDrawer = ({
         (isEditMode && String(customerName) !== String(originalHRISNumber))
       ) {
         const isCustomerUnique = await checkCustomerName(supabaseClient, {
-          customerName: String(customerName),
+          customerEmail: String(customerName),
         });
 
         if (isCustomerUnique) {
-          setError(`sections.${0}.section_field.${0}.field_response`, {
+          setError(`sections.${0}.section_field.${4}.field_response`, {
             type: "manual",
-            message: "Customer name must be unique.",
+            message: "Comapny Email must be unique.",
           });
           return;
         }

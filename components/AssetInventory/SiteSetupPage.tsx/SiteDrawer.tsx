@@ -1,7 +1,6 @@
 import { InventoryAssetFormValues } from "@/utils/types";
 import { Button, Drawer, Group, Stack, TextInput } from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form"; // Import necessary hooks for form control
-
 type Props = {
   isOpen: boolean;
   close: () => void;
@@ -9,6 +8,7 @@ type Props = {
 };
 
 const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
+  //   const supabaseClient = createPagesBrowserClient<Database>();
   const { control, handleSubmit, reset } =
     useFormContext<InventoryAssetFormValues>();
 
@@ -16,6 +16,35 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
     handleSiteSubmit(data);
     reset();
   };
+  //   const [regionOptionList, setRegionOptionsList] = useState<
+  //     { region_id: string; region: string }[]
+  //   >([]);
+  //   const [provinceOptionList, setProvinceOptionList] = useState<
+  //     { province_id: string; province: string }[]
+  //   >([]);
+  //   const [cityOptionList, setCityOptionList] = useState<
+  //     { city_id: string; city: string }[]
+  //   >([]);
+
+  //   useEffect(() => {
+  //     const fetchLocations = async () => {
+  //       try {
+  //         const regionData = await fetchRegion(
+  //           supabaseClient as unknown as SupabaseClient<
+  //             OneOfficeDatabase["address_schema"]
+  //           >
+  //         );
+  //         console.log(regionData);
+
+  //         if (!regionData) throw new Error("Failed to fetch regions");
+  //         setRegionOptionsList(regionData);
+  //       } catch (error) {
+  //         console.error("Error fetching regions:", error);
+  //       }
+  //     };
+
+  //     fetchLocations();
+  //   }, []);
 
   return (
     <Drawer
@@ -48,6 +77,47 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
             render={({ field }) => (
               <TextInput
                 label="Site Description"
+                placeholder="Enter site description"
+                required
+                {...field}
+              />
+            )}
+          />
+          {/* <Controller
+            name="site_region"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Region"
+                placeholder="Select region"
+                required
+                data={regionOptionList.map((region) => ({
+                  value: region.region_id,
+                  label: region.region,
+                }))}
+                {...field}
+              />
+            )}
+          /> */}
+
+          <Controller
+            name="site_city"
+            control={control}
+            render={({ field }) => (
+              <TextInput
+                label="State"
+                placeholder="Enter site description"
+                required
+                {...field}
+              />
+            )}
+          />
+          <Controller
+            name="site_postal_code"
+            control={control}
+            render={({ field }) => (
+              <TextInput
+                label="Postal Code"
                 placeholder="Enter site description"
                 required
                 {...field}

@@ -132,7 +132,7 @@ const UpdateModal = ({
       centered
       size="xl"
       withinPortal
-      title={`Update ${type}`}
+      title={`Update ${type.charAt(0).toUpperCase() + type.slice(1).replace("_", " ")}`}
     >
       <form onSubmit={handleSubmit(handleUpdate)}>
         <Stack spacing="sm">

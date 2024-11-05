@@ -109,9 +109,10 @@ const AssetListFilter = ({
   }));
 
   const customerOptions = customerList.map((customer) => ({
-    label: customer.customer_name,
-    value: customer.customer_name,
+    label: `${customer.customer_first_name} ${customer.customer_last_name}`,
+    value: customer.customer_id,
   }));
+
   const eventSecurity = securityGroupData.asset.filter.event
     ? securityGroupData.asset.filter.event
     : [];

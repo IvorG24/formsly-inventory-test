@@ -28,6 +28,8 @@ const DisableModal = ({
   const supabaseClient = useSupabaseClient();
   const handleConfirm = async () => {
     try {
+      console.log(type);
+
       switch (type) {
         case "site":
           await disableDrawerData(supabaseClient, {
@@ -40,16 +42,19 @@ const DisableModal = ({
             type: "location",
             typeId: typeId,
           });
+          break;
         case "category":
           await disableDrawerData(supabaseClient, {
             type: "category",
             typeId: typeId,
           });
+          break;
         case "Sub Category":
           await disableDrawerData(supabaseClient, {
             type: "sub_category",
             typeId: typeId,
           });
+          break;
         case "Custom Field":
           if (!setCurrentCustomFieldList) return;
           await updateDisableField(supabaseClient, {
@@ -58,11 +63,13 @@ const DisableModal = ({
           setCurrentCustomFieldList((prev) =>
             prev.filter((location) => location.field_id !== typeId)
           );
+          break;
         case "customer":
           await disableDrawerData(supabaseClient, {
             type: "customer",
             typeId: typeId,
           });
+          break;
         default:
           break;
       }
@@ -75,6 +82,8 @@ const DisableModal = ({
       if (!handleFetch) return;
       handleFetch(activePage ?? 1);
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: `Something went wrong`,
         color: "red",

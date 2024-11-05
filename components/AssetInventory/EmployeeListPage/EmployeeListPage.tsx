@@ -27,6 +27,7 @@ import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
+import { CSVLink } from "react-csv";
 import { useForm } from "react-hook-form";
 import EmployeeDrawer from "./EmployeeDrawer";
 
@@ -44,6 +45,7 @@ type Column = {
   title: string;
   render: (row: InventoryEmployeeList) => JSX.Element;
 };
+
 const EmployeeListPage = ({ securityGroup }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -67,12 +69,19 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     },
   });
 
+  const csvHeaders = columns
+    .filter((col) => col.accessor !== "actions")
+    .map((col) => ({
+      label: col.accessor,
+      key: col.accessor,
+    }));
+
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "scic_employee_id",
     direction: "desc",
   });
 
-  const { register, handleSubmit, getValues, setValue } = formMethods;
+  const { register, handleSubmit, getValues, setValue, reset } = formMethods;
 
   useEffect(() => {
     handlePagination(activePage);
@@ -103,12 +112,17 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
               title: key
                 .replace(/scic_employee_/gi, "")
                 .replace(/NAME/gi, " ")
+                .replace(/hris_id_number/gi, "HRIS ID Number")
                 .replace(/_/g, " ")
-                .toUpperCase(),
+                .replace(/\b\w/g, (char) => char.toUpperCase()),
               sortable: ["employee", "site", "department", "location"].some(
                 (keyword) => key.includes(keyword)
               ),
-              render: (row: InventoryEmployeeList) => <Text>{row[key]}</Text>,
+              render: (row: InventoryEmployeeList) => (
+                <Text fw={key === "scic_employee_hris_id_number" ? 600 : 400}>
+                  {row[key]}
+                </Text>
+              ),
             })),
 
           {
@@ -202,7 +216,8 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
             color: "green",
           });
 
-          handleFetchEmployeeList(1);
+          handleFetchEmployeeList(activePage);
+          reset();
         } catch (error) {
           notifications.show({
             message: "Error importing employees.",
@@ -230,17 +245,32 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
             {...register("file", { required: true })}
             onChange={(file) => setValue("file", file ?? undefined)}
           />
-          <Flex mt="md" align="center" justify="flex-end" gap="sm">
-            <Button
-              variant="default"
-              color="dimmed"
-              onClick={() => modals.close("importCsv")}
-            >
-              Cancel
-            </Button>
-            <Button color="blue" type="submit">
-              Upload
-            </Button>
+
+          <Flex mt="md" align="center" justify="space-between" gap="sm">
+            <Group>
+              <CSVLink
+                data={[]}
+                headers={csvHeaders}
+                filename="employeeFormat.csv"
+                className="btn btn-outline-primary"
+              >
+                <Button color="blue" variant="outline">
+                  Download CSV Format
+                </Button>
+              </CSVLink>
+            </Group>
+            <Group>
+              <Button
+                variant="default"
+                color="dimmed"
+                onClick={() => modals.close("importCsv")}
+              >
+                Cancel
+              </Button>
+              <Button color="blue" type="submit">
+                Upload
+              </Button>
+            </Group>
           </Flex>
         </form>
       ),
@@ -258,6 +288,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
+
   return (
     <Container maw={3840} h="100%">
       <EmployeeDrawer

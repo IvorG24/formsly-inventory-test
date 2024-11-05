@@ -1,5 +1,12 @@
 import { InventoryAssetFormValues, OptionType } from "@/utils/types";
-import { Button, Drawer, Group, Select, Stack, TextInput } from "@mantine/core";
+import {
+  Button,
+  Drawer,
+  Group,
+  MultiSelect,
+  Stack,
+  TextInput,
+} from "@mantine/core";
 import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
@@ -13,7 +20,6 @@ type Props = {
 const SubCategoryDrawer = ({
   isOpen,
   close,
-  handleFetchCategoryList,
   handleSubCategory,
   categoryList,
 }: Props) => {
@@ -36,10 +42,10 @@ const SubCategoryDrawer = ({
       <form onSubmit={handleSubmit(handleSubmitSiteForm)}>
         <Stack spacing={8}>
           <Controller
-            name="category_id"
+            name="category_ids"
             control={control}
             render={({ field }) => (
-              <Select
+              <MultiSelect
                 label="Category Name"
                 placeholder="Search by category name"
                 withAsterisk
@@ -48,8 +54,6 @@ const SubCategoryDrawer = ({
                 {...field}
                 onChange={(value) => {
                   field.onChange(value);
-
-                  handleFetchCategoryList(1, value);
                 }}
               />
             )}

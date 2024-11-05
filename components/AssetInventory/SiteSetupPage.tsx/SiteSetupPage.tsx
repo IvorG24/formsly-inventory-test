@@ -211,7 +211,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
           setModalOpened(false);
         }}
         opened={modalOpened}
-        type="sub "
+        type="site"
       />
       <UpdateModal
         typeId={siteId}

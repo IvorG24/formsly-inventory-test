@@ -7,7 +7,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CategoryTableRow,
   Column,
-  InventoryCustomerList,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -35,7 +35,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  customerTableList: InventoryCustomerList[];
+  customerTableList: InventoryCustomerRow[];
   securityGroupData: SecurityGroupData;
 };
 

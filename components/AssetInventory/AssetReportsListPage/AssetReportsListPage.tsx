@@ -5,7 +5,7 @@ import { useEventList } from "@/stores/useEventStore";
 import { limitOption } from "@/utils/constant";
 import {
   CategoryTableRow,
-  InventoryCustomerList,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -25,7 +25,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  customerTableList: InventoryCustomerList[];
+  customerTableList: InventoryCustomerRow[];
   securityGroupData: SecurityGroupData;
   tableColumnList: {
     label: string;

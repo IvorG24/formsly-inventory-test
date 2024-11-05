@@ -2812,11 +2812,15 @@ export type InventoryAssetFormValues = {
   site_id?: string;
   location_name?: string;
   category_name?: string;
-  category_id?: string;
+  category_ids?: string[];
   sub_category?: string;
   department_name?: string;
   site_name?: string;
   site_description?: string;
+  site_region?: string;
+  site_city?: string;
+  site_state: string;
+  site_postal_code: string;
 };
 
 export type InventoryResponseValues = {

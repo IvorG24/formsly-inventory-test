@@ -36,6 +36,7 @@ import SubCategoryDrawer from "./SubCategoriesDrawer";
 type FormValues = {
   category_id: string;
   category_name: string;
+  category_ids?: string[];
 };
 
 type Props = {
@@ -175,19 +176,13 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
         return;
       }
 
-      const result = await createDataDrawer(supabaseClient, {
+      await createDataDrawer(supabaseClient, {
         type: "sub-category",
         InventoryFormValues: data,
         teamId: activeTeam.team_id,
       });
 
-      const newData = {
-        category_name: result.result_category_name,
-        sub_category_id: result.result_id,
-        sub_category_name: result.result_name || "",
-      };
-
-      setSubCategory((prev) => [...prev, newData] as SubCategory[]);
+      handlePagination(activePage);
 
       notifications.show({
         message: "Category added successfully",

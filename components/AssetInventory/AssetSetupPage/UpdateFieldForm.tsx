@@ -28,7 +28,7 @@ const fieldTypes = [
   { value: "TEXT", label: "Text" },
   { value: "NUMBER", label: "Number" },
   { value: "DATE", label: "Date" },
-  { value: "SELECT", label: "Select" },
+  { value: "DROPDOWN", label: "Select" },
   { value: "TEXTAREA", label: "Text Area" },
   { value: "MULTISELECT", label: "Multi Select" },
 ];

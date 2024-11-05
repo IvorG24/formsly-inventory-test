@@ -9,7 +9,7 @@ import { useUserProfile } from "@/stores/useUserStore";
 import { editImageWithUUID } from "@/utils/functions";
 import {
   CategoryTableRow,
-  InventoryCustomerList,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -41,7 +41,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  customerTableList: InventoryCustomerList[];
+  customerTableList: InventoryCustomerRow[];
   userId: string;
   securityGroupData: SecurityGroupData;
   tableColumnList: {

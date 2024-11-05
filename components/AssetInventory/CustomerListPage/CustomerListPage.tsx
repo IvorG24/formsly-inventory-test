@@ -32,6 +32,7 @@ import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
+import { CSVLink } from "react-csv";
 import { useForm } from "react-hook-form";
 import DisableModal from "../FormModal/DisableModal";
 import CustomerDrawer from "./CustomerDrawer";
@@ -66,7 +67,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     },
   });
 
-  const { register, handleSubmit, getValues, setValue } = formMethods;
+  const { register, handleSubmit, getValues, setValue, reset } = formMethods;
 
   const canAddData = securityGroup.privileges.customer.add === true;
   const canEditData = securityGroup.privileges.customer.edit === true;
@@ -80,6 +81,13 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   useEffect(() => {
     handlePagination(activePage);
   }, [activePage, activeTeam.team_id]);
+
+  const csvHeaders = columns
+    .filter((col) => col.accessor !== "actions")
+    .map((col) => ({
+      label: col.accessor,
+      key: col.accessor,
+    }));
 
   const handleFetchCustomerList = async (page: number) => {
     try {
@@ -96,14 +104,20 @@ const CustomerListPage = ({ securityGroup }: Props) => {
 
       if (data.length > 0) {
         const generatedColumns = Object.keys(data[0])
-          .filter((key) => key !== "customer_id" && key !== "customer_team_id")
+          .filter(
+            (key) =>
+              key !== "customer_id" &&
+              key !== "customer_team_id" &&
+              key !== "customer_date_created"
+          )
           .map((key) => ({
             accessor: key,
             title: key
               .replace(/_/g, " ")
+              .replace("customer", "")
               .replace(/\b\w/g, (char) => char.toUpperCase()),
             sortable: key.includes("customer"),
-            width: "100%",
+            width: 180,
             render: (record: Record<string, unknown>) => (
               <Text>{(record[key] as string) || ""}</Text>
             ),
@@ -112,12 +126,12 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           accessor: "actions",
           title: "Actions",
           sortable: false,
-          width: "100%",
+          width: 180,
           render: (record: Record<string, unknown>) => (
             <Flex gap="md">
               {canEditData && (
                 <Button
-                  onClick={() => handleEdit(record as InventoryCustomerRow)}
+                  onClick={() => handleEdit(record as InventoryCustomerList)}
                   color="blue"
                   variant="outline"
                   size="sm"
@@ -126,7 +140,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
                 </Button>
               )}
               <Button
-                onClick={() => handleDelete(record as InventoryCustomerRow)}
+                onClick={() => handleDelete(record as InventoryCustomerList)}
                 color="red"
                 variant="outline"
                 size="sm"
@@ -199,8 +213,9 @@ const CustomerListPage = ({ securityGroup }: Props) => {
             message: "Customer imported successfully!",
             color: "green",
           });
-
+          reset();
           handleFetchCustomerList(activePage);
+          reset;
         } catch (error) {
           notifications.show({
             message: "Error importing Customer.",
@@ -228,17 +243,31 @@ const CustomerListPage = ({ securityGroup }: Props) => {
             {...register("file", { required: true })}
             onChange={(file) => setValue("file", file ?? undefined)}
           />
-          <Flex mt="md" align="center" justify="flex-end" gap="sm">
-            <Button
-              variant="default"
-              color="dimmed"
-              onClick={() => modals.close("importCsv")}
-            >
-              Cancel
-            </Button>
-            <Button color="blue" type="submit">
-              Upload
-            </Button>
+          <Flex mt="md" align="center" justify="space-between" gap="sm">
+            <Group>
+              <CSVLink
+                data={[]}
+                headers={csvHeaders}
+                filename="employeeFormat.csv"
+                className="btn btn-outline-primary"
+              >
+                <Button color="blue" variant="outline">
+                  Download CSV Format
+                </Button>
+              </CSVLink>
+            </Group>
+            <Group>
+              <Button
+                variant="default"
+                color="dimmed"
+                onClick={() => modals.close("importCsv")}
+              >
+                Cancel
+              </Button>
+              <Button color="blue" type="submit">
+                Upload
+              </Button>
+            </Group>
           </Flex>
         </form>
       ),
@@ -246,7 +275,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     });
   };
 
-  const handleEdit = (customer: InventoryCustomerRow) => {
+  const handleEdit = (customer: InventoryCustomerList) => {
     if (!canEditData) {
       notifications.show({
         message: "Action not allowed",
@@ -265,7 +294,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     open();
   };
 
-  const handleDelete = (customer: InventoryCustomerRow) => {
+  const handleDelete = (customer: InventoryCustomerList) => {
     if (!canDeleteData) {
       notifications.show({
         message: "Action not allowed",

@@ -172,7 +172,10 @@ const InventoryFormFields = ({
                 readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
                 type={
-                  field.field_name === "Email Address" ? "email" : undefined
+                  field.field_name === "Email Address" ||
+                  field.field_name === "Customer Email"
+                    ? "email"
+                    : undefined
                 }
                 icon={field.field_name === "Contact Number" ? "+63" : ""}
               />
