@@ -8421,7 +8421,7 @@ export const getCustomFieldData = async (
     .select("*", { count: "exact" })
     .eq("field_section_id", sectionId)
     .eq("field_is_custom_field", isCustomField)
-    .order("field_order", { ascending: true });
+    .order("field_name", { ascending: true });
 
   if (search) {
     query = query.ilike("field_name", `%${search}%`);

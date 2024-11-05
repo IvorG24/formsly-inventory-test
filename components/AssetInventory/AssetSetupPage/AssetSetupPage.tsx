@@ -177,6 +177,16 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
     }
   };
 
+  const disabledField = (fields: string) => {
+    const isDisabled = [
+      "Asset Name",
+      "Serial No.",
+      "CSI Item Code",
+      "Description",
+    ].includes(fields);
+    return isDisabled;
+  };
+
   return (
     <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
@@ -226,6 +236,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                     <Group>
                       <Checkbox
                         checked={checkedState[field.field_id]}
+                        disabled={disabledField(field.field_name)}
                         onChange={(e) => {
                           handleIncludeField(
                             field.field_id,
@@ -257,7 +268,10 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                       <Checkbox
                         checked={field.field_is_required}
                         value={field.field_is_required ? "true" : "false"}
-                        disabled={checkedState[field.field_id] === false}
+                        disabled={
+                          checkedState[field.field_id] === false ||
+                          disabledField(field.field_name)
+                        }
                         onChange={(e) => {
                           const isChecked = e.currentTarget.checked;
                           handleRequiredChange(field.field_id, isChecked);

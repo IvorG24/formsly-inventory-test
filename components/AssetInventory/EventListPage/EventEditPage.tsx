@@ -1,6 +1,7 @@
 import { updateCustomEvent } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { isDarkColor } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { createEventFormvalues, eventFormField } from "@/utils/types";
 import {
@@ -28,9 +29,11 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+
 type Props = {
   eventFormDefaultValues: createEventFormvalues;
 };
+
 const EditEventPage = ({ eventFormDefaultValues }: Props) => {
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
@@ -141,6 +144,14 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
       });
     }
   };
+
+  const darkRed = DEFAULT_THEME.colors.red.filter(isDarkColor);
+  const darkGreen = DEFAULT_THEME.colors.green.filter(isDarkColor);
+  const darkBlue = DEFAULT_THEME.colors.blue.filter(isDarkColor);
+  const darkYellow = DEFAULT_THEME.colors.yellow.filter(isDarkColor);
+  const darkOrange = DEFAULT_THEME.colors.orange.filter(isDarkColor);
+  const darkTeal = DEFAULT_THEME.colors.teal.filter(isDarkColor);
+
   const isCustomEvent = eventFormDefaultValues.event.customEvent;
   return (
     <Container maw={3840} h="100%">
@@ -191,12 +202,12 @@ const EditEventPage = ({ eventFormDefaultValues }: Props) => {
                       required
                       withPicker={false}
                       swatches={[
-                        ...DEFAULT_THEME.colors.red,
-                        ...DEFAULT_THEME.colors.green,
-                        ...DEFAULT_THEME.colors.blue,
-                        ...DEFAULT_THEME.colors.yellow,
-                        ...DEFAULT_THEME.colors.orange,
-                        ...DEFAULT_THEME.colors.teal,
+                        ...darkRed,
+                        ...darkGreen,
+                        ...darkBlue,
+                        ...darkYellow,
+                        ...darkOrange,
+                        ...darkTeal,
                       ]}
                       {...field}
                     />

@@ -180,6 +180,11 @@ const MaintenanceSetupPage = ({
     }
   };
 
+  const disabledField = (fields: string) => {
+    const isDisabled = ["Completion Date", "Status", "Title"].includes(fields);
+    return isDisabled;
+  };
+
   return (
     <Container maw={3840} h="100%">
       <LoadingOverlay visible={isLoading} />
@@ -229,6 +234,7 @@ const MaintenanceSetupPage = ({
                     <Group>
                       <Checkbox
                         checked={checkedState[field.field_id]}
+                        disabled={disabledField(field.field_name)}
                         onChange={(e) => {
                           handleIncludeField(
                             field.field_id,
@@ -260,7 +266,10 @@ const MaintenanceSetupPage = ({
                       <Checkbox
                         checked={field.field_is_required}
                         value={field.field_is_required ? "true" : "false"}
-                        disabled={checkedState[field.field_id] === false}
+                        disabled={
+                          checkedState[field.field_id] === false ||
+                          disabledField(field.field_name)
+                        }
                         onChange={(e) => {
                           const isChecked = e.currentTarget.checked;
                           handleRequiredChange(field.field_id, isChecked);
