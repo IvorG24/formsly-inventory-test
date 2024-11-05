@@ -15,6 +15,8 @@ import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequ
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
 import TicketRequestPEDEquipmentPartForm from "../TicketRequestPEDEquipmentPartForm/TicketRequestPEDEquipmentPartForm";
+import TicketRequestToJoinTeamGroup from "../TicketRequestToJoinTeamGroup/TicketRequestToJoinTeamGroup";
+import TicketRequestToJoinTeamProject from "../TicketRequestToJoinTeamProject/TicketRequestToJoinTeamProject";
 
 type Props = {
   category: string;
@@ -105,6 +107,7 @@ const TicketOverride = ({
           const newResponse =
             newSections[oldSectionIdx].ticket_section_fields[oldFieldIdx]
               .ticket_field_response;
+
           const isFile = newResponse instanceof File;
           if (oldField.ticket_field_response !== newResponse) {
             if (isFile) {
@@ -113,13 +116,22 @@ const TicketOverride = ({
               <br>
               ${file.name}</p>`;
             } else {
+              let prevResponse = oldField.ticket_field_response;
+              let finalResponse = newResponse;
+              if (oldField.ticket_field_type === "MULTISELECT") {
+                prevResponse = (
+                  oldField.ticket_field_response as string
+                ).replaceAll(",", ", ");
+                finalResponse = (newResponse as string[]).join(", ");
+              }
+
               ticketChanges += `<p>The <strong>${oldField.ticket_field_name}</strong> has been changed.
               <br>
               <strong>From:</strong>
-              ${oldField.ticket_field_response}
+              ${prevResponse}
               <br>
               <strong>To:</strong>
-              ${newResponse}</p>`;
+              ${finalResponse}</p>`;
             }
           }
         });
@@ -147,16 +159,16 @@ const TicketOverride = ({
               if (isFile) {
                 const file = newResponse as File;
                 ticketChanges += `<p>The <strong>${oldField.ticket_field_name}</strong> file in <strong>${section.ticket_section_name}</strong> has been changed.
-              <br>
-              ${file.name}</p>`;
+                <br>
+                ${file.name}</p>`;
               } else {
                 ticketChanges += `<p>The <strong>${oldField.ticket_field_name}</strong> in <strong>${section.ticket_section_name}</strong> has been changed.
-              <br>
-              <strong>From:</strong>
-              ${oldField.ticket_field_response}
-              <br>
-              <strong>To:</strong>
-              ${newResponse}</p>`;
+                <br>
+                <strong>From:</strong>
+                ${oldField.ticket_field_response}
+                <br>
+                <strong>To:</strong>
+                ${newResponse}</p>`;
               }
             }
           }
@@ -297,6 +309,32 @@ const TicketOverride = ({
       case "Item Request":
         return (
           <TicketItemRequestForm
+            category={category}
+            memberId={memberId}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
+            onOverrideResponseComment={handleOverrideResponseComment}
+          />
+        );
+      case "Request to Join Team Group":
+        return (
+          <TicketRequestToJoinTeamGroup
+            category={category}
+            memberId={memberId}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
+            onOverrideResponseComment={handleOverrideResponseComment}
+          />
+        );
+      case "Request to Join Team Project":
+        return (
+          <TicketRequestToJoinTeamProject
             category={category}
             memberId={memberId}
             ticketForm={ticketForm}

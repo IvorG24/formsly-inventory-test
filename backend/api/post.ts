@@ -2834,6 +2834,42 @@ export const acceptTeamMembershipRequest = async (
   if (error) throw error;
 };
 
+export const joinTeamGroupByTicketRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    groupList: string;
+    teamMemberId: string;
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "join_team_group_by_ticket_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};
+
+export const joinTeamProjectByTicketRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectList: string;
+    teamMemberId: string;
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "join_team_project_by_ticket_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};
+
 export const createAssetRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {

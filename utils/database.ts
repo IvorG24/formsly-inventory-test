@@ -5007,6 +5007,18 @@ export type Database = {
         }
         Returns: Json
       }
+      join_team_group_by_ticket_request: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
+      join_team_project_by_ticket_request: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
+      }
       leave_team: {
         Args: {
           team_id: string

@@ -111,7 +111,7 @@ const TicketResponseValue = ({ category, field }: Props) => {
         return (
           <Text>
             {`${parsedValue}`.split("\n").map((text, textId) => (
-              <Text key={textId}>{text}</Text>
+              <Text key={textId}>{text.replaceAll(",", ", ")}</Text>
             ))}
           </Text>
         );

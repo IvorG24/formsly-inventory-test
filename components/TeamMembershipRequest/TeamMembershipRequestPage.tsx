@@ -163,15 +163,15 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
       }
 
       setTeamMembershipRequest(allUserTeamMembershipRequest);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch team membership requests",
         color: "red",
       });
-      if (isError(error)) {
+      if (isError(e)) {
         await insertError(supabaseClient, {
           errorTableRow: {
-            error_message: error.message,
+            error_message: e.message,
             error_url: router.asPath,
             error_function: "handleFetchTeamMembershipRequest",
             error_user_email: user?.email,

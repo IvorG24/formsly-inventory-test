@@ -26,6 +26,8 @@ import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequ
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
 import TicketRequestPEDEquipmentPartForm from "../TicketRequestPEDEquipmentPartForm/TicketRequestPEDEquipmentPartForm";
+import TicketRequestToJoinTeamGroup from "../TicketRequestToJoinTeamGroup/TicketRequestToJoinTeamGroup";
+import TicketRequestToJoinTeamProject from "../TicketRequestToJoinTeamProject/TicketRequestToJoinTeamProject";
 import TicketForm from "./TicketForm";
 
 type Props = {
@@ -113,6 +115,24 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
             setIsLoading={setIsLoading}
           />
         );
+      case "Request to Join Team Group":
+        return (
+          <TicketRequestToJoinTeamGroup
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request to Join Team Project":
+        return (
+          <TicketRequestToJoinTeamProject
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
 
       default:
         return (
@@ -171,9 +191,12 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
                 setCategory(value);
                 if (value) handleCategoryChange(value);
               }}
-              data={categoryOptions}
+              data={categoryOptions.sort((a, b) =>
+                a < b ? -1 : a > b ? 1 : 0
+              )}
               required={true}
               readOnly={isLoading}
+              searchable
             />
 
             {!isFetchingForm ? (

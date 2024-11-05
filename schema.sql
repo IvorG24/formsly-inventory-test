@@ -205,27 +205,27 @@ CREATE TABLE team_schema.supplier_table (
 );
 
 CREATE TABLE team_schema.team_key_table (
-    team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_api_key VARCHAR(4000) NOT NULL,
-    team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_label VARCHAR(4000) NOT NULL,
-    team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_api_key VARCHAR(4000) NOT NULL,
+  team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_label VARCHAR(4000) NOT NULL,
+  team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-    team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+  team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE team_schema.team_key_record_table (
-    team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_record_access_api VARCHAR(5000) NOT NULL,
+  team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_record_access_api VARCHAR(5000) NOT NULL,
 
-    team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
+  team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
 );
 
 CREATE TABLE team_schema.team_membership_request_table (
-    team_membership_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_membership_request_to_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
-    team_membership_request_from_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
+  team_membership_request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_membership_request_to_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
+  team_membership_request_from_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE user_schema.user_valid_id_table (
@@ -21181,20 +21181,22 @@ AS $$
       `
     }).join(", ");
 
-    plv8.execute(
-      `
-        INSERT INTO public.notification_table
-        (
-          notification_app,
-          notification_type,
-          notification_content,
-          notification_redirect_url,
-          notification_user_id,
-          notification_team_id
-        )
-        VALUES ${notificationQuery}
-      `
-    );
+    if (notificationQuery.length) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id,
+            notification_team_id
+          )
+          VALUES ${notificationQuery}
+        `
+      );
+    }
 
     returnData = commentData[0];
  });
@@ -21299,6 +21301,90 @@ AS $$
       `, [userId, teamId]);
 
     })
+ });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION join_team_group_by_ticket_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      groupList,
+      teamMemberId,
+      teamId
+    } = input_data;
+
+    const teamGroupIdList = plv8.execute(
+      `
+        SELECT
+          team_group_id
+        FROM team_schema.team_group_table
+        WHERE
+          team_group_name IN (${groupList})
+          AND team_group_team_id = '${teamId}'
+      `
+    );
+
+    const insertData = teamGroupIdList.map(groupId => {
+      return `('${teamMemberId}', '${groupId.team_group_id}')`
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_group_member_table
+        (
+          team_member_id,
+          team_group_id
+        )
+        VALUES ${insertData}
+        ON CONFLICT (team_member_id, team_group_id) DO NOTHING
+      `
+    );
+ });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION join_team_project_by_ticket_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+  plv8.subtransaction(function(){
+    const {
+      projectList,
+      teamMemberId,
+      teamId
+    } = input_data;
+
+    const teamProjectIdList = plv8.execute(
+      `
+        SELECT
+          team_project_id
+        FROM team_schema.team_project_table
+        WHERE
+          team_project_name IN (${projectList})
+          AND team_project_team_id = '${teamId}'
+      `
+    );
+
+    const insertData = teamProjectIdList.map(projectId => {
+      return `('${teamMemberId}', '${projectId.team_project_id}')`
+    }).join(", ");
+
+    plv8.execute(
+      `
+        INSERT INTO team_schema.team_project_member_table
+        (
+          team_member_id,
+          team_project_id
+        )
+        VALUES ${insertData}
+        ON CONFLICT (team_member_id, team_project_id) DO NOTHING
+      `
+    );
  });
 $$ LANGUAGE plv8;
 
@@ -21606,8 +21692,12 @@ WITH CHECK (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -21628,8 +21718,12 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -21645,8 +21739,12 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = (SELECT auth.uid())
-    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
   )
 );
 
@@ -24899,6 +24997,769 @@ USING (
     team_membership_request_from_user_id = auth.uid()
   )
 );
+
+--- form_schema.questionnaire_table
+ALTER TABLE form_schema.questionnaire_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_team_id = questionnaire_team_id
+    AND team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- form_schema.questionnaire_question_table
+ALTER TABLE form_schema.questionnaire_question_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.questionnaire_question_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_table as qt
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qt.questionnaire_id = questionnaire_question_questionnaire_id
+    AND tm.team_member_user_id = (SELECT auth.uid())
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+---  form_schema.question_option_table
+ALTER TABLE form_schema.question_option_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON form_schema.question_option_table;
+CREATE POLICY "Allow READ access for anon users" ON form_schema.question_option_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.question_option_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.questionnaire_question_table as qqt
+    JOIN form_schema.questionnaire_table as qt ON qt.questionnaire_id = qqt.questionnaire_question_questionnaire_id
+    JOIN team_schema.team_table as tt ON tt.team_id = qt.questionnaire_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE qqt.questionnaire_question_id = '0033eafc-a7af-46e9-886c-66f59af8a003'
+    AND tm.team_member_user_id = 'abc84276-1ca3-4b34-91f3-2aed10d557bf'
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- form_schema.correct_response_table
+ALTER TABLE form_schema.correct_response_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
+  )
+);
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.correct_response_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.correct_response_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.correct_response_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    WHERE ft.field_id = correct_response_field_id
+      AND team_member_team_id IN (
+        SELECT team_member_team_id
+        FROM team_schema.team_member_table
+        WHERE team_member_user_id = (SELECT auth.uid())
+          AND team_member_role IN ('OWNER', 'ADMIN')
+      )
+  )
+);
+
+--- lookup_schema.query_table
+ALTER TABLE lookup_schema.degree_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.degree_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.degree_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- user_schema.user_sss_table
+ALTER TABLE user_schema.user_sss_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for own user" ON user_schema.user_sss_table;
+CREATE POLICY "Allow CREATE access for own user" ON user_schema.user_sss_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (user_sss_user_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON user_schema.user_sss_table;
+CREATE POLICY "Allow READ for authenticated users" ON user_schema.user_sss_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (user_sss_user_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Allow UPDATE for own user" ON user_schema.user_sss_table;
+CREATE POLICY "Allow UPDATE for own user" ON user_schema.user_sss_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING(true);
+
+--- user_schema.email_resend_table
+ALTER TABLE user_schema.email_resend_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow CREATE access for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow READ for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON user_schema.email_resend_table;
+CREATE POLICY "Allow UPDATE for anon users" ON user_schema.email_resend_table
+AS PERMISSIVE FOR UPDATE
+USING (true);
+
+--- hr_schema.background_check_table
+ALTER TABLE hr_schema.background_check_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.background_check_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.background_check_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.hr_phone_interview_table
+ALTER TABLE hr_schema.hr_phone_interview_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.hr_phone_interview_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.hr_phone_interview_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.hr_project_table
+ALTER TABLE hr_schema.hr_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.hr_project_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.hr_project_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.interview_online_meeting_table
+ALTER TABLE hr_schema.interview_online_meeting_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.interview_online_meeting_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.interview_online_meeting_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.job_offer_reason_for_rejection_table
+ALTER TABLE hr_schema.job_offer_reason_for_rejection_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_reason_for_rejection_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.job_offer_table
+ALTER TABLE hr_schema.job_offer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.job_offer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_position_table
+ALTER TABLE hr_schema.practical_test_position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_position_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_question_table
+ALTER TABLE hr_schema.practical_test_question_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_question_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_question_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.practical_test_table
+ALTER TABLE hr_schema.practical_test_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.practical_test_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.practical_test_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.technical_interview_table
+ALTER TABLE hr_schema.technical_interview_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.technical_interview_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.technical_interview_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.trade_test_table
+ALTER TABLE hr_schema.trade_test_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.trade_test_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.trade_test_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.recruitment_table
+ALTER TABLE hr_schema.recruitment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow CREATE access for anon users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON hr_schema.recruitment_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON hr_schema.recruitment_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- hr_schema.request_connection_table
+ALTER TABLE hr_schema.request_connection_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow CREATE access for anon users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow READ for authenticated users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for anon users" ON hr_schema.request_connection_table;
+CREATE POLICY "Allow UPDATE for anon users" ON hr_schema.request_connection_table
+AS PERMISSIVE FOR UPDATE
+USING (true);
+
+--- error_table
+ALTER TABLE error_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON error_table;
+CREATE POLICY "Allow CREATE access for anon users" ON error_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+--- workflow_schema.edge_table
+ALTER TABLE workflow_schema.edge_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.edge_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.edge_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.edge_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.edge_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.edge_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.edge_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.module_form_table
+ALTER TABLE workflow_schema.module_form_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.module_form_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.module_form_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_form_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_form_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.module_form_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.module_form_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.module_table
+ALTER TABLE workflow_schema.module_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.module_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.module_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.module_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.module_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.module_version_table
+ALTER TABLE workflow_schema.module_version_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.module_version_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.module_version_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.node_project_signer_table
+ALTER TABLE workflow_schema.node_project_signer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.node_project_signer_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.node_project_signer_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_project_signer_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_project_signer_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.node_project_signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.node_project_signer_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.node_project_table
+ALTER TABLE workflow_schema.node_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.node_project_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.node_project_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_project_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_project_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.node_project_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.node_project_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.node_table
+ALTER TABLE workflow_schema.node_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.node_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.node_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.node_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.node_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.node_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.node_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.workflow_table
+ALTER TABLE workflow_schema.workflow_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.workflow_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.workflow_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.workflow_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.workflow_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- workflow_schema.workflow_version_table
+ALTER TABLE workflow_schema.workflow_version_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for authenticated users" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow CREATE access for authenticated users" ON workflow_schema.workflow_version_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow READ for authenticated users" ON workflow_schema.workflow_version_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON workflow_schema.workflow_version_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON workflow_schema.workflow_version_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+--- request_schema.request_score_table
+ALTER TABLE request_schema.request_score_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for anon users" ON request_schema.request_score_table;
+CREATE POLICY "Allow CREATE access for anon users" ON request_schema.request_score_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON request_schema.request_score_table;
+CREATE POLICY "Allow READ for authenticated users" ON request_schema.request_score_table
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
 
 ----- END: POLICIES
 

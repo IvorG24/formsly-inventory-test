@@ -268,12 +268,12 @@ const TicketCommentSection = ({
   }, [commentAttachment, clearErrors, setError]);
 
   return (
-    <Stack>
+    <Stack mt="xl" spacing="xs">
       <Title order={4} color="dimmed">
         Comments
       </Title>
       {currentUser && (
-        <Box mt="xl">
+        <Box>
           <form onSubmit={handleSubmit(handleAddComment)}>
             <Textarea
               placeholder="Enter your comment here"

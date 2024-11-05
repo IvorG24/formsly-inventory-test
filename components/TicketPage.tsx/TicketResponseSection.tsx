@@ -25,7 +25,7 @@ const TicketResponseSection = ({
     <Stack>
       <Group position="apart">
         <Group spacing={8}>
-          <Text weight={600}>Request Details</Text>
+          <Text weight={600}>Ticket Details</Text>
           {isEditingResponse && (
             <Text size="xs" color="blue">
               (Edit Mode)

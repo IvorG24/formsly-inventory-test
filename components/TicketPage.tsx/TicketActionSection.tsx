@@ -12,6 +12,8 @@ import {
   createItemFromTicketRequest,
   createPedPartFromTicketRequest,
   createTicketComment,
+  joinTeamGroupByTicketRequest,
+  joinTeamProjectByTicketRequest,
 } from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -215,6 +217,10 @@ const TicketActionSection = ({
         return handleRequestPedEquipmentPartClosing();
       case "Item Request":
         return handleItemRequestClosing();
+      case "Request to Join Team Group":
+        return handleRequestToJoinTeamGroupClosing();
+      case "Request to Join Team Project":
+        return handleRequestToJoinTeamProjectClosing();
       default:
         handleUpdateTicketStatus("CLOSED", null);
         return;
@@ -494,6 +500,62 @@ const TicketActionSection = ({
             ),
           };
         }),
+        teamId: activeTeam.team_id,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestToJoinTeamGroupClosing = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) throw new Error();
+
+      await joinTeamGroupByTicketRequest(supabaseClient, {
+        groupList: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[0]
+            .ticket_field_response as string
+        )
+          .split(",")
+          .map((groupName: string) => `'${groupName}'`),
+        teamMemberId: ticket.ticket_requester_team_member_id,
+        teamId: activeTeam.team_id,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestToJoinTeamProjectClosing = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) throw new Error();
+
+      await joinTeamProjectByTicketRequest(supabaseClient, {
+        projectList: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[0]
+            .ticket_field_response as string
+        )
+          .split(",")
+          .map((projectName: string) => `'${projectName}'`),
+        teamMemberId: ticket.ticket_requester_team_member_id,
         teamId: activeTeam.team_id,
       });
 
