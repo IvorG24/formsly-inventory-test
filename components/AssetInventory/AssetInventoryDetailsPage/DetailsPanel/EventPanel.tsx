@@ -42,7 +42,7 @@ const formatValue = (key: string, value: string) => {
   if (typeof value === "boolean") {
     return value ? "Yes" : "No";
   }
-  return value || "N/A";
+  return value || "";
 };
 
 const EventPanel = ({

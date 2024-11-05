@@ -4844,6 +4844,8 @@ export const getUserCurrentSignature = async (
     userId: string;
   }
 ) => {
+  console.log(params);
+
   const { data, error } = await supabaseClient
     .rpc("get_user_current_signature", { input_data: params })
     .select("*");
@@ -8186,6 +8188,38 @@ export const getAssetSpreadsheetView = async (
 ) => {
   const { data, error } = await supabaseClient.rpc(
     "get_asset_spreadsheet_view",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as unknown as { data: InventoryListType[]; count: 0 };
+};
+
+export const getAssignedAssetOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    limit?: number;
+    page?: number;
+    sort?: boolean;
+    columnAccessor?: string;
+    search?: string;
+    sites?: string[];
+    locations?: string;
+    department?: string[];
+    category?: string[];
+    status?: string;
+    assignedToPerson?: string[];
+    assignedToSite?: string[];
+    assignedToCustomer?: string[];
+    teamId: string;
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_assigned_asset_on_load",
     {
       input_data: params,
     }

@@ -6,6 +6,7 @@ import {
 import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
 import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { editImageWithUUID } from "@/utils/functions";
 import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import {
@@ -22,7 +23,6 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
-import Compressor from "compressorjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -213,19 +213,9 @@ const UserSettingsPage = ({ user }: Props) => {
       // compress image
       let compressedImage: File | null = null;
       if (signature.size > 500000) {
-        compressedImage = await new Promise((resolve) => {
-          new Compressor(signature, {
-            quality: 0.3,
-            success(result) {
-              resolve(result as File);
-            },
-            error(error) {
-              throw error;
-            },
-          });
-        });
+        compressedImage = await editImageWithUUID(signature);
       }
-
+      const editedSignature = await editImageWithUUID(signature);
       const { data: signatureAttachment, url } = await createAttachment(
         supabaseClient,
         {
@@ -237,7 +227,7 @@ const UserSettingsPage = ({ user }: Props) => {
               ? user.user_signature_attachment_id
               : undefined,
           },
-          file: compressedImage || signature,
+          file: compressedImage || editedSignature,
           fileType: "s",
           userId: user.user_id,
         }

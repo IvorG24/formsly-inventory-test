@@ -1758,56 +1758,65 @@ export const updateEvent = async (
     teamMemberId?: string;
     type: string;
     eventId: string;
+    signature: string;
     userId?: string;
+    teamName: string;
   }
 ) => {
-  const { updateResponse, selectedRow, teamMemberId, type, userId, eventId } =
-    params;
+  const {
+    updateResponse,
+    selectedRow,
+    teamMemberId,
+    userId,
+    type,
+    signature,
+    eventId,
+    teamName,
+  } = params;
 
   const fieldResponsesArray: { name: string; response: string }[] = [];
-  let signatureUrl = null;
-  const fieldNamesArray: string[] = [];
+  let signatureUrl = signature || null;
 
   for (const section of updateResponse.sections) {
     for (const field of section.section_field) {
       const fieldResponse = field.field_response;
       const fieldName = field.field_name;
-      fieldNamesArray.push(fieldName);
 
-      if (field.field_type === "FILE" && fieldResponse instanceof File) {
+      if (
+        field.field_type === "FILE" &&
+        fieldResponse instanceof File &&
+        !signatureUrl
+      ) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,
           fieldResponse,
           fieldName,
           userId || ""
         );
-        signatureUrl = uploadedFileUrl;
-        fieldNamesArray.push(fieldName);
+        signatureUrl = uploadedFileUrl ?? signature;
       }
 
-      const allowedFields = new Set(fieldNamesArray);
-
-      if (fieldResponse && allowedFields.has(fieldName)) {
-        let responseValue = fieldResponse;
-
-        if (field.field_type === "DATE" && fieldResponse instanceof Date) {
-          responseValue = fieldResponse.toISOString();
-        }
-        if (field.field_type === "FILE" && fieldResponse instanceof File) {
-          responseValue = signatureUrl || "";
-        }
-        if (
-          field.field_type === "CHECKBOX" &&
-          fieldResponse instanceof Boolean
-        ) {
-          responseValue = fieldResponse ? "true" : "false";
-        }
-
-        fieldResponsesArray.push({
-          name: fieldName,
-          response: String(responseValue),
-        });
+      let responseValue = fieldResponse || "";
+      if (field.field_type === "DATE" && fieldResponse instanceof Date) {
+        responseValue = fieldResponse.toISOString();
+      } else if (
+        typeof fieldResponse === "string" ||
+        fieldResponse instanceof String
+      ) {
+        responseValue = fieldResponse || "";
+      } else if (field.field_type === "FILE" || fieldResponse instanceof File) {
+        responseValue = signatureUrl || signature;
+      } else if (
+        field.field_type === "CHECKBOX" &&
+        typeof fieldResponse === "boolean"
+      ) {
+        responseValue = fieldResponse ? "true" : "false";
       }
+
+      fieldResponsesArray.push({
+        name: fieldName,
+        response: String(responseValue),
+      });
     }
   }
 
@@ -1818,15 +1827,14 @@ export const updateEvent = async (
     type,
     signatureUrl,
     eventId,
+    teamName: teamName.replace(/ /g, "-").toLowerCase(),
   };
 
   const { data, error } = await supabaseClient.rpc("event_status_update", {
     input_data: input_params,
   });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
   return data;
 };
@@ -2041,6 +2049,25 @@ export const updateAssetImage = async (
       inventory_request_image_url: url,
     })
     .eq("inventory_request_tag_id", tagId);
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const updateWaitingForSignatureStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "update_event_status_waiting_for_signature",
+    {
+      input_data: params,
+    }
+  );
 
   if (error) throw error;
 

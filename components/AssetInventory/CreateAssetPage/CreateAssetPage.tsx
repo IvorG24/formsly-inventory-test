@@ -119,8 +119,6 @@ const CreateAssetPage = ({ form, formslyFormName = "" }: Props) => {
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/inventory/${assetData.inventory_request_tag_id}`
       );
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
+  IconBrandSuperhuman,
   IconBriefcaseOff,
   IconBuilding,
   IconCategory,
@@ -115,6 +116,12 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
 
   const subLinks = [...nonCustomEvents, ...customEvents];
   const navlinkData: NavLink[] = [
+    {
+      id: "assigned-asset",
+      icon: IconBrandSuperhuman,
+      label: "Assigned Asset",
+      href: `/${formattedTeamName}/inventory/assigned-asset`,
+    },
     ...(canView
       ? [
           {
@@ -330,6 +337,17 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   };
 
   const renderNavlinkData = navlinkData.map((link) => {
+    if (!link.subLinks) {
+      return (
+        <Navlink
+          key={link.id}
+          label={link.label}
+          onClick={() => handleNavlinkClick(link.href || "")}
+          icon={<link.icon size={20} />}
+          link={link.href}
+        />
+      );
+    }
     if (link) {
       return (
         <Accordion.Item

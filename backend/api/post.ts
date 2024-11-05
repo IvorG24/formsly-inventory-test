@@ -2905,7 +2905,6 @@ export const createAssetRequest = async (
   const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
     .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
     .join(", ")})`;
-  console.log(assetResponseValue);
 
   const requestData = {
     responseValues,

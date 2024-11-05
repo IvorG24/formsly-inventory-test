@@ -1,8 +1,12 @@
-import { getAssetSpreadsheetView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 
+import { getAssignedAssetOnLoad } from "@/backend/api/get";
+import { createAttachment } from "@/backend/api/post";
+import { updateWaitingForSignatureStatus } from "@/backend/api/update";
 import { useEventList } from "@/stores/useEventStore";
+import { useUserProfile } from "@/stores/useUserStore";
+import { editImageWithUUID } from "@/utils/functions";
 import {
   CategoryTableRow,
   InventoryCustomerList,
@@ -10,16 +14,28 @@ import {
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
-import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  FileInput,
+  Flex,
+  LoadingOverlay,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import AssetListFilter from "./AssetListFilter";
-import AssetListTable from "./AssetListTable";
+import AssignedAssetListFilter from "./AssignedAssetListFilter";
+import AssignedAssetListTable from "./AssignedAssetListTable";
 
 type Props = {
   siteList: SiteTableRow[];
@@ -34,6 +50,10 @@ type Props = {
   }[];
 };
 
+type signatureFile = {
+  file: File;
+};
+
 type FilterSelectedValuesType = {
   search?: string;
   sites?: string[];
@@ -45,9 +65,10 @@ type FilterSelectedValuesType = {
   assignedToPerson?: string[];
   assignedToSite?: string[];
   assignedToCustomer?: string[];
+  file?: File;
 };
 
-const AssetListPage = ({
+const AssignedAssetListPage = ({
   userId,
   siteList,
   customerTableList,
@@ -59,6 +80,7 @@ const AssetListPage = ({
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const eventList = useEventList();
+  const userProfile = useUserProfile();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
@@ -66,7 +88,7 @@ const AssetListPage = ({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [localFilter, setLocalFilter] =
     useLocalStorage<FilterSelectedValuesType>({
-      key: "inventory-assigned-asset-request-list-filter",
+      key: "inventory-request-list-filter",
       defaultValue: {
         search: "",
         sites: securityGroupData.asset.filter.site,
@@ -87,7 +109,8 @@ const AssetListPage = ({
     mode: "onChange",
   });
 
-  const { handleSubmit, getValues, setValue } = filterFormMethods;
+  const { handleSubmit, getValues, setValue, register, formState } =
+    filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "inventory_request_created",
@@ -121,6 +144,7 @@ const AssetListPage = ({
       )
       .map((column) => column.value),
   });
+
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
@@ -129,7 +153,7 @@ const AssetListPage = ({
   const handleFetchRequestList = async (page: number) => {
     try {
       setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) {
+      if (!activeTeam.team_id || !userProfile?.user_id) {
         console.warn(
           "RequestListPage handleFilterFormsError: active team_id not found"
         );
@@ -148,7 +172,7 @@ const AssetListPage = ({
         isAscendingSort,
       } = getValues();
 
-      const { data, count } = await getAssetSpreadsheetView(supabaseClient, {
+      const { data, count } = await getAssignedAssetOnLoad(supabaseClient, {
         page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
         sort: isAscendingSort,
@@ -172,6 +196,7 @@ const AssetListPage = ({
             ? securityGroupData.asset.filter.category
             : category,
         teamId: activeTeam.team_id,
+        userId: userProfile.user_id,
       });
 
       setInventoryList(data);
@@ -208,20 +233,125 @@ const AssetListPage = ({
 
   useEffect(() => {
     handlePagination(activePage);
-  }, [activeTeam]);
+  }, [activeTeam, userProfile]);
+
+  const handleUploadSignature = async (
+    data: signatureFile,
+    requestId: string
+  ) => {
+    try {
+      if (data === null) return;
+      const signature = data.file;
+
+      let compressedImage: File | null = null;
+      if (data.file.size > 500000) {
+        compressedImage = await editImageWithUUID(signature);
+      }
+      const editedSignature = await editImageWithUUID(signature);
+
+      await updateWaitingForSignatureStatus(supabaseClient, {
+        requestId,
+        userId: userProfile?.user_id ?? "",
+      });
+
+      const { data: signatureAttachment, url } = await createAttachment(
+        supabaseClient,
+        {
+          attachmentData: {
+            attachment_name: signature.name,
+            attachment_bucket: "USER_SIGNATURES",
+            attachment_value: "",
+            attachment_id: userProfile?.user_signature_attachment_id
+              ? userProfile.user_signature_attachment_id
+              : undefined,
+          },
+          file: compressedImage || editedSignature,
+          fileType: "s",
+          userId: userProfile?.user_id ?? "",
+        }
+      );
+
+      const { error } = await supabaseClient.rpc("update_user", {
+        input_data: {
+          userData: {
+            user_id: userProfile?.user_id,
+            user_signature_attachment_id: signatureAttachment.attachment_id,
+          },
+          previousSignatureUrl: url,
+        },
+      });
+
+      if (error) throw error;
+
+      notifications.show({
+        message: "Signature updated.",
+        color: "green",
+      });
+      modals.close("addSignature");
+      handlePagination(activePage);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+  console.log(userProfile);
+
+  const handleAction = (requestId: string) => {
+    modals.open({
+      modalId: "addSignature",
+      title: <Text>Upload You Signature</Text>,
+      children: (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const file = formData.get("file") as File;
+            handleUploadSignature({ file }, requestId);
+          }}
+        >
+          <Stack>
+            <FileInput
+              accept=".jpg, .jpeg, .png"
+              placeholder="Signature Upload"
+              label="Signature"
+              withAsterisk
+              {...register("file", { required: true })}
+              onChange={(file) => setValue("file", file ?? undefined)}
+            />
+            <Flex mt="md" align="center" justify="flex-end" gap="sm">
+              <Button
+                variant="default"
+                color="dimmed"
+                onClick={() => modals.close("addSignature")}
+              >
+                Cancel
+              </Button>
+              <Button color="blue" type="submit">
+                Upload
+              </Button>
+            </Flex>
+          </Stack>
+        </form>
+      ),
+      centered: true,
+    });
+  };
 
   return (
     <Container maw={3840} h="100%">
+      <LoadingOverlay visible={formState.isSubmitting} />
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={3}>Asset List Page</Title>
+          <Title order={3}>Assigned Asset List Page</Title>
           <Text>Manage your team assets here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <AssetListFilter
+            <AssignedAssetListFilter
               customerList={customerTableList}
               securityGroupData={securityGroupData}
               inventoryList={inventoryList}
@@ -240,7 +370,7 @@ const AssetListPage = ({
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <AssetListTable
+          <AssignedAssetListTable
             setSelectedRow={setSelectedRows}
             selectedRow={selectedRows}
             requestList={inventoryList}
@@ -249,6 +379,7 @@ const AssetListPage = ({
             isFetchingRequestList={isFetchingRequestList}
             handlePagination={handlePagination}
             sortStatus={sortStatus}
+            handleAction={handleAction}
             setSortStatus={setSortStatus}
             setValue={setValue}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
@@ -264,4 +395,4 @@ const AssetListPage = ({
   );
 };
 
-export default AssetListPage;
+export default AssignedAssetListPage;

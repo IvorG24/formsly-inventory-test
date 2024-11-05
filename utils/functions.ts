@@ -532,14 +532,13 @@ export const editImageWithUUID = (file: File): Promise<File> => {
 
         const uuid = uuidv4();
 
-        // Add UUID as a strike-through (centered across the signature)
-        ctx.font = "bold 42px Arial";
+        ctx.font = "bold 14px Arial";
         ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
         const uuidX = (minX + maxX) / 2;
-        const uuidY = (minY + maxY) / 2; // Place UUID in the middle of signature
+        const uuidY = (minY + maxY) / 2;
 
         ctx.fillText(uuid, uuidX, uuidY);
 

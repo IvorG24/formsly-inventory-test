@@ -25,6 +25,7 @@ import {
 import {
   IconArrowsMaximize,
   IconCopy,
+  IconEdit,
   IconLayersLinked,
   IconLinkOff,
 } from "@tabler/icons-react";
@@ -32,7 +33,7 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormSetValue } from "react-hook-form";
-import { FilterSelectedValuesType } from "./AssetListFilter";
+import { FilterSelectedValuesType } from "./AssignedAssetListFilter";
 
 type Props = {
   requestList: InventoryListType[];
@@ -48,6 +49,7 @@ type Props = {
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
   setSelectedRow: (newSelectedRows: string[]) => void;
   selectedRow: string[];
+  handleAction: (requestId: string) => void;
   listTableColumnFilter: string[];
   setListTableColumnFilter: (
     val: string[] | ((prevState: string[]) => string[])
@@ -63,7 +65,7 @@ const useStyles = createStyles(() => ({
     cursor: "pointer",
   },
 }));
-const AssetListTable = ({
+const AssignedAssetListTable = ({
   requestList,
   requestListCount,
   activePage,
@@ -79,6 +81,7 @@ const AssetListTable = ({
   setShowTableColumnFilter,
   listTableColumnFilter,
   setListTableColumnFilter,
+  handleAction,
   tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
@@ -139,11 +142,7 @@ const AssetListTable = ({
         } else if (fieldWithDate.includes(column.value)) {
           return <Text>{value ? formatDate(new Date(value)) : ""}</Text>;
         }
-        return (
-          <Text>
-            {value !== null || value !== undefined ? String(value) : ""}
-          </Text>
-        );
+        return <Text>{value !== null ? String(value) : ""}</Text>;
       },
     }));
 
@@ -263,17 +262,28 @@ const AssetListTable = ({
           hidden: checkIfColumnIsHidden("inventory_request_status"),
           render: ({
             inventory_request_status,
+            inventory_request_id,
             inventory_request_status_color,
           }) => {
             return (
-              <Badge
-                sx={{
-                  backgroundColor: inventory_request_status_color as string,
-                  color: "#fff",
-                }}
-              >
-                {String(inventory_request_status)}
-              </Badge>
+              <Flex align="center" justify="space-between">
+                <Badge
+                  sx={{
+                    backgroundColor: inventory_request_status_color as string,
+                    color: "#fff",
+                  }}
+                >
+                  {String(inventory_request_status)}
+                </Badge>
+                {inventory_request_status === "WAITING FOR SIGNATURE" && (
+                  <ActionIcon
+                    color="blue"
+                    onClick={() => handleAction(inventory_request_id as string)}
+                  >
+                    <IconEdit size={16} />
+                  </ActionIcon>
+                )}
+              </Flex>
             );
           },
         },
@@ -415,4 +425,4 @@ const AssetListTable = ({
   );
 };
 
-export default AssetListTable;
+export default AssignedAssetListTable;

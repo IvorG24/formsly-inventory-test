@@ -1,6 +1,6 @@
 // Imports
 import { getAssetListFilterOptions, getColumnList } from "@/backend/api/get";
-import AssetListPage from "@/components/AssetInventory/AssetListPage/AssetListPage";
+import AssignedAssetListPage from "@/components/AssetInventory/AssignedAssetListPage/AssignedAssetListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -21,19 +21,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 
       const fields = await getColumnList(supabaseClient);
 
-      const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
-        (permission) =>
-          permission.key === "viewOnly" && permission.value === true
-      );
-
-      if (!hasViewOnlyPermission) {
-        return {
-          redirect: {
-            destination: "/500",
-            permanent: false,
-          },
-        };
-      }
       return {
         props: {
           ...data,
@@ -43,8 +30,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         },
       };
     } catch (e) {
-      console.log(e);
-
       return {
         redirect: {
           destination: "/500",
@@ -79,8 +64,11 @@ const Page = ({
 }: Props) => {
   return (
     <>
-      <Meta description="Asset List Page" url="/teamName/inventory" />
-      <AssetListPage
+      <Meta
+        description="Assigned Asset List Page"
+        url="/teamName/inventory/assigned-asset"
+      />
+      <AssignedAssetListPage
         customerTableList={customerList}
         securityGroupData={securityGroupData}
         siteList={siteList}

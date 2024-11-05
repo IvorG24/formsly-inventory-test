@@ -2,6 +2,7 @@ import {
   getCustomerList,
   getInventoryFormDetails,
   getLocationOption,
+  getUserCurrentSignature,
 } from "@/backend/api/get";
 import { updateEvent } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -64,7 +65,8 @@ const EventFormModal = ({
   const [isLoading, setIsloading] = useState(false);
   const [opened, setOpened] = useState(true);
   const [formData, setFormData] = useState<InventoryFormType>();
-  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue, setError } =
+    requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
@@ -78,6 +80,14 @@ const EventFormModal = ({
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
       setIsloading(true);
+      const signature = await getUserCurrentSignature(supabaseClient, {
+        userId: userData?.user_id ?? "",
+      });
+      if (!signature) {
+        setError("root.signature", { message: "Manual signature not found" });
+        return;
+      }
+      //   }
       //   const formValidation = securityGroup.asset.filter.event.includes(
       //     `${formData?.form_name}`
       //   );
@@ -97,6 +107,8 @@ const EventFormModal = ({
         teamMemberId: teamMember?.team_member_id,
         type: formData?.form_name ?? "",
         userId: userData?.user_id,
+        signature: signature,
+        teamName:activeTeam.team_name
       });
       setOpened(false);
       handleFilterForms();
@@ -176,6 +188,7 @@ const EventFormModal = ({
         option_order: idx,
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));
+
       const customerListOption = customerOption.map((customer, idx) => ({
         option_id: customer.customer_id,
         option_value: `${customer.customer_name}`,
