@@ -1,11 +1,9 @@
 import { getCustomerList } from "@/backend/api/get";
-import { uploadCSVFileCustomer } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import {
   Column,
   InventoryCustomerList,
-  InventoryCustomerRow,
   SecurityGroupData,
 } from "@/utils/types";
 import {
@@ -14,7 +12,6 @@ import {
   Button,
   Container,
   Divider,
-  FileInput,
   Flex,
   Group,
   Paper,
@@ -24,15 +21,12 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconFileImport, IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
-import Papa from "papaparse";
 import { useEffect, useState } from "react";
-import { CSVLink } from "react-csv";
 import { useForm } from "react-hook-form";
 import DisableModal from "../FormModal/DisableModal";
 import CustomerDrawer from "./CustomerDrawer";
@@ -67,7 +61,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
     },
   });
 
-  const { register, handleSubmit, getValues, setValue, reset } = formMethods;
+  const { register, handleSubmit, getValues, setValue } = formMethods;
 
   const canAddData = securityGroup.privileges.customer.add === true;
   const canEditData = securityGroup.privileges.customer.edit === true;
@@ -81,13 +75,6 @@ const CustomerListPage = ({ securityGroup }: Props) => {
   useEffect(() => {
     handlePagination(activePage);
   }, [activePage, activeTeam.team_id]);
-
-  const csvHeaders = columns
-    .filter((col) => col.accessor !== "actions")
-    .map((col) => ({
-      label: col.accessor,
-      key: col.accessor,
-    }));
 
   const handleFetchCustomerList = async (page: number) => {
     try {
@@ -191,89 +178,6 @@ const CustomerListPage = ({ securityGroup }: Props) => {
       setIsLoading(false);
     }
   };
-  //for csv employee table and connection table
-  const handleCSVSubmit = (data: FormValues) => {
-    const file = data.file ? data.file : null;
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (result) => {
-        const parsedData = result.data as unknown as InventoryCustomerRow[];
-
-        try {
-          setIsLoading(true);
-          await uploadCSVFileCustomer(supabaseClient, {
-            parsedData: parsedData,
-            teamId: activeTeam.team_id,
-          });
-
-          notifications.show({
-            message: "Customer imported successfully!",
-            color: "green",
-          });
-          reset();
-          handleFetchCustomerList(activePage);
-          reset;
-        } catch (error) {
-          notifications.show({
-            message: "Error importing Customer.",
-            color: "red",
-          });
-        } finally {
-          setIsLoading(false);
-        }
-        modals.close("importCsv");
-      },
-    });
-  };
-  // modal
-  const handleAction = () => {
-    modals.open({
-      modalId: "importCsv",
-      title: <Text>Please upload a CSV file.</Text>,
-      children: (
-        <form onSubmit={handleSubmit(handleCSVSubmit)}>
-          <FileInput
-            accept=".csv"
-            placeholder="Customer csv file"
-            label="CSV File"
-            withAsterisk
-            {...register("file", { required: true })}
-            onChange={(file) => setValue("file", file ?? undefined)}
-          />
-          <Flex mt="md" align="center" justify="space-between" gap="sm">
-            <Group>
-              <CSVLink
-                data={[]}
-                headers={csvHeaders}
-                filename="employeeFormat.csv"
-                className="btn btn-outline-primary"
-              >
-                <Button color="blue" variant="outline">
-                  Download CSV Format
-                </Button>
-              </CSVLink>
-            </Group>
-            <Group>
-              <Button
-                variant="default"
-                color="dimmed"
-                onClick={() => modals.close("importCsv")}
-              >
-                Cancel
-              </Button>
-              <Button color="blue" type="submit">
-                Upload
-              </Button>
-            </Group>
-          </Flex>
-        </form>
-      ),
-      centered: true,
-    });
-  };
 
   const handleEdit = (customer: InventoryCustomerList) => {
     if (!canEditData) {
@@ -358,14 +262,6 @@ const CustomerListPage = ({ securityGroup }: Props) => {
               />
               {canAddData && (
                 <Group>
-                  <Button
-                    leftIcon={<IconFileImport size={16} />}
-                    onClick={() => handleAction()}
-                    variant="outline"
-                  >
-                    Import
-                  </Button>
-
                   <Button
                     leftIcon={<IconPlus size={16} />}
                     onClick={handleCreate}

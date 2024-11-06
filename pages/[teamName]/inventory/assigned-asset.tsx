@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         teamId: userActiveTeam.team_id,
       });
 
-      const fields = await getColumnList(supabaseClient);
+      const fields = await getColumnList(supabaseClient, {});
 
       return {
         props: {

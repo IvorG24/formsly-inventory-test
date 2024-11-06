@@ -4844,8 +4844,6 @@ export const getUserCurrentSignature = async (
     userId: string;
   }
 ) => {
-
-
   const { data, error } = await supabaseClient
     .rpc("get_user_current_signature", { input_data: params })
     .select("*");
@@ -8231,13 +8229,39 @@ export const getAssignedAssetOnLoad = async (
 };
 
 export const getColumnList = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryName?: string;
+  }
 ) => {
-  const { data, error } = await supabaseClient.rpc("get_column_fields");
+  const { data, error } = await supabaseClient.rpc("get_column_fields", {
+    input_data: params,
+  });
 
   if (error) throw error;
 
-  return data;
+  return data as {
+    value: string;
+    label: string;
+  }[];
+};
+
+export const getColumnListImport = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    type: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_column_fields_import", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as {
+    value: string;
+    label: string;
+  }[];
 };
 
 export const getAssetListFilterOptions = async (

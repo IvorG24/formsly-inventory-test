@@ -10,9 +10,8 @@ type Props = {
 
 const filterCategoryDetails = (detail: InventoryListType) => {
   return Object.entries(detail).filter(
-    ([key, value]) =>
+    ([key]) =>
       !isExcludedKey(key) &&
-      value &&
       ["inventory_request_category", "inventory_request_sub_category"].includes(
         key
       )
@@ -41,7 +40,7 @@ const CategoryInformationTable = ({ asset_details }: Props) => {
               <td>
                 <Text weight={500}>{formatLabel(key)}</Text>
               </td>
-              <td>{value || "N/A"}</td>
+              <td>{value || " "}</td>
             </tr>
           ))}
         </tbody>

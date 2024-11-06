@@ -8,9 +8,8 @@ type Props = {
   detail: InventoryListType;
 };
 
-const filterCustomFields = ([key, value]: [string, unknown]) =>
+const filterCustomFields = ([key]: [string, unknown]) =>
   !isExcludedKey(key) &&
-  value &&
   !key.startsWith("inventory_request_") &&
   !key.startsWith("relationship_type") &&
   !key.startsWith("site_name") &&

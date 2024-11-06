@@ -3020,6 +3020,7 @@ export const updateAssetRequest = async (
   const formattedResponseValues = fieldResponse
     .filter((response) => response.inventory_response_value !== null)
     .map((response) => {
+      if (!response.inventory_response_value) return "";
       return `('${capitalizeFirstWord(response.inventory_response_value)}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     });
 
@@ -3315,7 +3316,7 @@ export const createInventoryEmployee = async (
     .map(
       (response) =>
         `('${capitalizeFirstWord(
-          response.inventory_response_value
+          response.inventory_response_value ?? ""
         )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
     )
     .join(",");
@@ -3339,34 +3340,6 @@ export const createInventoryEmployee = async (
       input_data: inputData,
     }
   );
-  if (error) throw error;
-
-  return data;
-};
-
-export const uploadCSVFileEmployee = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { parsedData: InventoryEmployeeList[] }
-) => {
-  const { parsedData } = params;
-  const { data, error } = await supabaseClient.rpc("import_employee_data", {
-    input_data: { employees: parsedData },
-  });
-
-  if (error) throw error;
-
-  return data;
-};
-
-export const uploadCSVFileCustomer = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { parsedData: InventoryCustomerRow[]; teamId: string }
-) => {
-  const { parsedData, teamId } = params;
-  const { data, error } = await supabaseClient.rpc("import_customer_data", {
-    input_data: { customer: parsedData, teamId: teamId },
-  });
-
   if (error) throw error;
 
   return data;
@@ -3413,7 +3386,7 @@ export const createInventoryCustomer = async (
     .map(
       (response) =>
         `('${capitalizeFirstWord(
-          response.inventory_response_value
+          response.inventory_response_value ?? ""
         )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
     )
     .join(",");
@@ -3462,28 +3435,51 @@ export const checkCustomerName = async (
   return isUnique;
 };
 
-export const uploadCSVFileAssetData = async (
+export const uploadCSVFileData = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    parsedData: InventoryListType[];
+    parsedData:
+      | InventoryListType[]
+      | InventoryCustomerRow[]
+      | InventoryEmployeeList[];
+    type: "asset" | "employee" | "customer" | null;
     teamId: string;
     teamMemberId: string;
   }
 ) => {
-  const { parsedData, teamId, teamMemberId } = params;
+  const { parsedData, teamId, teamMemberId, type } = params;
+  console.log(params);
 
-  const inputData = {
-    assetData: parsedData,
-    teamId,
-    teamMemberId,
-  };
-  const { data, error } = await supabaseClient.rpc("import_asset_data", {
-    input_data: inputData,
-  });
-
-  if (error) throw error;
-
-  return data;
+  switch (type) {
+    case "asset": {
+      const inputData = {
+        assetData: parsedData,
+        teamId,
+        teamMemberId,
+      };
+      const { data, error } = await supabaseClient.rpc("import_asset_data", {
+        input_data: inputData,
+      });
+      if (error) throw error;
+      return data;
+    }
+    case "employee": {
+      const { data, error } = await supabaseClient.rpc("import_employee_data", {
+        input_data: { employees: parsedData },
+      });
+      if (error) throw error;
+      return data;
+    }
+    case "customer": {
+      const { data, error } = await supabaseClient.rpc("import_customer_data", {
+        input_data: { customer: parsedData, teamId },
+      });
+      if (error) throw error;
+      return data;
+    }
+    default:
+      throw new Error(`Unsupported type: ${type}`);
+  }
 };
 
 export const createInventoryWarranty = async (

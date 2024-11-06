@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         teamId: userActiveTeam.team_id,
       });
 
-      const fields = await getColumnList(supabaseClient);
+      const fields = await getColumnList(supabaseClient, {});
 
       const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
         (permission) =>
@@ -43,6 +43,8 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         },
       };
     } catch (e) {
+      console.log(e);
+
       return {
         redirect: {
           destination: "/500",

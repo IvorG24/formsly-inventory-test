@@ -249,7 +249,7 @@ const UpdateFieldForm = ({
             <>
               <Divider />
               <Text fw={500}>Choose a category </Text>
-              <ScrollArea mih={100} mah={400}>
+              <ScrollArea h={400}>
                 <Group position="center">
                   <Controller
                     name="fieldCategory"
