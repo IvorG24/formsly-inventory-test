@@ -28,8 +28,6 @@ const DisableModal = ({
   const supabaseClient = useSupabaseClient();
   const handleConfirm = async () => {
     try {
-      console.log(type);
-
       switch (type) {
         case "site":
           await disableDrawerData(supabaseClient, {
@@ -82,8 +80,6 @@ const DisableModal = ({
       if (!handleFetch) return;
       handleFetch(activePage ?? 1);
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: `Something went wrong`,
         color: "red",

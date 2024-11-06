@@ -43,6 +43,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [isLoading, setIsloading] = useState(false);
+  const [activePage, setActivePage] = useState(1);
   const [fieldId, setFieldId] = useState<string>("");
   const [modalOpened, setModalOpened] = useState(false);
   const [defaultField, setDefaultField] = useState<InventoryFieldRow[]>(field);
@@ -68,6 +69,8 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
         const { data, totalCount } = await getCustomFieldData(supabaseClient, {
           sectionId: "80aedd40-a682-4390-9e82-0e9592f7f912",
           isCustomField: true,
+          page: activePage,
+          limit: ROW_PER_PAGE,
         });
         setCustomFields(data);
         setTotalFields(totalCount);
@@ -81,9 +84,8 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
       }
     };
     fetchCustomCategory();
-  }, []);
+  }, [activePage]);
 
-  const [activePage, setActivePage] = useState(1);
   const categoryListChoices = categoryOptions.map((category) => ({
     label: category.category_name,
     value: category.category_id,
@@ -221,7 +223,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
               }}
               withBorder
               idAccessor="field_id"
-              page={activePage}
+              page={1}
               fetching={isLoading}
               totalRecords={defaultField.length}
               recordsPerPage={ROW_PER_PAGE}
@@ -316,7 +318,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
                 columns={[
                   {
                     accessor: "label",
-                    width: "30%",
+                    width: "40%",
                     title: "Custom Field Label",
                     render: (field) => <Text fw={600}>{field.field_name}</Text>,
                   },

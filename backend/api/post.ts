@@ -2903,18 +2903,21 @@ export const createAssetRequest = async (
       if (field.field_is_custom_field) {
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
-          inventory_response_value: String(responseValue),
+          inventory_response_value:
+            field.field_type === "MULTISELECT"
+              ? [responseValue].join(", ")
+              : String(responseValue),
           inventory_response_request_id: requestId,
         });
       } else if (!field.field_is_custom_field) {
         const formattedResponse =
           typeof responseValue === "string" || typeof responseValue === "number"
-            ? capitalizeFirstWord(String(responseValue))
+            ? String(responseValue)
             : responseValue instanceof Date
               ? responseValue.toISOString()
               : "";
 
-        if (field.field_type === "date" && responseValue) {
+        if (field.field_type === "Date" && responseValue) {
           fieldValue.push({
             response:
               responseValue instanceof Date
@@ -2931,15 +2934,13 @@ export const createAssetRequest = async (
 
   const responseValues = fieldResponse
     .map((response) => {
-      const responseValue = capitalizeFirstWord(
-        response.inventory_response_value ?? ""
-      );
+      const responseValue = response.inventory_response_value ?? "";
       return `('${responseValue}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     })
     .join(", ");
 
   const assetResponseValue = `('${requestId}','${teamMemberId}','${teamId}','${newTagId}', ${fieldValue
-    .map((response) => `'${capitalizeFirstWord(response.response ?? "")}'`)
+    .map((response) => `'${response.response ?? ""}'`)
     .join(", ")})`;
 
   const requestData = {
@@ -3006,7 +3007,10 @@ export const updateAssetRequest = async (
       if (field.field_is_sub_category || field.field_is_custom_field) {
         fieldResponse.push({
           inventory_response_field_id: field.field_id,
-          inventory_response_value: field.field_response as string,
+          inventory_response_value:
+            field.field_type === "MULTISELECT"
+              ? [field.field_response].join(", ")
+              : String(field.field_response),
           inventory_response_request_id: assetId,
         });
       }
@@ -3139,16 +3143,18 @@ export const createCustomFields = async (
     .schema("inventory_schema")
     .from("field_table")
     .select("field_order")
-    .order("field_order", { ascending: false })
     .eq("field_section_id", sectionId)
-    .limit(1);
+    .eq("field_is_disabled", false)
+    .order("field_order", { ascending: false })
+    .limit(1)
+    .single();
 
-  if (fieldError) throw new Error();
+  if (fieldError) throw fieldError;
 
   const fieldValue = `
   '${fieldId}', '${customFieldFormValues.fieldName}',
   '${customFieldFormValues.fieldIsRequired}', '${customFieldFormValues.fieldType}',
-  ${fieldData[0].field_order + 1}, TRUE, '${sectionId}'
+  ${fieldData.field_order + 1}, TRUE, '${sectionId}'
 `;
 
   const optionsValues = customFieldFormValues.fieldOption
@@ -3158,6 +3164,7 @@ export const createCustomFields = async (
         })
         .join(", ")
     : [];
+
   const categoriesValues =
     customFieldFormValues.fieldCategory &&
     customFieldFormValues.fieldCategory.length > 0

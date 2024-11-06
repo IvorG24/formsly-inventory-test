@@ -296,7 +296,6 @@ const AssignedAssetListPage = ({
       });
     }
   };
-  console.log(userProfile);
 
   const handleAction = (requestId: string) => {
     modals.open({

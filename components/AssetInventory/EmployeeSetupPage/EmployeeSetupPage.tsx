@@ -43,6 +43,7 @@ const EmployeeSetupPage = ({
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
     useState<customFieldFormValues>();
   const [totalFields, setTotalFields] = useState(0);
+  const [activePage, setActivePage] = useState(1);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [isLoading, setIsloading] = useState(false);
@@ -71,6 +72,8 @@ const EmployeeSetupPage = ({
         const { data, totalCount } = await getCustomFieldData(supabaseClient, {
           sectionId: sectionId,
           isCustomField: true,
+          page: activePage,
+          limit: ROW_PER_PAGE,
         });
         setCustomFields(data);
         setTotalFields(totalCount);
@@ -84,9 +87,8 @@ const EmployeeSetupPage = ({
       }
     };
     fetchCustomCategory();
-  }, []);
+  }, [activePage]);
 
-  const [activePage, setActivePage] = useState(1);
   const categoryListChoices = categoryOptions.map((category) => ({
     label: category.category_name,
     value: category.category_id,
@@ -226,7 +228,7 @@ const EmployeeSetupPage = ({
               }}
               withBorder
               idAccessor="field_id"
-              page={activePage}
+              page={1}
               totalRecords={defaultField.length}
               recordsPerPage={ROW_PER_PAGE}
               onPageChange={setActivePage}
@@ -321,7 +323,7 @@ const EmployeeSetupPage = ({
                 columns={[
                   {
                     accessor: "label",
-                    width: "30%",
+                    width: "40%",
                     title: "Custom Field Label",
                     render: (field) => <Text fw={600}>{field.field_name}</Text>,
                   },

@@ -591,29 +591,33 @@ const InventoryFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field: { value, onChange } }) => (
-              <Radio.Group
-                {...inputProps}
-                value={value as string}
-                onChange={onChange}
-                mb="md"
-              >
-                <Stack mt="xs">
-                  {field.options.map((option, optionIdx) => (
-                    <Radio
-                      ml="xs"
-                      key={option.option_id}
-                      value={option.option_value}
-                      label={`${String.fromCharCode(65 + optionIdx)} ) ${option.option_value}`}
-                      sx={{
-                        input: { cursor: "pointer" },
-                        label: { cursor: "pointer" },
-                      }}
-                    />
-                  ))}
-                </Stack>
-              </Radio.Group>
-            )}
+            render={({ field: { value, onChange } }) => {
+              return (
+                <Radio.Group
+                  {...inputProps}
+                  value={value as string}
+                  onChange={(selectedValue) => {
+                    onChange(selectedValue);
+                  }}
+                  mb="md"
+                >
+                  <Stack mt="xs">
+                    {field.options.map((option) => (
+                      <Radio
+                        ml="xs"
+                        key={option.option_id}
+                        value={option.option_value} // Bind each Radio value to option_value
+                        label={`${option.option_value}`}
+                        sx={{
+                          input: { cursor: "pointer" },
+                          label: { cursor: "pointer" },
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Radio.Group>
+              );
+            }}
             rules={fieldRules}
           />
         );

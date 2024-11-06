@@ -31,6 +31,7 @@ const fieldTypes = [
   { value: "DROPDOWN", label: "Select" },
   { value: "TEXTAREA", label: "Text Area" },
   { value: "MULTISELECT", label: "Multi Select" },
+  { value: "MULTIPLE CHOICE", label: "Radio Group" },
 ];
 
 type Props = {
@@ -185,7 +186,9 @@ const UpdateFieldForm = ({
             )}
           />
 
-          {(selectedType === "SELECT" || selectedType === "MULTISELECT") && (
+          {(selectedType === "DROPDOWN" ||
+            selectedType === "MULTISELECT" ||
+            selectedType === "MULTIPLE CHOICE") && (
             <>
               <Controller
                 name="fieldOption"

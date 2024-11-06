@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import CreateFieldForm from "../AssetSetupPage/CreateFieldForm";
@@ -43,6 +43,7 @@ const CustomerSetupPage = ({
   const [customFieldsDefaultValue, setCustomFieldsDefaultValue] =
     useState<customFieldFormValues>();
   const [totalFields, setTotalFields] = useState(0);
+  const [activePage, setActivePage] = useState(1);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [isLoading, setIsloading] = useState(false);
@@ -71,6 +72,8 @@ const CustomerSetupPage = ({
         const { data, totalCount } = await getCustomFieldData(supabaseClient, {
           sectionId: sectionId,
           isCustomField: true,
+          page: activePage,
+          limit: ROW_PER_PAGE,
         });
         setCustomFields(data);
         setTotalFields(totalCount);
@@ -84,9 +87,8 @@ const CustomerSetupPage = ({
       }
     };
     fetchCustomCategory();
-  }, []);
+  }, [activePage]);
 
-  const [activePage, setActivePage] = useState(1);
   const categoryListChoices = categoryOptions.map((category) => ({
     label: category.category_name,
     value: category.category_id,
@@ -305,7 +307,7 @@ const CustomerSetupPage = ({
                 columns={[
                   {
                     accessor: "label",
-                    width: "30%",
+                    width: "40%",
                     title: "Custom Field Label",
                     render: (field) => <Text fw={600}>{field.field_name}</Text>,
                   },
@@ -339,7 +341,6 @@ const CustomerSetupPage = ({
                             size="xs"
                             variant="outline"
                             color="blue"
-                            rightIcon={<IconEdit size={16} />}
                           >
                             Edit
                           </Button>

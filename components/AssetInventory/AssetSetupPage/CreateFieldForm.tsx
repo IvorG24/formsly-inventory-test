@@ -31,6 +31,8 @@ const fieldTypes = [
   { value: "DROPDOWN", label: "Select" },
   { value: "TEXTAREA", label: "Text Area" },
   { value: "MULTISELECT", label: "Multi Select" },
+  { value: "MULTIPLE CHOICE", label: "Radio Group" },
+  { value: "CHECKBOX", label: "Checkbox List" },
 ];
 
 type Props = {
@@ -55,6 +57,9 @@ const CreateFieldForm = ({
     useForm<customFieldFormValues>();
   const supabaseClient = useSupabaseClient();
   const selectedType = watch("fieldType");
+  const sortedCategoryList = categoryList.sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
 
   const onSubmit = async (data: customFieldFormValues) => {
     try {
@@ -87,6 +92,7 @@ const CreateFieldForm = ({
         message: "Custom field created",
         color: "green",
       });
+
       setTotalRecords((prevTotal) => prevTotal + 1);
       setShowCustomForm(false);
       reset();
@@ -109,6 +115,7 @@ const CreateFieldForm = ({
   };
 
   const [newOption, setNewOption] = useState<string>("");
+
   return (
     <Paper withBorder shadow="md" p="md">
       <Group position="right">
@@ -171,7 +178,10 @@ const CreateFieldForm = ({
             )}
           />
 
-          {(selectedType === "SELECT" || selectedType === "MULTISELECT") && (
+          {(selectedType === "DROPDOWN" ||
+            selectedType === "MULTISELECT" ||
+            selectedType === "MULTIPLE CHOICE" ||
+            selectedType === "CHECKBOX") && (
             <>
               <Controller
                 name="fieldOption"
@@ -232,7 +242,7 @@ const CreateFieldForm = ({
             <>
               <Divider />
               <Text fw={500}>Choose a Category</Text>
-              <ScrollArea mih={100} mah={400}>
+              <ScrollArea h={400}>
                 <Group position="center">
                   <Controller
                     name="fieldCategory"
@@ -255,7 +265,7 @@ const CreateFieldForm = ({
                             (field.value ?? []).length === categoryList.length
                           }
                         />
-                        {categoryList.map((cat) => (
+                        {sortedCategoryList.map((cat) => (
                           <Checkbox
                             key={cat.value}
                             label={cat.label}
