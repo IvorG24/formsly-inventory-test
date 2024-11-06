@@ -72,8 +72,9 @@ export default async function handler(
           body: JSON.stringify(req.body.ticketPayload),
         }
       );
-
       const createTicketData = await createTicketResponse.json();
+      if (!createTicketResponse.ok) throw Error(createTicketData.errorMessage);
+
       jiraTicketId = createTicketData.issueKey;
       jiraTicketLink = createTicketData._links.web;
     }

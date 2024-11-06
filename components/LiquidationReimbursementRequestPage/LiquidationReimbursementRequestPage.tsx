@@ -749,7 +749,23 @@ const LiquidationReimbursementRequestPage = ({
         chargeToProjectFieldResponse[0].request_response
       );
 
-      setIsTicketACSM(parsedChargeToProjectFieldResponse);
+      const chargeToProjectProjectFieldResponse =
+        await getFieldResponseByRequestId(supabaseClient, {
+          requestId: ticketUUID,
+          fieldId: "2bac0084-53f4-419f-aba7-fb1f77403e00",
+        });
+
+      let isCentralOfficePED = false;
+      if (chargeToProjectProjectFieldResponse[0]) {
+        const projectFieldResponse = safeParse(
+          chargeToProjectProjectFieldResponse[0].request_response
+        );
+        isCentralOfficePED = projectFieldResponse === "CENTRAL OFFICE - PED";
+      }
+
+      setIsTicketACSM(
+        parsedChargeToProjectFieldResponse && !isCentralOfficePED
+      );
     };
 
     if (isTicketPCV) {

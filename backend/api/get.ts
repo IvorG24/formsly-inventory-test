@@ -2025,7 +2025,6 @@ export const getProjectSignerWithTeamMember = async (
     .rpc("get_project_signer_with_team_member", { input_data: params })
     .select("*");
   if (error) throw error;
-
   return data as unknown as FormType["form_signer"];
 };
 

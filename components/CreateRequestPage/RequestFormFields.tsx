@@ -693,6 +693,25 @@ const RequestFormFields = ({
 
                   return true;
                 },
+                validateOBTicketID: (value) => {
+                  if (!pettyCashVoucherFormMethods) return true;
+                  if (
+                    pettyCashVoucherFormMethods &&
+                    field.field_name !== "Approved Official Business"
+                  )
+                    return true;
+
+                  const pattern = /^HRSM-\d+$/;
+                  const entries = (value as string).split(/[\s,]+/);
+
+                  for (const entry of entries) {
+                    if (!pattern.test(entry)) {
+                      return "Invalid HRSM ID. Example of valid HRSM ID: HRSM-1234, HRSM-5542. To add multiple HRSM IDs, follow this example: `HRSM-1125, HRSM-1132, HRSM-2214`";
+                    }
+                  }
+
+                  return true;
+                },
               },
             }}
           />

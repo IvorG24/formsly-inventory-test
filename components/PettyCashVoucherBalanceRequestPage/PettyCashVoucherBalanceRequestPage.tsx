@@ -377,7 +377,9 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
         amount,
         isForOfficialBusiness,
-        approvedOfficialBusiness,
+        approvedOfficialBusiness: approvedOfficialBusiness
+          ? truncate(approvedOfficialBusiness)
+          : "",
         department,
         isChargedToProject,
         particulars: truncate(particulars),

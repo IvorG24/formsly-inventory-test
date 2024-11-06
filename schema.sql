@@ -75,6 +75,12 @@ CREATE SCHEMA hr_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMAS
 
+----- START: SEQUENCES
+
+CREATE SEQUENCE request_schema.formsly_id_seq;
+
+----- END: SEQUENCES
+
 ----- START: TABLES
 
 CREATE TABLE attachment_table (
@@ -393,7 +399,7 @@ CREATE TABLE form_schema.requester_primary_signer_table (
 CREATE TABLE request_schema.request_table (
   request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_formsly_id_prefix VARCHAR(4000),
-  request_formsly_id_serial VARCHAR(4000),
+  request_formsly_id_serial VARCHAR(4000) DEFAULT UPPER(TO_HEX(NEXTVAL('formsly_id_seq'))), 
   request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   request_status_date_updated TIMESTAMPTZ,
   request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
@@ -1710,20 +1716,9 @@ AS $$
     } = input_data;
 
     let formslyIdPrefix = '';
-    let formslyIdSerial = '';
     let endId = '';
 
     if(isFormslyForm) {
-      const requestCount = plv8.execute(
-        `
-          SELECT COUNT(*) FROM request_schema.request_table
-          INNER JOIN form_schema.form_table ON request_form_id = form_id
-          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-            AND team_member_team_id = '${teamId}'
-        `
-      )[0].count;
-
-      formslyIdSerial = (Number(requestCount) + 1).toString(16).toUpperCase();
       let project;
       if(projectId){
         project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
@@ -1811,8 +1806,7 @@ AS $$
           (
             request_id,
             request_form_id,
-            request_formsly_id_prefix,
-            request_formsly_id_serial
+            request_formsly_id_prefix
             ${teamMemberId ? `,request_team_member_id` : ""}
             ${projectId ? `,request_project_id` : ""}
             ${status ? `,request_status` : ""}
@@ -1822,8 +1816,7 @@ AS $$
           (
             '${requestId}',
             '${formId}',
-            '${formslyIdPrefix}',
-            '${formslyIdSerial}'
+            '${formslyIdPrefix}'
             ${teamMemberId ? `,'${teamMemberId}'` : ""}
             ${projectId ? `,'${projectId}'` : ""}
             ${status ? `,'${status}'` : ""}
@@ -1936,7 +1929,7 @@ AS $$
         const notificationValues = requestSignerNotificationInput
         .map(
           (notification) =>
-            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${isFormslyForm ? `${formslyIdPrefix}-${formslyIdSerial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/requests/${isFormslyForm ? `${request_data.request_formsly_id_prefix}-${request_data.request_formsly_id_serial}` : requestId}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
         )
         .join(",");
 
@@ -25907,6 +25900,7 @@ GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO POSTGRES;
 GRANT ALL ON SCHEMA request_schema TO postgres;
 GRANT ALL ON SCHEMA request_schema TO public;
+GRANT USAGE, SELECT ON SEQUENCE formsly_id_seq TO PUBLIC, POSTGRES;
 
 GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO POSTGRES;
