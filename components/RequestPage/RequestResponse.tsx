@@ -52,7 +52,11 @@ const RequestResponse = ({
     variant: "filled",
     readOnly: true,
   };
-  const fieldWithIdLookup = ["Ticket ID", "Particular Request ID"];
+  const fieldWithIdLookup = [
+    "Ticket ID",
+    "Particular Request ID",
+    "Formsly ID",
+  ];
   const supabaseClient = useSupabaseClient();
   const team = useActiveTeam();
   const [linkDisplayValue, setLinkDisplayValue] = useState(

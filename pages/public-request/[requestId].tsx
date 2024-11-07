@@ -3,6 +3,7 @@ import { checkIfEmailExists } from "@/backend/api/post";
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
+import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -18,6 +19,7 @@ import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestP
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import TechnicalAssessmentRequestPage from "@/components/TechnicalAssessmentRequestPage/TechnicalAssessmentRequestPage";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestWithResponseType } from "@/utils/types";
 import { Space } from "@mantine/core";
@@ -227,6 +229,10 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
+    } else if (request.request_form.form_name.includes("General Assessment")) {
+      return <GeneralAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Technical Assessment") {
+      return <TechnicalAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

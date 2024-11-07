@@ -326,7 +326,11 @@ const EditLiquidationReimbursementRequestPage = ({
         ];
       }
 
-      if (paymentSection) {
+      const paymentSectionStillExists = currentSectionList.find(
+        (section) => section.section_name === "Payment"
+      );
+
+      if (paymentSection && !paymentSectionStillExists) {
         currentSectionList = [...currentSectionList, paymentSection];
       }
 
@@ -376,6 +380,10 @@ const EditLiquidationReimbursementRequestPage = ({
               "Payment Option",
               "Account Number",
               "Specify Other Type of Request",
+              "RIR Number",
+              "Formsly ID",
+              "Material Type",
+              "Equipment Code",
             ].includes(field.field_name)
         ),
       };
@@ -564,11 +572,22 @@ const EditLiquidationReimbursementRequestPage = ({
       if (isWithVAT) {
         const vatValue = calculateInvoiceAmountWithVAT(value);
         if (conditionalVatFieldIndex === -1) {
+          const defaultVatFieldIndex =
+            initialFormSectionList[1].section_field.findIndex(
+              (field) => field.field_name === "VAT"
+            );
           updateSection(sectionIndex, {
             ...currentPayeeSection,
             section_field: [
               ...currentPayeeSection.section_field,
-              initialFormSectionList[1].section_field[6],
+              {
+                ...initialFormSectionList[1].section_field[
+                  defaultVatFieldIndex
+                ],
+                field_section_duplicatable_id:
+                  currentPayeeSection.section_field[0]
+                    .field_section_duplicatable_id,
+              },
             ],
           });
         }
@@ -613,9 +632,13 @@ const EditLiquidationReimbursementRequestPage = ({
       const costFieldIndex = currentPayeeSection.section_field.findIndex(
         (field) => field.field_name === "Cost"
       );
+      const defaultVatFieldIndex =
+        initialFormSectionList[1].section_field.findIndex(
+          (field) => field.field_name === "VAT"
+        );
 
       const vatConditionalField = {
-        ...initialFormSectionList[1].section_field[6],
+        ...initialFormSectionList[1].section_field[defaultVatFieldIndex],
         field_response: calculateInvoiceAmountWithVAT(invoiceAmount),
         field_section_duplicatable_id:
           invoiceAmountField?.field_section_duplicatable_id,
@@ -738,8 +761,11 @@ const EditLiquidationReimbursementRequestPage = ({
       let currentPayeeSectionFieldList = currentPayeeSection.section_field;
 
       const addField = (fieldIndex: number) => {
-        const selectedField =
-          initialFormSectionList[1].section_field[fieldIndex];
+        const selectedField = {
+          ...initialFormSectionList[1].section_field[fieldIndex],
+          field_section_duplicatable_id:
+            currentPayeeSectionFieldList[0].field_section_duplicatable_id,
+        };
         currentPayeeSectionFieldList = [
           ...currentPayeeSectionFieldList,
           selectedField,
@@ -752,18 +778,39 @@ const EditLiquidationReimbursementRequestPage = ({
         );
       };
 
+      const rirNumberFieldIndex =
+        initialFormSectionList[1].section_field.findIndex(
+          (field) => field.field_name === "RIR Number"
+        );
+      const materialTypeIndex =
+        initialFormSectionList[1].section_field.findIndex(
+          (field) => field.field_name === "Material Type"
+        );
+
+      const rirNumberDoesNotExistInSection = !currentPayeeSectionFieldList.some(
+        (field) => field.field_name === "RIR Number"
+      );
+
+      const isMaterialsOption = `${value}`.includes("Materials");
+
       if (value === "Other") {
-        addField(3);
+        const specifyOtherTypeOfRequestFieldIndex =
+          initialFormSectionList[1].section_field.findIndex(
+            (field) => field.field_name === "Specify Other Type of Request"
+          );
+        addField(specifyOtherTypeOfRequestFieldIndex);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
-      } else if (value && value.includes("Materials")) {
-        const rirNumberDoesNotExistInSection =
-          !currentPayeeSectionFieldList.some(
-            (field) => field.field_name === "RIR Number"
-          );
-
+        // add rir number if true
+        if (isMaterialsOption && rirNumberDoesNotExistInSection) {
+          addField(rirNumberFieldIndex);
+          addField(materialTypeIndex);
+        }
+      } else if (isMaterialsOption) {
+        // add rir number if true
         if (rirNumberDoesNotExistInSection) {
-          addField(8);
+          addField(rirNumberFieldIndex);
+          addField(materialTypeIndex);
         }
 
         // add equipment code field
@@ -795,6 +842,10 @@ const EditLiquidationReimbursementRequestPage = ({
         removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
         // Equipment Code
         removeFieldById("8cd26ce7-0a5e-4199-b4c9-baaf32541b3a");
+        // Material Type
+        removeFieldById("90f3ae1f-4c6c-4329-8b95-d1b1e5545717");
+        // Formsly ID
+        removeFieldById("3240e28f-df73-46e4-ae5a-3cb6b2db3b16");
       }
 
       removeSection(sectionIndex);
@@ -946,6 +997,58 @@ const EditLiquidationReimbursementRequestPage = ({
       });
     } catch (e) {
       setValue(`sections.0.section_field.${fieldIndex}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleMaterialTypeChange = (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+
+      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
+      let currentPayeeSectionFieldList = currentPayeeSection.section_field;
+      const formslyIdFieldExists = currentPayeeSectionFieldList.find(
+        (field) => field.field_name === "Formsly ID"
+      );
+
+      if (value === "Other Expenses" && !formslyIdFieldExists) {
+        const formslyIdField = initialFormSectionList[1].section_field.find(
+          (field) => field.field_name === "Formsly ID"
+        );
+        if (!formslyIdField) return;
+        currentPayeeSectionFieldList = [
+          ...currentPayeeSectionFieldList,
+          {
+            ...formslyIdField,
+            field_section_duplicatable_id:
+              currentPayeeSectionFieldList[0].field_section_duplicatable_id,
+          },
+        ];
+      } else if (value !== "Other Expenses" && formslyIdFieldExists) {
+        currentPayeeSectionFieldList = currentPayeeSectionFieldList.filter(
+          (field) => field.field_name !== "Formsly ID"
+        );
+      }
+
+      removeSection(sectionIndex);
+      insertSection(
+        sectionIndex,
+        {
+          ...currentPayeeSection,
+          section_field: currentPayeeSectionFieldList.sort(
+            (a, b) => a.field_order - b.field_order
+          ),
+        },
+        { shouldFocus: false }
+      );
+    } catch (e) {
+      setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -1199,9 +1302,6 @@ const EditLiquidationReimbursementRequestPage = ({
           paymentSectionFieldList = [paymentSectionFieldList[0]];
         }
 
-        // fetch additional signer
-        handleProjectOrDepartmentNameChange();
-
         const noPaymentSection =
           requestTypeResponse === "Liquidation" ||
           requestTypeResponse === "Liquidation with Provisional Receipt";
@@ -1219,6 +1319,8 @@ const EditLiquidationReimbursementRequestPage = ({
 
         replaceSection(finalInitialRequestDetails);
         setInitialRequestDetails({ sections: finalInitialRequestDetails });
+        // fetch additional signer
+        handleProjectOrDepartmentNameChange();
         setIsLoading(false);
       };
       fetchRequestDetails();
@@ -1265,6 +1367,7 @@ const EditLiquidationReimbursementRequestPage = ({
                       onModeOfPaymentChange: handleModeOfPaymentChange,
                       onVatFieldChange: handleVatFieldChange,
                       onWorkingAdvancesChange: handleWorkingAdvancesChange,
+                      onMaterialTypeChange: handleMaterialTypeChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

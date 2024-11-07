@@ -4,6 +4,7 @@ import {
   createUserWithSSSID,
   uploadImage,
 } from "@/backend/api/post";
+import { isError } from "@/utils/functions";
 import { escapeQuotes, formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import { Container, Flex, LoadingOverlay, Paper } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -138,10 +139,22 @@ const OnboardingPage = ({ user }: Props) => {
         color: "green",
       });
     } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
+      if (
+        isError(e) &&
+        e.message ===
+          `duplicate key value violates unique constraint "user_sss_table_user_sss_number_key"`
+      ) {
+        notifications.show({
+          message:
+            "SSS ID Number already exists. Please contact the IT team to update the existing SSS ID Number",
+          color: "orange",
+        });
+      } else {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

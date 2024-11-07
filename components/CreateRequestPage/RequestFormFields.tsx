@@ -19,6 +19,7 @@ import {
   Checkbox,
   FileInput,
   Flex,
+  List,
   Loader,
   MultiSelect,
   NumberInput,
@@ -26,6 +27,7 @@ import {
   Select,
   Stack,
   Switch,
+  Text,
   TextInput,
   Textarea,
   Tooltip,
@@ -40,7 +42,7 @@ import {
   IconFile,
   IconLink,
 } from "@tabler/icons-react";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import isURL from "validator/lib/isURL";
 import { RequestFormValues } from "./CreateRequestPage";
@@ -166,6 +168,7 @@ type RequestFormFieldsProps = {
       sectionIndex: number
     ) => void;
     onWorkingAdvancesChange: (value: string | null, fieldIndex: number) => void;
+    onMaterialTypeChange: (value: string | null, sectionIndex: number) => void;
   };
   personnelTransferRequisitionMethods?: {
     onTypeOfTransferChange: (value: string | null) => void;
@@ -712,6 +715,21 @@ const RequestFormFields = ({
 
                   return true;
                 },
+                validateFormslyID: (value) => {
+                  if (!liquidationReimbursementFormMethods) return true;
+                  if (
+                    liquidationReimbursementFormMethods &&
+                    field.field_name !== "Formsly ID"
+                  )
+                    return true;
+
+                  const pattern = /^[A-Z0-9]+-[A-Z0-9]{4}$/;
+
+                  return (
+                    pattern.test(`${value}`.trim()) ||
+                    "Invalid Formsly ID. Example of valid Formsly ID: SL2PCVB-B515, MH1BOQ-B50A, MH1S-B501"
+                  );
+                },
               },
             }}
           />
@@ -1243,6 +1261,12 @@ const RequestFormFields = ({
                         sectionIndex
                       );
                       break;
+                    case "Material Type":
+                      liquidationReimbursementFormMethods?.onMaterialTypeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
                   }
                 }}
                 onDropdownOpen={() => {
@@ -1335,6 +1359,12 @@ const RequestFormFields = ({
                   field.field_name === "Department"
                     ? "Which department will this employee go to?"
                     : ""
+                }
+                itemComponent={
+                  liquidationReimbursementFormMethods &&
+                  field.field_name === "Type of Request"
+                    ? LRFTypeOfRequestSelectItem
+                    : undefined
                 }
               />
             )}
@@ -1578,3 +1608,29 @@ const RequestFormFields = ({
 };
 
 export default RequestFormFields;
+
+type LRFTypeOfRequestSelectItemProps = {
+  value: string;
+  label: string;
+};
+
+const LRFTypeOfRequestSelectItem = forwardRef<
+  HTMLDivElement,
+  LRFTypeOfRequestSelectItemProps
+>(({ value, label, ...others }: LRFTypeOfRequestSelectItemProps, ref) => (
+  <div ref={ref} {...others}>
+    <Stack spacing={0}>
+      <Text>{label}</Text>
+      {value.includes("Materials") && (
+        <List ml={12} fz={14}>
+          <List.Item>Items</List.Item>
+          <List.Item>Supplies</List.Item>
+          <List.Item>Services</List.Item>
+          <List.Item>Other Expenses</List.Item>
+        </List>
+      )}
+    </Stack>
+  </div>
+));
+
+LRFTypeOfRequestSelectItem.displayName = "LRFTypeOfRequestSelectItem";

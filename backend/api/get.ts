@@ -6024,6 +6024,11 @@ export const getApplicationInformationSummaryData = async (
   const offset = (page - 1) * limit;
 
   const responseFilterCondition = [];
+  const fieldIdCondition = [];
+
+  if (responseFilter.position || responseFilter.seniority) {
+    fieldIdCondition.push("'0fd115df-c2fe-4375-b5cf-6f899b47ec56'");
+  }
 
   if (
     Boolean(responseFilter.seniority) &&
@@ -6062,21 +6067,24 @@ export const getApplicationInformationSummaryData = async (
     );
   }
 
-  responseFilter.firstName
-    ? responseFilterCondition.push(
-        `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`
-      )
-    : null;
-  responseFilter.middleName
-    ? responseFilterCondition.push(
-        `(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`
-      )
-    : null;
-  responseFilter.lastName
-    ? responseFilterCondition.push(
-        `(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`
-      )
-    : null;
+  if (responseFilter.firstName) {
+    responseFilterCondition.push(
+      `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`
+    );
+    fieldIdCondition.push("'e48e7297-c250-4595-ba61-2945bf559a25'");
+  }
+  if (responseFilter.middleName) {
+    responseFilterCondition.push(
+      `(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`
+    );
+    fieldIdCondition.push("'7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'");
+  }
+  if (responseFilter.lastName) {
+    responseFilterCondition.push(
+      `(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`
+    );
+    fieldIdCondition.push("'9322b870-a0a1-4788-93f0-2895be713f9c'");
+  }
 
   const requestFilterCondition = [];
   Boolean(requestFilter.requestId)
@@ -6160,22 +6168,21 @@ export const getApplicationInformationSummaryData = async (
         request_date_created,
         request_status,
         request_status_date_updated,
-        request_response,
+        ${responseFilterCondition.length ? "request_response," : ""}
         request_score_value,
         ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
       FROM public.request_view
-      INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-        AND request_response_field_id IN (
-          '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
-          'e48e7297-c250-4595-ba61-2945bf559a25',
-          '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-          '9322b870-a0a1-4788-93f0-2895be713f9c'
-        )
-        ${
-          responseFilterCondition.length
-            ? `AND (${responseFilterCondition.join(" OR ")})`
-            : ""
-        }
+      ${
+        responseFilterCondition.length
+          ? `
+            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+              AND request_response_field_id IN (
+                ${fieldIdCondition.join(",")}
+              )
+              AND (${responseFilterCondition.join(" OR ")})
+            `
+          : ""
+      }
       INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
         ${
           requestScoreFilterCondition.length
@@ -6220,6 +6227,7 @@ export const getApplicationInformationSummaryData = async (
       input_data: { parentRequestQuery },
     }
   );
+
   if (error) throw error;
 
   const { data: columnData, error: columnError } = await supabaseClient.rpc(

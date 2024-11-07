@@ -123,6 +123,7 @@ type RequestFormSectionProps = {
       sectionIndex: number
     ) => void;
     onWorkingAdvancesChange: (value: string | null, fieldIndex: number) => void;
+    onMaterialTypeChange: (value: string | null, sectionIndex: number) => void;
   };
   personnelTransferRequisitionMethods?: {
     onMannerOfTransferChange: (
@@ -273,7 +274,7 @@ const RequestFormSection = ({
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
   applicationInformationFormMethods,
-  practicalTestFormMethods
+  practicalTestFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0]?.field_section_duplicatable_id;

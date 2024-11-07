@@ -14814,7 +14814,7 @@ plv8.subtransaction(function(){
     };
 
     if (form.form_is_formsly_form) {
-      if (form.form_name === 'General Assessment' && applicationInformationId) {
+      if (form.form_name.includes('General Assessment') && applicationInformationId) {
         const requestData = plv8.execute(
           `
             SELECT request_id
@@ -14905,7 +14905,12 @@ plv8.subtransaction(function(){
               '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
               '3e2cca9c-b23b-449a-a544-8d60ee8c269d',
               '69a2664f-c34d-4381-b19c-749c4a9a012b',
-              '8abe5d1a-8370-4472-b88e-3580f724d12d'
+              '8abe5d1a-8370-4472-b88e-3580f724d12d',
+              'be0e130b-455b-47e0-a804-f90943f7bc07',
+              '5c5284cd-7647-4307-b558-40b9076d9f7f',
+              'f1c516bd-e483-4f32-a5b0-5223b186afb5',
+              'd209aed6-e560-49a8-aa77-66c9cada168d',
+              'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
             )
           WHERE
             request_response_request_id = '${requestId}'

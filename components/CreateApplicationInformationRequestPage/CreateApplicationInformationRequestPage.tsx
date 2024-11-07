@@ -215,6 +215,11 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   }, [form, replaceSection, requestFormMethods]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
+    if (!data.sections.length) {
+      router.reload();
+      return;
+    }
+
     try {
       setIsLoading(true);
       let requestScore = 0;
