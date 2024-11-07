@@ -3448,7 +3448,6 @@ export const uploadCSVFileData = async (
   }
 ) => {
   const { parsedData, teamId, teamMemberId, type } = params;
-  console.log(params);
 
   switch (type) {
     case "asset": {

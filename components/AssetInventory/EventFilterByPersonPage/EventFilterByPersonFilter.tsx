@@ -1,9 +1,9 @@
-import { assignedToOption, limitOption } from "@/utils/constant";
+import { useEmployeeList } from "@/stores/useEmployeeStore";
+import { limitOption } from "@/utils/constant";
+import { formatCurrency } from "@/utils/functions";
 import {
   CategoryTableRow,
-  Column,
-  EventTableRow,
-  InventoryCustomerRow,
+  InventoryListType,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -20,24 +20,23 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { DataTableSortStatus } from "mantine-datatable";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { SetStateAction, useState } from "react";
+import { CSVLink } from "react-csv";
 import { Controller, useFormContext } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 
 type RequestListFilterProps = {
+  reportList: InventoryListType[];
   siteList: SiteTableRow[];
-  customerList: InventoryCustomerRow[];
-  eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   handleFilterForms: () => void;
-  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
   securityGroupData: SecurityGroupData;
-  columns: Column[];
+  listTableColumnFilter: string[];
+  eventName: string;
+  tableColumnList: { label: string; value: string }[];
 };
 
 export type FilterSelectedValuesType = {
@@ -48,24 +47,21 @@ export type FilterSelectedValuesType = {
   limit?: string;
   department?: string[];
   status?: string;
-  assignedToPerson?: string[];
-  assignedToSite?: string[];
-  assignedToCustomer?: string[];
-  isAscendingSort?: boolean;
-  event?: string;
-  appointedTo?: string;
+  assignedToPerson?: string;
+  isAscendingSort: boolean;
 };
 
-const EventReportListFilter = ({
-  eventList,
+const EventFilterByPersonFilter = ({
   departmentList,
   siteList,
   categoryList,
   handleFilterForms,
-  setSortStatus,
   showTableColumnFilter,
   setShowTableColumnFilter,
-  columns,
+  listTableColumnFilter,
+  tableColumnList,
+  reportList,
+  eventName,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -75,27 +71,15 @@ const EventReportListFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-
+  const employeeList = useEmployeeList();
+  const { ref: assignedToRef, focused: assignedToRefFocused } =
+    useFocusWithin();
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
-  const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+
   const { ref: limitRef, focused: limitRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
-  const { ref: eventRef, focused: eventRefFocused } = useFocusWithin();
-  const { ref: appointedToRef, focused: appointedToReFocused } =
-    useFocusWithin();
-
-  const columnAccessors = columns.map((col) => col.title);
-  const includesAssignedTo = [
-    "Check Out To",
-    "Check In To",
-    "Appointed To",
-  ].some((title) => columnAccessors.includes(title));
-  const eventOptions = eventList.map((event) => ({
-    label: event.event_status,
-    value: event.event_status,
-  }));
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -106,27 +90,30 @@ const EventReportListFilter = ({
       category: [],
       limit: "",
       status: "",
-      event: "",
-      appointedTo: "",
+      isAscendingSort: false,
+      assignedToPerson: "",
     });
   const [isFilter, setIsfilter] = useState(false);
 
-  const eventTableOptions = eventList.map((event) => ({
-    label: event.event_name,
-    value: event.event_name,
-  }));
   const siteListchoices = siteList.map((site) => {
     return {
       label: site.site_name,
       value: site.site_name,
     };
   });
+
   const departmentListChoices = departmentList.map((department) => {
     return {
       label: department.team_department_name,
       value: department.team_department_name,
     };
   });
+
+  const memberList = employeeList.map((member) => ({
+    value: member.scic_employee_id,
+    label: `${member.scic_employee_first_name} ${member.scic_employee_last_name}`,
+  }));
+
   const categoryListChoices = categoryList.map((category) => {
     return {
       label: category.category_name,
@@ -140,15 +127,64 @@ const EventReportListFilter = ({
     key: keyof FilterSelectedValuesType,
     value: string[] | boolean | string = []
   ) => {
-    const filterMatch = filterSelectedValues[key];
+    const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
-      setFilterSelectedValues((prev) => ({ ...prev, [key]: value }));
+      handleFilterForms();
+      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
     }
   };
-  useEffect(() => {
-    handleFilterForms();
-  }, [filterSelectedValues]);
+  const hiddenColumnValues = listTableColumnFilter.map((col) => col);
+
+  const columns = tableColumnList
+    .filter((col) => !hiddenColumnValues.includes(col.value))
+    .map((col) => ({
+      label: col.value
+        .replace(/_/g, " ")
+        .replace("inventory request", "")
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+        .trim(),
+      key: col.value,
+    }));
+
+  const transformedData = reportList.map((item) => {
+    const assignedTo = [
+      item.assignee_first_name,
+      item.assignee_last_name,
+      item.site_name,
+      item.customer_name,
+    ];
+    const createdBy = [
+      item.request_creator_first_name,
+      item.request_creator_last_name,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return {
+      ...item,
+      inventory_request_cost: formatCurrency(item.inventory_request_cost),
+      inventory_request_assigned_to: assignedTo,
+      inventory_request_created_by: createdBy,
+    };
+  });
+
+  const buildFilename = () => {
+    const activeFilters = Object.entries(filterSelectedValues)
+      .filter(([key, value]) => {
+        if (Array.isArray(value) && key) return value.length > 0;
+        return Boolean(value);
+      })
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}_${value.join("-")}`;
+        }
+        return `${key}_${value}`;
+      })
+      .join("_");
+
+    return `eventReport${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
+  };
 
   return (
     <>
@@ -204,32 +240,37 @@ const EventReportListFilter = ({
             />
           </Flex>
         </Group>
-        <Group>
+        <Flex align="end" gap="md">
+          {" "}
+          <CSVLink
+            data={transformedData}
+            headers={columns}
+            filename={buildFilename()}
+            className="btn"
+          >
+            <Button variant="outline">Export</Button>
+          </CSVLink>
           <Controller
             control={control}
-            name="event"
+            name="assignedToPerson"
             render={({ field: { value, onChange } }) => (
               <Select
-                data={eventTableOptions}
-                label="Event"
-                placeholder="Event"
-                ref={eventRef}
+                placeholder="Assigned To"
+                ref={assignedToRef}
+                data={memberList}
                 value={value}
-                onChange={(newValue) => {
-                  onChange(newValue);
-                  setSortStatus({
-                    columnAccessor: `event_${newValue?.replace(/ /g, "_").toLowerCase()}_date_created`,
-                    direction: "asc",
-                  });
-                  if (eventRefFocused) {
-                    handleFilterChange("event", value as string);
-                  }
+                onChange={(value) => {
+                  onChange(value);
+                  if (assignedToRefFocused)
+                    handleFilterChange("assignedToPerson", value as string);
                 }}
                 onDropdownClose={() =>
-                  handleFilterChange("event", value as string | undefined)
+                  handleFilterChange("assignedToPerson", value)
                 }
+                {...inputFilterProps}
                 sx={{ flex: 1 }}
-                maw={150}
+                miw={250}
+                maw={320}
               />
             )}
           />
@@ -256,8 +297,9 @@ const EventReportListFilter = ({
               />
             )}
           />
-        </Group>
+        </Flex>
       </Flex>
+
       <Divider my="md" />
 
       {isFilter && (
@@ -283,30 +325,7 @@ const EventReportListFilter = ({
               />
             )}
           />
-          <Controller
-            control={control}
-            name="status"
-            render={({ field: { value, onChange } }) => (
-              <Select
-                data={eventOptions}
-                placeholder="Status"
-                ref={statusRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (statusRefFocused)
-                    handleFilterChange("status", value as string | undefined);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("status", value as string | undefined)
-                }
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
+
           <Controller
             control={control}
             name="category"
@@ -328,6 +347,7 @@ const EventReportListFilter = ({
               />
             )}
           />
+
           <Controller
             control={control}
             name="department"
@@ -350,42 +370,10 @@ const EventReportListFilter = ({
               />
             )}
           />
-          {includesAssignedTo && (
-            <Controller
-              control={control}
-              name="appointedTo"
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  data={assignedToOption}
-                  placeholder="Assigned To"
-                  ref={appointedToRef}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (appointedToReFocused)
-                      handleFilterChange(
-                        "appointedTo",
-                        value as string | undefined
-                      );
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange(
-                      "appointedTo",
-                      value as string | undefined
-                    )
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
-          )}
         </Flex>
       )}
     </>
   );
 };
 
-export default EventReportListFilter;
+export default EventFilterByPersonFilter;

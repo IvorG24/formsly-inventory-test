@@ -1,6 +1,7 @@
 import {
   Button,
   createStyles,
+  Divider,
   Drawer,
   Group,
   Stack,
@@ -8,7 +9,7 @@ import {
   Text,
 } from "@mantine/core";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 type DataTableProps<T = Record<string, unknown>> = {
   idAccessor?: string;
@@ -36,7 +37,12 @@ type DataTableProps<T = Record<string, unknown>> = {
   setListTableColumnFilter: (
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
-  tableColumnList: { value: string; label: string }[];
+  tableColumnList: {
+    value: string;
+    label: string;
+    field_is_custom_field?: boolean;
+  }[];
+  type?: string;
 };
 
 const useStyles = createStyles((theme) => ({
@@ -72,9 +78,20 @@ const ListTable = ({
   listTableColumnFilter,
   handleFetch,
   setListTableColumnFilter,
+  type = "request",
   ...props
 }: DataTableProps) => {
   const { classes } = useStyles();
+  const customColumns = tableColumnList.filter(
+    (column) => column.field_is_custom_field
+  );
+  const defaultColumns = tableColumnList.filter(
+    (column) => !column.field_is_custom_field
+  );
+  const [tempTableColumnFilter, setTempTableColumnFilter] = useState(
+    listTableColumnFilter
+  );
+
   return (
     <>
       <DataTable
@@ -90,65 +107,147 @@ const ListTable = ({
       />
 
       {/* drawer */}
-      <Drawer
-        opened={showTableColumnFilter}
-        onClose={() => {
-          setShowTableColumnFilter(false);
-        }}
-        position="right"
-        title={
-          <Text weight={600} fz={16}>
-            Show/Hide Request List Table Columns
-          </Text>
-        }
-      >
-        <Stack px="sm">
-          {tableColumnList.map((column, idx) => {
-            const isHidden =
-              listTableColumnFilter.find(
-                (filter) => filter === column.value
-              ) === undefined;
+      {type === "asset" ? (
+        <>
+          {" "}
+          <Drawer
+            opened={showTableColumnFilter}
+            onClose={() => setShowTableColumnFilter(false)}
+            position="right"
+            title={
+              <Text weight={600} fz={16}>
+                Show/Hide Request List Table Columns
+              </Text>
+            }
+          >
+            <Stack px="sm">
+              {/* Default Columns */}
+              <Text weight={800} size="lg">
+                Default Columns
+              </Text>
 
-            const isPedColumn = column.label.includes("PED");
+              {defaultColumns.map((column, idx) => {
+                const isHidden = tempTableColumnFilter.includes(column.value);
 
-            if (isPedColumn) return null;
+                return (
+                  <Group position="apart" key={column.value + idx}>
+                    <Text weight={500}>{column.label}</Text>
+                    <Switch
+                      checked={!isHidden}
+                      onChange={(e) => {
+                        setTempTableColumnFilter(
+                          (prev) =>
+                            e.currentTarget.checked
+                              ? prev.filter(
+                                  (prevItem) => prevItem !== column.value
+                                ) // Show column
+                              : [...prev, column.value] // Hide column
+                        );
+                      }}
+                      styles={{ track: { cursor: "pointer" } }}
+                      color="green"
+                      onLabel="ON"
+                      offLabel="OFF"
+                    />
+                  </Group>
+                );
+              })}
+              <Divider />
+              <Text weight={800} size="lg">
+                Custom Columns
+              </Text>
 
-            return (
-              <Group position="apart" key={column.value + idx}>
-                <Text weight={500}>{column.label}</Text>
-                <Switch
-                  checked={isHidden}
-                  onChange={(e) => {
-                    if (e.currentTarget.checked) {
-                      setListTableColumnFilter((prev) =>
-                        prev.filter((prevItem) => prevItem !== column.value)
-                      );
-                    } else {
-                      setListTableColumnFilter((prev) => [
-                        ...prev,
-                        column.value,
-                      ]);
-                    }
+              {customColumns.map((column, idx) => {
+                const isHidden = tempTableColumnFilter.includes(column.value);
+
+                return (
+                  <Group position="apart" key={column.value + idx}>
+                    <Text weight={500}>{column.label}</Text>
+                    <Switch
+                      checked={!isHidden}
+                      onChange={(e) => {
+                        setTempTableColumnFilter(
+                          (prev) =>
+                            e.currentTarget.checked
+                              ? prev.filter(
+                                  (prevItem) => prevItem !== column.value
+                                ) // Show column
+                              : [...prev, column.value] // Hide column
+                        );
+                      }}
+                      styles={{ track: { cursor: "pointer" } }}
+                      color="green"
+                      onLabel="ON"
+                      offLabel="OFF"
+                    />
+                  </Group>
+                );
+              })}
+
+              {handleFetch && (
+                <Button
+                  onClick={() => {
+                    setListTableColumnFilter(tempTableColumnFilter); // Apply changes to main state
+                    setShowTableColumnFilter(false);
+                    handleFetch(1);
                   }}
-                  styles={{ track: { cursor: "pointer" } }}
-                  color="green"
-                  onLabel="ON"
-                  offLabel="OFF"
-                />
-              </Group>
-            );
-          })}
-          {handleFetch && (
-            <Button
-              onClick={() => {
-                setShowTableColumnFilter(false), handleFetch(1);
-              }}
-            >
-              Apply Changes
-            </Button>
-          )}
-        </Stack>
-      </Drawer>
+                >
+                  Apply Changes
+                </Button>
+              )}
+            </Stack>
+          </Drawer>
+        </>
+      ) : (
+        <>
+          <Drawer
+            opened={showTableColumnFilter}
+            onClose={() => {
+              setShowTableColumnFilter(false);
+            }}
+            position="right"
+            title={
+              <Text weight={600} fz={16}>
+                Show/Hide Request List Table Columns
+              </Text>
+            }
+          >
+            <Stack px="sm">
+              {tableColumnList.map((column, idx) => {
+                const isHidden =
+                  listTableColumnFilter.find(
+                    (filter) => filter === column.value
+                  ) === undefined;
+
+                return (
+                  <Group position="apart" key={column.value + idx}>
+                    <Text weight={500}>{column.label}</Text>
+                    <Switch
+                      checked={isHidden}
+                      onChange={(e) => {
+                        if (e.currentTarget.checked) {
+                          setListTableColumnFilter((prev) =>
+                            prev.filter((prevItem) => prevItem !== column.value)
+                          );
+                        } else {
+                          setListTableColumnFilter((prev) => [
+                            ...prev,
+                            column.value,
+                          ]);
+                        }
+                      }}
+                      styles={{ track: { cursor: "pointer" } }}
+                      color="green"
+                      onLabel="ON"
+                      offLabel="OFF"
+                    />
+                  </Group>
+                );
+              })}
+            </Stack>
+          </Drawer>
+        </>
+      )}
     </>
   );
 };

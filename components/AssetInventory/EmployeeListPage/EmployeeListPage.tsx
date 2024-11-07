@@ -255,7 +255,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
               minHeight: "300px",
             }}
             withBorder
-            idAccessor="site_id"
+            idAccessor="scic_employee_id"
             page={activePage}
             sortStatus={sortStatus}
             onSortStatusChange={setSortStatus}

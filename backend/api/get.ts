@@ -8242,6 +8242,7 @@ export const getColumnList = async (
   return data as {
     value: string;
     label: string;
+    field_is_custom_field?: string;
   }[];
 };
 
@@ -8260,6 +8261,7 @@ export const getColumnListImport = async (
   return data as {
     value: string;
     label: string;
+    field_is_custom_field?: string;
   }[];
 };
 
@@ -8723,11 +8725,12 @@ export const getDynamicReportView = async (
     category?: string[];
     status?: string;
     eventName: string;
-    assignedToPerson?: string[];
+    assignedToPerson?: string;
     assignedToSite?: string[];
     assignedToCustomer?: string[];
     teamId: string;
     appointedTo?: string;
+    type:string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -8739,5 +8742,24 @@ export const getDynamicReportView = async (
 
   if (error) throw error;
 
-  return data as unknown as { data: InventoryListType[]; count: 0 };
+  return data as unknown as { data: InventoryListType[]; count: 0,employee?:InventoryEmployeeList };
 };
+
+
+export const getColumnFieldsEvent = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+     eventName:string
+    }
+  ) => {
+    const { data, error } = await supabaseClient.rpc(
+      "get_column_fields_event",
+      {
+        input_data: params,
+      }
+    );
+
+    if (error) throw error;
+
+    return data as unknown as { value:string,label:string,field_is_custom_field?:boolean};
+  };

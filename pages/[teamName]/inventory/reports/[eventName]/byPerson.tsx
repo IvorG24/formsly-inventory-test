@@ -2,24 +2,36 @@
 import {
   checkIfOwnerOrAdmin,
   getAssetListFilterOptions,
+  getColumnFieldsEvent,
 } from "@/backend/api/get";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
-import EventReportListpage from "@/components/AssetInventory/EventReportListPage/EventReportListPage";
+import EventFilterByPersonPage from "@/components/AssetInventory/EventFilterByPersonPage/EventFilterByPersonPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
-  InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ user, userActiveTeam, supabaseClient, securityGroupData }) => {
+  async ({
+    user,
+    userActiveTeam,
+    supabaseClient,
+    securityGroupData,
+    context,
+  }) => {
     try {
+      const eventName = context.query.eventName as string;
+
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
+      });
+
+      const tableColumnList = await getColumnFieldsEvent(supabaseClient, {
+        eventName,
       });
 
       const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
@@ -39,7 +51,10 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       return {
         props: {
           ...data,
+          tableColumnList,
+          eventName,
           securityGroupData,
+          userId: user.id,
         },
       };
     } catch (e) {
@@ -55,33 +70,25 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 
 type Props = {
   siteList: SiteTableRow[];
-  customerList: InventoryCustomerRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroupData: SecurityGroupData;
+  eventName: string;
+  tableColumnList: {
+    value: string;
+    label: string;
+    field_is_custom_field?: boolean;
+  }[];
 };
 
-const Page = ({
-  siteList,
-  customerList,
-  departmentList,
-  categoryList,
-
-  securityGroupData,
-}: Props) => {
+const Page = ({ ...props }: Props) => {
   return (
     <>
       <Meta
-        description="Events Report List Page"
-        url="/teamName/inventory/reports/events"
+        description="Event Report List Page"
+        url="/teamName/inventory/reports/[eventName]/byPerson"
       />
-      <EventReportListpage
-        customerTableList={customerList}
-        securityGroupData={securityGroupData}
-        siteList={siteList}
-        departmentList={departmentList}
-        categoryList={categoryList}
-      />
+      <EventFilterByPersonPage {...props} />
     </>
   );
 };

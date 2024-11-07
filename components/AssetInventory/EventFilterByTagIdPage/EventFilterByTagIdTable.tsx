@@ -2,15 +2,11 @@ import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { BASE_URL, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { getAvatarColor } from "@/utils/styling";
 import { InventoryListType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
-  Avatar,
-  Badge,
   CopyButton,
-  createStyles,
   Flex,
   Group,
   HoverCard,
@@ -33,6 +29,7 @@ type Props = {
   requestList: InventoryListType[];
   requestListCount: number;
   activePage: number;
+  eventName: string;
   isFetchingRequestList: boolean;
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
@@ -48,16 +45,8 @@ type Props = {
   ) => void;
   tableColumnList: { value: string; label: string }[];
 };
-const useStyles = createStyles(() => ({
-  requestor: {
-    border: "solid 2px white",
-    cursor: "pointer",
-  },
-  clickable: {
-    cursor: "pointer",
-  },
-}));
-const AssetReportsListTable = ({
+
+const EventFilterByTagIdTable = ({
   requestList,
   requestListCount,
   activePage,
@@ -73,13 +62,13 @@ const AssetReportsListTable = ({
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
+  eventName,
 }: Props) => {
   const activeTeam = useActiveTeam();
 
-  const { classes } = useStyles();
   const router = useRouter();
   const limit = getValues("limit");
-
+  const eventFormatted = eventName.replace(/-/g, "_");
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -97,6 +86,9 @@ const AssetReportsListTable = ({
           "inventory_request_created_by",
           "inventory_request_user_id",
           "inventory_request_assigned_to",
+          `event_${eventFormatted}_request_id`,
+          `event_${eventFormatted}_signature`,
+          `event_${eventFormatted}_id`,
         ].includes(column.value)
     )
     .map((column) => ({
@@ -105,21 +97,15 @@ const AssetReportsListTable = ({
       sortable:
         column.value.startsWith("inventory_request") &&
         column.value !== "inventory_request_notes",
-      width: 180,
+      width: "auto",
       hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {
         const value =
           record[column.value] !== undefined && record[column.value] !== null
             ? String(record[column.value])
             : "";
-        const fieldWithDate = [
-          "inventory_request_purchase_date",
-          "inventory_request_created",
-          "inventory_request_date_updated",
-          "inventory_event_date_created",
-        ];
 
-        return fieldWithDate.includes(column.value) ? (
+        return column.label.includes("Date") ? (
           <Text>{value ? formatDate(new Date(value)) : ""}</Text>
         ) : (
           <Text>{value}</Text>
@@ -131,12 +117,13 @@ const AssetReportsListTable = ({
     const cost = Number(record.inventory_request_cost ?? 0);
     return sum + cost;
   }, 0);
+
   const totalCount = requestList.length;
 
   return (
     <>
       <ListTable
-        idAccessor="inventory_request_id"
+        idAccessor={`event_${eventFormatted}_id`}
         records={requestList}
         fetching={isFetchingRequestList}
         page={activePage}
@@ -225,20 +212,8 @@ const AssetReportsListTable = ({
             width: 180,
             sortable: true,
             hidden: checkIfColumnIsHidden("inventory_request_status"),
-            render: ({
-              inventory_request_status,
-              inventory_request_status_color,
-            }) => {
-              return (
-                <Badge
-                  sx={{
-                    backgroundColor: inventory_request_status_color as string,
-                    color: "#fff",
-                  }}
-                >
-                  {String(inventory_request_status)}
-                </Badge>
-              );
+            render: ({ inventory_request_status }) => {
+              return <Text>{String(inventory_request_status)}</Text>;
             },
           },
           {
@@ -249,47 +224,6 @@ const AssetReportsListTable = ({
             hidden: checkIfColumnIsHidden("inventory_request_name"),
             render: ({ inventory_request_name }) => {
               return <Text>{String(inventory_request_name)}</Text>;
-            },
-          },
-          {
-            accessor: "inventory_request_id",
-            title: "Assigned To",
-            sortable: true,
-            width: 180,
-            hidden: checkIfColumnIsHidden("inventory_request_assigned_to"),
-            render: (record) => {
-              const {
-                site_name,
-                customer_name,
-                assignee_first_name,
-                assignee_last_name,
-              } = record as {
-                site_name: string;
-                customer_name: string;
-                assignee_first_name: string;
-                assignee_last_name: string;
-              };
-
-              const isAssignedUser = !!assignee_first_name;
-              const avatarLabel = isAssignedUser
-                ? `${assignee_first_name[0]}${assignee_last_name[0]}`
-                : site_name || customer_name;
-
-              return (
-                <Flex px={0} gap={8} align="center">
-                  {isAssignedUser && (
-                    <Avatar className={classes.requestor}>{avatarLabel}</Avatar>
-                  )}
-
-                  {isAssignedUser ? (
-                    <Anchor target="_blank">
-                      <Text>{`${assignee_first_name} ${assignee_last_name}`}</Text>
-                    </Anchor>
-                  ) : (
-                    <Text>{site_name || customer_name}</Text>
-                  )}
-                </Flex>
-              );
             },
           },
           {
@@ -321,60 +255,6 @@ const AssetReportsListTable = ({
             },
           },
           ...dynamicColumns,
-          {
-            accessor: "inventory_request_created_by",
-            title: "Created By",
-            sortable: true,
-            width: 200,
-            hidden: checkIfColumnIsHidden("inventory_request_created_by"),
-            render: (record) => {
-              const {
-                request_creator_user_id,
-                request_creator_first_name,
-                request_creator_last_name,
-                request_creator_team_member_id,
-              } = record as {
-                request_creator_user_id: string;
-                request_creator_first_name: string;
-                request_creator_last_name: string;
-                request_creator_team_member_id: string;
-              };
-
-              return (
-                <Flex px={0} gap={8} align="center">
-                  <Avatar
-                    color={
-                      request_creator_user_id
-                        ? getAvatarColor(
-                            Number(`${request_creator_user_id.charCodeAt(0)}`)
-                          )
-                        : undefined
-                    }
-                    className={classes.requestor}
-                    onClick={() =>
-                      request_creator_team_member_id
-                        ? window.open(
-                            `/member/${request_creator_team_member_id}`
-                          )
-                        : null
-                    }
-                  >
-                    {request_creator_user_id
-                      ? `${request_creator_first_name[0] + request_creator_last_name[0]}`
-                      : ""}
-                  </Avatar>
-                  {request_creator_user_id && (
-                    <Anchor
-                      href={`/member/${request_creator_team_member_id}`}
-                      target="_blank"
-                    >
-                      <Text>{`${request_creator_first_name} ${request_creator_last_name}`}</Text>
-                    </Anchor>
-                  )}
-                </Flex>
-              );
-            },
-          },
           {
             accessor: "view",
             title: "View",
@@ -410,4 +290,4 @@ const AssetReportsListTable = ({
   );
 };
 
-export default AssetReportsListTable;
+export default EventFilterByTagIdTable;

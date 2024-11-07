@@ -12,6 +12,8 @@ import {
   Menu,
   ScrollArea,
   Stack,
+  Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
@@ -23,6 +25,8 @@ import {
   IconChevronDown,
   IconCirclePlus,
   IconDatabase,
+  IconDots,
+  IconFileImport,
   IconFileReport,
   IconGps,
   IconListDetails,
@@ -33,6 +37,7 @@ import {
   IconSettings,
   IconSettingsUp,
   IconTableColumn,
+  IconTableOptions,
   IconTimelineEvent,
   IconTooltip,
   IconUserCancel,
@@ -62,7 +67,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
   const teamMember = useUserTeamMember();
   const eventList = useEventList();
   const securityGroup = useSecurityGroup();
-
+  const theme = useMantineTheme();
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
@@ -151,7 +156,6 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon: IconTooltip,
           href: `/${formattedTeamName}/inventory/list/maintenance`,
         },
-
         {
           id: "warranty",
           label: "Warranty",
@@ -168,17 +172,35 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
         ...(isOwnerOrAdmin
           ? [
               {
-                id: "maintenance",
+                id: "asset-report",
                 label: "Assets Reports",
                 icon: IconFileReport,
                 href: `/${formattedTeamName}/inventory/reports/assets`,
               },
-
               {
-                id: "checked-out",
+                id: "checked-out-report",
                 label: "Events Reports",
                 icon: IconPaperclip,
-                href: `/${formattedTeamName}/inventory/reports/events`,
+                nestedSubLinks: [
+                  {
+                    id: "checkOutByEmployee",
+                    label: "By Employee",
+                    icon: IconDots,
+                    href: `/${formattedTeamName}/inventory/reports/check-out/byEmployee`,
+                  },
+                  {
+                    id: "checkOutByTagID",
+                    label: "By Tag ID",
+                    icon: IconDots,
+                    href: `/${formattedTeamName}/inventory/reports/check-out/byTagId`,
+                  },
+                  {
+                    id: "checkOutBySite",
+                    label: "By Site",
+                    icon: IconDots,
+                    href: `/${formattedTeamName}/inventory/reports/check-out/bySite`,
+                  },
+                ],
               },
             ]
           : []),
@@ -326,6 +348,23 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           : []),
       ],
     },
+    ...(isOwnerOrAdmin
+      ? [
+          {
+            id: "others",
+            icon: IconTableOptions,
+            label: "Others",
+            subLinks: [
+              {
+                id: "import",
+                label: "Import",
+                icon: IconFileImport,
+                href: `/${formattedTeamName}/inventory/others/import`,
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   const handleNavlinkClick = (href: string) => {
@@ -345,6 +384,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           onClick={() => handleNavlinkClick(link.href || "")}
           icon={<link.icon size={20} />}
           link={link.href}
+          type="link"
         />
       );
     }
@@ -366,39 +406,17 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           key={link.id}
           value={link.id}
         >
-          <Accordion.Control
-            icon={<link.icon size={20} />}
-            style={{
-              justifyContent: isCollapsed ? "flex-end" : "flex-start",
-            }}
-            styles={(theme) => ({
-              control: {
-                color:
-                  theme.colorScheme === "dark"
-                    ? theme.colors.gray[0]
-                    : theme.colors.dark[7],
-                "&:hover": {
-                  backgroundColor:
-                    theme.colorScheme === "dark"
-                      ? theme.colors.dark[5]
-                      : theme.colors.gray[0],
-                },
-                padding: isCollapsed ? "10px 0" : "10px 16px",
-              },
-              label: {
-                marginLeft: isCollapsed ? 0 : "12px",
-                display: isCollapsed ? "none" : "block",
-              },
-            })}
-          >
-            {link.label}
+          <Accordion.Control icon={<link.icon size={20} />}>
+            <Text fw={500} size="sm">
+              {link.label}
+            </Text>
           </Accordion.Control>
           <Accordion.Panel>
             <Stack spacing={4}>
               {link.subLinks?.map((subLink) => {
                 if (subLink && "id" in subLink && subLink.id === "databases") {
                   return (
-                    <Box key={subLink.id}>
+                    <Box ml={10} key={subLink.id}>
                       <Menu
                         withinPortal
                         position={
@@ -453,6 +471,68 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                   );
                 }
 
+                if (
+                  subLink &&
+                  "id" in subLink &&
+                  subLink.id === "checked-out-report"
+                ) {
+                  return (
+                    <Accordion key={subLink.id} variant="filled">
+                      <Accordion.Item
+                        sx={(theme) => ({
+                          "&:hover": {
+                            backgroundColor:
+                              theme.colorScheme === "dark"
+                                ? theme.colors.dark[5]
+                                : theme.colors.blue[0],
+                          },
+
+                          "&[data-active]": {
+                            backgroundColor: "transparent",
+                          },
+                        })}
+                        value={subLink.id}
+                      >
+                        <Accordion.Control
+                          icon={
+                            <subLink.icon
+                              color={
+                                theme.colorScheme === "dark" ? "white" : "black"
+                              }
+                              size={20}
+                            />
+                          }
+                        >
+                          <Text
+                            fw={400}
+                            color={
+                              theme.colorScheme === "dark" ? "white" : "dark.7"
+                            }
+                            size="sm"
+                          >
+                            {subLink.label}
+                          </Text>
+                        </Accordion.Control>
+                        <Accordion.Panel>
+                          {subLink.nestedSubLinks?.map(
+                            (nestedSubLink) =>
+                              nestedSubLink && (
+                                <Navlink
+                                  key={nestedSubLink.id}
+                                  label={nestedSubLink.label}
+                                  onClick={() =>
+                                    handleNavlinkClick(nestedSubLink.href || "")
+                                  }
+                                  icon={<nestedSubLink.icon size={20} />}
+                                  link={nestedSubLink.href || ""}
+                                />
+                              )
+                          )}
+                        </Accordion.Panel>
+                      </Accordion.Item>
+                    </Accordion>
+                  );
+                }
                 if (subLink && "id" in subLink) {
                   return (
                     <Navlink
@@ -538,6 +618,9 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                           ? theme.colors.gray[5]
                           : theme.colors.blue[7],
                     },
+                    fontFamily: theme.fontFamily,
+                    fontWeight: 100, // Adjust to match the Navlink font weight
+                    fontSize: theme.fontSizes.sm,
                   },
                   inner: {
                     justifyContent: "flex-start",
@@ -549,6 +632,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
             )}
           </Group>
           <Accordion
+            fw={400}
             chevron={isCollapsed ? null : <IconChevronDown size={14} />}
             value={isCollapsed ? null : undefined}
             variant="filled"

@@ -1,10 +1,7 @@
-import { useEmployeeList } from "@/stores/useEmployeeStore";
 import { limitOption } from "@/utils/constant";
 import { formatCurrency } from "@/utils/functions";
 import {
   CategoryTableRow,
-  EventTableRow,
-  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -30,16 +27,14 @@ import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 type RequestListFilterProps = {
   reportList: InventoryListType[];
   siteList: SiteTableRow[];
-  customerList: InventoryCustomerRow[];
-  eventList: EventTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   handleFilterForms: () => void;
-  type?: string;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
   securityGroupData: SecurityGroupData;
   listTableColumnFilter: string[];
+  eventName: string;
   tableColumnList: { label: string; value: string }[];
 };
 
@@ -57,11 +52,9 @@ export type FilterSelectedValuesType = {
   isAscendingSort?: boolean;
 };
 
-const AssetReportsListFilter = ({
-  eventList,
+const EventFilterByTagIdFilter = ({
   departmentList,
   siteList,
-  customerList,
   categoryList,
   handleFilterForms,
   showTableColumnFilter,
@@ -70,7 +63,7 @@ const AssetReportsListFilter = ({
   listTableColumnFilter,
   tableColumnList,
   reportList,
-  type = "asset",
+  eventName,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -80,26 +73,13 @@ const AssetReportsListFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-  const employeeList = useEmployeeList();
-  const { ref: assignedToRef, focused: assignedToRefFocused } =
-    useFocusWithin();
 
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
-  const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+
   const { ref: limitRef, focused: limitRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
-
-  const eventOptions = eventList.map((event) => ({
-    label: event.event_status,
-    value: event.event_status,
-  }));
-
-  const customerOptions = customerList.map((customer) => ({
-    label: `${customer.customer_first_name} ${customer.customer_last_name}`,
-    value: customer.customer_id,
-  }));
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -110,15 +90,8 @@ const AssetReportsListFilter = ({
       category: [],
       limit: "",
       status: "",
-      assignedToPerson: [],
-      assignedToSite: [],
     });
   const [isFilter, setIsfilter] = useState(false);
-
-  const memberList = employeeList.map((member) => ({
-    value: member.scic_employee_id,
-    label: `${member.scic_employee_first_name} ${member.scic_employee_last_name}`,
-  }));
 
   const siteListchoices = siteList.map((site) => {
     return {
@@ -203,7 +176,7 @@ const AssetReportsListFilter = ({
       })
       .join("_");
 
-    return `assetReport${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
+    return `eventReport${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
   };
 
   return (
@@ -324,33 +297,6 @@ const AssetReportsListFilter = ({
             />
           )}
 
-          {type === "asset" && (
-            <Controller
-              control={control}
-              name="status"
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  data={eventOptions}
-                  placeholder="Status"
-                  ref={statusRef}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (statusRefFocused)
-                      handleFilterChange("status", value as string | undefined);
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange("status", value as string | undefined)
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
-          )}
-
           {securityGroupData.asset.filter.category.length === 0 && (
             <Controller
               control={control}
@@ -401,82 +347,10 @@ const AssetReportsListFilter = ({
               )}
             />
           )}
-          <Controller
-            control={control}
-            name="assignedToPerson"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Assigned To Person"
-                ref={assignedToRef}
-                data={memberList}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (assignedToRefFocused)
-                    handleFilterChange("assignedToPerson", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("assignedToPerson", value)
-                }
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="assignedToSite"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Assigned To Site"
-                ref={assignedToRef}
-                data={siteListchoices}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (assignedToRefFocused)
-                    handleFilterChange("assignedToSite", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("assignedToSite", value)
-                }
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="assignedToCustomer"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Assigned To Customer"
-                ref={assignedToRef}
-                data={customerOptions}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (assignedToRefFocused)
-                    handleFilterChange("assignedToCustomer", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("assignedToCustomer", value)
-                }
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
         </Flex>
       )}
     </>
   );
 };
 
-export default AssetReportsListFilter;
+export default EventFilterByTagIdFilter;

@@ -54,7 +54,11 @@ type Props = {
   setListTableColumnFilter: (
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
-  tableColumnList: { value: string; label: string }[];
+  tableColumnList: {
+    value: string;
+    label: string;
+    field_is_custom_field?: boolean;
+  }[];
 };
 const useStyles = createStyles(() => ({
   requestor: {
@@ -421,6 +425,8 @@ const AssignedAssetListTable = ({
       listTableColumnFilter={listTableColumnFilter}
       setListTableColumnFilter={setListTableColumnFilter}
       tableColumnList={tableColumnList}
+      type="asset"
+      handleFetch={handlePagination}
     />
   );
 };

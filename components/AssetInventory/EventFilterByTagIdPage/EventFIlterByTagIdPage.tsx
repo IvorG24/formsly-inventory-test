@@ -1,11 +1,8 @@
-import { getAssetSpreadsheetView } from "@/backend/api/get";
+import { getDynamicReportView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-
-import { useEventList } from "@/stores/useEventStore";
 import { limitOption } from "@/utils/constant";
 import {
   CategoryTableRow,
-  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -18,15 +15,15 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import AssetReportsListFilter from "./AssetReportsListFilter";
-import AssetReportsListTable from "./AssetReportsListTable";
+import EventFilterByTagIdFilter from "./EventFilterByTagIdFilter";
+import EventFilterByTagIdTable from "./EventFilterByTagIdTable";
 
 type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
-  customerTableList: InventoryCustomerRow[];
   securityGroupData: SecurityGroupData;
+  eventName: string;
   tableColumnList: {
     label: string;
     value: string;
@@ -48,23 +45,24 @@ type FilterSelectedValuesType = {
   assignedToCustomer?: string[];
 };
 
-const AssetReportsListPage = ({
+const EventFilterByTagIdPage = ({
   siteList,
-  customerTableList,
   departmentList,
   categoryList,
   tableColumnList,
   securityGroupData,
+  eventName,
 }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
-  const eventList = useEventList();
 
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
-
+  const eventTitle = eventName
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
   const filterFormMethods = useForm<FilterSelectedValuesType>({
@@ -94,7 +92,7 @@ const AssetReportsListPage = ({
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
-    key: "inventory-asset-report-list-table-column-filter",
+    key: `inventory-${eventName}-byTagId-report-list-table-column-filter`,
     defaultValue:
       tableColumnList
         .sort((a, b) => a.label.localeCompare(b.label))
@@ -130,11 +128,8 @@ const AssetReportsListPage = ({
       }
       const {
         search,
-        assignedToPerson,
         locations,
         status,
-        assignedToSite,
-        assignedToCustomer,
         department,
         sites,
         category,
@@ -142,21 +137,20 @@ const AssetReportsListPage = ({
         isAscendingSort,
       } = getValues();
 
-      const { data, count } = await getAssetSpreadsheetView(supabaseClient, {
+      const { data, count } = await getDynamicReportView(supabaseClient, {
         page: page,
         limit: Number(limit) ? Number(limit) : 10,
         sort: isAscendingSort,
         columnAccessor: sortStatus.columnAccessor,
         search,
         status,
-        assignedToPerson,
-        assignedToSite,
-        assignedToCustomer,
         department: department,
         locations,
         sites: sites,
         category: category,
         teamId: activeTeam.team_id,
+        eventName: eventName,
+        type: "byTagId",
       });
 
       setInventoryList(data);
@@ -199,19 +193,18 @@ const AssetReportsListPage = ({
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={3}>Asset Report List Page</Title>
+          <Title order={3}>{eventTitle} Event Report By Tag ID List Page</Title>
           <Text>Manage your assets reports here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <AssetReportsListFilter
+            <EventFilterByTagIdFilter
+              eventName={eventName}
               reportList={inventoryList}
               listTableColumnFilter={listTableColumnFilter}
               tableColumnList={tableColumnList}
-              eventList={eventList}
-              customerList={customerTableList}
               securityGroupData={securityGroupData}
               siteList={siteList}
               categoryList={categoryList}
@@ -223,7 +216,7 @@ const AssetReportsListPage = ({
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <AssetReportsListTable
+          <EventFilterByTagIdTable
             requestList={inventoryList}
             requestListCount={inventoryListCount}
             activePage={activePage}
@@ -232,6 +225,7 @@ const AssetReportsListPage = ({
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}
+            eventName={eventName}
             getValues={getValues}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
@@ -246,4 +240,4 @@ const AssetReportsListPage = ({
   );
 };
 
-export default AssetReportsListPage;
+export default EventFilterByTagIdPage;

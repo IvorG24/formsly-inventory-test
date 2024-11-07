@@ -90,7 +90,6 @@ const ImportPage = ({ category }: Props) => {
           }));
 
           setColumns(columnsForCsv);
-          console.log(columnsForCsv);
 
           const parsedColumns =
             parsedData.length > 0

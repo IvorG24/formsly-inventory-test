@@ -47,6 +47,7 @@ type Props = {
   tableColumnList: {
     label: string;
     value: string;
+    field_is_custom_field?: boolean;
   }[];
 };
 

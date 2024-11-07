@@ -1,4 +1,4 @@
-import { Button } from "@mantine/core";
+import { Button, Text } from "@mantine/core";
 import { usePathname } from "next/navigation";
 import { MouseEventHandler, ReactNode } from "react";
 
@@ -8,11 +8,19 @@ type Props = {
   onClick?: MouseEventHandler<HTMLButtonElement>;
   isCollapsed?: boolean;
   link?: string;
+  type?: string;
 };
 
-const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
+const Navlink = ({
+  icon,
+  label,
+  isCollapsed,
+  onClick,
+  link,
+  type = "sublink",
+}: Props) => {
   const pathname = usePathname();
-
+  const margin = type === "link" ? 5 : 10;
   return (
     <Button
       onClick={onClick}
@@ -21,7 +29,7 @@ const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
       fullWidth
       mih={50}
       mah={50}
-      fw={400}
+      ml={margin}
       styles={(theme) => ({
         root: {
           backgroundColor:
@@ -29,16 +37,31 @@ const Navlink = ({ icon, label, isCollapsed, onClick, link }: Props) => {
           color:
             pathname === link
               ? theme.colors.blue[7]
-              : theme.colorScheme === "dark"
-                ? theme.colors.gray[0]
-                : theme.colors.dark[7],
+              : type === "link"
+                ? theme.colorScheme === "dark"
+                  ? theme.colors.gray[5]
+                  : theme.colors.dark[7]
+                : theme.colorScheme === "dark"
+                  ? theme.colors.gray[0]
+                  : theme.colors.dark[7],
+
+          ...(type === "link" && {
+            "&:hover": {
+              backgroundColor:
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[5]
+                  : theme.colors.blue[0],
+            },
+          }),
         },
         inner: {
           justifyContent: "flex-start",
         },
       })}
     >
-      {isCollapsed ? null : label}
+      <Text fw={type === "link" ? 500 : 400} size="sm">
+        {isCollapsed ? null : label}
+      </Text>
     </Button>
   );
 };

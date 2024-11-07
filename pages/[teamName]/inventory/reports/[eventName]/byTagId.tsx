@@ -2,28 +2,37 @@
 import {
   checkIfOwnerOrAdmin,
   getAssetListFilterOptions,
-  getColumnList,
+  getColumnFieldsEvent,
 } from "@/backend/api/get";
-import AssetReportsListPage from "@/components/AssetInventory/AssetReportsListPage/AssetReportsListPage";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
+import EventFilterByTagIdPage from "@/components/AssetInventory/EventFilterByTagIdPage/EventFIlterByTagIdPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
-  InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ user, userActiveTeam, supabaseClient, securityGroupData }) => {
+  async ({
+    user,
+    userActiveTeam,
+    supabaseClient,
+    securityGroupData,
+    context,
+  }) => {
     try {
+      const eventName = context.query.eventName as string;
+      
       const data = await getAssetListFilterOptions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
 
-      const fields = await getColumnList(supabaseClient, {});
+      const tableColumnList = await getColumnFieldsEvent(supabaseClient, {
+        eventName,
+      });
 
       const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
         userId: user.id,
@@ -42,7 +51,8 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       return {
         props: {
           ...data,
-          fields,
+          tableColumnList,
+          eventName,
           securityGroupData,
           userId: user.id,
         },
@@ -59,41 +69,26 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 );
 
 type Props = {
-  userId: string;
   siteList: SiteTableRow[];
-  customerList: InventoryCustomerRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroupData: SecurityGroupData;
-  fields: {
+  eventName: string;
+  tableColumnList: {
     value: string;
     label: string;
     field_is_custom_field?: boolean;
   }[];
 };
 
-const Page = ({
-  siteList,
-  customerList,
-  departmentList,
-  categoryList,
-  fields,
-  securityGroupData,
-}: Props) => {
+const Page = ({ ...props }: Props) => {
   return (
     <>
       <Meta
-        description="Asset List Page"
-        url="/teamName/inventory/reports/asset"
+        description="Event Report List Page"
+        url="/teamName/inventory/reports/[eventName]/byTagId"
       />
-      <AssetReportsListPage
-        customerTableList={customerList}
-        securityGroupData={securityGroupData}
-        siteList={siteList}
-        departmentList={departmentList}
-        categoryList={categoryList}
-        tableColumnList={fields}
-      />
+      <EventFilterByTagIdPage {...props} />
     </>
   );
 };
