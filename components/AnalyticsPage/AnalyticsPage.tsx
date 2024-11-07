@@ -1,7 +1,17 @@
 import { HRAnalyticsData } from "@/utils/types";
-import { Container, Stack, Tabs, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Flex,
+  Stack,
+  Tabs,
+  Text,
+  Title,
+} from "@mantine/core";
 import { IconFileAnalytics, IconReportAnalytics } from "@tabler/icons-react";
+import { useState } from "react";
 import Analytics from "./Analytics";
+import ExportToCSVModal from "./ExportToCSVModal";
 import Response from "./Response";
 
 type Props = {
@@ -9,10 +19,17 @@ type Props = {
 };
 
 const AnalyticsPage = ({ analyticsData }: Props) => {
+  const [openExportToCSVModal, setOpenExportToCSVModal] = useState(false);
+
   return (
     <Container fluid>
       <Stack spacing="sm">
-        <Title order={2}>Human Resources Analytics Page</Title>
+        <Flex gap="sm" wrap="wrap">
+          <Title order={2}>Human Resources Analytics Page</Title>
+          <Button onClick={() => setOpenExportToCSVModal(true)}>
+            Export to CSV
+          </Button>
+        </Flex>
         <Text>
           Gain valuable insights into your organization&apos;s HR metrics,
           including employee performance and response analytics. Use the tabs
@@ -42,6 +59,11 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
             <Analytics />
           </Tabs.Panel>
         </Tabs>
+
+        <ExportToCSVModal
+          opened={openExportToCSVModal}
+          onClose={() => setOpenExportToCSVModal(false)}
+        />
       </Stack>
     </Container>
   );

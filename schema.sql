@@ -21386,6 +21386,101 @@ AS $$
  });
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_hr_recruitment_data(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let data;
+  plv8.subtransaction(function(){
+    const {
+      startDate,
+      endDate
+    } = input_data;
+
+    let query = `
+        SELECT 
+            request_formsly_id AS "Applicant Ref ID",
+            REPLACE(CONCAT(first.request_response, ' ', middle.request_response, ' ', last.request_response), '"', '') AS "Name of Applicant",
+            REPLACE(position.request_response, '"', '') AS "Position",
+            salary.request_response AS "Asking Salary",
+            request_status AS "Application Information Status",
+            request_status_date_updated AS "Application Information Date",
+            CONCAT(aiu.user_first_name, ' ', aiu.user_last_name) AS "Application Information Assigned HR",
+            hr_phone_interview_status AS "HR Phone Interview Status",
+            hr_phone_interview_status_date_updated AS "HR Phone Interview Date",
+            CONCAT(hru.user_first_name, ' ', hru.user_last_name) AS "HR Interview Assigned HR",
+            di.technical_interview_status AS "Department Interview Status",
+            di.technical_interview_status_date_updated AS "Department Interview Date",
+            CONCAT(diu.user_first_name, ' ', diu.user_last_name) AS "Department Interview Assigned HR",
+            ri.technical_interview_status AS "Department Interview Status",
+            ri.technical_interview_status_date_updated AS "Department Interview Date",
+            CONCAT(riu.user_first_name, ' ', riu.user_last_name) AS "Requestor Interview Assigned HR",
+            background_check_status AS "Background Check Status",
+            background_check_status_date_updated AS "Background Check Date",
+            CONCAT(bcu.user_first_name, ' ', bcu.user_last_name) AS "Background Check Assigned HR",
+            job_offer_status AS "Job Offer Status",
+            job_offer_compensation AS "Compensation",
+            job_offer_date_created "Job Offer Date",
+            CONCAT(jou.user_first_name, ' ', jou.user_last_name) AS "Job Offer Assigned HR",
+            request_date_created AS "Date Created"
+        FROM public.request_view 
+        INNER JOIN request_schema.request_response_table AS first ON first.request_response_request_id = request_id
+            AND first.request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25'
+        LEFT JOIN request_schema.request_response_table AS middle ON middle.request_response_request_id = request_id
+            AND middle.request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'
+        INNER JOIN request_schema.request_response_table AS last ON last.request_response_request_id = request_id
+        AND last.request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c'
+        INNER JOIN request_schema.request_response_table AS position ON position.request_response_request_id = request_id
+            AND position.request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+        INNER JOIN request_schema.request_response_table AS salary ON salary.request_response_request_id = request_id
+            AND salary.request_response_field_id = 'bcfba5e2-b9cc-4c4b-a308-174993c4564d'
+        INNER JOIN request_schema.request_signer_table ON request_signer_request_id = request_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table AS aiu ON aiu.user_id = team_member_user_id
+        LEFT JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = request_id
+        LEFT JOIN team_schema.team_member_table AS hrtm ON hrtm.team_member_id = hr_phone_interview_team_member_id
+        LEFT JOIN user_schema.user_table AS hru ON hru.user_id = hrtm.team_member_user_id
+        LEFT JOIN hr_schema.technical_interview_table AS di ON di.technical_interview_request_id = request_id
+            AND di.technical_interview_number = 1
+        LEFT JOIN team_schema.team_member_table AS ditm ON ditm.team_member_id = di.technical_interview_team_member_id
+        LEFT JOIN user_schema.user_table AS diu ON diu.user_id = ditm.team_member_user_id
+        LEFT JOIN hr_schema.technical_interview_table AS ri ON ri.technical_interview_request_id = request_id
+            AND ri.technical_interview_number = 2
+        LEFT JOIN team_schema.team_member_table AS ritm ON ritm.team_member_id = ri.technical_interview_team_member_id
+        LEFT JOIN user_schema.user_table AS riu ON riu.user_id = ritm.team_member_user_id
+        LEFT JOIN hr_schema.background_check_table ON background_check_request_id = request_id
+        LEFT JOIN team_schema.team_member_table AS bctm ON bctm.team_member_id = background_check_team_member_id
+        LEFT JOIN user_schema.user_table AS bcu ON bcu.user_id = bctm.team_member_user_id
+        LEFT JOIN (
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY job_offer_date_created DESC) AS rn
+        FROM hr_schema.job_offer_table
+        ) jo ON job_offer_request_id = request_id
+        AND jo.rn = 1
+        LEFT JOIN team_schema.team_member_table AS jotm ON jotm.team_member_id = job_offer_team_member_id
+        LEFT JOIN user_schema.user_table AS jou ON jou.user_id = jotm.team_member_user_id
+        WHERE 
+            request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+    `;
+
+    const params = [];
+    if (startDate) {
+        params.push(...[startDate, endDate]);
+        query += ' AND (request_date_created >= $1 AND request_date_created <= $2)'
+    };
+
+    query += ' ORDER BY request_date_created DESC';
+    
+    const recruitment_data = plv8.execute(query, params);
+
+    data = recruitment_data;
+ });
+ return data;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES

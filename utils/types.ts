@@ -2709,6 +2709,31 @@ export type CreatePracticalTestFormType = {
   }[];
 };
 
+export type HRRecruitmentData = {
+  "Applicant Ref ID": string;
+  "Name of Applicant": string;
+  Position: string;
+  "Asking Salary": string;
+  "Application Information Status": string;
+  "Application Information Date": string | null;
+  "Application Information Assigned HR": string;
+  "HR Phone Interview Status": string | null;
+  "HR Phone Interview Date": string | null;
+  "HR Interview Assigned HR": string | null;
+  "Department Interview Status": string | null;
+  "Department Interview Date": string | null;
+  "Department Interview Assigned HR": string | null;
+  "Requestor Interview Assigned HR": string | null;
+  "Background Check Status": string | null;
+  "Background Check Date": string | null;
+  "Background Check Assigned HR": string | null;
+  "Job Offer Status": string | null;
+  Compensation: string | null;
+  "Job Offer Date": string | null;
+  "Job Offer Assigned HR": string | null;
+  "Date Created": string;
+};
+
 export type InventoryFormResponseType = {
   form_id: string;
   form_name: string;
