@@ -1,6 +1,7 @@
 import { getDynamicReportView } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { limitOption } from "@/utils/constant";
+import { dateOption, limitOption } from "@/utils/constant";
+import { formatDateRange } from "@/utils/functions";
 import {
   CategoryTableRow,
   InventoryListType,
@@ -43,6 +44,9 @@ type FilterSelectedValuesType = {
   assignedToPerson?: string[];
   assignedToSite?: string[];
   assignedToCustomer?: string[];
+  dateType: string;
+  dateStart: Date | null;
+  dateEnd: Date | null;
 };
 
 const EventFilterByTagIdPage = ({
@@ -78,6 +82,9 @@ const EventFilterByTagIdPage = ({
       assignedToSite: [],
       assignedToCustomer: [],
       isAscendingSort: false,
+      dateType: dateOption[0].value,
+      dateStart: null,
+      dateEnd: null,
     },
     mode: "onChange",
   });
@@ -135,7 +142,13 @@ const EventFilterByTagIdPage = ({
         category,
         limit,
         isAscendingSort,
+        dateType,
+        dateStart,
+        dateEnd,
       } = getValues();
+
+      const { startDate: formattedDateStart, endDate: formattedDateEnd } =
+        formatDateRange(dateStart, dateEnd, dateType);
 
       const { data, count } = await getDynamicReportView(supabaseClient, {
         page: page,
@@ -151,8 +164,11 @@ const EventFilterByTagIdPage = ({
         teamId: activeTeam.team_id,
         eventName: eventName,
         type: "byTagId",
+        dateType: dateType,
+        dateStart: formattedDateStart || "",
+        dateEnd: formattedDateEnd || "",
       });
-
+      console.log(data);
       setInventoryList(data);
       setInventoryListCount(count);
     } catch (e) {

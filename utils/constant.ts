@@ -1537,16 +1537,39 @@ export const limitOption = [
 ];
 
 export const assignedToOption = [
-    {
-      value: "Customer",
-      label: "Customer",
-    },
-    {
-      value: "Site",
-      label: "Site",
-    },
-    {
-      value: "Person",
-      label: "Person",
-    },
-  ];
+  {
+    value: "Customer",
+    label: "Customer",
+  },
+  {
+    value: "Site",
+    label: "Site",
+  },
+  {
+    value: "Person",
+    label: "Person",
+  },
+];
+
+export const dateOption = [
+  {
+    value: "current",
+    label: "Current Status",
+  },
+  {
+    value: "all time",
+    label: "All Time",
+  },
+  {
+    value: "monthly",
+    label: "Monthly",
+  },
+  {
+    value: "yearly",
+    label: "Yearly",
+  },
+  {
+    value: "custom",
+    label: "Custom Range",
+  },
+];

@@ -1,4 +1,3 @@
-import { useEmployeeList } from "@/stores/useEmployeeStore";
 import { dateOption, limitOption } from "@/utils/constant";
 import { formatCurrency } from "@/utils/functions";
 import {
@@ -55,11 +54,12 @@ export type FilterSelectedValuesType = {
   assignedToPerson?: string;
   isAscendingSort: boolean;
   dateType: string;
+  assignedToSite: string;
   dateStart: Date | null;
   dateEnd: Date | null;
 };
 
-const EventFilterByPersonFilter = ({
+const EventFilterBySiteFilter = ({
   departmentList,
   siteList,
   categoryList,
@@ -79,9 +79,7 @@ const EventFilterByPersonFilter = ({
     searchable: true,
     nothingFound: "Nothing found",
   };
-  const employeeList = useEmployeeList();
-  const { ref: assignedToRef, focused: assignedToRefFocused } =
-    useFocusWithin();
+
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
   const { ref: datetypeRef, focused: datetypeRefFocused } = useFocusWithin();
@@ -104,6 +102,7 @@ const EventFilterByPersonFilter = ({
       dateType: dateOption[0].value,
       dateStart: null,
       dateEnd: null,
+      assignedToSite: "",
     });
   const [isFilter, setIsfilter] = useState(false);
 
@@ -120,11 +119,6 @@ const EventFilterByPersonFilter = ({
       value: department.team_department_name,
     };
   });
-
-  const memberList = employeeList.map((member) => ({
-    value: member.scic_employee_id,
-    label: `${member.scic_employee_first_name} ${member.scic_employee_last_name}`,
-  }));
 
   const categoryListChoices = categoryList.map((category) => {
     return {
@@ -267,30 +261,6 @@ const EventFilterByPersonFilter = ({
           </CSVLink>
           <Controller
             control={control}
-            name="assignedToPerson"
-            render={({ field: { value, onChange } }) => (
-              <Select
-                placeholder="Assigned To"
-                ref={assignedToRef}
-                data={memberList}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (assignedToRefFocused)
-                    handleFilterChange("assignedToPerson", value as string);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("assignedToPerson", value)
-                }
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-          <Controller
-            control={control}
             name="limit"
             render={({ field: { value, onChange } }) => (
               <Select
@@ -318,7 +288,7 @@ const EventFilterByPersonFilter = ({
       <Divider my="md" />
 
       {isFilter && (
-        <Flex gap="sm" wrap="wrap" mb="sm">
+        <Flex gap="sm" wrap="wrap" justify="space-between" mb="sm">
           <Group>
             <Controller
               control={control}
@@ -489,4 +459,4 @@ const EventFilterByPersonFilter = ({
   );
 };
 
-export default EventFilterByPersonFilter;
+export default EventFilterBySiteFilter;

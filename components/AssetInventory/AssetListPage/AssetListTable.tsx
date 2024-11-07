@@ -410,6 +410,8 @@ const AssetListTable = ({
       setShowTableColumnFilter={setShowTableColumnFilter}
       listTableColumnFilter={listTableColumnFilter}
       setListTableColumnFilter={setListTableColumnFilter}
+      handleFetch={handlePagination}
+      type="asset"
       tableColumnList={tableColumnList}
     />
   );

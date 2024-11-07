@@ -184,9 +184,9 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
                 nestedSubLinks: [
                   {
                     id: "checkOutByEmployee",
-                    label: "By Employee",
+                    label: "By Person",
                     icon: IconDots,
-                    href: `/${formattedTeamName}/inventory/reports/check-out/byEmployee`,
+                    href: `/${formattedTeamName}/inventory/reports/check-out/byPerson`,
                   },
                   {
                     id: "checkOutByTagID",

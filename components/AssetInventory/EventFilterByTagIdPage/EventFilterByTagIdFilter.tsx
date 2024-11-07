@@ -1,4 +1,4 @@
-import { limitOption } from "@/utils/constant";
+import { dateOption, limitOption } from "@/utils/constant";
 import { formatCurrency } from "@/utils/functions";
 import {
   CategoryTableRow,
@@ -17,6 +17,11 @@ import {
   Switch,
   TextInput,
 } from "@mantine/core";
+import {
+  DatePickerInput,
+  MonthPickerInput,
+  YearPickerInput,
+} from "@mantine/dates";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
 import { SetStateAction, useState } from "react";
@@ -50,6 +55,9 @@ export type FilterSelectedValuesType = {
   assignedToSite?: string[];
   assignedToCustomer?: string[];
   isAscendingSort?: boolean;
+  dateType: string;
+  dateStart: Date | null;
+  dateEnd: Date | null;
 };
 
 const EventFilterByTagIdFilter = ({
@@ -59,7 +67,6 @@ const EventFilterByTagIdFilter = ({
   handleFilterForms,
   showTableColumnFilter,
   setShowTableColumnFilter,
-  securityGroupData,
   listTableColumnFilter,
   tableColumnList,
   reportList,
@@ -76,10 +83,10 @@ const EventFilterByTagIdFilter = ({
 
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
-
   const { ref: limitRef, focused: limitRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
+  const { ref: datetypeRef, focused: datetypeRefFocused } = useFocusWithin();
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -90,7 +97,11 @@ const EventFilterByTagIdFilter = ({
       category: [],
       limit: "",
       status: "",
+      dateType: "",
+      dateStart: null,
+      dateEnd: null,
     });
+
   const [isFilter, setIsfilter] = useState(false);
 
   const siteListchoices = siteList.map((site) => {
@@ -114,7 +125,8 @@ const EventFilterByTagIdFilter = ({
     };
   });
 
-  const { register, control } = useFormContext<FilterSelectedValuesType>();
+  const { register, control, watch, setValue } =
+    useFormContext<FilterSelectedValuesType>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
@@ -127,6 +139,7 @@ const EventFilterByTagIdFilter = ({
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
     }
   };
+
   const hiddenColumnValues = listTableColumnFilter.map((col) => col);
 
   const columns = tableColumnList
@@ -179,6 +192,9 @@ const EventFilterByTagIdFilter = ({
     return `eventReport${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
   };
 
+  const dateTypeWatch = watch("dateType");
+  const dateStart = watch("dateStart");
+  const dateEnd = watch("dateEnd");
   return (
     <>
       <Flex
@@ -272,8 +288,8 @@ const EventFilterByTagIdFilter = ({
       <Divider my="md" />
 
       {isFilter && (
-        <Flex gap="sm" wrap="wrap" mb="sm">
-          {securityGroupData.asset.filter.site.length === 0 && (
+        <Flex gap="sm" justify="space-between" wrap="wrap" mb="sm">
+          <Group>
             <Controller
               control={control}
               name="sites"
@@ -295,9 +311,7 @@ const EventFilterByTagIdFilter = ({
                 />
               )}
             />
-          )}
 
-          {securityGroupData.asset.filter.category.length === 0 && (
             <Controller
               control={control}
               name="category"
@@ -320,8 +334,7 @@ const EventFilterByTagIdFilter = ({
                 />
               )}
             />
-          )}
-          {securityGroupData.asset.filter.department.length === 0 && (
+
             <Controller
               control={control}
               name="department"
@@ -346,6 +359,104 @@ const EventFilterByTagIdFilter = ({
                 />
               )}
             />
+
+            <Controller
+              control={control}
+              name="dateType"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  placeholder="Date Type"
+                  ref={datetypeRef}
+                  data={dateOption}
+                  value={value}
+                  onChange={(value) => {
+                    onChange(value);
+                    setValue("dateStart", null);
+                    setValue("dateEnd", null);
+                    if (datetypeRefFocused)
+                      handleFilterChange("dateType", value as string);
+                  }}
+                  onDropdownClose={() => {
+                    handleFilterChange("dateType", value);
+                  }}
+                  {...inputFilterProps}
+                  sx={{ flex: 1 }}
+                  miw={250}
+                  maw={320}
+                />
+              )}
+            />
+          </Group>
+          {dateTypeWatch !== "current" && (
+            <Group>
+              <Controller
+                name="dateStart"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    {dateTypeWatch === "monthly" && (
+                      <MonthPickerInput
+                        clearable
+                        placeholder="Pick a start date"
+                        {...field}
+                      />
+                    )}
+                    {dateTypeWatch === "custom" && (
+                      <DatePickerInput
+                        clearable
+                        placeholder="Pick a start date"
+                        {...field}
+                      />
+                    )}
+                    {dateTypeWatch === "yearly" && (
+                      <YearPickerInput
+                        clearable
+                        placeholder="Pick a start date"
+                        {...field}
+                      />
+                    )}
+                  </>
+                )}
+              />
+
+              <Controller
+                name="dateEnd"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    {dateTypeWatch === "monthly" && (
+                      <MonthPickerInput
+                        clearable
+                        placeholder="Pick an end date"
+                        {...field}
+                      />
+                    )}
+                    {dateTypeWatch === "custom" && (
+                      <DatePickerInput
+                        clearable
+                        placeholder="Pick an end date"
+                        {...field}
+                      />
+                    )}
+                    {dateTypeWatch === "yearly" && (
+                      <YearPickerInput
+                        clearable
+                        placeholder="Pick an end date"
+                        {...field}
+                      />
+                    )}
+                  </>
+                )}
+              />
+              {dateTypeWatch !== "all time" && (
+                <Button
+                  onClick={() => handleFilterForms()}
+                  disabled={!dateStart || !dateEnd}
+                >
+                  Submit
+                </Button>
+              )}
+            </Group>
           )}
         </Flex>
       )}

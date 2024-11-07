@@ -4,7 +4,6 @@ import { dateOption, limitOption } from "@/utils/constant";
 import { formatDateRange } from "@/utils/functions";
 import {
   CategoryTableRow,
-  InventoryEmployeeList,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -17,10 +16,10 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import EventFilterByPersonFilter, {
+import EventFilterBySiteFilter, {
   FilterSelectedValuesType,
-} from "./EventFilterByPersonFilter";
-import EventFilterByPersonTable from "./EventFilterByPersonTable";
+} from "./EventFilterBySiteFilter";
+import EventFilterBySiteTable from "./EventFilterBySiteTable";
 
 type Props = {
   siteList: SiteTableRow[];
@@ -35,22 +34,7 @@ type Props = {
   }[];
 };
 
-type EventFilterByPersonPage = {
-  search?: string;
-  sites?: string[];
-  locations?: string;
-  category?: string[];
-  department?: string[];
-  limit?: string;
-  status?: string;
-  isAscendingSort?: boolean;
-  assignedToPerson?: string;
-  dateType: string;
-  dateStart: Date | null;
-  dateEnd: Date | null;
-};
-
-const EventFilterByPersonPage = ({
+const EventFilterBySitePage = ({
   siteList,
   departmentList,
   categoryList,
@@ -65,7 +49,6 @@ const EventFilterByPersonPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
-  const [employee, setEmployee] = useState<InventoryEmployeeList | null>(null);
 
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
   const eventTitle = eventName
@@ -80,7 +63,7 @@ const EventFilterByPersonPage = ({
       category: [],
       status: "",
       limit: limitOption[0].value,
-      assignedToPerson: "",
+      assignedToSite: "",
       isAscendingSort: false,
       dateType: dateOption[0].value,
       dateStart: null,
@@ -151,29 +134,26 @@ const EventFilterByPersonPage = ({
       const { startDate: formattedDateStart, endDate: formattedDateEnd } =
         formatDateRange(dateStart, dateEnd, dateType);
 
-      const { data, count, employee } = await getDynamicReportView(
-        supabaseClient,
-        {
-          page: page,
-          limit: Number(limit) ? Number(limit) : 10,
-          sort: isAscendingSort,
-          columnAccessor: sortStatus.columnAccessor,
-          search,
-          status,
-          department: department,
-          locations,
-          sites: sites,
-          category: category,
-          teamId: activeTeam.team_id,
-          assignedToPerson,
-          eventName: eventName,
-          type: "byPerson",
-          dateType: dateType,
-          dateStart: formattedDateStart || "",
-          dateEnd: formattedDateEnd || "",
-        }
-      );
-      setEmployee(employee ?? null);
+      const { data, count } = await getDynamicReportView(supabaseClient, {
+        page: page,
+        limit: Number(limit) ? Number(limit) : 10,
+        sort: isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
+        search,
+        status,
+        department: department,
+        locations,
+        sites: sites,
+        category: category,
+        teamId: activeTeam.team_id,
+        assignedToPerson,
+        eventName: eventName,
+        type: "bySite",
+        dateType: dateType,
+        dateStart: formattedDateStart || "",
+        dateEnd: formattedDateEnd || "",
+      });
+
       setInventoryList(data);
       setInventoryListCount(count);
     } catch (e) {
@@ -214,14 +194,14 @@ const EventFilterByPersonPage = ({
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={3}>{eventTitle} Event Report By Person List Page</Title>
+          <Title order={3}>{eventTitle} Event Report By Site List Page</Title>
           <Text>Manage your assets reports here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <EventFilterByPersonFilter
+            <EventFilterBySiteFilter
               eventName={eventName}
               reportList={inventoryList}
               listTableColumnFilter={listTableColumnFilter}
@@ -237,9 +217,8 @@ const EventFilterByPersonPage = ({
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <EventFilterByPersonTable
+          <EventFilterBySiteTable
             requestList={inventoryList}
-            employee={employee}
             requestListCount={inventoryListCount}
             activePage={activePage}
             isFetchingRequestList={isFetchingRequestList}
@@ -262,4 +241,4 @@ const EventFilterByPersonPage = ({
   );
 };
 
-export default EventFilterByPersonPage;
+export default EventFilterBySitePage;

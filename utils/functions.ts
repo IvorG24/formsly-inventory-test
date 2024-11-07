@@ -622,3 +622,43 @@ export const isDarkColor = (hexColor: string) => {
 
   return brightness < 150;
 };
+
+export const formatDateRange = (
+  start: Date | null,
+  end: Date | null,
+  type: string | null
+) => {
+  if (type === "monthly" && start) {
+    const startDate = new Date(`${start}-01`);
+    const endDateMonth = new Date(`${end}`);
+    const endDate = new Date(
+      endDateMonth.getFullYear(),
+      endDateMonth.getMonth() + 1,
+      0
+    );
+    return {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+    };
+  } else if (type === "custom" && start && end) {
+    const startDate = new Date(`${start}-01`);
+    const endDateDate = new Date(`${end}`);
+    endDateDate.setDate(endDateDate.getDate() + 1);
+
+    return {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDateDate.toISOString().split("T")[0],
+    };
+  } else if (type === "yearly" && start && end) {
+    const startDate = new Date(`${start}`);
+    const endDateDate = new Date(`${end}`);
+    startDate.setDate(startDate.getDate() + 1);
+    endDateDate.setFullYear(endDateDate.getFullYear() + 1);
+
+    return {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDateDate.toISOString().split("T")[0],
+    };
+  }
+  return { startDate: null, endDate: null };
+};

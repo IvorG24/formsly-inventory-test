@@ -23,7 +23,7 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
-import { FilterSelectedValuesType } from "./EventFilterByTagIdFilter";
+import { FilterSelectedValuesType } from "./EventFilterBySiteFilter";
 
 type Props = {
   requestList: InventoryListType[];
@@ -46,7 +46,7 @@ type Props = {
   tableColumnList: { value: string; label: string }[];
 };
 
-const EventFilterByTagIdTable = ({
+const EventFilterBySiteTable = ({
   requestList,
   requestListCount,
   activePage,
@@ -69,7 +69,6 @@ const EventFilterByTagIdTable = ({
   const router = useRouter();
   const limit = getValues("limit");
   const eventFormatted = eventName.replace(/-/g, "_");
-
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -95,7 +94,9 @@ const EventFilterByTagIdTable = ({
     .map((column) => ({
       accessor: column.value,
       title: column.label,
-      sortable: column.value !== "inventory_request_notes",
+      sortable:
+        column.value.startsWith("inventory_request") &&
+        column.value !== "inventory_request_notes",
       width: "auto",
       hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {
@@ -289,4 +290,4 @@ const EventFilterByTagIdTable = ({
   );
 };
 
-export default EventFilterByTagIdTable;
+export default EventFilterBySiteTable;
