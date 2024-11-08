@@ -5,6 +5,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Accordion,
+  Badge,
   Box,
   Button,
   Group,
@@ -53,20 +54,23 @@ type NavLink = {
   label: string;
   icon: (props: TablerIconsProps) => JSX.Element;
   href?: string;
+  withIndicator?: boolean;
   subLinks?: NavLink[];
   nestedSubLinks?: NavLink[];
 };
 type Props = {
   openNavbar: boolean;
   setOpenNavbar: Dispatch<boolean>;
+  indicatorCount: { assignedAsset: number };
 };
-const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
+const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
   const teamList = useTeamList();
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const eventList = useEventList();
   const securityGroup = useSecurityGroup();
+
   const theme = useMantineTheme();
   const formattedTeamName = formatTeamNameToUrlKey(activeTeam.team_name ?? "");
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -125,6 +129,7 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
       id: "assigned-asset",
       icon: IconBrandSuperhuman,
       label: "Assigned Asset",
+      withIndicator: Boolean(indicatorCount.assignedAsset),
       href: `/${formattedTeamName}/inventory/assigned-asset`,
     },
     ...(canView
@@ -385,9 +390,19 @@ const Navbar = ({ openNavbar, setOpenNavbar }: Props) => {
           icon={<link.icon size={20} />}
           link={link.href}
           type="link"
+          indicator={
+            link.withIndicator ? (
+              <Group>
+                <Badge color="orange" variant="filled" radius="xl" size="md">
+                  {indicatorCount.assignedAsset}
+                </Badge>
+              </Group>
+            ) : null
+          }
         />
       );
     }
+
     if (link) {
       return (
         <Accordion.Item

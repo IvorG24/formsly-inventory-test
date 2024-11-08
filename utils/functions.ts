@@ -4,7 +4,6 @@ import { InventoryFormValues } from "@/components/AssetInventory/CreateAssetPage
 import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
-import { v4 as uuidv4 } from "uuid";
 import { startCase } from "./string";
 import {
   JiraItemUserTableData,
@@ -479,6 +478,15 @@ export const transformEmployeeData = (
   }, {} as SCICEmployeeTableInsert);
 };
 
+export const generateSerial = () => {
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const randomSerial = Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0");
+
+  return `SIG-${randomSerial}-${today}`;
+};
+
 export const editImageWithUUID = (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -502,6 +510,8 @@ export const editImageWithUUID = (file: File): Promise<File> => {
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const { data, width, height } = imageData;
+
+        const signatureSerial = generateSerial();
 
         let minX = width,
           maxX = 0,
@@ -530,9 +540,7 @@ export const editImageWithUUID = (file: File): Promise<File> => {
           maxY = height / 2;
         }
 
-        const uuid = uuidv4();
-
-        ctx.font = "bold 14px Arial";
+        ctx.font = "bold 52px Arial";
         ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -540,9 +548,8 @@ export const editImageWithUUID = (file: File): Promise<File> => {
         const uuidX = (minX + maxX) / 2;
         const uuidY = (minY + maxY) / 2;
 
-        ctx.fillText(uuid, uuidX, uuidY);
+        ctx.fillText(signatureSerial, uuidX, uuidY);
 
-        // Always save as PNG
         canvas.toBlob((blob) => {
           if (blob) {
             const editedFile = new File(
@@ -556,7 +563,7 @@ export const editImageWithUUID = (file: File): Promise<File> => {
           } else {
             reject(new Error("Failed to create PNG blob from canvas"));
           }
-        }, "image/png"); // Output format is forced to PNG
+        }, "image/png");
       };
     };
 
@@ -586,7 +593,6 @@ export const setFileInputFromUrl = async (url: string) => {
   const response = await fetch(url);
   const blob = await response.blob();
 
-  // Create a new file object from the blob
   const fileName = url.split("/").pop() || "default_file";
   const file = new File([blob], fileName, { type: blob.type });
   return file;

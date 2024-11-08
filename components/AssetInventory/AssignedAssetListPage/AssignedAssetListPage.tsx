@@ -248,7 +248,6 @@ const AssignedAssetListPage = ({
       if (data.file.size > 500000) {
         compressedImage = await editImageWithUUID(signature);
       }
-      const editedSignature = await editImageWithUUID(signature);
 
       await updateWaitingForSignatureStatus(supabaseClient, {
         requestId,
@@ -266,7 +265,7 @@ const AssignedAssetListPage = ({
               ? userProfile.user_signature_attachment_id
               : undefined,
           },
-          file: compressedImage || editedSignature,
+          file: compressedImage || signature,
           fileType: "s",
           userId: userProfile?.user_id ?? "",
         }

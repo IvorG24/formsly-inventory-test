@@ -100,7 +100,7 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
             )}
           /> */}
 
-          <Controller
+          {/* <Controller
             name="site_city"
             control={control}
             render={({ field }) => (
@@ -123,7 +123,7 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
                 {...field}
               />
             )}
-          />
+          /> */}
 
           <Group mt="md">
             <Button fullWidth type="submit">

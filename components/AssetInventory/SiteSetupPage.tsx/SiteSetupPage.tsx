@@ -25,7 +25,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ type FormValues = {
   search: string;
   site_name: string;
   site_description: string;
+  isAscendingSort: boolean;
 };
 type Props = {
   securityGroup: SecurityGroupData;
@@ -67,24 +68,33 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
     defaultValues: {
       site_name: "",
       site_description: "",
+      isAscendingSort: false,
     },
   });
 
-  const { register, handleSubmit, getValues } = formMethods;
+  const { register, handleSubmit, getValues, setValue } = formMethods;
+
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "site_name",
+    direction: "desc",
+  });
 
   useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
-  }, [activePage, activeTeam.team_id]);
+  }, [activePage, activeTeam.team_id, sortStatus]);
 
   const handleFetchSiteList = async (page: number) => {
     try {
       if (!activeTeam.team_id) return;
-      const { search } = getValues();
+      const { search, isAscendingSort } = getValues();
       const { data, totalCount } = await getSiteList(supabaseClient, {
         search,
         teamid: activeTeam.team_id,
         page,
         limit: ROW_PER_PAGE,
+        isAScendingSort: isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
       });
       setCurrentSiteList(data);
       setSiteListCount(totalCount);
@@ -279,6 +289,8 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
             totalRecords={siteListCount}
             recordsPerPage={ROW_PER_PAGE}
             onPageChange={handlePagination}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
             records={currentSiteList}
             fetching={isFetchingSiteList}
             columns={[
@@ -286,6 +298,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
                 accessor: "site_name",
                 width: "20%",
                 title: "Site Name",
+                sortable: true,
                 render: (site) => <Text>{site.site_name}</Text>,
               },
               {

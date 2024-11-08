@@ -116,6 +116,9 @@ const ImportPage = ({ category }: Props) => {
             });
           }
         }
+        if (importType === "asset") {
+          fetchColumnList(categoryWatch);
+        }
       },
     });
     setValue("file", selectedFile);
@@ -166,7 +169,7 @@ const ImportPage = ({ category }: Props) => {
       }));
       setColumns(columnsForCsv);
 
-      if (importType === "asset") {
+      if (importType === "asset" && parsedData.length > 0) {
         const parsedColumns =
           parsedData.length > 0
             ? Object.keys(parsedData[0]).map((col) => col.trim().toLowerCase())
@@ -284,7 +287,7 @@ const ImportPage = ({ category }: Props) => {
             <>
               <Divider />
               <ScrollArea mt="lg" h={600}>
-                <Table highlightOnHover withBorder withColumnBorders>
+                <Table striped highlightOnHover withBorder withColumnBorders>
                   <thead>
                     <tr>
                       {Object.keys(parsedData[0]).map((key) => (

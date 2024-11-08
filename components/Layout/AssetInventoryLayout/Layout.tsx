@@ -1,6 +1,7 @@
 import {
   getActiveGroup,
   getAllTeamOfUser,
+  getAssignedCount,
   getEmployeeInventoryList,
   getEventDetails,
   getSecurityGroups,
@@ -47,6 +48,9 @@ const Layout = ({ children }: LayoutProps) => {
   const { setSecurityGroup } = useSecurityAction();
   const [openNavbar, setOpenNavbar] = useState(false);
   const [isLoading, setIsloading] = useState(false);
+  const [indicatorCount, setIndicatorCount] = useState({
+    assignedAsset: 100,
+  });
   const fetchAllTeamMembers = async (teamId: string) => {
     const allTeamMembers: TeamMemberType[] = [];
     let offset = 0;
@@ -172,6 +176,12 @@ const Layout = ({ children }: LayoutProps) => {
             teamId: activeTeamId,
           });
           setEventList(data);
+
+          const { assignedAsset } = await getAssignedCount(supabaseClient, {
+            teamId: activeTeamId,
+            userId,
+          });
+          setIndicatorCount({ assignedAsset: assignedAsset });
         }
 
         setIsloading(false);
@@ -201,7 +211,13 @@ const Layout = ({ children }: LayoutProps) => {
         },
       }}
       navbarOffsetBreakpoint="sm"
-      navbar={<Navbar openNavbar={openNavbar} setOpenNavbar={setOpenNavbar} />}
+      navbar={
+        <Navbar
+          indicatorCount={indicatorCount}
+          openNavbar={openNavbar}
+          setOpenNavbar={setOpenNavbar}
+        />
+      }
       header={
         <Header
           openNavbar={openNavbar}

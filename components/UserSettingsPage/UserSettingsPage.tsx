@@ -6,7 +6,6 @@ import {
 import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
 import { BASE_URL } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { editImageWithUUID } from "@/utils/functions";
 import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import {
@@ -210,12 +209,21 @@ const UserSettingsPage = ({ user }: Props) => {
       setIsUpdatingSignature(true);
       if (signature === null) return;
 
-      // compress image
       let compressedImage: File | null = null;
       if (signature.size > 500000) {
-        compressedImage = await editImageWithUUID(signature);
+        compressedImage = await new Promise((resolve) => {
+          new Compressor(signature, {
+            quality: 0.3,
+            success(result) {
+              resolve(result as File);
+            },
+            error(error) {
+              throw error;
+            },
+          });
+        });
       }
-      const editedSignature = await editImageWithUUID(signature);
+
       const { data: signatureAttachment, url } = await createAttachment(
         supabaseClient,
         {
@@ -227,7 +235,7 @@ const UserSettingsPage = ({ user }: Props) => {
               ? user.user_signature_attachment_id
               : undefined,
           },
-          file: compressedImage || editedSignature,
+          file: compressedImage || signature,
           fileType: "s",
           userId: user.user_id,
         }
