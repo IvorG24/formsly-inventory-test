@@ -1083,12 +1083,16 @@ const EditLiquidationReimbursementRequestPage = ({
               (response) =>
                 response.request_response_field_id === field.field_id
             );
+
+            if (field.field_name === "Project Responsible for PCF Charges") {
+              field.field_is_read_only = !isReferenceOnly;
+            }
+
             return {
               ...field,
               field_response: response
                 ? safeParse(response.request_response)
                 : "",
-              field_is_read_only: canEditVatField,
             };
           });
 
@@ -1205,7 +1209,7 @@ const EditLiquidationReimbursementRequestPage = ({
               }
             }
 
-            if (response) {
+            if (response !== "") {
               fieldList.push({
                 ...field,
                 field_response: response,

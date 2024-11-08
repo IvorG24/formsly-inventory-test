@@ -110,12 +110,7 @@ const EmployeeList = ({
       accessor: "scic_employee_hris_id_number",
       title: "HRIS NUMBER",
       render: ({ scic_employee_hris_id_number }) => (
-        <Text
-          className={classes.clickableColumn}
-          onClick={() => {
-            handleColumnClick(scic_employee_hris_id_number);
-          }}
-        >
+        <Text className={classes.clickableColumn}>
           {scic_employee_hris_id_number}
         </Text>
       ),
@@ -160,7 +155,7 @@ const EmployeeList = ({
   ];
 
   return (
-    <Box>
+    <Box pos="relative">
       <LoadingOverlay visible={isFetchingEmployee} />
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
@@ -223,6 +218,9 @@ const EmployeeList = ({
         onPageChange={(page: number) => {
           setActivePage(page);
           handleFetch(page);
+        }}
+        onRowClick={({ scic_employee_hris_id_number }) => {
+          handleColumnClick(scic_employee_hris_id_number);
         }}
       />
     </Box>

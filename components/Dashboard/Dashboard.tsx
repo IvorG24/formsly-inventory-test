@@ -83,7 +83,8 @@ const Dashboard = ({ ticketListCount }: Props) => {
     .filter(
       (form) =>
         (form.form_is_formsly_form &&
-          !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ||
+          !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name) &&
+          !form.form_is_public_form) ||
         !form.form_is_formsly_form
     )
     .map((form) => ({

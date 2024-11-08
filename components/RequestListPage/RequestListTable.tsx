@@ -714,12 +714,12 @@ const RequestListTable = ({
         {
           accessor: "user_id",
           title: "Requested By",
-          sortable: true,
           hidden: checkIfColumnIsHidden("request_team_member_id"),
           render: ({ request_team_member_id }) => {
             const requestorMemberData = teamMemberList.find(
               (member) => member.team_member_id === request_team_member_id
             );
+
             if (!requestorMemberData) {
               return <Text>Public User</Text>;
             }

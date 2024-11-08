@@ -68,8 +68,8 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
           router.query.onboarding === "true"
             ? `${notification.notification_redirect_url}?onboarding=true`
             : `${notification.notification_redirect_url}`;
-        await router.push(redirectUrl);
         onReadNotification();
+        await router.push(redirectUrl);
       }}
       sx={{ cursor: "pointer" }}
       fluid

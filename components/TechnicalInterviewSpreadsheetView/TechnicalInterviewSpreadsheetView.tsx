@@ -130,6 +130,7 @@ const TechnicalInterviewSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
+
       notifications.show({
         message: "Failed to fetch data",
         color: "red",

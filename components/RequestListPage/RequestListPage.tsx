@@ -7,27 +7,16 @@ import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   RequestListFilterValues,
   RequestListItemType,
   TeamProjectTableRow,
 } from "@/utils/types";
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  Menu,
-  Paper,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
@@ -38,8 +27,8 @@ type Props = {
   projectList: TeamProjectTableRow[];
 };
 
-const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
-  const router = useRouter();
+const RequestListPage = ({ projectList }: Props) => {
+  // const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
@@ -177,7 +166,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
   };
 
   useEffect(() => {
-    if (activeTeam.team_id && teamMember) {
+    if (activeTeam.team_id && teamMember && teamMemberList.length) {
       handlePagination(activePage);
     }
   }, [activeTeam, teamMember, teamMemberList]);
@@ -189,7 +178,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
           <Title order={4}>Request List Page</Title>
           <Text>Manage your team requests here.</Text>
         </Box>
-        {isFormslyTeam ? (
+        {/* {isFormslyTeam ? (
           <Menu shadow="md" width={200}>
             <Menu.Target>
               <Button variant="light">Spreadsheet View</Button>
@@ -220,7 +209,7 @@ const RequestListPage = ({ isFormslyTeam, projectList }: Props) => {
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
-        ) : null}
+        ) : null} */}
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>

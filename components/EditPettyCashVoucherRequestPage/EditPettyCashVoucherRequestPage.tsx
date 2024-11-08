@@ -1012,6 +1012,11 @@ const EditPettyCashVoucherRequestPage = ({
                   break;
               }
 
+              // disable editing of requesting project
+              if (field.field_id === "a1fdfcbb-5a2f-4b9d-8c6a-8c45e64e1d3b") {
+                field.field_is_read_only = !isReferenceOnly;
+              }
+
               return {
                 ...field,
                 field_response: response

@@ -4376,7 +4376,7 @@ AS $$
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
-    const pendingValidIDList = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_status='PENDING';`);
+    // const pendingValidIDList = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_status='PENDING';`);
 
     team_data = {
       team,
@@ -4412,7 +4412,7 @@ AS $$
       }),
       teamProjectsCount: `${teamProjectsCount}`,
       teamMembersCount: Number(teamMembersCount),
-      pendingValidIDList
+      pendingValidIDList: []
     }
  });
  return team_data;
@@ -4449,18 +4449,19 @@ AS $$
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user
         FROM team_schema.team_member_table tmt
-        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
+        INNER JOIN user_schema.user_table usert 
+          ON tmt.team_member_user_id = usert.user_id
+          AND usert.user_is_disabled=false
+          ${search && `AND (
+            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
+            OR usert.user_email ILIKE '%${search}%'
+          )`}
         LEFT JOIN user_schema.user_employee_number_table uent
           ON uent.user_employee_number_user_id = usert.user_id
           AND uent.user_employee_number_is_disabled=false
         WHERE
           tmt.team_member_team_id='${teamId}'
           AND tmt.team_member_is_disabled=false
-          AND usert.user_is_disabled=false
-          ${search && `AND (
-            CONCAT(usert.user_first_name, ' ', usert.user_last_name) ILIKE '%${search}%'
-            OR usert.user_email ILIKE '%${search}%'
-          )`}
         ORDER BY
           CASE tmt.team_member_role
               WHEN 'OWNER' THEN 1
@@ -4582,7 +4583,7 @@ AS $$
 
     const isFormslyTeam = plv8.execute(`SELECT COUNT(*) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
-    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
+    const projectList = plv8.execute(`SELECT team_project_name, team_project_code FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
     request_data = {isFormslyTeam,projectList}
  });
@@ -6419,11 +6420,11 @@ AS $$
                 SELECT request_response
                 FROM request_schema.request_response_table
                 WHERE
-                    request_response_request_id = '${connectedRequest.request_id}'
-                    AND request_response_field_id IN (
+                    request_response_field_id IN (
                         '9a112d6f-a34e-4767-b3c1-7f30af858f8f',
                         '2bac0084-53f4-419f-aba7-fb1f77403e00'
                     )
+                    AND request_response_request_id = '${connectedRequest.request_id}'
             `)[0];
 
             if (parentRequestIdField) {
@@ -6940,8 +6941,9 @@ AS $$
             const requestResponseData = plv8.execute(`
               SELECT *
               FROM request_schema.request_response_table
-              WHERE request_response_request_id = '${technicalAssessmentId}'
-              AND request_response_field_id = '${field.field_id}'
+              WHERE 
+                request_response_field_id = '${field.field_id}'
+                AND request_response_request_id = '${technicalAssessmentId}'
             `);
 
             return {
@@ -6982,8 +6984,9 @@ AS $$
               `
                 SELECT *
                 FROM request_schema.request_response_table
-                WHERE request_response_request_id = '${requestData.request_id}'
-                AND request_response_field_id = '${field.field_id}'
+                WHERE 
+                  request_response_field_id = '${field.field_id}'
+                  AND request_response_request_id = '${requestData.request_id}'
               `
             );
 
@@ -7024,8 +7027,9 @@ AS $$
             `
               SELECT *
               FROM request_schema.request_response_table
-              WHERE request_response_request_id = '${requestData.request_id}'
-              AND request_response_field_id = '${field.field_id}'
+              WHERE 
+                request_response_field_id = '${field.field_id}'
+                AND request_response_request_id = '${requestData.request_id}'
             `
           );
 
@@ -15944,10 +15948,10 @@ AS $$
     let generalAssessmentScoreCondition = '';
     if (general_assessment_score) {
       if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
       if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
     let technicalAssessmentRequestIdCondition = '';
@@ -15957,10 +15961,10 @@ AS $$
     let technicalAssessmentScoreCondition = '';
     if (technical_assessment_score) {
       if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
       if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
 
@@ -16325,10 +16329,10 @@ AS $$
     let generalAssessmentScoreCondition = '';
     if (general_assessment_score) {
       if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
       if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
     let technicalAssessmentRequestIdCondition = '';
@@ -16338,10 +16342,10 @@ AS $$
     let technicalAssessmentScoreCondition = '';
     if (technical_assessment_score) {
       if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
       if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
     let tradeTestDateCondition = "";
@@ -17046,10 +17050,10 @@ AS $$
     let generalAssessmentScoreCondition = '';
     if (general_assessment_score) {
       if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
       if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
     let technicalAssessmentRequestIdCondition = '';
@@ -17059,10 +17063,10 @@ AS $$
     let technicalAssessmentScoreCondition = '';
     if (technical_assessment_score) {
       if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
       if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
     let technicalInterviewDateCondition = "";
@@ -17365,10 +17369,10 @@ AS $$
     let generalAssessmentScoreCondition = '';
     if (general_assessment_score) {
       if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
       if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
     let technicalAssessmentRequestIdCondition = '';
@@ -17378,10 +17382,10 @@ AS $$
     let technicalAssessmentScoreCondition = '';
     if (technical_assessment_score) {
       if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
       if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
     let backgroundCheckDateCondition = "";
@@ -17620,10 +17624,10 @@ AS $$
     let generalAssessmentScoreCondition = '';
     if (general_assessment_score) {
       if (general_assessment_score.start) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
       if (general_assessment_score.end) {
-        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+        generalAssessmentScoreCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
     let technicalAssessmentRequestIdCondition = '';
@@ -17633,10 +17637,10 @@ AS $$
     let technicalAssessmentScoreCondition = '';
     if (technical_assessment_score) {
       if (technical_assessment_score.start) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
       if (technical_assessment_score.end) {
-        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+        technicalAssessmentScoreCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
     let jobOfferDateCondition = "";
@@ -25876,17 +25880,24 @@ SELECT
 
 ----- START: INDEXES
 
+CREATE INDEX request_form_id_idx ON request_schema.request_table(request_form_id);
+
+CREATE INDEX team_member_team_id_idx ON team_schema.team_member_table(team_member_team_id);
+
+CREATE INDEX request_is_disabled_idx ON request_schema.request_table(request_is_disabled);
+
+CREATE INDEX form_is_disabled_public_idx ON form_schema.form_table(form_is_disabled, form_is_public_form);
+
+CREATE INDEX request_team_member_id_idx ON request_schema.request_table(request_team_member_id);
+
+CREATE INDEX request_response_field_id_request_response_request_id_idx
+ON request_schema.request_response_table (request_response_field_id, request_response_request_id);
+
 CREATE INDEX request_response_request_id_idx
-ON request_schema.request_response_table (request_response, request_response_request_id);
+ON request_schema.request_response_table (request_response_request_id);
 
-CREATE INDEX request_list_idx
-ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
-
-CREATE INDEX request_response_idx
-ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
-
-CREATE INDEX request_response_table_request_response_field_id_idx
-ON request_schema.request_response_table (request_response_field_id);
+CREATE INDEX request_response_request_response_field_id_idx
+ON request_schema.request_response_table (SUBSTRING(request_response FROM 1 FOR 255), request_response_field_id);
 
 CREATE INDEX request_signer_table_request_signer_request_id_idx
 ON request_schema.request_signer_table (request_signer_request_id);
@@ -25894,11 +25905,14 @@ ON request_schema.request_signer_table (request_signer_request_id);
 CREATE INDEX request_signer_table_request_signer_signer_id_idx
 ON request_schema.request_signer_table (request_signer_signer_id);
 
-CREATE INDEX request_table_request_form_id_idx
-ON request_schema.request_table (request_form_id);
+CREATE INDEX comment_team_member_id_comment_rqeuest_id
+ON request_schema.comment_table (comment_team_member_id, comment_request_id);
 
-CREATE INDEX request_team_member_id_idx
-ON request_schema.request_table (request_team_member_id);
+CREATE INDEX notification_user_id_notification_app_notification_team_id_idx
+ON public.notification_table (notification_user_id, notification_app, notification_team_id);
+
+CREATE INDEX team_member_user_id_idx
+ON team_schema.team_member_table (team_member_user_id);
 
 ----- END: INDEXES
 

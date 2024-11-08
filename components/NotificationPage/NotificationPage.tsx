@@ -111,6 +111,7 @@ const NotificationPage = ({
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
+      setIsLoading(true);
       await updateNotificationStatus(supabaseClient, { notificationId });
       const updatedStoreNotificationList = storeNotificationList.map(
         (notification) => {
@@ -129,6 +130,7 @@ const NotificationPage = ({
         updateUnreadNotificationCount > 0 ? updateUnreadNotificationCount : 0
       );
     } catch {
+      setIsLoading(false);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -149,11 +151,11 @@ const NotificationPage = ({
         page: Number(page),
         userId,
         teamId,
-        unreadOnly:
-          currentTab === "unread" ? true : tab === "unread" ? true : false,
+        unreadOnly: currentTab === "unread",
       });
 
       const result = data as NotificationTableRow[];
+
       setPageNotificationList(result);
       setTotalNotificationCount(count || 0);
     } catch {
