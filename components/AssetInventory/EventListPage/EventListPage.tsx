@@ -3,7 +3,7 @@ import { updateDisabledEvent } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { EventTableRow } from "@/utils/types";
+import { InventoryEventList } from "@/utils/types";
 import {
   ActionIcon,
   Badge,
@@ -42,7 +42,9 @@ const EventsListPage = () => {
   const router = useRouter();
 
   const [activePage, setActivePage] = useState(1);
-  const [currentEventList, setCurrentEventList] = useState<EventTableRow[]>([]);
+  const [currentEventList, setCurrentEventList] = useState<
+    InventoryEventList[]
+  >([]);
   const [eventCount, setEventcount] = useState(0);
   const [isLoading, setIsloading] = useState(false);
   const [isFetchingSiteList, setIsFetchingSiteList] = useState(false);
@@ -78,6 +80,7 @@ const EventsListPage = () => {
         isAscendingSort,
         columnAccessor: sortStatus.columnAccessor,
       });
+
       setEventcount(totalCount);
       setCurrentEventList(data);
       const initialCheckedState = data.reduce(

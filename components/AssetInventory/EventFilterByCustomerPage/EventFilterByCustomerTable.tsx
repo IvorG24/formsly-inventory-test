@@ -23,7 +23,7 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
-import { FilterSelectedValuesType } from "./EventFilterBySiteFilter";
+import { FilterSelectedValuesType } from "./EventFilterByCustomerFilter";
 
 type Props = {
   requestList: InventoryListType[];
@@ -46,7 +46,7 @@ type Props = {
   tableColumnList: { value: string; label: string }[];
 };
 
-const EventFilterBySiteTable = ({
+const EventFilterByCustomerTable = ({
   requestList,
   requestListCount,
   activePage,
@@ -288,4 +288,4 @@ const EventFilterBySiteTable = ({
   );
 };
 
-export default EventFilterBySiteTable;
+export default EventFilterByCustomerTable;

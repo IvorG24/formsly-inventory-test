@@ -1,10 +1,10 @@
-import { EventTableRow } from "@/utils/types";
+import { InventoryEventList } from "@/utils/types";
 import { create } from "zustand";
 
 type Store = {
-  eventList: EventTableRow[];
+  eventList: InventoryEventList[];
   actions: {
-    setEventList: (eventList: EventTableRow[]) => void;
+    setEventList: (eventList: InventoryEventList[]) => void;
   };
 };
 

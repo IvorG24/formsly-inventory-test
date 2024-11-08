@@ -98,9 +98,7 @@ const EventFilterByPersonTable = ({
     .map((column) => ({
       accessor: column.value,
       title: column.label,
-      sortable:
-        column.value.startsWith("inventory_request") &&
-        column.value !== "inventory_request_notes",
+      sortable: column.value !== "inventory_request_notes",
       width: "auto",
       hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {

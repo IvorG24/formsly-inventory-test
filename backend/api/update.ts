@@ -3,6 +3,7 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
+import { editImageWithUUIDFromURL } from "@/utils/functions";
 import {
   escapeQuotes,
   escapeQuotesForObject,
@@ -1776,16 +1777,26 @@ export const updateEvent = async (
 
   const fieldResponsesArray: { name: string; response: string }[] = [];
   let signatureUrl = signature || null;
+  const editedFile = await editImageWithUUIDFromURL(signatureUrl);
 
   for (const section of updateResponse.sections) {
     for (const field of section.section_field) {
       const fieldResponse = field.field_response;
       const fieldName = field.field_name;
 
+      if (field.field_type === "FILE" && fieldResponse instanceof File) {
+        const uploadedFileUrl = await handleSignatureUpload(
+          supabaseClient,
+          fieldResponse ?? editedFile,
+          fieldName,
+          userId || ""
+        );
+        signatureUrl = uploadedFileUrl ?? "";
+      }
       if (
         field.field_type === "FILE" &&
         fieldResponse instanceof File &&
-        !signatureUrl
+        signatureUrl
       ) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,
@@ -1793,7 +1804,7 @@ export const updateEvent = async (
           fieldName,
           userId || ""
         );
-        signatureUrl = uploadedFileUrl ?? signature;
+        signatureUrl = uploadedFileUrl ?? editedFile;
       }
 
       let responseValue = fieldResponse || "";
@@ -1805,7 +1816,8 @@ export const updateEvent = async (
       ) {
         responseValue = fieldResponse || "";
       } else if (field.field_type === "FILE" || fieldResponse instanceof File) {
-        responseValue = signatureUrl || signature;
+        responseValue = signatureUrl || editedFile;
+        console.log(responseValue);
       } else if (
         field.field_type === "CHECKBOX" &&
         typeof fieldResponse === "boolean"

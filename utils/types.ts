@@ -2998,3 +2998,9 @@ export type Column = {
   hidden?: boolean;
   render: (record: Record<string, unknown>, index: number) => JSX.Element;
 };
+
+export type InventoryEventList = EventTableRow & {
+  has_assigned_to: boolean;
+  has_site: boolean;
+  has_customer: boolean;
+};

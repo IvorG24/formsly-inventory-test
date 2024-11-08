@@ -575,6 +575,93 @@ export const editImageWithUUID = (file: File): Promise<File> => {
   });
 };
 
+export const editImageWithUUIDFromURL = async (
+  imageUrl: string | null
+): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    if (!imageUrl) {
+      reject(new Error("Image URL is required"));
+      return;
+    }
+
+    fetch(imageUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(blob);
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) {
+            return reject(new Error("Failed to get canvas context"));
+          }
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const { data, width, height } = imageData;
+
+          const signatureSerial = generateSerial();
+
+          let minX = width,
+            maxX = 0,
+            minY = height,
+            maxY = 0;
+
+          // Detect non-white pixels (bounding box of signature)
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const index = (y * width + x) * 4;
+              const [r, g, b] = [data[index], data[index + 1], data[index + 2]];
+
+              if (!(r > 200 && g > 200 && b > 200)) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+              }
+            }
+          }
+
+          if (minX === width && maxX === 0 && minY === height && maxY === 0) {
+            minX = 0;
+            maxX = width;
+            minY = height / 2;
+            maxY = height / 2;
+          }
+
+          ctx.font = "bold 52px Arial";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          const uuidX = (minX + maxX) / 2;
+          const uuidY = (minY + maxY) / 2;
+
+          ctx.fillText(signatureSerial, uuidX, uuidY);
+
+          canvas.toBlob((editedBlob) => {
+            if (editedBlob) {
+              const editedFile = new File([editedBlob], "edited_image.png", {
+                type: "image/png",
+              });
+              resolve(editedFile);
+            } else {
+              reject(new Error("Failed to create PNG blob from canvas"));
+            }
+          }, "image/png");
+        };
+
+        img.onerror = () => reject(new Error("Failed to load image"));
+      })
+      .catch((error) => reject(error));
+  });
+};
+
 export const formatLabel = (key: string) => {
   if (key === "inventory_request_tag_id") {
     return "Asset Tag ID";

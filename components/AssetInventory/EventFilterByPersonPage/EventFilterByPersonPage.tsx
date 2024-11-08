@@ -208,7 +208,7 @@ const EventFilterByPersonPage = ({
 
   useEffect(() => {
     handlePagination(activePage);
-  }, [activeTeam]);
+  }, [activeTeam, eventName]);
 
   return (
     <Container maw={3840} h="100%">

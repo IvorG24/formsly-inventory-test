@@ -1,4 +1,5 @@
 import {
+  Accordion,
   Button,
   createStyles,
   Divider,
@@ -121,79 +122,109 @@ const ListTable = ({
             }
           >
             <Stack px="sm">
-              {/* Default Columns */}
-              <Text weight={800} size="lg">
-                Default Columns
-              </Text>
+              <Accordion variant="contained">
+                {/* Default Columns Accordion */}
+                <Accordion.Item value="default-columns">
+                  <Accordion.Control>
+                    <Text weight={800} size="lg">
+                      Default Columns
+                    </Text>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {defaultColumns.map((column, idx) => {
+                      const isHidden = tempTableColumnFilter.includes(
+                        column.value
+                      );
 
-              {defaultColumns.map((column, idx) => {
-                const isHidden = tempTableColumnFilter.includes(column.value);
+                      return (
+                        <Group position="apart" p={10} key={column.value + idx}>
+                          <Text weight={500}>{column.label}</Text>
+                          <Switch
+                            checked={!isHidden}
+                            onChange={(e) => {
+                              setTempTableColumnFilter(
+                                (prev) =>
+                                  e.currentTarget.checked
+                                    ? prev.filter(
+                                        (prevItem) => prevItem !== column.value
+                                      ) // Show column
+                                    : [...prev, column.value] // Hide column
+                              );
+                            }}
+                            styles={{ track: { cursor: "pointer" } }}
+                            color="green"
+                            onLabel="ON"
+                            offLabel="OFF"
+                          />
+                        </Group>
+                      );
+                    })}
+                  </Accordion.Panel>
+                </Accordion.Item>
 
-                return (
-                  <Group position="apart" key={column.value + idx}>
-                    <Text weight={500}>{column.label}</Text>
-                    <Switch
-                      checked={!isHidden}
-                      onChange={(e) => {
-                        setTempTableColumnFilter(
-                          (prev) =>
-                            e.currentTarget.checked
-                              ? prev.filter(
-                                  (prevItem) => prevItem !== column.value
-                                ) // Show column
-                              : [...prev, column.value] // Hide column
-                        );
-                      }}
-                      styles={{ track: { cursor: "pointer" } }}
-                      color="green"
-                      onLabel="ON"
-                      offLabel="OFF"
-                    />
-                  </Group>
-                );
-              })}
-              <Divider />
-              <Text weight={800} size="lg">
-                Custom Columns
-              </Text>
+                {/* Custom Columns Accordion */}
+                <Accordion.Item value="custom-columns">
+                  <Accordion.Control>
+                    <Text weight={800} size="lg">
+                      Custom Columns
+                    </Text>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    {customColumns.map((column, idx) => {
+                      const isHidden = tempTableColumnFilter.includes(
+                        column.value
+                      );
 
-              {customColumns.map((column, idx) => {
-                const isHidden = tempTableColumnFilter.includes(column.value);
-
-                return (
-                  <Group position="apart" key={column.value + idx}>
-                    <Text weight={500}>{column.label}</Text>
-                    <Switch
-                      checked={!isHidden}
-                      onChange={(e) => {
-                        setTempTableColumnFilter(
-                          (prev) =>
-                            e.currentTarget.checked
-                              ? prev.filter(
-                                  (prevItem) => prevItem !== column.value
-                                ) // Show column
-                              : [...prev, column.value] // Hide column
-                        );
-                      }}
-                      styles={{ track: { cursor: "pointer" } }}
-                      color="green"
-                      onLabel="ON"
-                      offLabel="OFF"
-                    />
-                  </Group>
-                );
-              })}
+                      return (
+                        <Stack key={column.value + idx} spacing="lg">
+                          <Group p={10} position="apart">
+                            <Text>{column.label}</Text>
+                            <Switch
+                              checked={!isHidden}
+                              onChange={(e) => {
+                                setTempTableColumnFilter((prev) =>
+                                  e.currentTarget.checked
+                                    ? prev.filter(
+                                        (prevItem) => prevItem !== column.value
+                                      ) // Show column
+                                    : [...prev, column.value]
+                                );
+                              }}
+                              styles={{ track: { cursor: "pointer" } }}
+                              color="green"
+                              onLabel="ON"
+                              offLabel="OFF"
+                            />
+                          </Group>
+                        </Stack>
+                      );
+                    })}
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
 
               {handleFetch && (
-                <Button
-                  onClick={() => {
-                    setListTableColumnFilter(tempTableColumnFilter); // Apply changes to main state
-                    setShowTableColumnFilter(false);
-                    handleFetch(1);
-                  }}
-                >
-                  Apply Changes
-                </Button>
+                <Stack>
+                  <Button
+                    onClick={() => {
+                      setListTableColumnFilter(tempTableColumnFilter);
+                      setShowTableColumnFilter(false);
+                      handleFetch(1);
+                    }}
+                  >
+                    Apply Changes
+                  </Button>
+                  <Divider labelPosition="center" label={<Text>OR</Text>} />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setListTableColumnFilter(tempTableColumnFilter);
+                      setShowTableColumnFilter(false);
+                    }}
+                  >
+                    Reset Columns
+                  </Button>
+                </Stack>
               )}
             </Stack>
           </Drawer>

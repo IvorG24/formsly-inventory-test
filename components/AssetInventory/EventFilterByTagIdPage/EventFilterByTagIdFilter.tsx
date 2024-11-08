@@ -148,6 +148,7 @@ const EventFilterByTagIdFilter = ({
       label: col.value
         .replace(/_/g, " ")
         .replace("inventory request", "")
+        .replace("event", "")
         .replace(/\b\w/g, (char) => char.toUpperCase())
         .trim(),
       key: col.value,
@@ -189,7 +190,7 @@ const EventFilterByTagIdFilter = ({
       })
       .join("_");
 
-    return `eventReport${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
+    return `eventReport_${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
   };
 
   const dateTypeWatch = watch("dateType");

@@ -108,7 +108,7 @@ const EventFormModal = ({
         type: formData?.form_name ?? "",
         userId: userData?.user_id,
         signature: signature,
-        teamName:activeTeam.team_name
+        teamName: activeTeam.team_name,
       });
       setOpened(false);
       handleFilterForms();
@@ -191,7 +191,7 @@ const EventFormModal = ({
 
       const customerListOption = customerOption.map((customer, idx) => ({
         option_id: customer.customer_id,
-        option_value: `${customer.customer_name}`,
+        option_value: `${customer.customer_first_name} ${customer.customer_last_name}`,
         option_order: idx,
         option_field_id: form.form_section[0].section_field[0].field_id,
       }));

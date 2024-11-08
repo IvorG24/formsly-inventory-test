@@ -35,6 +35,7 @@ import {
   IconPaperclip,
   IconPuzzle,
   IconReport,
+  IconReportSearch,
   IconSettings,
   IconSettingsUp,
   IconTableColumn,
@@ -57,6 +58,7 @@ type NavLink = {
   withIndicator?: boolean;
   subLinks?: NavLink[];
   nestedSubLinks?: NavLink[];
+  isEvent?: boolean;
 };
 type Props = {
   openNavbar: boolean;
@@ -124,6 +126,48 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
     }));
 
   const subLinks = [...nonCustomEvents, ...customEvents];
+  console.log(eventList);
+
+  const dynamicEventReportSubLinks: NavLink[] = eventList.map((event) => {
+    const eventName = event.event_name.toLowerCase().replace(/ /g, "-");
+    const baseHref = `/${formattedTeamName}/inventory/reports/${eventName}`;
+
+    const nestedSubLinks: NavLink[] = [
+      {
+        id: `${eventName}-by-tag-id`,
+        label: "By Tag ID",
+        icon: IconDots,
+        href: `${baseHref}/byTagId`,
+      },
+      event.has_site && {
+        id: `${eventName}-by-site`,
+        label: "By Site",
+        icon: IconDots,
+        href: `${baseHref}/bySite`,
+      },
+      event.has_assigned_to && {
+        id: `${eventName}-by-person`,
+        label: "By Person",
+        icon: IconDots,
+        href: `${baseHref}/byPerson`,
+      },
+      event.has_customer && {
+        id: `${eventName}-by-customer`,
+        label: "By Customer",
+        icon: IconDots,
+        href: `${baseHref}/byCustomer`,
+      },
+    ].filter(Boolean) as NavLink[];
+
+    return {
+      id: `event-${eventName}`,
+      label: event.event_name,
+      icon: IconReportSearch,
+      nestedSubLinks,
+      isEvent: true,
+    };
+  });
+
   const navlinkData: NavLink[] = [
     {
       id: "assigned-asset",
@@ -182,31 +226,7 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
                 icon: IconFileReport,
                 href: `/${formattedTeamName}/inventory/reports/assets`,
               },
-              {
-                id: "checked-out-report",
-                label: "Events Reports",
-                icon: IconPaperclip,
-                nestedSubLinks: [
-                  {
-                    id: "checkOutByEmployee",
-                    label: "By Person",
-                    icon: IconDots,
-                    href: `/${formattedTeamName}/inventory/reports/check-out/byPerson`,
-                  },
-                  {
-                    id: "checkOutByTagID",
-                    label: "By Tag ID",
-                    icon: IconDots,
-                    href: `/${formattedTeamName}/inventory/reports/check-out/byTagId`,
-                  },
-                  {
-                    id: "checkOutBySite",
-                    label: "By Site",
-                    icon: IconDots,
-                    href: `/${formattedTeamName}/inventory/reports/check-out/bySite`,
-                  },
-                ],
-              },
+              ...dynamicEventReportSubLinks,
             ]
           : []),
       ],
@@ -486,11 +506,7 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
                   );
                 }
 
-                if (
-                  subLink &&
-                  "id" in subLink &&
-                  subLink.id === "checked-out-report"
-                ) {
+                if (subLink && "id" in subLink && subLink.isEvent) {
                   return (
                     <Accordion key={subLink.id} variant="filled">
                       <Accordion.Item

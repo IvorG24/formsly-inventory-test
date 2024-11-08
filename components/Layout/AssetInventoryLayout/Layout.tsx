@@ -49,7 +49,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [openNavbar, setOpenNavbar] = useState(false);
   const [isLoading, setIsloading] = useState(false);
   const [indicatorCount, setIndicatorCount] = useState({
-    assignedAsset: 100,
+    assignedAsset: 0,
   });
   const fetchAllTeamMembers = async (teamId: string) => {
     const allTeamMembers: TeamMemberType[] = [];
@@ -175,6 +175,7 @@ const Layout = ({ children }: LayoutProps) => {
           const { data } = await getEventDetails(supabaseClient, {
             teamId: activeTeamId,
           });
+
           setEventList(data);
 
           const { assignedAsset } = await getAssignedCount(supabaseClient, {
@@ -186,7 +187,6 @@ const Layout = ({ children }: LayoutProps) => {
 
         setIsloading(false);
       } catch (e) {
-        await router.push("/500");
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

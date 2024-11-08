@@ -25,6 +25,7 @@ import {
 } from "@mantine/dates";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { SetStateAction, useState } from "react";
 import { CSVLink } from "react-csv";
 import { Controller, useFormContext } from "react-hook-form";
@@ -80,6 +81,8 @@ const EventFilterByPersonFilter = ({
     nothingFound: "Nothing found",
   };
   const employeeList = useEmployeeList();
+  const router = useRouter();
+  const event = router.query.eventName as string;
   const { ref: assignedToRef, focused: assignedToRefFocused } =
     useFocusWithin();
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
@@ -155,6 +158,7 @@ const EventFilterByPersonFilter = ({
       label: col.value
         .replace(/_/g, " ")
         .replace("inventory request", "")
+        .replace("event", "")
         .replace(/\b\w/g, (char) => char.toUpperCase())
         .trim(),
       key: col.value,
@@ -196,7 +200,7 @@ const EventFilterByPersonFilter = ({
       })
       .join("_");
 
-    return `eventReport${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
+    return `eventReport_${eventName.replace(/-/g, "_").toUpperCase()}_${activeFilters.toUpperCase() ? `_${activeFilters.toUpperCase()}` : ""}.csv`;
   };
   const dateTypeWatch = watch("dateType");
   const dateStart = watch("dateStart");

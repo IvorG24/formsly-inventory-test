@@ -16,8 +16,10 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
-import EventFilterByTagIdFilter from "./EventFilterByTagIdFilter";
-import EventFilterByTagIdTable from "./EventFilterByTagIdTable";
+import EventFilterByCustomerFilter, {
+  FilterSelectedValuesType,
+} from "./EventFilterByCustomerFilter";
+import EventFilterByCustomerTable from "./EventFilterByCustomerTable";
 
 type Props = {
   siteList: SiteTableRow[];
@@ -32,24 +34,7 @@ type Props = {
   }[];
 };
 
-type FilterSelectedValuesType = {
-  search?: string;
-  sites?: string[];
-  locations?: string;
-  category?: string[];
-  department?: string[];
-  limit?: string;
-  status?: string;
-  isAscendingSort?: boolean;
-  assignedToPerson?: string[];
-  assignedToSite?: string[];
-  assignedToCustomer?: string[];
-  dateType: string;
-  dateStart: Date | null;
-  dateEnd: Date | null;
-};
-
-const EventFilterByTagIdPage = ({
+const EventFilterByCustomerPage = ({
   siteList,
   departmentList,
   categoryList,
@@ -64,11 +49,11 @@ const EventFilterByTagIdPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
+
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
   const eventTitle = eventName
     .replace(/-/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
-  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-
   const filterFormMethods = useForm<FilterSelectedValuesType>({
     defaultValues: {
       search: "",
@@ -78,9 +63,7 @@ const EventFilterByTagIdPage = ({
       category: [],
       status: "",
       limit: limitOption[0].value,
-      assignedToPerson: [],
-      assignedToSite: [],
-      assignedToCustomer: [],
+      assignedToSite: "",
       isAscendingSort: false,
       dateType: dateOption[0].value,
       dateStart: null,
@@ -142,6 +125,7 @@ const EventFilterByTagIdPage = ({
         category,
         limit,
         isAscendingSort,
+        assignedToPerson,
         dateType,
         dateStart,
         dateEnd,
@@ -162,8 +146,9 @@ const EventFilterByTagIdPage = ({
         sites: sites,
         category: category,
         teamId: activeTeam.team_id,
+        assignedToPerson,
         eventName: eventName,
-        type: "byTagId",
+        type: "bySite",
         dateType: dateType,
         dateStart: formattedDateStart || "",
         dateEnd: formattedDateEnd || "",
@@ -209,14 +194,16 @@ const EventFilterByTagIdPage = ({
     <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
-          <Title order={3}>{eventTitle} Event Report By Tag ID List Page</Title>
+          <Title order={3}>
+            {eventTitle} Event Report By Customer List Page
+          </Title>
           <Text>Manage your assets reports here.</Text>
         </Box>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
-            <EventFilterByTagIdFilter
+            <EventFilterByCustomerFilter
               eventName={eventName}
               reportList={inventoryList}
               listTableColumnFilter={listTableColumnFilter}
@@ -232,7 +219,7 @@ const EventFilterByTagIdPage = ({
           </form>
         </FormProvider>
         <Box h="fit-content">
-          <EventFilterByTagIdTable
+          <EventFilterByCustomerTable
             requestList={inventoryList}
             requestListCount={inventoryListCount}
             activePage={activePage}
@@ -256,4 +243,4 @@ const EventFilterByTagIdPage = ({
   );
 };
 
-export default EventFilterByTagIdPage;
+export default EventFilterByCustomerPage;

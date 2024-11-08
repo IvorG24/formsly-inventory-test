@@ -178,6 +178,7 @@ const AssetListFilter = ({
       setLocalFilter({ ...localFilter, [key]: value });
     }
   };
+  console.log(customerOptions);
 
   useEffect(() => {
     Object.entries(localFilter).forEach(([key, value]) => {
