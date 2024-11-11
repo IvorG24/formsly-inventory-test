@@ -24,12 +24,13 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
 
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 import TradeTestFilterMenu from "./TradeTestFilterMenu";
@@ -95,6 +96,11 @@ const TradeTestSpreadsheetView = ({
     key: "TradeTestColumns",
     defaultValue: [],
   });
+
+  const prevSortRef = useRef<{
+    sortBy: string;
+    order: string;
+  }>();
 
   const filterFormMethods = useForm<TradeTestFilterFormValues>({
     defaultValues: formDefaultValues as unknown as TradeTestFilterFormValues,
@@ -167,29 +173,31 @@ const TradeTestSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id) {
+      handleSorting();
+    }
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      await fetchData({
-        page: 1,
-      });
       const storedData = localStorage.getItem("tradeTestSpreadsheetView");
       if (storedData) {
         const filterData: TradeTestFilterFormValues = JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
         filterFormMethods.reset(filterData as TradeTestFilterFormValues);
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
   }, [user?.user_id]);
 
   const handleUpdateTradeTestStatus = async (

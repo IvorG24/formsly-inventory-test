@@ -554,7 +554,7 @@ const ReviewAppNavLink = () => {
     ...(userTeamMemberData?.team_member_role === "ADMIN"
       ? [
           {
-            label: `Pactical Test Form`,
+            label: `Practical Test Form`,
             icon: (
               <Box ml="sm" {...defaultNavLinkContainerProps}>
                 <IconClipboard {...defaultIconProps} />

@@ -244,7 +244,7 @@ export const withAuthAndOnboardingRequestPage = <
       if (!teamId) {
         return {
           redirect: {
-            destination: "/user/requests",
+            destination: "/user/join-team",
             permanent: false,
           },
         };
@@ -257,7 +257,7 @@ export const withAuthAndOnboardingRequestPage = <
       if (!userActiveTeam) {
         return {
           redirect: {
-            destination: "/user/requests",
+            destination: "/user/join-team",
             permanent: false,
           },
         };
@@ -354,7 +354,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
       if (!teamId) {
         return {
           redirect: {
-            destination: "/user/requests",
+            destination: "/user/join-team",
             permanent: false,
           },
         };
@@ -367,7 +367,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
       if (!userActiveTeam) {
         return {
           redirect: {
-            destination: "/user/requests",
+            destination: "/user/join-team",
             permanent: false,
           },
         };

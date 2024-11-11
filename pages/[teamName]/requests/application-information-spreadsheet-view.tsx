@@ -8,7 +8,6 @@ import { withActiveTeam } from "@/utils/server-side-protections";
 import {
   ApplicationInformationFieldOptionType,
   OptionType,
-  SectionWithFieldType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
@@ -49,31 +48,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
   approverOptionList: OptionType[];
 };
 
-const Page = ({ sectionList, optionList, approverOptionList }: Props) => {
-  const filteredSectionList = sectionList
-    .filter((section) =>
-      ["Header", "Personal Information"].includes(section.section_name)
-    )
-    .map((section) => {
-      const filteredFields = section.section_field.filter((field) =>
-        [
-          "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
-          "e48e7297-c250-4595-ba61-2945bf559a25",
-          "7ebb72a0-9a97-4701-bf7c-5c45cd51fbce",
-          "9322b870-a0a1-4788-93f0-2895be713f9c",
-        ].includes(field.field_id)
-      );
-      return {
-        ...section,
-        section_field: filteredFields,
-      };
-    });
-
+const Page = ({ optionList, approverOptionList }: Props) => {
   return (
     <>
       <Meta
@@ -81,7 +60,6 @@ const Page = ({ sectionList, optionList, approverOptionList }: Props) => {
         url="/{teamName}/requests/application-information-spreadsheet-view"
       />
       <ApplicationInformationSpreadsheetView
-        sectionList={filteredSectionList}
         optionList={optionList}
         approverOptionList={approverOptionList}
       />

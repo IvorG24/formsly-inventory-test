@@ -54,6 +54,13 @@ const useStyles = createStyles((theme) => ({
     },
     cursor: "pointer",
   },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
 }));
 
 type Props = {
@@ -63,12 +70,13 @@ type Props = {
   setSelectedProject: Dispatch<
     SetStateAction<TeamProjectWithAddressType | null>
   >;
+  isLoading: boolean;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   selectedProject: TeamProjectWithAddressType | null;
   isOwnerOrAdmin: boolean;
-  handleFetch: (search: string, page: number) => void;
-  isLoading: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  handleFetch: (search: string, page: number) => void;
+  isFetchingMembers: boolean;
   projectCount: number;
 };
 
@@ -81,8 +89,9 @@ const ProjectList = ({
   selectedProject,
   isOwnerOrAdmin,
   handleFetch,
-  isLoading,
+  isFetchingMembers,
   setIsLoading,
+  isLoading,
   projectCount,
 }: Props) => {
   const { classes } = useStyles();
@@ -126,7 +135,6 @@ const ProjectList = ({
   const handleDelete = async () => {
     const saveCheckList = checkList;
     const savedRecord = projectList;
-
     try {
       setCheckList([]);
       await deleteRow(supabaseClient, {
@@ -151,13 +159,17 @@ const ProjectList = ({
   };
 
   const handleColumnClick = (project_id: string) => {
-    if (selectedProject?.team_project_id === project_id) return;
+    if (selectedProject?.team_project_id === project_id || isFetchingMembers)
+      return;
 
     setIsFetchingMembers(true);
     const newSelectedProject = projectList.find(
       (project) => project.team_project_id === project_id
     );
     setSelectedProject(newSelectedProject || null);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   };
 
   const handleFileClick = async (path: string) => {
@@ -209,7 +221,9 @@ const ProjectList = ({
       title: "Project Name",
       render: ({ team_project_name, team_project_id }) => (
         <Text
-          className={classes.clickableColumn}
+          className={
+            isFetchingMembers ? classes.disabledColumn : classes.clickableColumn
+          }
           onClick={() => {
             handleColumnClick(team_project_id);
           }}
@@ -223,9 +237,11 @@ const ProjectList = ({
       title: "Code",
       render: ({ team_project_code, team_project_id }) => (
         <Text
-          className={classes.clickableColumn}
+          className={
+            isFetchingMembers ? classes.disabledColumn : classes.clickableColumn
+          }
           onClick={() => {
-            handleColumnClick(team_project_id);
+            if (!isFetchingMembers) handleColumnClick(team_project_id);
           }}
         >
           {team_project_code}

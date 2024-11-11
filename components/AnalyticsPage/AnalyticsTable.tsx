@@ -6,6 +6,7 @@ import {
   Center,
   Flex,
   Group,
+  LoadingOverlay,
   Paper,
   Stack,
   Text,
@@ -22,6 +23,7 @@ type RequestStatisticsProps = {
   frequency?: string;
   monthLabel: string[];
   dataChartResponse: DatasetChartResponse[];
+  isLoading: boolean;
 };
 
 const AnalyticsTable = ({
@@ -31,6 +33,7 @@ const AnalyticsTable = ({
   frequency,
   xLabel,
   dataChartResponse,
+  isLoading,
 }: RequestStatisticsProps) => {
   const statusList =
     stepFilter === "request"
@@ -85,7 +88,8 @@ const AnalyticsTable = ({
   }, [selectedFilter, dataChartResponse]);
 
   return (
-    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
+    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }} pos="relative">
+      <LoadingOverlay visible={isLoading} />
       <Stack>
         <Group position="apart">
           <Group spacing="xs" mb="sm">

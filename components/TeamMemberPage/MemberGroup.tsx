@@ -76,8 +76,8 @@ const MemberGroup = ({ memberId, groupList, groupCount }: Props) => {
           <TextInput
             placeholder="Search group"
             rightSection={
-              <ActionIcon size="xs" type="submit">
-                <IconSearch />
+              <ActionIcon type="submit" disabled={isLoading}>
+                <IconSearch size={14} />
               </ActionIcon>
             }
             maw={350}

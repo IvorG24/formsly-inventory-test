@@ -1260,6 +1260,16 @@ CREATE TABLE hr_schema.practical_test_position_table (
   practical_test_position_position_id UUID REFERENCES lookup_schema.position_table(position_id) ON DELETE CASCADE NOT NULL
 );
 
+CREATE TABLE hr_schema.application_information_additional_details_table (
+  application_information_additional_details_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  application_information_additional_details_position VARCHAR(4000) NOT NULL,
+  application_information_additional_details_first_name VARCHAR(4000) NOT NULL,
+  application_information_additional_details_middle_name VARCHAR(4000),
+  application_information_additional_details_last_name VARCHAR(4000) NOT NULL,
+  
+  application_information_additional_details_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -1710,6 +1720,7 @@ AS $$
       requestScore,
       rootFormslyRequestId,
       recruiter,
+      applicationInformationParams,
       interviewParams,
       backgroundCheckParams,
       tradeTestParams
@@ -1980,6 +1991,27 @@ AS $$
       );
       const query = 'SELECT public.update_trade_test_status($1::json)';
       plv8.execute(query, [JSON.stringify(tradeTestParams)]);
+    } else if (applicationInformationParams) {
+      plv8.execute(
+        `
+          INSERT INTO hr_schema.application_information_additional_details_table
+          (
+            application_information_additional_details_position,
+            application_information_additional_details_first_name,
+            application_information_additional_details_middle_name,
+            application_information_additional_details_last_name,
+            application_information_additional_details_request_id
+          )
+          VALUES
+          (
+            '${applicationInformationParams.position}',
+            '${applicationInformationParams.firstName}',
+            ${applicationInformationParams.middleName ? `'${applicationInformationParams.middleName}'` : "NULL"},
+            '${applicationInformationParams.lastName}',
+            '${requestId}'
+          )
+        `
+      );
     }
  });
  return request_data;
@@ -7146,9 +7178,9 @@ AS $$
       teamId,
     } = input_data;
 
-    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category = '${category}' LIMIT 1`)[0];
 
-    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
+    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id = '${categoryData.ticket_category_id}'`);
 
     const sectionList = sectionData.map(section => {
       const fieldData = plv8.execute(
@@ -7208,7 +7240,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request Item CSI"){
       const itemList = plv8.execute(`
         SELECT * FROM item_schema.item_table
@@ -7247,7 +7278,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request Item Option"){
       const itemList = plv8.execute(`
         SELECT * FROM item_schema.item_table
@@ -7292,7 +7322,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Incident Report for Employees"){
         const memberList = plv8.execute(`
           SELECT
@@ -7332,7 +7361,6 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-
     } else if (category === "Request PED Equipment Part"){
       const equipmentNameList = plv8.execute(
         `
@@ -7457,9 +7485,7 @@ AS $$
         }
       })
       returnData = { ticket_sections }
-    }
-
-    else {
+    } else {
       returnData = { ticket_sections: sectionList }
     }
  });
@@ -7541,45 +7567,48 @@ AS $$
       userId
     } = input_data;
 
-    const ticket = plv8.execute(`SELECT tt.*, tct.ticket_category
-      FROM ticket_schema.ticket_table tt
-      INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-      WHERE ticket_id='${ticketId}';
-    `)[0];
+    const ticket = plv8.execute(
+      `
+        SELECT 
+          tt.*, 
+          tct.ticket_category
+        FROM ticket_schema.ticket_table tt
+        INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+        WHERE ticket_id = '${ticketId}'
+      `
+    )[0];
 
-    const requester = plv8.execute(`
-      SELECT jsonb_build_object(
-        'team_member_id', tm.team_member_id,
-        'team_member_team_id', tm.team_member_team_id,
-        'team_member_role', tm.team_member_role,
-        'team_member_user', jsonb_build_object(
-          'user_id', u.user_id,
-          'user_first_name', u.user_first_name,
-          'user_last_name', u.user_last_name,
-          'user_email', u.user_email,
-          'user_avatar', u.user_avatar
-        )
-      ) AS member
-      FROM team_schema.team_member_table tm
-      JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}'
-    `)[0]
+    const requester = plv8.execute(
+      `
+        SELECT
+          team_member_id,
+          team_member_team_id,
+          team_member_role,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_email,
+          user_avatar
+        FROM team_schema.team_member_table
+        JOIN user_schema.user_table ON team_member_user_id = user_id
+        WHERE team_member_id = '${ticket.ticket_requester_team_member_id}'
+      `
+    )[0];
 
-    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
+    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.team_member_team_id}"}')`)[0].get_ticket_form;
 
-    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}'`);
 
     const originalTicketSections = ticketForm.ticket_sections.map(section=>({
-        ...section,
-        field_section_duplicatable_id: null,
-        ticket_section_fields: section.ticket_section_fields.map(field=>{
-          return {
-            ...field,
-            ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
-          }
-        })
-      }))
-
+      ...section,
+      field_section_duplicatable_id: null,
+      ticket_section_fields: section.ticket_section_fields.map(field=>{
+        return {
+          ...field,
+          ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
+        }
+      })
+    }));
 
     const sectionWithDuplicateList = [];
     originalTicketSections.forEach((section) => {
@@ -7726,7 +7755,17 @@ AS $$
     returnData = {
       ticket: {
         ...ticket,
-        ticket_requester: requester.member,
+        ticket_requester: {
+          team_member_id: requester.team_member_id,
+          team_member_role: requester.team_member_role,
+          team_member_user: {
+            user_id: requester.user_id,
+            user_first_name: requester.user_first_name,
+            user_last_name: requester.user_last_name,
+            user_avatar: requester.user_avatar,
+            user_email: requester.user_email
+          }
+        },
         ticket_approver: approver ? approver.member : null,
         ticket_comment: ticketCommentData.map(ticketComment => {
           return {
@@ -7752,8 +7791,8 @@ AS $$
           }
         }
       )},
-    user: member,
-    ticketForm: ticketFormWithResponse,
+      user: member,
+      ticketForm: ticketFormWithResponse,
     }
  });
  return returnData;
@@ -15091,25 +15130,6 @@ AS $$
 
     const requestListWithResponses = [];
     parentRequests.forEach((parentRequest) => {
-      const responseList = plv8.execute(
-        `
-          SELECT
-            request_response_table.*,
-            field_id
-          FROM
-            request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND request_response_field_id IN (
-              '0fd115df-c2fe-4375-b5cf-6f899b47ec56',
-              'e48e7297-c250-4595-ba61-2945bf559a25',
-              '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce',
-              '9322b870-a0a1-4788-93f0-2895be713f9c'
-            )
-          WHERE
-            request_response_request_id = '${parentRequest.request_id}'
-        `
-      );
-
       const signerList = plv8.execute(
         `
           SELECT
@@ -15137,7 +15157,10 @@ AS $$
         request_status: parentRequest.request_status,
         request_status_date_updated: parentRequest.request_status_date_updated,
         request_score_value: parentRequest.request_score_value,
-        request_response_list: responseList,
+        application_information_additional_details_position: parentRequest.application_information_additional_details_position,
+        application_information_additional_details_first_name: parentRequest.application_information_additional_details_first_name,
+        application_information_additional_details_middle_name: parentRequest.application_information_additional_details_middle_name,
+        application_information_additional_details_last_name: parentRequest.application_information_additional_details_last_name,
         request_signer_list: signerList.map(signer => {
           return {
             request_signer_id: signer.request_signer_id,
@@ -15191,16 +15214,6 @@ AS $$
 
     const optionList = [];
 
-    const sectionList = plv8.execute(
-      `
-        SELECT *
-        FROM form_schema.section_table
-        WHERE
-          section_form_id = '${formId}'
-        ORDER BY section_order
-      `
-    );
-
     const signerIdList = plv8.execute(
       `
         SELECT DISTINCT(signer_id)
@@ -15230,42 +15243,6 @@ AS $$
     }
 
     returnData = {
-      sectionList: sectionList.map(section => {
-        const fieldData = plv8.execute(
-          `
-            SELECT *
-            FROM form_schema.field_table
-            WHERE
-              field_section_id = '${section.section_id}'
-            ORDER BY field_order
-          `
-        );
-
-        const fieldWithOptionData = fieldData.map(field => {
-          const fieldOptionData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE
-                option_field_id = '${field.field_id}'
-            `
-          );
-
-          if(fieldOptionData.length){
-            optionList.push({
-              field_name: field.field_name,
-              field_option: fieldOptionData
-            });
-          }
-
-          return field;
-        });
-
-        return {
-          ...section,
-          section_field: fieldWithOptionData
-        }
-      }),
       optionList,
       approverOptionList: approverOptionList.map(approver => {
         return {
@@ -15289,12 +15266,10 @@ AS $$
     const {
       page,
       limit,
-      status,
-      sort,
+      email,
       search,
       columnAccessor,
-      email,
-      form
+      sort
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15305,39 +15280,24 @@ AS $$
           request_id,
           request_formsly_id,
           request_date_created,
-          request_status,
-          request_form_id,
-          form_name
+          request_status
         FROM (
           SELECT
             request_id,
             request_formsly_id,
             request_date_created,
             request_status,
-            request_form_id,
-            form_name,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
-          INNER JOIN form_schema.form_table ON form_id = request_form_id
-            AND form_table.form_is_disabled = false
-            AND form_is_public_form = true
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response = '"${email}"'
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            AND field_id IN (
-              '56438f2d-da70-4fa4-ade6-855f2f29823b',
-              '5c5284cd-7647-4307-b558-40b9076d9f7f',
-              '3c0723cc-f083-4f89-abe0-f8fb4bd02234',
-              '226b0080-b9bf-423e-ba3a-87132dfa9c6a'
-            )
+            AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
           WHERE
             request_is_disabled = false
         ) AS a
         WHERE
           a.rowNumber = 1
-          ${status}
           ${search}
-          ${form}
         ORDER BY ${columnAccessor} ${sort}
         LIMIT ${limit}
         OFFSET ${offset}
@@ -15351,14 +15311,8 @@ AS $$
             request_id,
             request_formsly_id,
             request_date_created,
-            request_status,
-            request_form_id,
-            form_name,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
-          INNER JOIN form_schema.form_table ON form_id = request_form_id
-            AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-            AND form_is_disabled = false
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
             AND request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
             AND request_response = '"${email}"'
@@ -15367,9 +15321,6 @@ AS $$
         ) AS a
         WHERE
           a.rowNumber = 1
-          ${status}
-          ${search}
-          ${form}
       `
     )[0];
 
@@ -15387,174 +15338,128 @@ CREATE OR REPLACE FUNCTION fetch_user_request_list_data(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let return_value
+  let returnData;
   plv8.subtransaction(function(){
     const {
-      requestList
+      requestIdCondition
     } = input_data;
 
-    return_value = requestList.map(request => {
-      const request_signer = plv8.execute(
-        `
-          SELECT
-            request_signer_id,
-            request_signer_status,
-            signer_team_member_id,
-            signer_is_primary_signer,
-            user_id,
-            user_first_name,
-            user_last_name,
-            user_avatar
-          FROM request_schema.request_signer_table
-          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
-          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-          WHERE
-            request_signer_request_id = '${request.request_id}'
-        `
-      ).map(signer => {
-        return {
-          request_signer_id: signer.request_signer_id,
-          request_signer_status: signer.request_signer_status,
-          request_signer: {
-              signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
-          },
-          signer_team_member_user: {
-            user_id: signer.user_id,
-            user_first_name: signer.user_first_name,
-            user_last_name: signer.user_last_name,
-            user_avatar: signer.user_avatar
-          }
-        }
-      });
-
-      let isWithViewIndicator = false;
-      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment v1', 'General Assessment'].includes(request.form_name)){
-        const connectedRequestCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            WHERE
-              request_response_field_id IN (
-                'be0e130b-455b-47e0-a804-f90943f7bc07',
-                'c3225996-d3e8-4fb4-87d8-f5ced778adcf',
-                'ef1e47d2-413f-4f92-b541-20c88f3a67b2',
-                '362bff3d-54fa-413b-992c-fd344d8552c6'
-              )
-              AND request_response = '"${request.request_formsly_id}"'
-          `
-        )[0].count;
-        if(!connectedRequestCount){
-          isWithViewIndicator = true;
-        }
-      }
-
-      const checkProgress = (formslyId, requestId) => {
-        const generalAssessmentCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id IN (
-                '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
-                '2f9100a9-f322-405f-acda-68bbf94236b0'
-              )
-            WHERE
-              request_response = '"${formslyId}"'
-          `
-        )[0].count;
-        if(!generalAssessmentCount){
-          return true;
-        }
-
-        const technicalAssessmentCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM request_schema.request_response_table
-            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
-            WHERE
-              request_response = '"${formslyId}"'
-          `
-        )[0].count;
-        if(!technicalAssessmentCount){
-          return true;
-        }
-
-        const hrPhoneInterviewCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.hr_phone_interview_table
-            WHERE
-              hr_phone_interview_request_id = '${requestId}'
-              AND hr_phone_interview_schedule IS NULL
-          `
-        )[0].count;
-        if(hrPhoneInterviewCount){
-          return true;
-        }
-
-        const technicalInterviewCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.technical_interview_table
-            WHERE
-              technical_interview_request_id = '${requestId}'
-              AND technical_interview_schedule IS NULL
-          `
-        )[0].count;
-        if(technicalInterviewCount){
-          return true;
-        }
-
-        const tradeTestCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM hr_schema.trade_test_table
-            WHERE
-              trade_test_request_id = '${requestId}'
-              AND trade_test_schedule IS NULL
-          `
-        )[0].count;
-        if(tradeTestCount){
-          return true;
-        }
-
-        const jobOfferData = plv8.execute(
-          `
-            SELECT job_offer_id, job_offer_status
-            FROM hr_schema.job_offer_table
-            WHERE
-              job_offer_request_id = '${requestId}'
-            ORDER BY job_offer_date_created DESC
-            LIMIT 1
-          `
-        );
-        if(jobOfferData.length && jobOfferData[0].job_offer_status === 'PENDING'){
-          return true;
-        }
-      }
-
-      let isWithProgressIndicator = false;
-      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
-        isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
-      }
-
-      return {
-        request_id: request.request_id,
-        request_formsly_id: request.request_formsly_id,
-        request_date_created: request.request_date_created,
-        request_status: request.request_status,
-        request_form_id: request.request_form_id,
-        form_name: request.form_name,
-        request_signer: request_signer,
-        request_is_with_view_indicator: isWithViewIndicator,
-        request_is_with_progress_indicator: isWithProgressIndicator
-      }
-    });
+    returnData = plv8.execute(
+      `
+        SELECT request_response_request_id, request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_request_id IN (${requestIdCondition})
+          AND request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
+      `
+    );
   });
-  return return_value
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_user_request_indicator(
+  input_data JSON
+)
+RETURNS BOOLEAN
+SET search_path TO ''
+AS $$
+  let returnData
+  plv8.subtransaction(function(){
+    const {
+      request
+    } = input_data;
+
+    const checkProgress = (formslyId, requestId) => {
+      const generalAssessmentCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM request_schema.request_response_table
+          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            AND request_form_id IN (
+              '71f569a0-70a8-4609-82d2-5cc26ac1fe8c',
+              '2f9100a9-f322-405f-acda-68bbf94236b0'
+            )
+          WHERE
+            request_response = '"${formslyId}"'
+        `
+      )[0].count;
+      if(!generalAssessmentCount){
+        return true;
+      }
+
+      const technicalAssessmentCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM request_schema.request_response_table
+          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
+          WHERE
+            request_response = '"${formslyId}"'
+        `
+      )[0].count;
+      if(!technicalAssessmentCount){
+        return true;
+      }
+
+      const hrPhoneInterviewCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.hr_phone_interview_table
+          WHERE
+            hr_phone_interview_request_id = '${requestId}'
+            AND hr_phone_interview_schedule IS NULL
+        `
+      )[0].count;
+      if(hrPhoneInterviewCount){
+        return true;
+      }
+
+      const technicalInterviewCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.technical_interview_table
+          WHERE
+            technical_interview_request_id = '${requestId}'
+            AND technical_interview_schedule IS NULL
+        `
+      )[0].count;
+      if(technicalInterviewCount){
+        return true;
+      }
+
+      const tradeTestCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM hr_schema.trade_test_table
+          WHERE
+            trade_test_request_id = '${requestId}'
+            AND trade_test_schedule IS NULL
+        `
+      )[0].count;
+      if(tradeTestCount){
+        return true;
+      }
+
+      const jobOfferData = plv8.execute(
+        `
+          SELECT job_offer_id, job_offer_status
+          FROM hr_schema.job_offer_table
+          WHERE
+            job_offer_request_id = '${requestId}'
+          ORDER BY job_offer_date_created DESC
+          LIMIT 1
+        `
+      );
+      if(jobOfferData.length && jobOfferData[0].job_offer_status === 'PENDING'){
+        return true;
+      }
+    }
+    let isWithProgressIndicator = false;
+    isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
+
+    returnData = isWithProgressIndicator;
+  });
+  return returnData
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_user_id_in_application_information(
@@ -25890,6 +25795,8 @@ CREATE INDEX form_is_disabled_public_idx ON form_schema.form_table(form_is_disab
 
 CREATE INDEX request_team_member_id_idx ON request_schema.request_table(request_team_member_id);
 
+CREATE INDEX request_date_created_idx ON request_schema.request_table(request_date_created);
+
 CREATE INDEX request_response_field_id_request_response_request_id_idx
 ON request_schema.request_response_table (request_response_field_id, request_response_request_id);
 
@@ -25899,13 +25806,7 @@ ON request_schema.request_response_table (request_response_request_id);
 CREATE INDEX request_response_request_response_field_id_idx
 ON request_schema.request_response_table (SUBSTRING(request_response FROM 1 FOR 255), request_response_field_id);
 
-CREATE INDEX request_signer_table_request_signer_request_id_idx
-ON request_schema.request_signer_table (request_signer_request_id);
-
-CREATE INDEX request_signer_table_request_signer_signer_id_idx
-ON request_schema.request_signer_table (request_signer_signer_id);
-
-CREATE INDEX comment_team_member_id_comment_rqeuest_id
+CREATE INDEX comment_team_member_id_comment_request_idx
 ON request_schema.comment_table (comment_team_member_id, comment_request_id);
 
 CREATE INDEX notification_user_id_notification_app_notification_team_id_idx
@@ -25913,6 +25814,21 @@ ON public.notification_table (notification_user_id, notification_app, notificati
 
 CREATE INDEX team_member_user_id_idx
 ON team_schema.team_member_table (team_member_user_id);
+
+CREATE INDEX item_is_disabled_item_is_available_item_team_id_idx
+ON item_schema.item_table (item_is_disabled, item_is_available, item_team_id);
+
+CREATE INDEX item_description_item_id_item_description_is_disabled_item_description_is_available_idx
+ON item_schema.item_description_table (item_description_item_id, item_description_is_disabled, item_description_is_available);
+
+CREATE INDEX item_description_field_item_description_id_item_description_field_is_disabled_item_description_field_is_available_idx
+ON item_schema.item_description_field_table (item_description_field_item_description_id, item_description_field_is_disabled, item_description_field_is_available);
+
+CREATE INDEX request_signer_signer_id_request_signer_request_id_request_signer_status_idx
+ON request_schema.request_signer_table (request_signer_signer_id, request_signer_request_id, request_signer_status);
+
+CREATE INDEX request_signer_request_id_idx
+ON request_schema.request_signer_table (request_signer_request_id);
 
 ----- END: INDEXES
 

@@ -32,6 +32,7 @@ import {
   AddressTableRow,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
+  ApplicationListItemType,
   ApproverUnresolvedRequestCountType,
   AppType,
   AttachmentBucketType,
@@ -6025,11 +6026,7 @@ export const getApplicationInformationSummaryData = async (
   const offset = (page - 1) * limit;
 
   const responseFilterCondition = [];
-  const fieldIdCondition = [];
-
-  if (responseFilter.position || responseFilter.seniority) {
-    fieldIdCondition.push("'0fd115df-c2fe-4375-b5cf-6f899b47ec56'");
-  }
+  const requestFilterCondition = [];
 
   if (
     Boolean(responseFilter.seniority) &&
@@ -6040,8 +6037,8 @@ export const getApplicationInformationSummaryData = async (
     const seniority =
       responseFilter.seniority === "MID" ? "" : `${responseFilter.seniority} `;
     responseFilterCondition.push(
-      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
-        .map((value) => `'"${seniority}${value}"'`)
+      `(application_information_additional_details_position IN (${responseFilter.position
+        .map((value) => `'${seniority}${value}'`)
         .join(", ")}))`
     );
   } else if (
@@ -6050,11 +6047,11 @@ export const getApplicationInformationSummaryData = async (
   ) {
     if (responseFilter.seniority === "MID") {
       responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response NOT ILIKE '"JUNIOR%' AND request_response NOT ILIKE '"SENIOR%')`
+        `(application_information_additional_details_position NOT ILIKE 'JUNIOR%' AND application_information_additional_details_position NOT ILIKE 'SENIOR%')`
       );
     } else {
       responseFilterCondition.push(
-        `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response ILIKE '"${responseFilter.seniority}%')`
+        `(application_information_additional_details_position ILIKE '${responseFilter.seniority}%')`
       );
     }
   } else if (
@@ -6062,32 +6059,28 @@ export const getApplicationInformationSummaryData = async (
     responseFilter?.position?.length
   ) {
     responseFilterCondition.push(
-      `(request_response_field_id = '0fd115df-c2fe-4375-b5cf-6f899b47ec56' AND request_response IN (${responseFilter.position
-        .map((value) => `'"${value}"'`)
+      `(application_information_additional_details_position IN (${responseFilter.position
+        .map((value) => `'${value}'`)
         .join(", ")}))`
     );
   }
 
   if (responseFilter.firstName) {
     responseFilterCondition.push(
-      `(request_response_field_id = 'e48e7297-c250-4595-ba61-2945bf559a25' AND request_response ILIKE '%${responseFilter.firstName}%')`
+      `(application_information_additional_details_first_name ILIKE '%${responseFilter.firstName}%')`
     );
-    fieldIdCondition.push("'e48e7297-c250-4595-ba61-2945bf559a25'");
   }
   if (responseFilter.middleName) {
     responseFilterCondition.push(
-      `(request_response_field_id = '7ebb72a0-9a97-4701-bf7c-5c45cd51fbce' AND request_response ILIKE '%${responseFilter.middleName}%')`
+      `( application_information_additional_details_middle_name ILIKE '%${responseFilter.middleName}%')`
     );
-    fieldIdCondition.push("'7ebb72a0-9a97-4701-bf7c-5c45cd51fbce'");
   }
   if (responseFilter.lastName) {
     responseFilterCondition.push(
-      `(request_response_field_id = '9322b870-a0a1-4788-93f0-2895be713f9c' AND request_response ILIKE '%${responseFilter.lastName}%')`
+      `(application_information_additional_details_last_name ILIKE '%${responseFilter.lastName}%')`
     );
-    fieldIdCondition.push("'9322b870-a0a1-4788-93f0-2895be713f9c'");
   }
 
-  const requestFilterCondition = [];
   Boolean(requestFilter.requestId)
     ? requestFilterCondition.push(
         `request_formsly_id ILIKE '%${requestFilter.requestId}%'`
@@ -6142,82 +6135,43 @@ export const getApplicationInformationSummaryData = async (
       )})`)
     : null;
 
-  const filterCount = responseFilterCondition.length;
-
-  const castRequestResponse = (value: string) => {
-    switch (sort?.dataType) {
-      case "NUMBER":
-        return `CAST(${value} AS NUMERIC)`;
-      case "DATE":
-        return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
-      default:
-        return value;
-    }
-  };
-
   const parentRequestQuery = `
     SELECT request_id,
       request_formsly_id,
       request_date_created,
       request_status,
       request_status_date_updated,
-      request_score_value
-    FROM (
-      SELECT
-        request_id,
-        request_formsly_id,
-        request_date_created,
-        request_status,
-        request_status_date_updated,
-        ${responseFilterCondition.length ? "request_response," : ""}
-        request_score_value,
-        ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
-      FROM public.request_view
+      request_score_value,
+      application_information_additional_details_position,
+      application_information_additional_details_first_name,
+      application_information_additional_details_middle_name,
+      application_information_additional_details_last_name
+    FROM public.request_view
+    INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
       ${
-        responseFilterCondition.length
-          ? `
-            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-              AND request_response_field_id IN (
-                ${fieldIdCondition.join(",")}
-              )
-              AND (${responseFilterCondition.join(" OR ")})
-            `
+        requestScoreFilterCondition.length
+          ? `AND (${requestScoreFilterCondition.join(" AND ")})`
           : ""
       }
-      INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
-        ${
-          requestScoreFilterCondition.length
-            ? `AND (${requestScoreFilterCondition.join(" OR ")})`
-            : ""
-        }
-      WHERE
-        request_is_disabled = FALSE
-        AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
-    ) AS a
     INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
       ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
-    WHERE
-      a.rowNumber = ${filterCount ? filterCount : 1}
+    INNER JOIN hr_schema.application_information_additional_details_table ON request_id = application_information_additional_details_request_id
       ${
-        requestFilterCondition.length
-          ? `AND (${requestFilterCondition.join(" AND ")})`
+        responseFilterCondition.length
+          ? `AND ${responseFilterCondition.join(" AND ")}`
           : ""
       }
-    ${!isSortByResponse ? `ORDER BY ${sort?.field} ${sort?.order}` : ""}
+    WHERE
+      request_is_disabled = FALSE
+      AND request_form_id = '16ae1f62-c553-4b0e-909a-003d92828036'
+      ${
+        requestFilterCondition.length
+          ? `AND ${requestFilterCondition.join(" AND ")}`
+          : ""
+      }
     ${
-      isSortByResponse
-        ? `
-      ORDER BY ${castRequestResponse(`(
-      SELECT request_response
-      FROM request_schema.request_response_table
-      WHERE
-        request_response_request_id = request_id
-        AND request_response_field_id = '${sort?.field}'
-      )`)} ${sort?.order}
-    `
-        : ""
-    }
-    , request_date_created DESC
+      !isSortByResponse ? `ORDER BY ${sort?.field} ${sort?.order}` : ""
+    }, request_date_created DESC
     LIMIT ${limit}
     OFFSET ${offset}
   `;
@@ -6264,29 +6218,21 @@ export const getFormSectionWithFieldList = async (
   };
 };
 
-export const getUserRequestList = async (
+export const getUserApplicationList = async (
   supabaseClient: SupabaseClient<Database>,
   params: FetchUserRequestListParams
 ) => {
   const {
     page,
     limit,
-    status,
-    search,
     isAscendingSort,
-    columnAccessor = "request_date_created",
     email,
-    form,
+    search,
+    columnAccessor = "request_date_created",
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
 
-  const statusCondition = status
-    ?.map((value) => `a.request_status = '${value}'`)
-    .join(" OR ");
-  const formCondition = form
-    ?.map((value) => `a.request_form_id = '${value}'`)
-    .join(" OR ");
   const searchCondition =
     search && validate(search)
       ? `a.request_id = '${search}'`
@@ -6297,31 +6243,57 @@ export const getUserRequestList = async (
       input_data: {
         page: page,
         limit: limit,
-        status: statusCondition ? `AND (${statusCondition})` : "",
-        search: search ? `AND (${searchCondition})` : "",
         sort,
-        columnAccessor,
         email,
-        form: formCondition ? `AND (${formCondition})` : "",
+        search: search ? `AND (${searchCondition})` : "",
+        columnAccessor,
       },
     });
   if (requestListError) throw requestListError;
 
   const dataFormat = requestList as unknown as {
-    data: RequestListItemType[];
+    data: ApplicationListItemType[];
     count: number;
   };
+
+  if (!dataFormat.data.length) {
+    return {
+      data: [],
+      count: dataFormat.count,
+    };
+  }
+
+  const requestIdCondition = dataFormat.data
+    .map((request) => `'${request.request_id}'`)
+    .join(", ");
 
   const { data: requestListData, error: requestListDataError } =
     await supabaseClient.rpc("fetch_user_request_list_data", {
       input_data: {
-        requestList: dataFormat.data,
+        requestIdCondition,
       },
     });
   if (requestListDataError) throw requestListDataError;
+  const formattedRequestListData = requestListData as unknown as {
+    request_response_request_id: string;
+    request_response: string;
+  }[];
+
+  const returnData = dataFormat.data.map((request) => {
+    const matchedRequest = formattedRequestListData.find(
+      (thisRequest) =>
+        request.request_id === thisRequest.request_response_request_id
+    );
+
+    return {
+      ...request,
+      request_application_information_position:
+        matchedRequest?.request_response,
+    };
+  });
 
   return {
-    data: requestListData as RequestListItemType[],
+    data: returnData as ApplicationListItemType[],
     count: dataFormat.count,
   };
 };
@@ -7882,10 +7854,25 @@ export const getRecruitmentData = async (
   const { data, error } = await supabaseClient.rpc("get_hr_recruitment_data", {
     input_data: params,
   });
-
   if (error) throw error;
 
   return data as HRRecruitmentData[];
+};
+
+export const getApplicationInformationIndicator = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    request: ApplicationListItemType;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "fetch_user_request_indicator",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as boolean;
 };
 
 export const getInventoryFormDetails = async (

@@ -164,6 +164,7 @@ const CategoryLookupList = ({
   ) => {
     const savedRecord = categoryLookupList;
     try {
+      setIsLoading(true);
       setCategoryLookupList((prev) =>
         prev.map((categoryLookup) => {
           if (categoryLookup.id !== categoryLookupId) return categoryLookup;
@@ -185,6 +186,8 @@ const CategoryLookupList = ({
         color: "red",
       });
       setCategoryLookupList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -199,7 +202,10 @@ const CategoryLookupList = ({
             miw={250}
             placeholder="Search"
             rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
+              <ActionIcon
+                disabled={isLoading}
+                onClick={() => search && handleSearch()}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }

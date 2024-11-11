@@ -171,6 +171,7 @@ const EquipmentList = ({
   const handleUpdateStatus = async (equipmentId: string, value: boolean) => {
     const savedRecord = equipmentList;
     try {
+      setIsLoading(true);
       setEquipmentList((prev) =>
         prev.map((equipment) => {
           if (equipment.equipment_id !== equipmentId) return equipment;
@@ -186,12 +187,18 @@ const EquipmentList = ({
         status: value,
         schema: "equipment_schema",
       });
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setEquipmentList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -213,7 +220,10 @@ const EquipmentList = ({
             miw={250}
             placeholder="Name"
             rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
+              <ActionIcon
+                disabled={isLoading}
+                onClick={() => search && handleSearch()}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }

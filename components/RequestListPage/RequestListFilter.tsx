@@ -103,8 +103,6 @@ const RequestListFilter = ({
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
-      // if (value.length === 0 && filterMatch.length === 0) return;
-      handleFilterForms();
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
       setLocalFilter({ ...localFilter, [key]: value });
     }
@@ -130,7 +128,9 @@ const RequestListFilter = ({
           sx={{ flex: 2 }}
           miw={250}
           maw={320}
-          disabled={filterSelectedValues.isApproversView}
+          disabled={
+            filterSelectedValues.isApproversView || isFetchingRequestList
+          }
         />
         <Button
           variant="light"
@@ -200,7 +200,9 @@ const RequestListFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
+                disabled={
+                  filterSelectedValues.isApproversView || isFetchingRequestList
+                }
               />
             )}
           />
@@ -224,7 +226,9 @@ const RequestListFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
+                disabled={
+                  filterSelectedValues.isApproversView || isFetchingRequestList
+                }
               />
             )}
           />
@@ -249,7 +253,9 @@ const RequestListFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
+                disabled={
+                  filterSelectedValues.isApproversView || isFetchingRequestList
+                }
               />
             )}
           />
@@ -273,7 +279,9 @@ const RequestListFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
+                disabled={
+                  filterSelectedValues.isApproversView || isFetchingRequestList
+                }
               />
             )}
           />
@@ -297,10 +305,18 @@ const RequestListFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
-                disabled={filterSelectedValues.isApproversView}
+                disabled={
+                  filterSelectedValues.isApproversView || isFetchingRequestList
+                }
               />
             )}
           />
+          <Button
+            disabled={isFetchingRequestList}
+            onClick={() => handleFilterForms()}
+          >
+            Apply Filter
+          </Button>
         </Flex>
       )}
     </>

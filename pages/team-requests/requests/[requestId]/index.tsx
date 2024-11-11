@@ -50,7 +50,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     if (!teamId) {
       return {
         redirect: {
-          destination: "/user/requests",
+          destination: "/user/join-team",
           permanent: false,
         },
       };

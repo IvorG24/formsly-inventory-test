@@ -315,6 +315,22 @@ export const useStyles = createStyles((theme) => ({
       padding: "10px",
     },
   },
+  clickableColumn: {
+    "&:hover": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[7]
+          : theme.colors.gray[5],
+    },
+    cursor: "pointer",
+  },
+  disabledColumn: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.gray[7]
+        : theme.colors.gray[5],
+    cursor: "pointer",
+  },
 }));
 
 export const getHRAnalyticsStatusToColor = (status: string) => {

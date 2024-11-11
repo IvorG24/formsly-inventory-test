@@ -8,6 +8,7 @@ import {
 } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { isEqual } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import {
   HRPhoneInterviewFilterFormValues,
@@ -19,7 +20,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import HRPhoneInterviewColumnsMenu from "./HRPhoneInterviewColumnsMenu";
@@ -84,6 +85,11 @@ const HRPhoneInterviewSpreadsheetView = ({
     key: "HRPhoneInterviewColumns",
     defaultValue: [],
   });
+
+  const prevSortRef = useRef<{
+    sortBy: string;
+    order: string;
+  }>();
 
   const filterFormMethods = useForm<HRPhoneInterviewFilterFormValues>({
     defaultValues:
@@ -157,14 +163,14 @@ const HRPhoneInterviewSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      await fetchData({
-        page: 1,
-      });
       const storedData = localStorage.getItem(
         "hrPhoneInterviewSpreadsheetView"
       );
@@ -173,16 +179,16 @@ const HRPhoneInterviewSpreadsheetView = ({
           JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
         filterFormMethods.reset(filterData as HRPhoneInterviewFilterFormValues);
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
+
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
   }, [user?.user_id]);
 
   const handleUpdateHRPhoneInterviewStatus = async (

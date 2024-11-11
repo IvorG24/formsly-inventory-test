@@ -269,6 +269,13 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         sssId: (
           data.sections[3].section_field[0].field_response as string
         ).replace(/\D/g, ""),
+        applicationInformationParams: {
+          position: data.sections[0].section_field[0].field_response as string,
+          firstName: data.sections[1].section_field[0].field_response as string,
+          middleName: data.sections[1].section_field[1]
+            .field_response as string,
+          lastName: data.sections[1].section_field[2].field_response as string,
+        },
       });
 
       const adOwnerId = router.query["ad-owner"] as string;

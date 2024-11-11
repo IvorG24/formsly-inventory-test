@@ -47,7 +47,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [description, setDescription] = useState(form.form_description);
   const [isSavingDescription, setIsSavingDescription] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
   const methods = useForm<{ description: string }>();
   const {
     handleSubmit,
@@ -60,6 +60,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
   const handleToggleVisibility = async (checked: boolean) => {
     setIsHidden(!checked);
     try {
+      setIsLoading(true);
       await updateFormVisibility(supabaseClient, {
         formId,
         isHidden: !checked,
@@ -83,6 +84,8 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,6 +116,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
 
   return (
     <Paper p="xl" shadow="xs">
+      <LoadingOverlay visible={isLoading} />
       <Title order={2}>{form.form_name}</Title>
       {isEditingDescription ? (
         <FormProvider {...methods}>

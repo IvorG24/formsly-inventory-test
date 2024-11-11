@@ -455,7 +455,7 @@ const BillOfQuantityRequestPage = ({
       });
       const jiraTicket = await createJiraTicket({
         requestType: "Request for Liquidation/Reimbursement v2",
-        formslyId: request.request_formsly_id,
+        formslyId: lrfRequest.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
       });

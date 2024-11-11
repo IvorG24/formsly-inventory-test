@@ -684,13 +684,19 @@ const RequestFormFields = ({
                     `${workingAdvancesFieldValue}`.includes("Petty Cash Fund")
                   ) {
                     const currentValue = (value as string).trim();
-                    const isValid = currentValue.includes("PCV-");
-                    // input should only have A-Z, 0-9, and '-'
-                    const validCharRegex = /[^A-Z0-9\-]/;
+                    const validPCVTicketIDCharRegex = /[^A-Z0-9\-]/;
+                    const isValidPCVTicketID =
+                      currentValue.includes("PCV-") &&
+                      !validPCVTicketIDCharRegex.test(currentValue);
+
+                    const validWAVTicketIDCharRegex = /^WAV NO\. \d{7}$/;
+                    const isValidWAVTicketID =
+                      validWAVTicketIDCharRegex.test(currentValue);
 
                     return (
-                      (isValid && !validCharRegex.test(currentValue)) ||
-                      "Invalid ticket ID. Example of valid ticket ID: SI2PCV-A13E, CO10PCV-A265, ME1PCV-A10C"
+                      isValidPCVTicketID ||
+                      isValidWAVTicketID ||
+                      "Invalid ticket ID. Example of valid ticket ID: SI2PCV-A13E, CO10PCV-A265, WAV NO. 0296703"
                     );
                   }
 

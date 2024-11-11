@@ -224,6 +224,7 @@ const TeamMembershipRequestAdminView = ({ teamId }: Props) => {
                 variant="light"
                 leftIcon={<IconReload size={16} />}
                 onClick={() => handleFetchTeamMembershipRequest(1)}
+                disabled={isLoading}
               >
                 Refresh
               </Button>

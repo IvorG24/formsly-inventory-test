@@ -15,7 +15,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import JobOfferColumnsMenu from "./JobOfferColumnsMenu";
@@ -28,6 +28,7 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
+import { isEqual } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import JobOfferFilterMenu from "./JobOfferFilterMenu";
 import JobOfferSpreadsheetTable from "./JobOfferSpreadsheetTable/JobOfferSpreadsheetTable";
@@ -94,6 +95,11 @@ const JobOfferSpreadsheetView = ({
   });
   const teamMemberOptions = useTeamMemberList();
   const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
+
+  const prevSortRef = useRef<{
+    sortBy: string;
+    order: string;
+  }>();
 
   const filterFormMethods = useForm<JobOfferFilterFormValues>({
     defaultValues: formDefaultValues as unknown as JobOfferFilterFormValues,
@@ -166,29 +172,28 @@ const JobOfferSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      await fetchData({
-        page: 1,
-      });
       const storedData = localStorage.getItem("jobOfferSpreadsheetView");
       if (storedData) {
         const filterData: JobOfferFilterFormValues = JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
         filterFormMethods.reset(filterData as JobOfferFilterFormValues);
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
   }, [user?.user_id]);
 
   useEffect(() => {

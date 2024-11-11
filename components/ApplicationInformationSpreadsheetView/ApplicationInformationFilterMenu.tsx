@@ -25,7 +25,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconCalendar, IconFilter } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
 import { swatchMap } from "./ApplicationInformationColumnsMenu";
-import { ClassNameType } from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
+
+type ClassNameType = "Request" | "Header" | "Personal Information";
 
 const sectionList = [
   {

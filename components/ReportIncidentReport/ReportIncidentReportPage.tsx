@@ -143,7 +143,7 @@ const ReportIncidentReportPage = () => {
           <Title order={2}>Incident Report for Employees Metrics</Title>
         </Flex>
         <form onSubmit={handleSubmit(handleFilterSubmit)}>
-          <IncidentReportListFilter reporteeOption={reporteeOption} />
+          <IncidentReportListFilter reporteeOption={reporteeOption} isFetchingData={isFetchingData} />
         </form>
 
         <Paper p="xs" mt="md" pos="relative">

@@ -154,6 +154,7 @@ const OtherExpensesTypeList = ({
   const handleUpdateStatus = async (typeId: string, value: boolean) => {
     const savedRecord = typeList;
     try {
+      setIsLoading(true);
       setTypeList((prev) =>
         prev.map((type) => {
           if (type.other_expenses_type_id !== typeId) return type;
@@ -170,12 +171,19 @@ const OtherExpensesTypeList = ({
         status: value,
         schema: "other_expenses_schema",
       });
+
+      notifications.show({
+        message: "Status Updated",
+        color: "green",
+      });
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       setTypeList(savedRecord);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -190,7 +198,10 @@ const OtherExpensesTypeList = ({
             miw={250}
             placeholder="Search"
             rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
+              <ActionIcon
+                disabled={isLoading}
+                onClick={() => search && handleSearch()}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }

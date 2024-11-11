@@ -5,14 +5,7 @@ import { generateDateLabels } from "@/utils/functions";
 import { capitalizeEachWord } from "@/utils/string";
 import { getHRAnalyticsStatusToColor } from "@/utils/styling";
 import { Dataset, DatasetChartResponse, OptionType } from "@/utils/types";
-import {
-  Alert,
-  Container,
-  LoadingOverlay,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Alert, Container, Stack, Text, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
@@ -255,7 +248,6 @@ const Analytics = () => {
 
   return (
     <Container p={0}>
-      <LoadingOverlay visible={isLoading} />
       <Stack spacing="sm">
         <Title order={3} mb="sm">
           HR Analytics
@@ -286,6 +278,7 @@ const Analytics = () => {
           monthLabel={monthLabels}
           dataChartResponse={dataChart}
           stepFilter={stepValue}
+          isLoading={isLoading}
         />
       </Stack>
     </Container>

@@ -95,8 +95,8 @@ const MemberProject = ({
           <TextInput
             placeholder="Search project"
             rightSection={
-              <ActionIcon size="xs" type="submit">
-                <IconSearch />
+              <ActionIcon type="submit" disabled={isLoading}>
+                <IconSearch size={14} />
               </ActionIcon>
             }
             maw={350}

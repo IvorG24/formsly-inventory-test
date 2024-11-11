@@ -8,6 +8,7 @@ import {
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useTeamMemberListActions } from "@/stores/useTeamMemberStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
@@ -31,7 +32,7 @@ type LayoutProps = {
 const Layout = ({ children }: LayoutProps) => {
   const currentUser = useUser();
   const userId = currentUser?.id;
-
+  const { setIsLoading } = useLoadingActions();
   const theme = useMantineTheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -79,6 +80,7 @@ const Layout = ({ children }: LayoutProps) => {
     const fetchInitialData = async () => {
       if (!userId) return;
       try {
+        setIsLoading(true);
         // fetch all the team where the user is a part of
         const data = await getAllTeamOfUser(supabaseClient, {
           userId: userId,
@@ -204,6 +206,8 @@ const Layout = ({ children }: LayoutProps) => {
           color: "red",
         });
         await router.push("/500");
+      } finally {
+        setIsLoading(false);
       }
     };
 

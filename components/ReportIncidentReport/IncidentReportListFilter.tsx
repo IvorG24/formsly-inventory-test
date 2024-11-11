@@ -13,9 +13,13 @@ export type IncidentReportFormValues = {
 
 type Props = {
   reporteeOption: { label: string; value: string }[];
+  isFetchingData: boolean;
 };
 
-const IncidentReportListFilter = ({ reporteeOption }: Props) => {
+const IncidentReportListFilter = ({
+  reporteeOption,
+  isFetchingData,
+}: Props) => {
   const { control } = useFormContext<IncidentReportFormValues>();
   const [interval, setInterval] = useState("Monthly");
 
@@ -89,8 +93,8 @@ const IncidentReportListFilter = ({ reporteeOption }: Props) => {
           />
         )}
 
-        <Button type="submit" px="xs">
-          <IconSearch />
+        <Button type="submit" px="xs" disabled={isFetchingData}>
+          <IconSearch size={14} />
         </Button>
       </Flex>
     </Container>

@@ -211,6 +211,7 @@ const RequestFormListPage = ({
                   openDelay={800}
                 >
                   <ActionIcon
+                    disabled={isFetchingFormList}
                     onClick={async () => {
                       setValue(
                         "isAscendingSort",
@@ -237,7 +238,7 @@ const RequestFormListPage = ({
           <TextInput
             placeholder="Search form..."
             rightSection={
-              <ActionIcon size="xs" type="submit">
+              <ActionIcon disabled={isFetchingFormList} size="xs" type="submit">
                 <IconSearch />
               </ActionIcon>
             }
@@ -373,6 +374,7 @@ const RequestFormListPage = ({
           await handleFilterForms();
         }}
         mt="xl"
+        disabled={isFetchingFormList}
         position="right"
       />
 

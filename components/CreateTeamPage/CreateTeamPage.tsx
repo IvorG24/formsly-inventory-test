@@ -73,7 +73,7 @@ const CreateTeamPage = () => {
             mt="md"
             onClick={async () => {
               modals.closeAll();
-              await router.push("/user/requests?onboarding=true");
+              await router.push("/user/join-team?onboarding=true");
             }}
           >
             <Box>

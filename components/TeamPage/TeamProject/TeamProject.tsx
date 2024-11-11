@@ -68,6 +68,7 @@ const TeamProject = ({
             handleFetch={handleFetch}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            isFetchingMembers={isFetchingMembers}
             projectCount={projectCount}
           />
         ) : null}

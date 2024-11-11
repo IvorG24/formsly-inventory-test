@@ -595,6 +595,12 @@ export const createRequest = async (
     userId: string;
     sssId?: string;
     applicationInformationFormslyId?: string;
+    applicationInformationParams?: {
+      position: string;
+      firstName: string;
+      middleName: string;
+      lastName: string;
+    };
     interviewParams?: {
       status: string;
       teamMemberId: string;
@@ -647,6 +653,7 @@ export const createRequest = async (
     userId,
     sssId,
     applicationInformationFormslyId,
+    applicationInformationParams,
     interviewParams,
     backgroundCheckParams,
     tradeTestParams,
@@ -796,6 +803,7 @@ export const createRequest = async (
         requestScore,
         rootFormslyRequestId,
         recruiter,
+        applicationInformationParams,
         interviewParams,
         backgroundCheckParams,
         tradeTestParams,

@@ -224,13 +224,13 @@ const NotificationPage = ({
     }
   }, [router.query, storeNotificationList]);
 
-  useEffect(() => {
-    if (router.query.page === "1") {
-      setPageNotificationList(
-        storeNotificationList.slice(0, DEFAULT_NOTIFICATION_LIST_LIMIT)
-      );
-    }
-  }, [storeNotificationList, router.query]);
+  // useEffect(() => {
+  //   if (router.query.page === "1") {
+  //     setPageNotificationList(
+  //       storeNotificationList.slice(0, DEFAULT_NOTIFICATION_LIST_LIMIT)
+  //     );
+  //   }
+  // }, [storeNotificationList, router.query]);
 
   useEffect(() => {
     const fetchApproverRequestCount = async (
@@ -265,15 +265,21 @@ const NotificationPage = ({
       <Paper p="md" mt="xl">
         <Tabs
           defaultValue={tab}
-          onTabChange={(value) =>
-            router
+          onTabChange={async (value) => {
+            if (value === tab) return;
+            setIsLoading(true);
+            await router
               .replace(`/user/notification?tab=${value}`)
-              .then(() => handleGetNotificationList(1, value as string))
-          }
+              .then(() => handleGetNotificationList(1, value as string));
+          }}
         >
           <Tabs.List>
-            <Tabs.Tab value="all">All</Tabs.Tab>
-            <Tabs.Tab value="unread">Unread</Tabs.Tab>
+            <Tabs.Tab value="all" disabled={isLoading}>
+              All
+            </Tabs.Tab>
+            <Tabs.Tab value="unread" disabled={isLoading}>
+              Unread
+            </Tabs.Tab>
           </Tabs.List>
 
           {pageNotificationList.length > 0 ? (
@@ -297,12 +303,14 @@ const NotificationPage = ({
             totalNotificationCount / DEFAULT_NOTIFICATION_LIST_LIMIT
           )}
           onChange={async (value) => {
+            setIsLoading(true);
             setActivePage(value);
             await router.push(`/user/notification?tab=${tab}&page=${value}`);
             await handleGetNotificationList(value);
           }}
           mt="xl"
           position="right"
+          disabled={isLoading}
         />
       </Paper>
     </Container>

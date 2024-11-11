@@ -1,4 +1,3 @@
-import { SectionWithFieldType } from "@/utils/types";
 import {
   Accordion,
   Box,
@@ -20,11 +19,6 @@ export const swatchMap = {
   Request: "blue",
   Header: "cyan",
   "Personal Information": "teal",
-  "Contact Information": "green",
-  "ID Number": "red",
-  "Educational Background": "grape",
-  "Work Information": "violet",
-  Resume: "indigo",
 };
 
 const requestColumnList = {
@@ -58,14 +52,42 @@ const requestColumnList = {
   ],
 };
 
+const headerColumnList = {
+  section_id: "Header",
+  section_name: "Header",
+  section_field: [
+    {
+      field_id: "Position",
+      field_name: "Position",
+    },
+  ],
+};
+
+const personalInformationColumnList = {
+  section_id: "Personal Information",
+  section_name: "Personal Information",
+  section_field: [
+    {
+      field_id: "First Name",
+      field_name: "First Name",
+    },
+    {
+      field_id: "Middle Name",
+      field_name: "Middle Name",
+    },
+    {
+      field_id: "Last Name",
+      field_name: "Last Name",
+    },
+  ],
+};
+
 type Props = {
-  sectionList: SectionWithFieldType[];
   hiddenColumnList: string[];
   setHiddenColumnList: Dispatch<SetStateAction<string[]>>;
 };
 
 const ApplicationInformationColumnsMenu = ({
-  sectionList,
   hiddenColumnList,
   setHiddenColumnList,
 }: Props) => {
@@ -96,10 +118,15 @@ const ApplicationInformationColumnsMenu = ({
         scrollAreaComponent={ScrollArea.Autosize}
       >
         <Accordion w="100%" variant="contained">
-          {[requestColumnList, ...sectionList].map((section) => {
+          {[
+            requestColumnList,
+            headerColumnList,
+            personalInformationColumnList,
+          ].map((section) => {
             const fieldList = section.section_field.map(
               (field) => field.field_id
             );
+
             return (
               <Accordion.Item
                 key={section.section_id}

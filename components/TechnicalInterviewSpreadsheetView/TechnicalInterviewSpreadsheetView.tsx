@@ -15,6 +15,7 @@ import {
   formatDate,
   formatTime,
 } from "@/utils/constant";
+import { isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   OptionType,
@@ -26,7 +27,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
@@ -97,6 +98,11 @@ const TechnicalInterviewSpreadsheetView = ({
     defaultValue: [],
   });
 
+  const prevSortRef = useRef<{
+    sortBy: string;
+    order: string;
+  }>();
+
   const filterFormMethods = useForm<TechnicalInterviewFilterFormValues>({
     defaultValues:
       formDefaultValues as unknown as TechnicalInterviewFilterFormValues,
@@ -130,7 +136,6 @@ const TechnicalInterviewSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
-
       notifications.show({
         message: "Failed to fetch data",
         color: "red",
@@ -171,14 +176,14 @@ const TechnicalInterviewSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      await fetchData({
-        page: 1,
-      });
       const storedData = localStorage.getItem(
         "technicalInterviewSpreadsheetView"
       );
@@ -189,16 +194,15 @@ const TechnicalInterviewSpreadsheetView = ({
         filterFormMethods.reset(
           filterData as TechnicalInterviewFilterFormValues
         );
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
   }, [user?.user_id]);
 
   const handleUpdateTechnicalInterviewStatus = async (

@@ -3,7 +3,9 @@ import {
   getApplicationInformationPositionOptions,
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
+import { useUserProfile } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS, FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { isEqual } from "@/utils/functions";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
   ApplicationInformationFieldOptionType,
@@ -11,7 +13,6 @@ import {
   ApplicationInformationSpreadsheetData,
   OptionTableRow,
   OptionType,
-  SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -19,11 +20,10 @@ import { notifications } from "@mantine/notifications";
 import {
   SupabaseClient,
   useSupabaseClient,
-  useUser,
 } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { Database as OneOfficeDatabase } from "oneoffice-api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -61,17 +61,15 @@ const formDefaultValues = {
 };
 
 type Props = {
-  sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
   approverOptionList: OptionType[];
 };
 
 const ApplicationInformationSpreadsheetView = ({
-  sectionList,
   optionList: initialOptionList,
   approverOptionList,
 }: Props) => {
-  const user = useUser();
+  const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [data, setData] = useState<ApplicationInformationSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +82,12 @@ const ApplicationInformationSpreadsheetView = ({
     defaultValue: [],
   });
 
+  const prevSortRef = useRef<{
+    field: string;
+    order: string;
+    dataType: string;
+  }>();
+
   const filterFormMethods = useForm<ApplicationInformationFilterFormValues>({
     defaultValues:
       formDefaultValues as unknown as ApplicationInformationFilterFormValues,
@@ -92,6 +96,7 @@ const ApplicationInformationSpreadsheetView = ({
   const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
     try {
       if (!user) return;
+
       setIsLoading(true);
       setIsMax(false);
       const filterData = filterFormMethods.getValues();
@@ -101,7 +106,7 @@ const ApplicationInformationSpreadsheetView = ({
         {
           ...filterData,
           ...data,
-          userId: user.id,
+          userId: user.user_id,
           limit: DEFAULT_NUMBER_SSOT_ROWS,
           page: data?.page ?? page,
           sort: data?.sort ?? sort,
@@ -158,7 +163,10 @@ const ApplicationInformationSpreadsheetView = ({
     const handleSorting = async () => {
       await fetchData({ sort, page: 1 });
     };
-    handleSorting();
+    if (user && user.user_id && !isEqual(prevSortRef.current, sort)) {
+      prevSortRef.current = sort;
+      handleSorting();
+    }
   }, [sort]);
 
   useEffect(() => {
@@ -261,17 +269,16 @@ const ApplicationInformationSpreadsheetView = ({
         filterFormMethods.reset(
           filterData as ApplicationInformationFilterFormValues
         );
-        await fetchData({
-          ...filterData,
-        });
       } else {
         await fetchData({
           page: 1,
         });
       }
     };
-    fetchInitialData();
-  }, []);
+    if (user && user.user_id) {
+      fetchInitialData();
+    }
+  }, [user?.user_id]);
 
   return (
     <Stack pos="relative">
@@ -301,7 +308,6 @@ const ApplicationInformationSpreadsheetView = ({
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu
-            sectionList={sectionList}
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
           />
@@ -309,7 +315,6 @@ const ApplicationInformationSpreadsheetView = ({
       </Box>
       <ApplicationInformationSpreadsheetTable
         data={data}
-        sectionList={sectionList}
         isLoading={isLoading}
         page={page}
         handlePagination={handlePagination}

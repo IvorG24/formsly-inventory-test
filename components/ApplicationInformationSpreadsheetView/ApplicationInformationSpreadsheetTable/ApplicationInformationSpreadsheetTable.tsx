@@ -1,8 +1,4 @@
-import {
-  ApplicationInformationFieldObjectType,
-  ApplicationInformationSpreadsheetData,
-  SectionWithFieldType,
-} from "@/utils/types";
+import { ApplicationInformationSpreadsheetData } from "@/utils/types";
 import {
   Button,
   Center,
@@ -26,15 +22,7 @@ import {
 import { Dispatch, SetStateAction } from "react";
 import ApplicationInformationMainTableRow from "./ApplicationInformationMainTableRow";
 
-const unsortableFieldList = [
-  "Approver",
-  "Contact Number",
-  "Email Address",
-  "SSS ID Number",
-  "Philhealth Number",
-  "Pag-IBIG Number",
-  "TIN",
-];
+const unsortableFieldList = ["Approver"];
 
 export const requestColumnList = [
   {
@@ -67,16 +55,27 @@ export const requestColumnList = [
     field_name: "Score",
     field_type: "NUMBER",
   },
+  {
+    field_id: "application_information_additional_details_position",
+    field_name: "Position",
+    field_type: "TEXT",
+  },
+  {
+    field_id: "application_information_additional_details_first_name",
+    field_name: "First Name",
+    field_type: "TEXT",
+  },
+  {
+    field_id: "application_information_additional_details_middle_name",
+    field_name: "Middle Name",
+    field_type: "TEXT",
+  },
+  {
+    field_id: "application_information_additional_details_last_name",
+    field_name: "Last Name",
+    field_type: "TEXT",
+  },
 ];
-
-export type ClassNameType =
-  | "Header"
-  | "Personal Information"
-  | "Contact Information"
-  | "ID Number"
-  | "Educational Background"
-  | "Work Information"
-  | "Resume";
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
@@ -112,32 +111,10 @@ const useStyles = createStyles((theme) => ({
     color: theme.white,
     textAlign: "center",
   },
-  Header: {
-    backgroundColor: theme.colors.cyan[3],
-  },
-  "Personal Information": {
-    backgroundColor: theme.colors.teal[3],
-  },
-  "Contact Information": {
-    backgroundColor: theme.colors.green[3],
-  },
-  "ID Number": {
-    backgroundColor: theme.colors.red[3],
-  },
-  "Educational Background": {
-    backgroundColor: theme.colors.grape[3],
-  },
-  "Work Information": {
-    backgroundColor: theme.colors.violet[3],
-  },
-  Resume: {
-    backgroundColor: theme.colors.indigo[3],
-  },
 }));
 
 type Props = {
   data: ApplicationInformationSpreadsheetData[];
-  sectionList: SectionWithFieldType[];
   isLoading: boolean;
   page: number;
   handlePagination: (page: number) => void;
@@ -151,7 +128,6 @@ type Props = {
 
 const ApplicationInformationSpreadsheetTable = ({
   data,
-  sectionList,
   isLoading,
   page,
   handlePagination,
@@ -161,16 +137,6 @@ const ApplicationInformationSpreadsheetTable = ({
   hiddenColumnList,
 }: Props) => {
   const { classes } = useStyles();
-
-  const fieldObject: ApplicationInformationFieldObjectType = {};
-  sectionList.forEach((section) => {
-    section.section_field.forEach((field) => {
-      fieldObject[field.field_id] = {
-        ...field,
-        field_section: section,
-      };
-    });
-  });
 
   const handleSortClick = (field: string, dataType: string) => {
     setSort((prev) => {
@@ -235,55 +201,6 @@ const ApplicationInformationSpreadsheetTable = ({
       ));
   };
 
-  const renderFieldList = () => {
-    const fieldList: {
-      field_name: string;
-      field_id: string;
-      field_type: string;
-      section_name: string;
-    }[] = [];
-
-    sectionList.forEach((section) => {
-      if (section.section_name !== "Most Recent Work Experience") {
-        section.section_field.forEach((field) => {
-          fieldList.push({
-            field_id: field.field_id,
-            field_name: field.field_name,
-            field_type: field.field_type,
-            section_name: section.section_name,
-          });
-        });
-      }
-    });
-
-    return fieldList
-      .filter((field) => !hiddenColumnList.includes(field.field_id)) // Filter out hidden columns
-      .map((field, index) => {
-        const isSortable = !unsortableFieldList.includes(field.field_name); // Check if sortable
-        return (
-          <th
-            key={index}
-            className={classes[field.section_name as ClassNameType]}
-            onClick={
-              isSortable
-                ? () => handleSortClick(field.field_id, field.field_type)
-                : undefined
-            }
-            style={{
-              cursor: !unsortableFieldList.includes(field.field_name)
-                ? "pointer"
-                : "default",
-            }}
-          >
-            <Flex gap="sm" align="center" justify="space-between">
-              <Text>{field.field_name}</Text>
-              {isSortable && sortButtons(field)}
-            </Flex>
-          </th>
-        );
-      });
-  };
-
   return (
     <Stack>
       <Paper p="xs" pos="relative">
@@ -295,17 +212,13 @@ const ApplicationInformationSpreadsheetTable = ({
           />
           <Table withBorder withColumnBorders className={classes.parentTable}>
             <thead>
-              <tr>
-                {renderRequestFieldList()}
-                {renderFieldList()}
-              </tr>
+              <tr>{renderRequestFieldList()}</tr>
             </thead>
             <tbody>
               {data.map((item) => (
                 <ApplicationInformationMainTableRow
                   key={item.request_id}
                   item={item}
-                  fieldObject={fieldObject}
                   hiddenColumnList={hiddenColumnList}
                 />
               ))}

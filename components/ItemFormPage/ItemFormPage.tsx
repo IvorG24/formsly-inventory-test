@@ -43,6 +43,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { useStyles } from "@/utils/styling";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
@@ -75,6 +76,7 @@ const ItemFormPage = ({
   const teamMember = useUserTeamMember();
   const formList = useFormList();
   const { setFormList } = useFormActions();
+  const { classes } = useStyles();
 
   const initialSignerIds: string[] = [];
 
@@ -324,6 +326,8 @@ const ItemFormPage = ({
     projectName: string
   ) => {
     try {
+      if (isFetchingProjectSigner || selectedProject?.projectId === projectId)
+        return;
       setSelectedProject(null);
       setIsFetchingProjectSigner(true);
       const data = await getProjectSigner(supabaseClient, {
@@ -494,7 +498,10 @@ const ItemFormPage = ({
             miw={250}
             placeholder="Project"
             rightSection={
-              <ActionIcon onClick={() => handleFetchProject(1, projectSearch)}>
+              <ActionIcon
+                disabled={isFetchingProject}
+                onClick={() => handleFetchProject(1, projectSearch)}
+              >
                 <IconSearch size={16} />
               </ActionIcon>
             }
@@ -526,7 +533,11 @@ const ItemFormPage = ({
               title: "Project",
               render: ({ team_project_name, team_project_id }) => (
                 <Text
-                  sx={{ cursor: "pointer" }}
+                  className={
+                    isFetchingProjectSigner
+                      ? classes.disabledColumn
+                      : classes.clickableColumn
+                  }
                   onClick={() =>
                     handleFetchProjectSigner(team_project_id, team_project_name)
                   }
