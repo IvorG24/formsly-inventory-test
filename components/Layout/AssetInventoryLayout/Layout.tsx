@@ -24,7 +24,6 @@ import { AppShell, LoadingOverlay, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import Header from "../AppLayout/Header/Header";
@@ -37,7 +36,6 @@ const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
   const currentUser = useUser();
   const userId = currentUser?.id;
-  const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setTeamMemberStore } = useTeamMemberListActions();
   const { setEmployeeList } = useEmployeeListActions();

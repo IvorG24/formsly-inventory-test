@@ -51,7 +51,7 @@ export type FilterSelectedValuesType = {
   limit?: string;
   department?: string[];
   status?: string;
-  assignedToCustomer?: string;
+  assignedToCustomer?: string[];
   isAscendingSort: boolean;
   dateType: string;
   assignedToSite: string;
@@ -98,7 +98,7 @@ const EventFilterByCustomerFilter = ({
       limit: "",
       status: "",
       isAscendingSort: false,
-      assignedToCustomer: "",
+      assignedToCustomer: [],
       dateType: dateOption[0].value,
       dateStart: null,
       dateEnd: null,

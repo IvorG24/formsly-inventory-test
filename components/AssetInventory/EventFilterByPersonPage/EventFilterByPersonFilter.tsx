@@ -25,7 +25,6 @@ import {
 } from "@mantine/dates";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { useRouter } from "next/router";
 import { SetStateAction, useState } from "react";
 import { CSVLink } from "react-csv";
 import { Controller, useFormContext } from "react-hook-form";
@@ -81,8 +80,7 @@ const EventFilterByPersonFilter = ({
     nothingFound: "Nothing found",
   };
   const employeeList = useEmployeeList();
-  const router = useRouter();
-  const event = router.query.eventName as string;
+
   const { ref: assignedToRef, focused: assignedToRefFocused } =
     useFocusWithin();
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
