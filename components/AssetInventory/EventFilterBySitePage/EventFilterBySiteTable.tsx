@@ -44,6 +44,7 @@ type Props = {
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
   tableColumnList: { value: string; label: string }[];
+  defaultColumnList: string[];
 };
 
 const EventFilterBySiteTable = ({
@@ -62,6 +63,7 @@ const EventFilterBySiteTable = ({
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
+  defaultColumnList,
   eventName,
 }: Props) => {
   const activeTeam = useActiveTeam();
@@ -69,28 +71,27 @@ const EventFilterBySiteTable = ({
   const router = useRouter();
   const limit = getValues("limit");
   const eventFormatted = eventName.replace(/-/g, "_");
+
+  const excludedColumns = [
+    "inventory_request_id",
+    "inventory_request_status",
+    "inventory_request_name",
+    "inventory_request_tag_id",
+    "inventory_request_cost",
+    "inventory_request_created_by",
+    "inventory_request_user_id",
+    "inventory_request_assigned_to",
+    `event_${eventFormatted}_request_id`,
+    `event_${eventFormatted}_signature`,
+    `event_${eventFormatted}_id`,
+  ];
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
 
   const dynamicColumns = tableColumnList
-    .filter(
-      (column) =>
-        ![
-          "inventory_request_id",
-          "inventory_request_status",
-          "inventory_request_name",
-          "inventory_request_tag_id",
-          "inventory_request_cost",
-          "inventory_request_created_by",
-          "inventory_request_user_id",
-          "inventory_request_assigned_to",
-          `event_${eventFormatted}_request_id`,
-          `event_${eventFormatted}_signature`,
-          `event_${eventFormatted}_id`,
-        ].includes(column.value)
-    )
+    .filter((column) => !excludedColumns.includes(column.value))
     .map((column) => ({
       accessor: column.value,
       title: column.label,
@@ -131,6 +132,7 @@ const EventFilterBySiteTable = ({
         totalRecords={requestListCount}
         recordsPerPage={Number(limit)}
         sortStatus={sortStatus}
+        defaultColumnList={defaultColumnList}
         onSortStatusChange={setSortStatus}
         handleFetch={handlePagination}
         columns={[
@@ -161,7 +163,8 @@ const EventFilterBySiteTable = ({
                       </Anchor>
                     </Text>
 
-                    {String(relationship_type) && (
+                    {(relationship_type === "parent" ||
+                      relationship_type === "child") && (
                       <HoverCard width={280} shadow="md">
                         <HoverCard.Target>
                           <ActionIcon>
@@ -176,7 +179,9 @@ const EventFilterBySiteTable = ({
                           <Text size="sm">
                             {relationship_type === "parent"
                               ? "This asset is a parent asset."
-                              : "This asset is a child asset."}
+                              : relationship_type === "child"
+                                ? "This asset is a child asset."
+                                : null}
                           </Text>
                         </HoverCard.Dropdown>
                       </HoverCard>

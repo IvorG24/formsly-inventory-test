@@ -47,6 +47,7 @@ type Props = {
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
   tableColumnList: { value: string; label: string }[];
+  defaultColumnList: string[];
 };
 
 const EventFilterByPersonTable = ({
@@ -67,6 +68,7 @@ const EventFilterByPersonTable = ({
   tableColumnList,
   employee,
   eventName,
+  defaultColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
 
@@ -140,6 +142,7 @@ const EventFilterByPersonTable = ({
           sortStatus={sortStatus}
           onSortStatusChange={setSortStatus}
           handleFetch={handlePagination}
+          defaultColumnList={defaultColumnList}
           columns={[
             {
               accessor: "r.inventory_request_tag_id",
@@ -168,7 +171,8 @@ const EventFilterByPersonTable = ({
                         </Anchor>
                       </Text>
 
-                      {String(relationship_type) && (
+                      {(relationship_type === "parent" ||
+                        relationship_type === "child") && (
                         <HoverCard width={280} shadow="md">
                           <HoverCard.Target>
                             <ActionIcon>
@@ -183,7 +187,9 @@ const EventFilterByPersonTable = ({
                             <Text size="sm">
                               {relationship_type === "parent"
                                 ? "This asset is a parent asset."
-                                : "This asset is a child asset."}
+                                : relationship_type === "child"
+                                  ? "This asset is a child asset."
+                                  : null}
                             </Text>
                           </HoverCard.Dropdown>
                         </HoverCard>

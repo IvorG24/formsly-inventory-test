@@ -78,28 +78,28 @@ const EventFilterBySitePage = ({
     columnAccessor: "inventory_request_created",
     direction: "desc",
   });
+  const getDefaultColumnList = () => {
+    const excludedColumns = [
+      "inventory_request_id",
+      "inventory_request_name",
+      "inventory_request_tag_id",
+    ];
+
+    return tableColumnList
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .filter(
+        (column) =>
+          !column.value.startsWith("event") &&
+          !excludedColumns.includes(column.value)
+      )
+      .map((column) => column.value);
+  };
 
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
     key: `inventory-${eventName}-byTagId-report-list-table-column-filter`,
-    defaultValue:
-      tableColumnList
-        .sort((a, b) => a.label.localeCompare(b.label))
-        .filter(
-          (column) =>
-            ![
-              "Asset Tag Id",
-              "Asset Name",
-              "Date Created",
-              "Item Code",
-              "Brand",
-              "Model",
-              "Serial No.",
-              "Cost",
-            ].includes(column.label)
-        )
-        .map((column) => column.value) || [],
+    defaultValue: getDefaultColumnList(),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -218,6 +218,7 @@ const EventFilterBySitePage = ({
         </FormProvider>
         <Box h="fit-content">
           <EventFilterBySiteTable
+            defaultColumnList={getDefaultColumnList()}
             requestList={inventoryList}
             requestListCount={inventoryListCount}
             activePage={activePage}

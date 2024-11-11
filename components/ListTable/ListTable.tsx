@@ -43,6 +43,7 @@ type DataTableProps<T = Record<string, unknown>> = {
     label: string;
     field_is_custom_field?: boolean;
   }[];
+  defaultColumnList?: string[];
   type?: string;
 };
 
@@ -77,6 +78,7 @@ const ListTable = ({
   setShowTableColumnFilter,
   tableColumnList,
   listTableColumnFilter,
+  defaultColumnList,
   handleFetch,
   setListTableColumnFilter,
   type = "request",
@@ -218,7 +220,8 @@ const ListTable = ({
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setListTableColumnFilter(tempTableColumnFilter);
+                      setTempTableColumnFilter(defaultColumnList ?? []);
+                      setListTableColumnFilter(defaultColumnList ?? []);
                       setShowTableColumnFilter(false);
                     }}
                   >
