@@ -2,6 +2,7 @@ import { dateOption, limitOption } from "@/utils/constant";
 import { formatCurrency } from "@/utils/functions";
 import {
   CategoryTableRow,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -32,6 +33,7 @@ import { Department } from "../DepartmentSetupPage/DepartmentSetupPage";
 type RequestListFilterProps = {
   reportList: InventoryListType[];
   siteList: SiteTableRow[];
+  customerList: InventoryCustomerRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   handleFilterForms: () => void;
@@ -51,7 +53,7 @@ export type FilterSelectedValuesType = {
   limit?: string;
   department?: string[];
   status?: string;
-  assignedToCustomer?: string[];
+  assignedToCustomer?: string;
   isAscendingSort: boolean;
   dateType: string;
   assignedToSite: string;
@@ -65,6 +67,7 @@ const EventFilterByCustomerFilter = ({
   categoryList,
   handleFilterForms,
   showTableColumnFilter,
+  customerList,
   setShowTableColumnFilter,
   listTableColumnFilter,
   tableColumnList,
@@ -83,6 +86,8 @@ const EventFilterByCustomerFilter = ({
   const { ref: categoryref, focused: categoryRefFocused } = useFocusWithin();
   const { ref: siteRef, focused: siteRefFocused } = useFocusWithin();
   const { ref: datetypeRef, focused: datetypeRefFocused } = useFocusWithin();
+  const { ref: assignedToRef, focused: assignedToRefFocused } =
+    useFocusWithin();
 
   const { ref: limitRef, focused: limitRefFocused } = useFocusWithin();
   const { ref: departmentRef, focused: departmentRefFocused } =
@@ -98,7 +103,7 @@ const EventFilterByCustomerFilter = ({
       limit: "",
       status: "",
       isAscendingSort: false,
-      assignedToCustomer: [],
+      assignedToCustomer: "",
       dateType: dateOption[0].value,
       dateStart: null,
       dateEnd: null,
@@ -110,6 +115,13 @@ const EventFilterByCustomerFilter = ({
     return {
       label: site.site_name,
       value: site.site_name,
+    };
+  });
+
+  const customerOptions = customerList.map((customer) => {
+    return {
+      label: `${customer.customer_first_name} ${customer.customer_last_name}`,
+      value: customer.customer_id,
     };
   });
 
@@ -280,6 +292,33 @@ const EventFilterByCustomerFilter = ({
                 }
                 sx={{ flex: 1 }}
                 maw={100}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="assignedToCustomer"
+            render={({ field: { value, onChange } }) => (
+              <Select
+                placeholder="Assigned To Customer"
+                ref={assignedToRef}
+                data={customerOptions}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (assignedToRefFocused)
+                    handleFilterChange(
+                      "assignedToCustomer",
+                      value as string | undefined
+                    );
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("assignedToCustomer", value)
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
               />
             )}
           />

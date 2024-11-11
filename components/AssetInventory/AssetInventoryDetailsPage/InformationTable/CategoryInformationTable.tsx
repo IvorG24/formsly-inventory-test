@@ -40,7 +40,18 @@ const CategoryInformationTable = ({ asset_details }: Props) => {
               <td>
                 <Text weight={500}>{formatLabel(key)}</Text>
               </td>
-              <td>{value || " "}</td>
+              <td>
+                <Text
+                  maw={300}
+                  sx={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {value || " "}
+                </Text>
+              </td>
             </tr>
           ))}
         </tbody>

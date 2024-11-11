@@ -65,8 +65,7 @@ const EventFormModal = ({
   const [isLoading, setIsloading] = useState(false);
   const [opened, setOpened] = useState(true);
   const [formData, setFormData] = useState<InventoryFormType>();
-  const { handleSubmit, control, getValues, setValue, setError } =
-    requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
@@ -80,13 +79,30 @@ const EventFormModal = ({
   const handleFormSubmit = async (data: InventoryFormValues) => {
     try {
       setIsloading(true);
-      const signature = await getUserCurrentSignature(supabaseClient, {
-        userId: userData?.user_id ?? "",
-      });
-      if (!signature) {
-        setError("root.signature", { message: "Manual signature not found" });
+      let signature = null;
+
+      const signatureField = data.sections[0].section_field.find(
+        (field) => field.field_name === "Signature"
+      );
+
+      if (signatureField && signatureField.field_response) {
+        signature = signatureField.field_response as File;
+      } else if (signatureField && !signatureField.field_response) {
+        signature = await getUserCurrentSignature(supabaseClient, {
+          userId: userData?.user_id ?? "",
+        });
+      }
+
+      if (signature === null) {
+        notifications.show({
+          message:
+            "Upload a signature here or upload in user settings to continue",
+          color: "orange",
+        });
+        setIsloading(false);
         return;
       }
+
       //   }
       //   const formValidation = securityGroup.asset.filter.event.includes(
       //     `${formData?.form_name}`
@@ -107,23 +123,23 @@ const EventFormModal = ({
         teamMemberId: teamMember?.team_member_id,
         type: formData?.form_name ?? "",
         userId: userData?.user_id,
-        signature: signature,
+        signature: signature ?? "",
         teamName: activeTeam.team_name,
       });
-      setOpened(false);
-      handleFilterForms();
-      notifications.show({
-        message: "Event Submitted",
-        color: "green",
-      });
-      setIsloading(false);
-    } catch (e) {
-      setIsloading(false);
 
+      setOpened(false);
+      handleFilterForms(),
+        notifications.show({
+          message: "Event Submitted",
+          color: "green",
+        });
+    } catch (e) {
       notifications.show({
         message: "Something went wrong",
         color: "red",
       });
+    } finally {
+      setIsloading(false);
     }
   };
 
@@ -337,7 +353,12 @@ const EventFormModal = ({
       >
         <Title order={3}>{formData?.form_name} Event</Title>
         <FormProvider {...requestFormMethods}>
-          <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <form
+            onSubmit={(e) => {
+              e.stopPropagation();
+              handleSubmit(handleFormSubmit)(e);
+            }}
+          >
             {formSections.map((section, idx) => {
               const sectionFields = section.section_field || [];
 

@@ -116,10 +116,12 @@ const AssetListFilter = ({
   const eventSecurity = securityGroupData.asset.filter.event
     ? securityGroupData.asset.filter.event
     : [];
+    
   const eventActions = eventList.map((event) => ({
     label: event.event_name,
     value: event.event_id,
   }));
+
   const filteredEvents = eventActions.filter((event) =>
     eventSecurity.includes(event.label)
   );
@@ -178,7 +180,6 @@ const AssetListFilter = ({
       setLocalFilter({ ...localFilter, [key]: value });
     }
   };
-  console.log(customerOptions);
 
   useEffect(() => {
     Object.entries(localFilter).forEach(([key, value]) => {

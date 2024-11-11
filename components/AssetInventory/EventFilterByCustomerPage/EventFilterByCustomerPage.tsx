@@ -4,6 +4,7 @@ import { dateOption, limitOption } from "@/utils/constant";
 import { formatDateRange } from "@/utils/functions";
 import {
   CategoryTableRow,
+  InventoryCustomerRow,
   InventoryListType,
   SecurityGroupData,
   SiteTableRow,
@@ -25,6 +26,7 @@ type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
   categoryList: CategoryTableRow[];
+  customerList: InventoryCustomerRow[];
   securityGroupData: SecurityGroupData;
   eventName: string;
   tableColumnList: {
@@ -40,6 +42,7 @@ const EventFilterByCustomerPage = ({
   categoryList,
   tableColumnList,
   securityGroupData,
+  customerList,
   eventName,
 }: Props) => {
   const activeTeam = useActiveTeam();
@@ -49,7 +52,9 @@ const EventFilterByCustomerPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
   const [inventoryListCount, setInventoryListCount] = useState(0);
-
+  const [customerData, setCustomerData] = useState<InventoryCustomerRow | null>(
+    null
+  );
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
   const eventTitle = eventName
     .replace(/-/g, " ")
@@ -134,26 +139,29 @@ const EventFilterByCustomerPage = ({
       const { startDate: formattedDateStart, endDate: formattedDateEnd } =
         formatDateRange(dateStart, dateEnd, dateType);
 
-      const { data, count } = await getDynamicReportView(supabaseClient, {
-        page: page,
-        limit: Number(limit) ? Number(limit) : 10,
-        sort: isAscendingSort,
-        columnAccessor: sortStatus.columnAccessor,
-        search,
-        status,
-        department: department,
-        locations,
-        sites: sites,
-        category: category,
-        teamId: activeTeam.team_id,
-        assignedToCustomer: assignedToCustomer,
-        eventName: eventName,
-        type: "bySite",
-        dateType: dateType,
-        dateStart: formattedDateStart || "",
-        dateEnd: formattedDateEnd || "",
-      });
-
+      const { data, count, customer } = await getDynamicReportView(
+        supabaseClient,
+        {
+          page: page,
+          limit: Number(limit) ? Number(limit) : 10,
+          sort: isAscendingSort,
+          columnAccessor: sortStatus.columnAccessor,
+          search,
+          status,
+          department: department,
+          locations,
+          sites: sites,
+          category: category,
+          teamId: activeTeam.team_id,
+          assignedToCustomer: assignedToCustomer,
+          eventName: eventName,
+          type: "byCustomer",
+          dateType: dateType,
+          dateStart: formattedDateStart || "",
+          dateEnd: formattedDateEnd || "",
+        }
+      );
+      setCustomerData(customer ?? null);
       setInventoryList(data);
       setInventoryListCount(count);
     } catch (e) {
@@ -204,6 +212,7 @@ const EventFilterByCustomerPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <EventFilterByCustomerFilter
+              customerList={customerList}
               eventName={eventName}
               reportList={inventoryList}
               listTableColumnFilter={listTableColumnFilter}
@@ -236,6 +245,7 @@ const EventFilterByCustomerPage = ({
             listTableColumnFilter={listTableColumnFilter}
             setListTableColumnFilter={setListTableColumnFilter}
             tableColumnList={tableColumnList}
+            customerData={customerData}
           />
         </Box>
       </Paper>

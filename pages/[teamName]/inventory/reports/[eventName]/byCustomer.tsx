@@ -10,6 +10,7 @@ import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
 import {
   CategoryTableRow,
+  InventoryCustomerRow,
   SecurityGroupData,
   SiteTableRow,
 } from "@/utils/types";
@@ -71,6 +72,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 type Props = {
   siteList: SiteTableRow[];
   departmentList: Department[];
+  customerList: InventoryCustomerRow[];
   categoryList: CategoryTableRow[];
   securityGroupData: SecurityGroupData;
   eventName: string;

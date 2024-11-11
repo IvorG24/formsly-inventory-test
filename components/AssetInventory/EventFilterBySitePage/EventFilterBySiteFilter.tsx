@@ -360,6 +360,7 @@ const EventFilterBySiteFilter = ({
                 />
               )}
             />
+            
             <Controller
               control={control}
               name="dateType"

@@ -1,5 +1,6 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { formatCurrency } from "@/utils/functions";
 import { InventoryDynamicRow } from "@/utils/types";
 import {
   Button,
@@ -31,10 +32,7 @@ const formatValue = (key: string, value: string) => {
   if (typeof value === "number") {
     return key.toLowerCase().includes("date")
       ? formatDate(new Date(value))
-      : new Intl.NumberFormat("en-PH", {
-          style: "currency",
-          currency: "PHP",
-        }).format(value);
+      : formatCurrency(value);
   }
   if (typeof value === "string" && key.toLowerCase().includes("date")) {
     return formatDate(new Date(value));

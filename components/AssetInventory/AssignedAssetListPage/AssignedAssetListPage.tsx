@@ -5,7 +5,7 @@ import { getAssignedAssetOnLoad } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
 import { updateWaitingForSignatureStatus } from "@/backend/api/update";
 import { useEventList } from "@/stores/useEventStore";
-import { useUserProfile } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { editImageWithUUID } from "@/utils/functions";
 import {
   CategoryTableRow,
@@ -82,6 +82,8 @@ const AssignedAssetListPage = ({
   const supabaseClient = useSupabaseClient();
   const eventList = useEventList();
   const userProfile = useUserProfile();
+  const teamMember = useUserTeamMember();
+
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryListType[]>([]);
@@ -242,6 +244,7 @@ const AssignedAssetListPage = ({
   ) => {
     try {
       if (data === null) return;
+
       const signature = data.file;
 
       let compressedImage: File | null = null;
@@ -252,6 +255,7 @@ const AssignedAssetListPage = ({
       await updateWaitingForSignatureStatus(supabaseClient, {
         requestId,
         userId: userProfile?.user_id ?? "",
+        teamMemberId: teamMember?.team_member_id ?? "",
       });
 
       const { data: signatureAttachment, url } = await createAttachment(
@@ -300,11 +304,12 @@ const AssignedAssetListPage = ({
   const handleAction = (requestId: string) => {
     modals.open({
       modalId: "addSignature",
-      title: <Text>Upload You Signature</Text>,
+      title: <Text>Upload Your Signature</Text>,
       children: (
         <form
           onSubmit={(e) => {
             e.preventDefault();
+
             const formData = new FormData(e.currentTarget);
             const file = formData.get("file") as File;
             handleUploadSignature({ file }, requestId);

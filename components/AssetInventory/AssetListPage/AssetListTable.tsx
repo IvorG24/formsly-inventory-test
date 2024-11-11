@@ -212,7 +212,8 @@ const AssetListTable = ({
                     </Anchor>
                   </Text>
 
-                  {String(relationship_type) && (
+                  {(relationship_type === "parent" ||
+                    relationship_type === "child") && (
                     <HoverCard width={280} shadow="md">
                       <HoverCard.Target>
                         <ActionIcon>
@@ -227,7 +228,9 @@ const AssetListTable = ({
                         <Text size="sm">
                           {relationship_type === "parent"
                             ? "This asset is a parent asset."
-                            : "This asset is a child asset."}
+                            : relationship_type === "child"
+                              ? "This asset is a child asset."
+                              : null}
                         </Text>
                       </HoverCard.Dropdown>
                     </HoverCard>

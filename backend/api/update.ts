@@ -1759,7 +1759,7 @@ export const updateEvent = async (
     teamMemberId?: string;
     type: string;
     eventId: string;
-    signature: string;
+    signature: string | File;
     userId?: string;
     teamName: string;
   }
@@ -1776,35 +1776,31 @@ export const updateEvent = async (
   } = params;
 
   const fieldResponsesArray: { name: string; response: string }[] = [];
-  let signatureUrl = signature || null;
-  const editedFile = await editImageWithUUIDFromURL(signatureUrl);
+  let signatureUrl = null;
+  let fileToUpload: File | null = null;
+
+  if (signature && typeof signature === "string") {
+    fileToUpload = await editImageWithUUIDFromURL(signature);
+  }
 
   for (const section of updateResponse.sections) {
     for (const field of section.section_field) {
       const fieldResponse = field.field_response;
       const fieldName = field.field_name;
 
-      if (field.field_type === "FILE" && fieldResponse instanceof File) {
+      const uploadFile =
+        field.field_type === "FILE" && fieldResponse instanceof File
+          ? fieldResponse
+          : fileToUpload;
+
+      if (uploadFile && !signatureUrl) {
         const uploadedFileUrl = await handleSignatureUpload(
           supabaseClient,
-          fieldResponse ?? editedFile,
+          uploadFile,
           fieldName,
           userId || ""
         );
-        signatureUrl = uploadedFileUrl ?? "";
-      }
-      if (
-        field.field_type === "FILE" &&
-        fieldResponse instanceof File &&
-        signatureUrl
-      ) {
-        const uploadedFileUrl = await handleSignatureUpload(
-          supabaseClient,
-          fieldResponse,
-          fieldName,
-          userId || ""
-        );
-        signatureUrl = uploadedFileUrl ?? editedFile;
+        signatureUrl = uploadedFileUrl;
       }
 
       let responseValue = fieldResponse || "";
@@ -1816,8 +1812,7 @@ export const updateEvent = async (
       ) {
         responseValue = fieldResponse || "";
       } else if (field.field_type === "FILE" || fieldResponse instanceof File) {
-        responseValue = signatureUrl || editedFile;
-        console.log(responseValue);
+        responseValue = signatureUrl ?? "";
       } else if (
         field.field_type === "CHECKBOX" &&
         typeof fieldResponse === "boolean"
@@ -1837,7 +1832,6 @@ export const updateEvent = async (
     selectedRow,
     teamMemberId: teamMemberId ?? null,
     type,
-    signatureUrl,
     eventId,
     teamName: teamName.replace(/ /g, "-").toLowerCase(),
   };
@@ -2072,6 +2066,7 @@ export const updateWaitingForSignatureStatus = async (
   params: {
     requestId: string;
     userId: string;
+    teamMemberId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

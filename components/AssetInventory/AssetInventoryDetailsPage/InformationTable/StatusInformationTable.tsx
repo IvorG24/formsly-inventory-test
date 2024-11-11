@@ -45,8 +45,10 @@ const StatusInformationTable = ({ asset_details }: Props) => {
               <Text weight={500}>Created By</Text>
             </td>
             <td>
-              {asset_details.request_creator_first_name || "N/A"}{" "}
-              {asset_details.request_creator_last_name || "N/A"}
+              <Text truncate>
+                {asset_details.request_creator_first_name || "N/A"}{" "}
+                {asset_details.request_creator_last_name || "N/A"}
+              </Text>
             </td>
           </tr>
           <tr>
@@ -54,9 +56,11 @@ const StatusInformationTable = ({ asset_details }: Props) => {
               <Text weight={500}>Assigned To</Text>
             </td>
             <td>
-              {asset_details.site_name || ""}{" "}
-              {asset_details.customer_name || ""}{" "}
-              {`${asset_details.assignee_first_name || ""} ${asset_details.assignee_last_name || ""}`}
+              <Text truncate>
+                {asset_details.site_name || ""}{" "}
+                {asset_details.customer_name || ""}{" "}
+                {`${asset_details.assignee_first_name || ""} ${asset_details.assignee_last_name || ""}`}
+              </Text>
             </td>
           </tr>
           {filteredStatusDetails.map(([key, value]) => (
@@ -76,7 +80,16 @@ const StatusInformationTable = ({ asset_details }: Props) => {
                     {value || "N/A"}
                   </Badge>
                 ) : (
-                  value || "N/A"
+                  <Text
+                    maw={300}
+                    sx={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {value || "N/A"}
+                  </Text>
                 )}
               </td>
             </tr>

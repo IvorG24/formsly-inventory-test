@@ -126,7 +126,6 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
     }));
 
   const subLinks = [...nonCustomEvents, ...customEvents];
-  console.log(eventList);
 
   const dynamicEventReportSubLinks: NavLink[] = eventList.map((event) => {
     const eventName = event.event_name.toLowerCase().replace(/ /g, "-");

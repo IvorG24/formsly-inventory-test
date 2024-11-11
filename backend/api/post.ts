@@ -3221,29 +3221,30 @@ export const handleSignatureUpload = async (
   field: string,
   userId: string
 ) => {
-  const fileType = getFileType(field);
-  const uploadParams = {
-    bucket: "USER_SIGNATURES" as AttachmentBucketType,
-    fileType,
-    userId,
-  };
+  const bucket = "EVENT_SIGNATURES" as AttachmentBucketType;
 
-  const isImage = file.type.split("/")[0] === "image";
-
-  if (isImage) {
-    const editedFile = await editImageWithUUID(file);
-    const uploadResponse = await uploadImage(supabaseClient, {
-      ...uploadParams,
-      image: editedFile,
-    });
-    return uploadResponse.publicUrl;
-  } else {
-    const uploadResponse = await uploadFile(supabaseClient, {
-      ...uploadParams,
-      file,
-    });
-    return uploadResponse.publicUrl;
+  if (file.type.split("/")[0] !== "image") {
+    throw new Error("Only image files are allowed for signature upload.");
   }
+
+  const originalFileName = `${userId}_${Date.now()}_${file.name || "default_file"}`;
+  if (file.type.split("/")[0] !== "image") {
+    throw new Error("Only image files are allowed for signature upload.");
+  }
+  const fileToUpload =
+    file.type.split("/")[0] === "image" ? await editImageWithUUID(file) : file;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from(bucket)
+    .upload(originalFileName, fileToUpload, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(originalFileName);
+
+  return data?.publicUrl || null;
 };
 
 export const handleAssetImageUpload = async (
@@ -3656,6 +3657,35 @@ export const uploadAssetFile = async (
 
   return {
     fileName: formattedFileName,
+    publicUrl: data.publicUrl,
+  };
+};
+
+export const uploadSignature = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    image: File;
+    bucket: AttachmentBucketType;
+    fileType: string;
+    userId: string;
+  }
+) => {
+  const { image, bucket } = params;
+
+  const originalFileName =
+    (image instanceof File && image.name) || "default_file";
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from(bucket)
+    .upload(originalFileName, image, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(originalFileName);
+
+  return {
     publicUrl: data.publicUrl,
   };
 };

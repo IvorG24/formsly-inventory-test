@@ -2,7 +2,7 @@ import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { BASE_URL, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryListType } from "@/utils/types";
+import { InventoryCustomerRow, InventoryListType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -10,6 +10,7 @@ import {
   Flex,
   Group,
   HoverCard,
+  Stack,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -23,10 +24,12 @@ import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
+import CustomerDetails from "./CustomerDetails/CustomerDetails";
 import { FilterSelectedValuesType } from "./EventFilterByCustomerFilter";
 
 type Props = {
   requestList: InventoryListType[];
+  customerData: InventoryCustomerRow | null;
   requestListCount: number;
   activePage: number;
   eventName: string;
@@ -50,6 +53,7 @@ const EventFilterByCustomerTable = ({
   requestList,
   requestListCount,
   activePage,
+  customerData,
   isFetchingRequestList,
   handlePagination,
   sortStatus,
@@ -69,6 +73,7 @@ const EventFilterByCustomerTable = ({
   const router = useRouter();
   const limit = getValues("limit");
   const eventFormatted = eventName.replace(/-/g, "_");
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -119,172 +124,177 @@ const EventFilterByCustomerTable = ({
   const totalCount = requestList.length;
 
   return (
-    <>
-      <ListTable
-        idAccessor={`event_${eventFormatted}_id`}
-        records={requestList}
-        fetching={isFetchingRequestList}
-        page={activePage}
-        onPageChange={(page) => {
-          handlePagination(page);
-        }}
-        totalRecords={requestListCount}
-        recordsPerPage={Number(limit)}
-        sortStatus={sortStatus}
-        onSortStatusChange={setSortStatus}
-        handleFetch={handlePagination}
-        columns={[
-          {
-            accessor: "r.inventory_request_tag_id",
-            title: "Asset Tag ID",
-            width: 180,
-            sortable: true,
-            hidden: checkIfColumnIsHidden("inventory_request_tag_id"),
-            footer: (
-              <Text weight="bold" size="sm">
-                Total Assets: {totalCount}
-              </Text>
-            ),
-            render: ({ inventory_request_tag_id, relationship_type }) => {
-              return (
-                <Flex
-                  key={String(inventory_request_tag_id)}
-                  justify="space-between"
-                >
-                  <Group>
-                    <Text truncate maw={150}>
-                      <Anchor
-                        href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${inventory_request_tag_id}`}
-                        target="_blank"
-                      >
-                        {String(inventory_request_tag_id)}
-                      </Anchor>
-                    </Text>
-
-                    {String(relationship_type) && (
-                      <HoverCard width={280} shadow="md">
-                        <HoverCard.Target>
-                          <ActionIcon>
-                            {relationship_type === "parent" ? (
-                              <IconLayersLinked color="green" size={16} />
-                            ) : relationship_type === "child" ? (
-                              <IconLinkOff color="red" size={16} />
-                            ) : null}
-                          </ActionIcon>
-                        </HoverCard.Target>
-                        <HoverCard.Dropdown>
-                          <Text size="sm">
-                            {relationship_type === "parent"
-                              ? "This asset is a parent asset."
-                              : "This asset is a child asset."}
-                          </Text>
-                        </HoverCard.Dropdown>
-                      </HoverCard>
-                    )}
-                  </Group>
-                  <CopyButton
-                    value={`${BASE_URL}/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/inventory/${inventory_request_tag_id}`}
+    <Stack>
+      {customerData && <CustomerDetails customer={customerData} />}
+      {requestList.length > 0 && (
+        <ListTable
+          idAccessor={`event_${eventFormatted}_id`}
+          records={requestList}
+          fetching={isFetchingRequestList}
+          page={activePage}
+          onPageChange={(page) => {
+            handlePagination(page);
+          }}
+          totalRecords={requestListCount}
+          recordsPerPage={Number(limit)}
+          sortStatus={sortStatus}
+          onSortStatusChange={setSortStatus}
+          handleFetch={handlePagination}
+          columns={[
+            {
+              accessor: "r.inventory_request_tag_id",
+              title: "Asset Tag ID",
+              width: 180,
+              sortable: true,
+              hidden: checkIfColumnIsHidden("inventory_request_tag_id"),
+              footer: (
+                <Text weight="bold" size="sm">
+                  Total Assets: {totalCount}
+                </Text>
+              ),
+              render: ({ inventory_request_tag_id, relationship_type }) => {
+                return (
+                  <Flex
+                    key={String(inventory_request_tag_id)}
+                    justify="space-between"
                   >
-                    {({ copied, copy }) => (
-                      <Tooltip
-                        label={
-                          copied ? "Copied" : `Copy ${inventory_request_tag_id}`
-                        }
-                        onClick={copy}
-                      >
-                        <ActionIcon>
-                          <IconCopy size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    )}
-                  </CopyButton>
-                </Flex>
-              );
+                    <Group>
+                      <Text truncate maw={150}>
+                        <Anchor
+                          href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${inventory_request_tag_id}`}
+                          target="_blank"
+                        >
+                          {String(inventory_request_tag_id)}
+                        </Anchor>
+                      </Text>
+
+                      {String(relationship_type) && (
+                        <HoverCard width={280} shadow="md">
+                          <HoverCard.Target>
+                            <ActionIcon>
+                              {relationship_type === "parent" ? (
+                                <IconLayersLinked color="green" size={16} />
+                              ) : relationship_type === "child" ? (
+                                <IconLinkOff color="red" size={16} />
+                              ) : null}
+                            </ActionIcon>
+                          </HoverCard.Target>
+                          <HoverCard.Dropdown>
+                            <Text size="sm">
+                              {relationship_type === "parent"
+                                ? "This asset is a parent asset."
+                                : "This asset is a child asset."}
+                            </Text>
+                          </HoverCard.Dropdown>
+                        </HoverCard>
+                      )}
+                    </Group>
+                    <CopyButton
+                      value={`${BASE_URL}/${formatTeamNameToUrlKey(
+                        activeTeam.team_name ?? ""
+                      )}/inventory/${inventory_request_tag_id}`}
+                    >
+                      {({ copied, copy }) => (
+                        <Tooltip
+                          label={
+                            copied
+                              ? "Copied"
+                              : `Copy ${inventory_request_tag_id}`
+                          }
+                          onClick={copy}
+                        >
+                          <ActionIcon>
+                            <IconCopy size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  </Flex>
+                );
+              },
             },
-          },
-          {
-            accessor: "r.inventory_request_status",
-            title: "Status",
-            width: 180,
-            sortable: true,
-            hidden: checkIfColumnIsHidden("inventory_request_status"),
-            render: ({ inventory_request_status }) => {
-              return <Text>{String(inventory_request_status)}</Text>;
+            {
+              accessor: "r.inventory_request_status",
+              title: "Status",
+              width: 180,
+              sortable: true,
+              hidden: checkIfColumnIsHidden("inventory_request_status"),
+              render: ({ inventory_request_status }) => {
+                return <Text>{String(inventory_request_status)}</Text>;
+              },
             },
-          },
-          {
-            accessor: "r.inventory_request_name",
-            title: "Asset Name",
-            width: 180,
-            sortable: true,
-            hidden: checkIfColumnIsHidden("inventory_request_name"),
-            render: ({ inventory_request_name }) => {
-              return <Text>{String(inventory_request_name)}</Text>;
+            {
+              accessor: "r.inventory_request_name",
+              title: "Asset Name",
+              width: 180,
+              sortable: true,
+              hidden: checkIfColumnIsHidden("inventory_request_name"),
+              render: ({ inventory_request_name }) => {
+                return <Text>{String(inventory_request_name)}</Text>;
+              },
             },
-          },
-          {
-            accessor: "r.inventory_request_cost",
-            title: "Cost",
-            width: 250,
-            sortable: true,
-            hidden: checkIfColumnIsHidden("inventory_request_cost"),
-            footer: (
-              <Text weight="bold" size="sm">
-                Total Asset Cost: ₱
-                {totalCost.toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Text>
-            ),
-            render: ({ inventory_request_cost }) => {
-              const costValue = Number(inventory_request_cost);
-              return (
-                <Text>
-                  ₱
-                  {Number(costValue).toLocaleString("en-PH", {
+            {
+              accessor: "r.inventory_request_cost",
+              title: "Cost",
+              width: 250,
+              sortable: true,
+              hidden: checkIfColumnIsHidden("inventory_request_cost"),
+              footer: (
+                <Text weight="bold" size="sm">
+                  Total Asset Cost: ₱
+                  {totalCost.toLocaleString("en-PH", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </Text>
-              );
+              ),
+              render: ({ inventory_request_cost }) => {
+                const costValue = Number(inventory_request_cost);
+                return (
+                  <Text>
+                    ₱
+                    {Number(costValue).toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                );
+              },
             },
-          },
-          ...dynamicColumns,
-          {
-            accessor: "view",
-            title: "View",
-            hidden: checkIfColumnIsHidden("view"),
-            width: 180,
-            textAlignment: "center",
-            render: ({ inventory_request_tag_id }) => (
-              <ActionIcon
-                maw={120}
-                mx="auto"
-                color="blue"
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/inventory/${inventory_request_tag_id}`
-                  )
-                }
-              >
-                <IconArrowsMaximize size={16} />
-              </ActionIcon>
-            ),
-          },
-        ]}
-        type="asset"
-        showTableColumnFilter={showTableColumnFilter}
-        setShowTableColumnFilter={setShowTableColumnFilter}
-        listTableColumnFilter={listTableColumnFilter}
-        setListTableColumnFilter={setListTableColumnFilter}
-        tableColumnList={tableColumnList}
-      />
-    </>
+            ...dynamicColumns,
+            {
+              accessor: "view",
+              title: "View",
+              hidden: checkIfColumnIsHidden("view"),
+              width: 180,
+              textAlignment: "center",
+              render: ({ inventory_request_tag_id }) => (
+                <ActionIcon
+                  maw={120}
+                  mx="auto"
+                  color="blue"
+                  onClick={async () =>
+                    await router.push(
+                      `/${formatTeamNameToUrlKey(
+                        activeTeam.team_name ?? ""
+                      )}/inventory/${inventory_request_tag_id}`
+                    )
+                  }
+                >
+                  <IconArrowsMaximize size={16} />
+                </ActionIcon>
+              ),
+            },
+          ]}
+          type="asset"
+          showTableColumnFilter={showTableColumnFilter}
+          setShowTableColumnFilter={setShowTableColumnFilter}
+          listTableColumnFilter={listTableColumnFilter}
+          setListTableColumnFilter={setListTableColumnFilter}
+          tableColumnList={tableColumnList}
+        />
+      )}
+    </Stack>
   );
 };
 
