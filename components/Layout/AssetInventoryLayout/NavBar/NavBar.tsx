@@ -441,7 +441,7 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
           value={link.id}
         >
           <Accordion.Control icon={<link.icon size={20} />}>
-            <Text fw={500} size="sm">
+            <Text fw={400} size="sm">
               {link.label}
             </Text>
           </Accordion.Control>

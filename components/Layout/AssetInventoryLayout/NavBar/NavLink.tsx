@@ -61,7 +61,7 @@ const Navlink = ({
       })}
     >
       <Group position="apart" spacing={30}>
-        <Text fw={type === "link" ? 500 : 400} size="sm">
+        <Text fw={type === "link" ? 400 : 400} size="sm">
           {isCollapsed ? null : label}
         </Text>
         {indicator}

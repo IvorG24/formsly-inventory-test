@@ -235,7 +235,9 @@ const AssetReportsListTable = ({
               return (
                 <Badge
                   sx={{
-                    backgroundColor: inventory_request_status_color as string,
+                    backgroundColor: inventory_request_status_color
+                      ? (inventory_request_status_color as string)
+                      : "#1AC2D9",
                     color: "#fff",
                   }}
                 >

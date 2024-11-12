@@ -8,6 +8,7 @@ import {
   Stack,
   Switch,
   Text,
+  Title,
 } from "@mantine/core";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -128,9 +129,9 @@ const ListTable = ({
                 {/* Default Columns Accordion */}
                 <Accordion.Item value="default-columns">
                   <Accordion.Control>
-                    <Text weight={800} size="lg">
+                    <Title order={4} color="dimmed">
                       Default Columns
-                    </Text>
+                    </Title>
                   </Accordion.Control>
                   <Accordion.Panel>
                     {defaultColumns.map((column, idx) => {
@@ -167,9 +168,9 @@ const ListTable = ({
                 {/* Custom Columns Accordion */}
                 <Accordion.Item value="custom-columns">
                   <Accordion.Control>
-                    <Text weight={800} size="lg">
+                    <Title order={4} color="dimmed">
                       Custom Columns
-                    </Text>
+                    </Title>
                   </Accordion.Control>
                   <Accordion.Panel>
                     {customColumns.map((column, idx) => {
