@@ -8090,6 +8090,8 @@ export const getLocationList = async (
     site_id?: string;
     page: number;
     limit: number;
+    isAscendingSort?:boolean
+    columnAccessor?:string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_location_list", {

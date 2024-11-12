@@ -1,10 +1,10 @@
 import {
   getAssetHistoryData,
   getAssetSpreadsheetView,
-  getEventDetails,
   getEventsHistoryData,
 } from "@/backend/api/get";
 import { useEmployeeList } from "@/stores/useEmployeeStore";
+import { useEventList } from "@/stores/useEventStore";
 import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
@@ -33,7 +33,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconDotsVertical, IconEdit } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import EventFormModal from "../FormModal/EventFormModal";
 import AdditionalDetailsPanel from "./DetailsPanel/AdditionalDetailsPanel";
@@ -65,13 +65,13 @@ const AssetInventoryDetailsPage = ({
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
   const router = useRouter();
+  const eventList = useEventList();
 
   const securityGroup = useSecurityGroup();
   const employeeList = useEmployeeList();
   const assetId = router.query.assetId as string;
   const [isLoading, setIsloading] = useState(false);
-  const [optionsEvent, setOptionsEvent] = useState<OptionType[]>([]);
-  const [statusList, setStatusList] = useState<OptionType[]>([]);
+
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assetDetails, setAssetDetails] =
     useState<InventoryListType[]>(initialDetails);
@@ -88,56 +88,21 @@ const AssetInventoryDetailsPage = ({
     columnAccessor: "inventory_history_date_created",
     direction: "desc",
   });
+
   const canEdit =
     securityGroup?.asset?.permissions?.find(
       (permission) => permission.key === "editAssets"
     )?.value === true;
 
-  useEffect(() => {
-    const getEventOptions = async () => {
-      if (!activeTeam.team_id) return;
-      const { data } = await getEventDetails(supabaseClient, {
-        teamId: activeTeam.team_id,
-      });
-      const eventSecurity = securityGroup.asset.filter.event;
-
-      const filteredEvents = data.filter((event) =>
-        eventSecurity.includes(event.event_name)
-      );
-
-      const assetStatus = assetDetails[0]?.inventory_request_status;
-
-      const filteredEventOptions = filteredEvents.filter((event) => {
-        if (assetStatus === "CHECKED OUT" && event.event_name === "Check Out") {
-          return false;
-        }
-        if (assetStatus === "AVAILABLE" && event.event_name === "Check In") {
-          return false;
-        }
-        return true;
-      });
-      const initialEventOptions: OptionType[] = filteredEventOptions.map(
-        (event) => ({
-          label: event.event_name,
-          value: event.event_id,
-        })
-      );
-      const initialStatusOptions: OptionType[] = [
-        ...data.map((event) => ({
-          label: event.event_name,
-          value: event.event_name.toUpperCase(),
-        })),
-        { label: "Link As Child", value: "LINK AS CHILD" },
-        { label: "Link As Parent", value: "LINK AS PARENT" },
-        { label: "Update", value: "UPDATE" },
-      ];
-
-      setStatusList(initialStatusOptions);
-      setOptionsEvent(initialEventOptions);
-    };
-
-    getEventOptions();
-  }, [activeTeam.team_id, assetDetails, securityGroup]);
+  const statusList: OptionType[] = [
+    ...eventList.map((event) => ({
+      label: event.event_name,
+      value: event.event_name.toUpperCase(),
+    })),
+    { label: "Link As Child", value: "LINK AS CHILD" },
+    { label: "Link As Parent", value: "LINK AS PARENT" },
+    { label: "Update", value: "UPDATE" },
+  ];
 
   const handleMenuClick = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -276,14 +241,22 @@ const AssetInventoryDetailsPage = ({
 
                   <Menu.Dropdown>
                     <Menu.Label>Actions</Menu.Label>
-                    {optionsEvent.map((event) => (
-                      <Menu.Item
-                        key={event.value}
-                        onClick={() => handleMenuClick(event.value)}
-                      >
-                        {event.label}
-                      </Menu.Item>
-                    ))}
+                    {eventList
+                      .filter((option) => {
+                        const shouldHide =
+                          initialDetails[0].inventory_request_status ===
+                          option.event_status;
+
+                        return !shouldHide;
+                      })
+                      .map((event) => (
+                        <Menu.Item
+                          key={event.event_id}
+                          onClick={() => handleMenuClick(event.event_id)}
+                        >
+                          {event.event_name}
+                        </Menu.Item>
+                      ))}
                   </Menu.Dropdown>
                 </Menu>
               </Group>

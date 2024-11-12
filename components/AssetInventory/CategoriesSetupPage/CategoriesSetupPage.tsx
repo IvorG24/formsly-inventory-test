@@ -269,7 +269,9 @@ const CategoriesSetupPage = ({ securityGroup }: Props) => {
                 accessor: "category_name",
                 width: "90%",
                 title: "Category Name",
-                render: (category) => <Text>{category.category_name}</Text>,
+                render: (category) => (
+                  <Text fw={600}>{category.category_name}</Text>
+                ),
               },
               {
                 accessor: "actions",

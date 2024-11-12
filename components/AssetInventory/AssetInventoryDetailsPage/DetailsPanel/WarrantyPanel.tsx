@@ -3,6 +3,7 @@ import { createInventoryWarranty } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { formatCurrency } from "@/utils/functions";
 import { InventoryWarrantyList } from "@/utils/types";
 import { Button, Flex, Group, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
@@ -109,10 +110,7 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
                   {isDate
                     ? formatDate(new Date(value))
                     : isNumber
-                      ? new Intl.NumberFormat("en-PH", {
-                          style: "currency",
-                          currency: "PHP",
-                        }).format(Number(value))
+                      ? formatCurrency(Number(value))
                       : isMonth
                         ? Number(value) > 1
                           ? `${value} Months`
@@ -247,7 +245,6 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <Group position="apart" align="end">
             <DatePickerInput
-              label="Expiration Date"
               placeholder="Warranty Date Expiration"
               {...register("date", { required: false })}
               miw={250}

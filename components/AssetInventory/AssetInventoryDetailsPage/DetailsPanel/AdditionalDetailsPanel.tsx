@@ -1,5 +1,5 @@
 import { formatDate, isExcludedKey } from "@/utils/constant";
-import { formatLabel } from "@/utils/functions";
+import { formatCurrency, formatLabel } from "@/utils/functions";
 import { InventoryListType } from "@/utils/types";
 import { Card, Stack, Table, Text } from "@mantine/core";
 import { useMemo } from "react";
@@ -60,13 +60,7 @@ const AdditionalDetailsPanel = ({ detail }: Props) => {
               <td>
                 <Text weight={500}>Cost</Text>
               </td>
-              <td>
-                ₱
-                {Number(detail.inventory_request_cost).toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </td>
+              <td>{formatCurrency(Number(detail.inventory_request_cost))}</td>
             </tr>
           </tbody>
         </Table>

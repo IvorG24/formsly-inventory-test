@@ -29,7 +29,7 @@ const StatusInformationTable = ({ asset_details }: Props) => {
   );
 
   return (
-    <Grid.Col span={12} xs={6}>
+    <Grid.Col maw={300} span={12} xs={6}>
       <Table striped highlightOnHover withBorder withColumnBorders>
         <tbody>
           {/* Status Information Section */}
@@ -56,10 +56,27 @@ const StatusInformationTable = ({ asset_details }: Props) => {
               <Text weight={500}>Assigned To</Text>
             </td>
             <td>
-              <Text truncate>
-                {asset_details.site_name || ""}{" "}
-                {asset_details.customer_name || ""}{" "}
-                {`${asset_details.assignee_first_name || ""} ${asset_details.assignee_last_name || ""}`}
+              <Text>
+                {asset_details.site_name ? asset_details.site_name : ""}
+                {asset_details.site_name && asset_details.customer_name
+                  ? " "
+                  : ""}
+                {asset_details.customer_name ? asset_details.customer_name : ""}
+                {(asset_details.site_name || asset_details.customer_name) &&
+                (asset_details.assignee_first_name ||
+                  asset_details.assignee_last_name)
+                  ? " "
+                  : ""}
+                {asset_details.assignee_first_name
+                  ? asset_details.assignee_first_name
+                  : ""}
+                {asset_details.assignee_first_name &&
+                asset_details.assignee_last_name
+                  ? " "
+                  : ""}
+                {asset_details.assignee_last_name
+                  ? asset_details.assignee_last_name
+                  : ""}
               </Text>
             </td>
           </tr>

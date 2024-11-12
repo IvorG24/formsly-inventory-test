@@ -195,7 +195,6 @@ const EmployeeSetupPage = ({
 
   return (
     <Container maw={3840} h="100%">
-      <LoadingOverlay visible={isLoading} />
       <DisableModal
         setCurrentCustomFieldList={setCustomFields}
         typeId={fieldId}
@@ -205,6 +204,7 @@ const EmployeeSetupPage = ({
         opened={modalOpened}
         type="Custom Field"
       />
+      <LoadingOverlay visible={isLoading} />
       <Paper p="md">
         <Stack>
           <Group position="apart" align="end">
@@ -315,7 +315,6 @@ const EmployeeSetupPage = ({
                 withBorder
                 idAccessor="field_id"
                 page={activePage}
-                fetching={isLoading}
                 totalRecords={totalFields}
                 recordsPerPage={ROW_PER_PAGE}
                 onPageChange={setActivePage}

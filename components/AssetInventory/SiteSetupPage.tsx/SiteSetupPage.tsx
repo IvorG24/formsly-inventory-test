@@ -299,7 +299,7 @@ const SiteSetupPage = ({ securityGroup }: Props) => {
                 width: "20%",
                 title: "Site Name",
                 sortable: true,
-                render: (site) => <Text>{site.site_name}</Text>,
+                render: (site) => <Text fw={600}>{site.site_name}</Text>,
               },
               {
                 accessor: "site_description",

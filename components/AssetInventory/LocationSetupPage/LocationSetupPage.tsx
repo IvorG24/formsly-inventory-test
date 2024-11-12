@@ -28,7 +28,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconLocation, IconPlus } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import DisableModal from "../FormModal/DisableModal";
@@ -38,6 +38,7 @@ import LocationDrawer from "./LocationDrawer";
 type FormValues = {
   site_id: string;
   location_name: string;
+  isAscendingSort: boolean;
 };
 type Props = {
   siteListData: SiteTableRow[];
@@ -68,6 +69,11 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
     value: option.site_id,
   }));
 
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "location_name",
+    direction: "desc",
+  });
+
   const canAddData = securityGroup.privileges.location.add === true;
   const canDeleteData = securityGroup.privileges.location.delete === true;
   const canEditData = securityGroup.privileges.location.edit === true;
@@ -76,27 +82,31 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
     defaultValues: {
       site_id: "",
       location_name: "",
+      isAscendingSort: false,
     },
   });
 
-  const { control, handleSubmit, getValues } = formMethods;
+  const { control, handleSubmit, getValues, setValue } = formMethods;
 
   useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
-  }, [activePage]);
+  }, [activePage, activeTeam.team_id, sortStatus]);
 
   const handleFetchLocationList = async (
     page: number,
     value: string | null
   ) => {
     try {
-      const { site_id } = getValues();
+      const { site_id, isAscendingSort } = getValues();
       const siteId = value ? value : site_id;
 
       const { data, totalCount } = await getLocationList(supabaseClient, {
         site_id: siteId,
         limit: ROW_PER_PAGE,
         page,
+        isAscendingSort,
+        columnAccessor: sortStatus.columnAccessor,
       });
 
       setCurrentLocationList(data);
@@ -295,12 +305,17 @@ const LocationSetupPage = ({ securityGroup, siteListData }: Props) => {
             onPageChange={handlePagination}
             records={currentLocationList}
             fetching={isFetchingLocationList}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
             columns={[
               {
                 accessor: "location_name",
                 width: "50%",
                 title: "Location Name",
-                render: (location) => <Text>{location.location_name}</Text>,
+                sortable: true,
+                render: (location) => (
+                  <Text fw={600}>{location.location_name}</Text>
+                ),
               },
               {
                 accessor: "site_name",

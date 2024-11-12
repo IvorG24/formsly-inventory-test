@@ -299,7 +299,7 @@ const SubCategoriesSetupPage = ({ securityGroup, categoryOptions }: Props) => {
                 width: "40%",
                 title: "Sub Category Name",
                 render: (subCategory) => (
-                  <Text>{subCategory.sub_category_name}</Text>
+                  <Text fw={600}>{subCategory.sub_category_name}</Text>
                 ),
               },
               {

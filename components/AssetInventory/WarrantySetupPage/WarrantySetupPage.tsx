@@ -295,7 +295,6 @@ const WarrantySetupPage = ({
                   minHeight: "300px",
                 }}
                 withBorder
-                fetching={isLoading}
                 idAccessor="field_id"
                 page={activePage}
                 totalRecords={totalFields}

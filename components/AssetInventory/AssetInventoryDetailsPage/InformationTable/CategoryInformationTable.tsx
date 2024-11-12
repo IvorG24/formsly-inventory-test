@@ -25,7 +25,7 @@ const CategoryInformationTable = ({ asset_details }: Props) => {
   }, [asset_details]);
 
   return (
-    <Grid.Col span={12} xs={6}>
+    <Grid.Col maw={300} span={12} xs={6}>
       <Table striped highlightOnHover withBorder withColumnBorders>
         <tbody>
           <tr>

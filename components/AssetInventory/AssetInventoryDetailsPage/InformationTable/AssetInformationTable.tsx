@@ -33,7 +33,7 @@ const AssetInformationTable = ({ asset_details }: Props) => {
   }, [asset_details]);
 
   return (
-    <Grid.Col span={12} xs={6}>
+    <Grid.Col maw={250} span={12} xs={6}>
       <Table striped highlightOnHover withBorder withColumnBorders>
         <tbody>
           {/* Asset Information Section */}
@@ -51,7 +51,7 @@ const AssetInformationTable = ({ asset_details }: Props) => {
               </td>
               <td>
                 <Text
-                  maw={300}
+                  maw={160}
                   sx={{
                     whiteSpace: "nowrap",
                     overflow: "hidden",

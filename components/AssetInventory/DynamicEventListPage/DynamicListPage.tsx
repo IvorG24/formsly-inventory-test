@@ -121,7 +121,7 @@ const DynamicListPage = ({
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
-    key: "inventory-list-checkout-table-column-filter",
+    key: `inventory-list-${status}-table-column-filter`,
     defaultValue: getDefaultColumnList(),
   });
 
@@ -164,6 +164,7 @@ const DynamicListPage = ({
         assignedToPerson,
         assignedToSite,
         department: securityGroup.asset.filter.department || department,
+        columnAccessor: sortStatus.columnAccessor,
         locations,
         sites: securityGroup.asset.filter.site || sites,
         category: securityGroup.asset.filter.category || category,

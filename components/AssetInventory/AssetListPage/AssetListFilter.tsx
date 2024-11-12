@@ -93,12 +93,10 @@ const AssetListFilter = ({
   const { ref: departmentRef, focused: departmentRefFocused } =
     useFocusWithin();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
   const handleSelectChange = (value: string | null) => {
     if (selectedEventId === value) {
       setSelectedEventId(null);
-      setTimeout(() => {
-        setSelectedEventId(value);
-      }, 0);
     } else {
       setSelectedEventId(value);
     }
@@ -116,7 +114,7 @@ const AssetListFilter = ({
   const eventSecurity = securityGroupData.asset.filter.event
     ? securityGroupData.asset.filter.event
     : [];
-    
+
   const eventActions = eventList.map((event) => ({
     label: event.event_name,
     value: event.event_id,
@@ -270,22 +268,16 @@ const AssetListFilter = ({
 
                     if (selectedItems.length === 0) return true;
 
-                    const hasCheckedOutItem = selectedItems.some(
-                      (item) => item.inventory_request_status === "CHECKED OUT"
-                    );
-                    const hasAvailableItem = selectedItems.some(
-                      (item) => item.inventory_request_status === "AVAILABLE"
+                    const event = eventList.find(
+                      (evt) => evt.event_name === option.label
                     );
 
-                    if (hasCheckedOutItem && option.label === "Check Out") {
-                      return false;
-                    }
+                    if (!event) return true;
 
-                    if (hasAvailableItem && option.label === "Check In") {
-                      return false;
-                    }
-
-                    return true;
+                    return !selectedItems.some(
+                      (item) =>
+                        item.inventory_request_status === event.event_status
+                    );
                   })
                   .map((event) => (
                     <Menu.Item

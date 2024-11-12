@@ -41,16 +41,16 @@ const HistoryPanel = ({
     });
 
   useEffect(() => {
-    if (activeTab !== "history") return;
+    if (activeTab === "history") {
+      const fetchData = async () => {
+        setIsLoading(true);
+        await fetchHistoryPanel(activePage);
+        setIsLoading(false);
+      };
 
-    const fetchData = async () => {
-      setIsLoading(true);
-      await fetchHistoryPanel(activePage); // Await the asynchronous function
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [activePage, activeTab]);
+      fetchData();
+    }
+  }, [activeTab]);
 
   const { ref: eventRef, focused: event } = useFocusWithin();
   const { ref: acionByRef, focused: actionBy } = useFocusWithin();
@@ -87,7 +87,6 @@ const HistoryPanel = ({
           render={({ field: { value, onChange } }) => (
             <DatePickerInput
               placeholder="Date"
-              label="Date"
               ref={dateRef}
               value={value ? new Date(value) : null}
               onChange={(value) => {
@@ -111,7 +110,6 @@ const HistoryPanel = ({
             <MultiSelect
               data={statusList}
               placeholder="Event"
-              label="Event"
               ref={eventRef}
               value={value}
               searchable
@@ -133,7 +131,6 @@ const HistoryPanel = ({
             <MultiSelect
               data={teamMemberOption}
               placeholder="Action By"
-              label="Action By"
               ref={acionByRef}
               value={value as string[]}
               searchable

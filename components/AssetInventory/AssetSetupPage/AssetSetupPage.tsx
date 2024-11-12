@@ -201,6 +201,7 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
         opened={modalOpened}
         type="Custom Field"
       />
+
       <Paper p="md">
         <Stack>
           <Group position="apart" align="end">
@@ -224,7 +225,6 @@ const AssetSetupPage = ({ securityGroup, categoryOptions, field }: Props) => {
               withBorder
               idAccessor="field_id"
               page={1}
-              fetching={isLoading}
               totalRecords={defaultField.length}
               recordsPerPage={ROW_PER_PAGE}
               onPageChange={setActivePage}
