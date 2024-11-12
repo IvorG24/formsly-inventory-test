@@ -90,7 +90,7 @@ const DynamicListPage = ({
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "request_date_created",
+    columnAccessor: "inventory_request_created",
     direction: "desc",
   });
 

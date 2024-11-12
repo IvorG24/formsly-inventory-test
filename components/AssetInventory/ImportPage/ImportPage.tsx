@@ -55,6 +55,7 @@ const ImportPage = ({ category }: Props) => {
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataCompatible, setIsDataCompatible] = useState(true);
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
 
   const categoryOptions = category.map((category) => ({
     label: category.category_name,
@@ -66,6 +67,7 @@ const ImportPage = ({ category }: Props) => {
 
   const handleFileUpload = async (selectedFile: File | null) => {
     if (!selectedFile) return;
+    setValue("file", null);
 
     Papa.parse(selectedFile, {
       header: true,
@@ -121,7 +123,10 @@ const ImportPage = ({ category }: Props) => {
         }
       },
     });
-    setValue("file", selectedFile);
+    setValue("file", selectedFile); // Set the file in form state
+
+    // Update the key to force the FileInput component to re-render
+    setFileInputKey(Date.now());
   };
 
   const handleSubmitFile = async () => {
@@ -201,6 +206,24 @@ const ImportPage = ({ category }: Props) => {
     }
   };
 
+  const handleFetchColumnForNonAsset = async (value: string | null) => {
+    try {
+      setValue("importType", value as "asset" | "employee" | "customer");
+
+      if (value === "asset") return;
+      setParsedData([]);
+      const columnImport = await getColumnListImport(supabaseClient, {
+        type: value ?? "",
+      });
+      const columnsForCsv = columnImport.map((col) => ({
+        label: col.label,
+        key: col.value,
+      }));
+
+      setColumns(columnsForCsv);
+    } catch (e) {}
+  };
+
   return (
     <Container fluid>
       <LoadingOverlay visible={isLoading} />
@@ -220,23 +243,21 @@ const ImportPage = ({ category }: Props) => {
                   { label: "Customer", value: "customer" },
                 ]}
                 {...register("importType", { required: true })}
-                onChange={(value) =>
-                  setValue(
-                    "importType",
-                    value as "asset" | "employee" | "customer"
-                  )
-                }
+                onChange={(value) => handleFetchColumnForNonAsset(value)}
               />
               {importType && (
                 <form onSubmit={handleSubmit(handleSubmitFile)}>
                   <Stack spacing="md">
                     <FileInput
+                      key={fileInputKey}
                       label="Upload CSV file"
                       placeholder="Choose a file"
                       accept=".csv"
                       withAsterisk
                       {...register("file", { required: true })}
-                      onChange={(file) => handleFileUpload(file)}
+                      onChange={(file) => {
+                        handleFileUpload(file);
+                      }}
                     />
 
                     <Group position="apart" align="center" mt="md">
