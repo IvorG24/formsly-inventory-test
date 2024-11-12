@@ -103,6 +103,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
                 .replace(/hris_id_number/gi, "HRIS ID Number")
                 .replace(/_/g, " ")
                 .replace(/\b\w/g, (char) => char.toUpperCase()),
+              width: "100%",
               sortable: ["employee", "site", "department", "location"].some(
                 (keyword) => key.includes(keyword)
               ),
@@ -117,6 +118,7 @@ const EmployeeListPage = ({ securityGroup }: Props) => {
             accessor: "actions",
             title: "Actions",
             sortable: false,
+            width: "100%",
             render: (row: InventoryEmployeeList) => (
               <>
                 {canEditData && (

@@ -104,7 +104,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
               .replace("customer", "")
               .replace(/\b\w/g, (char) => char.toUpperCase()),
             sortable: key.includes("customer"),
-            width: 180,
+            width: "100%",
             render: (record: Record<string, unknown>) => (
               <Text>{(record[key] as string) || ""}</Text>
             ),
@@ -113,7 +113,7 @@ const CustomerListPage = ({ securityGroup }: Props) => {
           accessor: "actions",
           title: "Actions",
           sortable: false,
-          width: 180,
+          width: "100%",
           render: (record: Record<string, unknown>) => (
             <Flex gap="md">
               {canEditData && (

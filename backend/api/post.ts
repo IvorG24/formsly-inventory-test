@@ -3029,7 +3029,7 @@ export const updateAssetRequest = async (
     .filter((response) => response.inventory_response_value !== null)
     .map((response) => {
       if (!response.inventory_response_value) return "";
-      return `('${capitalizeFirstWord(response.inventory_response_value)}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
+      return `('${response.inventory_response_value}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`;
     });
 
   const responseValues =
