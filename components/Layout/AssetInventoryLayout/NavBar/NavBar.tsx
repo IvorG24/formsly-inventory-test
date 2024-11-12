@@ -649,7 +649,7 @@ const Navbar = ({ openNavbar, setOpenNavbar, indicatorCount }: Props) => {
                           : theme.colors.blue[7],
                     },
                     fontFamily: theme.fontFamily,
-                    fontWeight: 100, // Adjust to match the Navlink font weight
+                    fontWeight: 100,
                     fontSize: theme.fontSizes.sm,
                   },
                   inner: {
