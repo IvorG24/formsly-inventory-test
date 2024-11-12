@@ -5,6 +5,7 @@ import {
   DEFAULT_REQUEST_LIST_LIMIT,
   formatDate,
 } from "@/utils/constant";
+import { formatCurrency } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InventoryListType } from "@/utils/types";
@@ -53,6 +54,7 @@ type Props = {
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
   tableColumnList: { value: string; label: string }[];
+  defaultColumnList: string[];
 };
 const useStyles = createStyles(() => ({
   requestor: {
@@ -63,6 +65,15 @@ const useStyles = createStyles(() => ({
     cursor: "pointer",
   },
 }));
+
+const excludedColumns = [
+  "inventory_request_id",
+  "inventory_request_status",
+  "inventory_request_name",
+  "inventory_request_tag_id",
+  "inventory_request_assigned_to",
+];
+
 const AssetListTable = ({
   requestList,
   requestListCount,
@@ -79,12 +90,14 @@ const AssetListTable = ({
   setShowTableColumnFilter,
   listTableColumnFilter,
   setListTableColumnFilter,
+  defaultColumnList,
   tableColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
 
   const { classes } = useStyles();
   const router = useRouter();
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -101,22 +114,15 @@ const AssetListTable = ({
   };
 
   const dynamicColumns = tableColumnList
-    .filter(
-      (column) =>
-        !checkIfColumnIsHidden(column.value) &&
-        column.value !== "inventory_request_id" &&
-        column.value !== "inventory_request_status" &&
-        column.value !== "inventory_request_name" &&
-        column.value !== "inventory_request_tag_id" &&
-        column.value !== "inventory_request_assigned_to"
-    )
+    .filter((column) => !excludedColumns.includes(column.value))
     .map((column) => ({
       accessor: `r.${column.value}`,
       title: column.label,
       sortable:
         column.value.startsWith("inventory_request") &&
         column.value !== "inventory_request_notes",
-      width: 180,
+      width: "100%",
+      hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {
         const value =
           record[column.value] !== undefined && record[column.value] !== null
@@ -133,7 +139,7 @@ const AssetListTable = ({
 
         if (fieldsWithPesoSign.includes(column.value)) {
           const formattedValue = value
-            ? `₱ ${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            ? `${formatCurrency(Number(value))}`
             : "";
           return <Flex>{formattedValue}</Flex>;
         } else if (fieldWithDate.includes(column.value)) {
@@ -160,6 +166,7 @@ const AssetListTable = ({
       recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
       sortStatus={sortStatus}
       onSortStatusChange={setSortStatus}
+      defaultColumnList={defaultColumnList}
       columns={[
         {
           accessor: "checkbox",

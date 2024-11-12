@@ -47,6 +47,7 @@ type Props = {
     val: string[] | ((prevState: string[]) => string[])
   ) => void;
   tableColumnList: { value: string; label: string }[];
+  defaultColumnList: string[];
 };
 const useStyles = createStyles(() => ({
   requestor: {
@@ -73,6 +74,7 @@ const AssetReportsListTable = ({
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
+  defaultColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
 
@@ -80,38 +82,38 @@ const AssetReportsListTable = ({
   const router = useRouter();
   const limit = getValues("limit");
 
+  const excludedColumns = [
+    "inventory_request_id",
+    "inventory_request_status",
+    "inventory_request_name",
+    "inventory_request_tag_id",
+    "inventory_request_cost",
+    "inventory_request_created_by",
+    "inventory_request_user_id",
+    "inventory_request_assigned_to",
+  ];
+
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
 
   const dynamicColumns = tableColumnList
-    .filter(
-      (column) =>
-        ![
-          "inventory_request_id",
-          "inventory_request_status",
-          "inventory_request_name",
-          "inventory_request_tag_id",
-          "inventory_request_cost",
-          "inventory_request_created_by",
-          "inventory_request_user_id",
-          "inventory_request_assigned_to",
-        ].includes(column.value)
-    )
+    .filter((column) => !excludedColumns.includes(column.value))
     .map((column) => ({
       accessor: column.value,
       title: column.label,
       sortable:
         column.value.startsWith("inventory_request") &&
         column.value !== "inventory_request_notes",
-      width: 180,
+      width: "100%",
       hidden: checkIfColumnIsHidden(column.value),
       render: (record: Record<string, unknown>) => {
         const value =
           record[column.value] !== undefined && record[column.value] !== null
             ? String(record[column.value])
             : "";
+
         const fieldWithDate = [
           "inventory_request_purchase_date",
           "inventory_request_created",
@@ -148,6 +150,7 @@ const AssetReportsListTable = ({
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
         handleFetch={handlePagination}
+        defaultColumnList={defaultColumnList}
         columns={[
           {
             accessor: "r.inventory_request_tag_id",

@@ -93,28 +93,36 @@ const DynamicListPage = ({
     columnAccessor: "request_date_created",
     direction: "desc",
   });
+
+  const getDefaultColumnList = () => {
+    const excludedColumns = [
+      "Asset Tag ID",
+      "Asset Name",
+      "Status",
+      "Assigned To",
+      "Date Created",
+      "Item Code",
+      "Brand",
+      "Model",
+      "Serial No.",
+      "Site",
+      "Location",
+      "Department",
+      "Old Asset Number",
+      "IT Equipment Type",
+    ];
+
+    return tableColumnList
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .filter((column) => !excludedColumns.includes(column.label))
+      .map((column) => column.value);
+  };
+
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
     key: "inventory-list-checkout-table-column-filter",
-    defaultValue: tableColumnList
-      .filter(
-        (column) =>
-          ![
-            "Asset Tag Id",
-            "Asset Name",
-            "Status",
-            "Date Created",
-            "Item Code",
-            "Brand",
-            "Model",
-            "Serial No.",
-            "Site",
-            "Location",
-            "Department",
-          ].includes(column.label)
-      )
-      .map((column) => column.value),
+    defaultValue: getDefaultColumnList(),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -253,6 +261,7 @@ const DynamicListPage = ({
             listTableColumnFilter={listTableColumnFilter}
             setListTableColumnFilter={setListTableColumnFilter}
             tableColumnList={tableColumnList}
+            defaultColumnList={getDefaultColumnList()}
           />
         </Box>
       </Paper>

@@ -91,27 +91,31 @@ const AssetReportsListPage = ({
     direction: "desc",
   });
 
+  const getDefaultColumnList = () => {
+    const excludedColumns = [
+      "Asset Tag ID",
+      "Status",
+      "Assigned To",
+      "Asset Name",
+      "Date Created",
+      "Item Code",
+      "Brand",
+      "Model",
+      "Serial No.",
+      "Cost",
+    ];
+
+    return tableColumnList
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .filter((column) => !excludedColumns.includes(column.label))
+      .map((column) => column.value);
+  };
+
   const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
     string[]
   >({
     key: "inventory-asset-report-list-table-column-filter",
-    defaultValue:
-      tableColumnList
-        .sort((a, b) => a.label.localeCompare(b.label))
-        .filter(
-          (column) =>
-            ![
-              "Asset Tag Id",
-              "Asset Name",
-              "Date Created",
-              "Item Code",
-              "Brand",
-              "Model",
-              "Serial No.",
-              "Cost",
-            ].includes(column.label)
-        )
-        .map((column) => column.value) || [],
+    defaultValue: getDefaultColumnList(),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -239,6 +243,7 @@ const AssetReportsListPage = ({
             listTableColumnFilter={listTableColumnFilter}
             setListTableColumnFilter={setListTableColumnFilter}
             tableColumnList={tableColumnList}
+            defaultColumnList={getDefaultColumnList()}
           />
         </Box>
       </Paper>

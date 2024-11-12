@@ -78,6 +78,7 @@ const EventFilterBySitePage = ({
     columnAccessor: "inventory_request_created",
     direction: "desc",
   });
+  
   const getDefaultColumnList = () => {
     const excludedColumns = [
       "inventory_request_id",
