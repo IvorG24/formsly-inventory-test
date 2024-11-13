@@ -1,29 +1,14 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 
 import { getInventoryMaintenance } from "@/backend/api/get";
 import { createInventoryMaitenance } from "@/backend/api/post";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  Column,
-  InventoryMaintenanceList,
-  SecurityGroupData,
-} from "@/utils/types";
-import {
-  Anchor,
-  Box,
-  Button,
-  Container,
-  Flex,
-  Paper,
-  Text,
-  Title,
-} from "@mantine/core";
+import { InventoryMaintenanceList, SecurityGroupData } from "@/utils/types";
+import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconEdit } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -33,6 +18,11 @@ import MaintenanceListTable from "./MaintenanceListTable";
 
 type Props = {
   securityGroupData: SecurityGroupData;
+  tableColumnList: {
+    value: string;
+    label: string;
+    field_is_custom_field?: boolean;
+  }[];
 };
 
 type FilterSelectedValuesType = {
@@ -41,7 +31,7 @@ type FilterSelectedValuesType = {
   isAscendingSort: boolean;
 };
 
-const MaintenanceListPage = ({ securityGroupData }: Props) => {
+const MaintenanceListPage = ({ securityGroupData, tableColumnList }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const userProfile = useUserProfile();
@@ -66,7 +56,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
   const [selectedMaintenance, setSelectedMaintenance] =
     useState<InventoryMaintenanceList | null>(null);
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-  const [columns, setColumns] = useState<Column[]>([]);
+
   const [opened, { open, close }] = useDisclosure(false);
 
   const filterFormMethods = useForm<FilterSelectedValuesType>({
@@ -76,10 +66,22 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
 
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
-  const columnDefaultValue = columns.map((col) => ({
-    value: col.accessor,
-    label: col.title,
-  }));
+  const getDefaultColumnList = () => {
+    const excludedColumns = [
+      "Asset Tag ID",
+      "Asset Name",
+      "Maintenance Date",
+      "Title",
+      "Status",
+      "Completion Date",
+      "Cost",
+      "Maintenance By",
+      "Details",
+    ];
+    return tableColumnList
+      .filter((column) => !excludedColumns.includes(column.label))
+      .map((column) => column.value);
+  };
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "inventory_maintenance_date_created",
@@ -90,7 +92,7 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
     string[]
   >({
     key: "inventory-list-maintenance-table-column-filter",
-    defaultValue: columnDefaultValue.map((col) => col.value),
+    defaultValue: getDefaultColumnList(),
   });
 
   const checkIfColumnIsHidden = (column: string) => {
@@ -143,115 +145,6 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
           columnAccessor: sortStatus.columnAccessor,
         }
       );
-
-      if (data.length > 0) {
-        const tagId = "inventory_request_tag_id";
-        const name = "inventory_request_name";
-
-        const generatedColumns = [
-          {
-            accessor: tagId,
-            title: "Tag ID",
-            sortable: true,
-            hidden: checkIfColumnIsHidden(tagId),
-            render: (record: Record<string, unknown>) => (
-              <Text>
-                <Anchor
-                  href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${record[tagId]}`}
-                  target="_blank"
-                >
-                  {String(record[tagId])}
-                </Anchor>
-              </Text>
-            ),
-          },
-          {
-            accessor: name,
-            title: "Name",
-            sortable: true,
-            width: 180,
-            hidden: checkIfColumnIsHidden(name),
-            render: (record: Record<string, unknown>) => (
-              <Text>
-                <Anchor
-                  href={`/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/inventory/${record[tagId]}`}
-                  target="_blank"
-                >
-                  {String(record[name])}
-                </Anchor>
-              </Text>
-            ),
-          },
-          ...Object.keys(data[0] ?? {})
-            .filter(
-              (key) =>
-                key !== "inventory_maintenance_id" &&
-                key !== "inventory_maintenance_request_id" &&
-                key !== tagId &&
-                key !== name
-            )
-            .map((key) => ({
-              accessor: key,
-              title: key
-                .replace(/_/g, " ")
-                .replace("inventory", "")
-                .replace("request", "")
-                .replace(/\b\w/g, (char) => char.toUpperCase()),
-              sortable: key.includes("maintenance"),
-              width: 180,
-              hidden: checkIfColumnIsHidden(key),
-              render: (record: Record<string, unknown>) => {
-                const value = record[key];
-
-                if (key.includes("date")) {
-                  const isDate =
-                    typeof value === "string" && !isNaN(Date.parse(value));
-                  if (isDate) {
-                    return (
-                      <Text size="sm">
-                        {formatDate(new Date(value as string))}
-                      </Text>
-                    );
-                  }
-                }
-
-                if (key.includes("cost") && typeof value === "number") {
-                  return (
-                    <Text size="sm">
-                      {new Intl.NumberFormat("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      }).format(value as number)}
-                    </Text>
-                  );
-                }
-
-                return <Text>{String(value)}</Text>;
-              },
-            })),
-          {
-            accessor: "actions",
-            title: "Actions",
-            sortable: false,
-            render: (record: Record<string, unknown>) => {
-              const inventoryRecord = record as InventoryMaintenanceList;
-              return (
-                <Button
-                  onClick={() => handleEdit(inventoryRecord)}
-                  color="blue"
-                  variant="outline"
-                  size="sm"
-                  rightIcon={<IconEdit size={16} />}
-                >
-                  Edit
-                </Button>
-              );
-            },
-          },
-        ];
-
-        setColumns(generatedColumns);
-      }
       setMaintenanceList(data);
       setMaintenanceCount(totalCount);
     } catch (e) {
@@ -337,13 +230,14 @@ const MaintenanceListPage = ({ securityGroupData }: Props) => {
             sortStatus={sortStatus}
             setSortStatus={setSortStatus}
             setValue={setValue}
-            columns={columns}
             checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}
             listTableColumnFilter={listTableColumnFilter}
             setListTableColumnFilter={setListTableColumnFilter}
-            tableColumnList={columnDefaultValue}
+            tableColumnList={tableColumnList}
+            defaulColumnList={getDefaultColumnList()}
+            handleEdit={handleEdit}
           />
         </Box>
       </Paper>

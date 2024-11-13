@@ -1,4 +1,5 @@
 // Imports
+import { getColumnListDynamic } from "@/backend/api/get";
 import MaintenanceListPage from "@/components/AssetInventory/MaintenanceListPage/MaintenanceListPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveGroup } from "@/utils/server-side-protections";
@@ -6,7 +7,7 @@ import { SecurityGroupData } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveGroup(
-  async ({ securityGroupData }) => {
+  async ({ securityGroupData, supabaseClient }) => {
     try {
       const hasViewOnlyPermission = securityGroupData.asset.permissions.some(
         (permission) =>
@@ -22,12 +23,19 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         };
       }
 
+      const tableColumnList = await getColumnListDynamic(supabaseClient, {
+        formId: "ffb70d77-05e7-46de-abbf-1513002d079a",
+        type: "maintenance",
+      });
       return {
         props: {
           securityGroupData,
+          tableColumnList,
         },
       };
     } catch (e) {
+      console.log(e);
+
       return {
         redirect: {
           destination: "/500",
@@ -39,15 +47,23 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
 );
 type Props = {
   securityGroupData: SecurityGroupData;
+  tableColumnList: {
+    value: string;
+    label: string;
+    field_is_custom_field?: boolean;
+  }[];
 };
-const Page = ({ securityGroupData }: Props) => {
+const Page = ({ securityGroupData, tableColumnList }: Props) => {
   return (
     <>
       <Meta
         description="Maintenance List Page"
         url="/teamName/inventory/list/maintenance"
       />
-      <MaintenanceListPage securityGroupData={securityGroupData} />
+      <MaintenanceListPage
+        tableColumnList={tableColumnList}
+        securityGroupData={securityGroupData}
+      />
     </>
   );
 };

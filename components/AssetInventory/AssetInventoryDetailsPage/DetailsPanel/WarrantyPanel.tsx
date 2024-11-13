@@ -1,4 +1,4 @@
-import { getInventoryWarranty } from "@/backend/api/get";
+import { getColumnListDynamic, getInventoryWarranty } from "@/backend/api/get";
 import { createInventoryWarranty } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -28,6 +28,15 @@ type Column = {
   title: string;
   render: (row: InventoryWarrantyList) => JSX.Element;
 };
+
+const excludedColumns = [
+  "inventory_warranty_id",
+  "inventory_request_name",
+  "inventory_request_tag_id",
+  "inventory_warranty_request_id",
+  "inventory_warranty_status",
+];
+
 type Props = {
   activeTab: string;
   fetchHistory: (page: number) => void;
@@ -80,31 +89,26 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
         limit: ROW_PER_PAGE,
         teamId: activeTeam.team_id,
       });
+      const tableColumnList = await getColumnListDynamic(supabaseClient, {
+        formId: "dd3d9787-ba92-4ef7-bc9f-8c6f374cd477",
+        type: "warranty",
+      });
 
       if (data.length > 0) {
-        const generatedColumns = Object.keys(data[0])
-          .filter(
-            (key) =>
-              key !== "inventory_warranty_id" &&
-              key !== "inventory_warranty_request_id" &&
-              key !== "inventory_warranty_date_created" &&
-              key !== "inventory_warranty_status"
-          )
-          .map((key) => ({
-            accessor: key,
-            // Capitalize the first letter of each word in the title
-            title: key
-              .replace(/_/g, " ")
-              .replace("inventory", "")
-              .replace(/\b\w/g, (char) => char.toUpperCase()),
+        const generatedColumns = tableColumnList
+          .filter((column) => !excludedColumns.includes(column.value))
+          .map((column) => ({
+            accessor: column.value,
+
+            title: column.label.replace(/\b\w/g, (char) => char.toUpperCase()),
 
             render: (row: InventoryWarrantyList) => {
-              const value = row[key];
+              const value = row[column.value];
 
-              const isDate = key.includes("date");
+              const isDate = column.value.includes("date");
 
-              const isNumber = key.includes("Cost");
-              const isMonth = key.includes("length");
+              const isNumber = column.value.includes("Cost");
+              const isMonth = column.value.includes("length");
               return (
                 <Text size="sm">
                   {isDate

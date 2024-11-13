@@ -92,8 +92,9 @@ const EventFormModal = ({
           userId: userData?.user_id ?? "",
         });
       }
+      console.log(signature);
 
-      if (signature === null) {
+      if (!signature) {
         notifications.show({
           message:
             "Upload a signature here or upload in user settings to continue",
@@ -134,6 +135,8 @@ const EventFormModal = ({
           color: "green",
         });
     } catch (e) {
+      console.log(e);
+
       notifications.show({
         message: "Something went wrong",
         color: "red",

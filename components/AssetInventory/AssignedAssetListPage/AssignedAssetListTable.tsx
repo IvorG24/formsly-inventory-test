@@ -279,12 +279,15 @@ const AssignedAssetListTable = ({
               <Flex align="center" justify="space-between">
                 <Badge
                   sx={{
-                    backgroundColor: inventory_request_status_color as string,
+                    backgroundColor: inventory_request_status_color
+                      ? (inventory_request_status_color as string)
+                      : "#1AC2D9",
                     color: "#fff",
                   }}
                 >
                   {String(inventory_request_status)}
                 </Badge>
+
                 {inventory_request_status === "WAITING FOR SIGNATURE" && (
                   <ActionIcon
                     color="blue"

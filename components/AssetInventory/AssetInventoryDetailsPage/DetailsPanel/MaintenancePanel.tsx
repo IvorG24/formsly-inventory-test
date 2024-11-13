@@ -1,8 +1,12 @@
-import { getInventoryMaintenance } from "@/backend/api/get";
+import {
+  getColumnListDynamic,
+  getInventoryMaintenance,
+} from "@/backend/api/get";
 import { createInventoryMaitenance } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, maintenanceOption, ROW_PER_PAGE } from "@/utils/constant";
+import { formatCurrency } from "@/utils/functions";
 import { InventoryMaintenanceList } from "@/utils/types";
 import { Button, Flex, Group, MultiSelect, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
@@ -32,6 +36,13 @@ type Props = {
   activeTab: string;
   fetchHistory: (page: number) => void;
 };
+const excludedColumns = [
+  "inventory_maintenance_id",
+  "inventory_request_name",
+  "inventory_request_tag_id",
+  "inventory_maintenance_request_id",
+];
+
 const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -89,40 +100,31 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
         }
       );
 
+      const tableColumnList = await getColumnListDynamic(supabaseClient, {
+        formId: "ffb70d77-05e7-46de-abbf-1513002d079a",
+        type: "maintenance",
+      });
+
       if (data.length > 0) {
-        const generatedColumns = Object.keys(data[0])
-          .filter(
-            (key) =>
-              key !== "inventory_maintenance_id" &&
-              key !== "inventory_maintenance_request_id" &&
-              key !== "inventory_maintenance_date_created" &&
-              key !== "inventory_request_name" &&
-              key !== "inventory_request_tag_id"
-          )
-          .map((key) => ({
-            accessor: key,
-            title: key
-              .replace(/_/g, " ")
-              .replace("inventory", "")
-              .replace(/\b\w/g, (char) => char.toUpperCase()),
-
+        const generatedColumns = tableColumnList
+          .filter((column) => !excludedColumns.includes(column.value))
+          .map((column) => ({
+            accessor: column.value,
+            title: column.label.replace(/\b\w/g, (char) => char.toUpperCase()),
             render: (row: InventoryMaintenanceList) => {
-              const value = row[key];
+              const value = row[column.value];
 
-              const isDate = key.includes("date");
+              const isDate = column.value.includes("date");
               const isString =
                 typeof value === "string" && isNaN(Date.parse(value));
-              const isNumber = key.includes("cost");
+              const isNumber = column.value.includes("cost");
 
               return (
                 <Text size="sm">
                   {isDate
                     ? formatDate(new Date(value))
                     : isNumber
-                      ? new Intl.NumberFormat("en-PH", {
-                          style: "currency",
-                          currency: "PHP",
-                        }).format(Number(value))
+                      ? formatCurrency(Number(value))
                       : isString
                         ? value
                         : ""}

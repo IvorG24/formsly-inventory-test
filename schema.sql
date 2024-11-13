@@ -11912,7 +11912,7 @@ CREATE OR REPLACE FUNCTION get_user_current_signature(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-let returnData = [];
+let returnData = null;
 plv8.subtransaction(function() {
   const {
     userId
@@ -11934,8 +11934,8 @@ plv8.subtransaction(function() {
 
   returnData = {
     user_signature_attachment: {
-      attachment_value: userData.attachment_value,
-      attachment_bucket: userData.attachment_bucket
+      attachment_value: userData.attachment_value || "",
+      attachment_bucket: userData.attachment_bucket || ""
     }
   }
 });
