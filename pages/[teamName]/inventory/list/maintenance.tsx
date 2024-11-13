@@ -34,8 +34,6 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
         },
       };
     } catch (e) {
-      console.log(e);
-
       return {
         redirect: {
           destination: "/500",

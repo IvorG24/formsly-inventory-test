@@ -3,6 +3,7 @@ import {
   getInventoryMaintenance,
 } from "@/backend/api/get";
 import { createInventoryMaitenance } from "@/backend/api/post";
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, maintenanceOption, ROW_PER_PAGE } from "@/utils/constant";
@@ -49,6 +50,7 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
   const userProfile = useUserProfile();
   const router = useRouter();
   const teamMember = useUserTeamMember();
+  const securityGroupData = useSecurityGroup();
   const [activePage, setActivePage] = useState(1);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [maintenanceList, setMaintenanceList] = useState<
@@ -69,6 +71,16 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
   });
 
   const assetId = router.query.assetId as string;
+  const canAddAsset =
+    securityGroupData?.asset?.permissions.find(
+      (permission) => permission.key === "addAssets"
+    )?.value ?? false;
+
+  const canEdit =
+    securityGroupData?.asset?.permissions.find(
+      (permission) => permission.key === "editAssets"
+    )?.value ?? false;
+
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
@@ -137,15 +149,17 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
           title: "Actions",
           render: (row: InventoryMaintenanceList) => (
             <>
-              <Button
-                onClick={() => handleEdit(row)}
-                color="blue"
-                variant="outline"
-                size="sm"
-                rightIcon={<IconEdit size={16} />}
-              >
-                Edit
-              </Button>
+              {canEdit && (
+                <Button
+                  onClick={() => handleEdit(row)}
+                  color="blue"
+                  variant="outline"
+                  size="sm"
+                  rightIcon={<IconEdit size={16} />}
+                >
+                  Edit
+                </Button>
+              )}
             </>
           ),
         });
@@ -276,14 +290,18 @@ const MaintenancePanel = ({ activeTab, fetchHistory }: Props) => {
                 onDropdownClose={() => handleFetchMaitenanceList(activePage)}
               />
             </Group>
-            <Button
-              leftIcon=<IconPlus size={16} />
-              onClick={() => {
-                open(), setFormMode("create"), setSelectedMaintenance(null);
-              }}
-            >
-              Add Maintenance
-            </Button>
+            {canAddAsset && (
+              <>
+                <Button
+                  leftIcon=<IconPlus size={16} />
+                  onClick={() => {
+                    open(), setFormMode("create"), setSelectedMaintenance(null);
+                  }}
+                >
+                  Add Maintenance
+                </Button>
+              </>
+            )}
           </Group>
         </form>
 

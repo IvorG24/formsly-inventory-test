@@ -34,7 +34,7 @@ const SiteDrawer = ({ isOpen, close, handleSiteSubmit }: Props) => {
   //             OneOfficeDatabase["address_schema"]
   //           >
   //         );
-  //         console.log(regionData);
+  //
 
   //         if (!regionData) throw new Error("Failed to fetch regions");
   //         setRegionOptionsList(regionData);

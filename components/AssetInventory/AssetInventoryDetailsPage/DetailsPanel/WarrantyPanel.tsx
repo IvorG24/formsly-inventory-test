@@ -1,5 +1,6 @@
 import { getColumnListDynamic, getInventoryWarranty } from "@/backend/api/get";
 import { createInventoryWarranty } from "@/backend/api/post";
+import { useSecurityGroup } from "@/stores/useSecurityGroupStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, ROW_PER_PAGE } from "@/utils/constant";
@@ -47,6 +48,7 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
   const userProfile = useUserProfile();
   const router = useRouter();
   const teamMember = useUserTeamMember();
+  const securityGroupData = useSecurityGroup();
   const [activePage, setActivePage] = useState(1);
   const [warrantyList, setWarrantyList] = useState<InventoryWarrantyList[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
@@ -63,6 +65,16 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
   });
 
   const assetId = router.query.assetId as string;
+  const canAddAsset =
+    securityGroupData?.asset?.permissions.find(
+      (permission) => permission.key === "addAssets"
+    )?.value ?? false;
+
+  const canEdit =
+    securityGroupData?.asset?.permissions.find(
+      (permission) => permission.key === "editAssets"
+    )?.value ?? false;
+
   const { register, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
@@ -129,15 +141,17 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
           title: "Actions",
           render: (row: InventoryWarrantyList) => (
             <>
-              <Button
-                onClick={() => handleEdit(row)}
-                color="blue"
-                variant="outline"
-                size="sm"
-                rightIcon={<IconEdit size={16} />}
-              >
-                Edit
-              </Button>
+              {canEdit && (
+                <Button
+                  onClick={() => handleEdit(row)}
+                  color="blue"
+                  variant="outline"
+                  size="sm"
+                  rightIcon={<IconEdit size={16} />}
+                >
+                  Edit
+                </Button>
+              )}
             </>
           ),
         });
@@ -264,14 +278,16 @@ const WarrantyPanel = ({ activeTab, fetchHistory }: Props) => {
                 handleFetchWarrantyList(activePage);
               }}
             />
-            <Button
-              leftIcon={<IconPlus size={16} />}
-              onClick={() => {
-                open(), setFormMode("create"), setSelectedWarranty(null);
-              }}
-            >
-              Add warranty
-            </Button>
+            {canAddAsset && (
+              <Button
+                leftIcon={<IconPlus size={16} />}
+                onClick={() => {
+                  open(), setFormMode("create"), setSelectedWarranty(null);
+                }}
+              >
+                Add warranty
+              </Button>
+            )}
           </Group>
         </form>
 

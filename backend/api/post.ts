@@ -11,7 +11,6 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
-  capitalizeFirstWord,
   editImageWithUUID,
   extractInventoryData,
   formatJiraItemUserTableData,
@@ -3324,9 +3323,9 @@ export const createInventoryEmployee = async (
   const responseValues = fieldResponse
     .map(
       (response) =>
-        `('${capitalizeFirstWord(
+        `('${
           response.inventory_response_value ?? ""
-        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
+        }', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
     )
     .join(",");
 
@@ -3394,9 +3393,9 @@ export const createInventoryCustomer = async (
   const responseValues = fieldResponse
     .map(
       (response) =>
-        `('${capitalizeFirstWord(
+        `('${
           response.inventory_response_value ?? ""
-        )}', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
+        }', '${response.inventory_response_field_id}', '${response.inventory_response_request_id}')`
     )
     .join(",");
 

@@ -3,7 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { BASE_URL, formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { formatCurrency } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryWarrantyList } from "@/utils/types";
+import { InventoryWarrantyList, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -22,6 +22,7 @@ import { FilterSelectedValuesType } from "./WarrantyListFilter";
 
 type Props = {
   warrantyList: InventoryWarrantyList[];
+  securityGroup: SecurityGroupData;
   warrantyListCount: number;
   activePage: number;
   isFetching: boolean;
@@ -68,6 +69,7 @@ const WarrantyListTable = ({
   tableColumnList,
   handleEdit,
   defaultColumnList,
+  securityGroup,
 }: Props) => {
   const activeTeam = useActiveTeam();
 
@@ -75,6 +77,11 @@ const WarrantyListTable = ({
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
+
+  const canEdit =
+    securityGroup?.asset?.permissions.find(
+      (permission) => permission.key === "editAssets"
+    )?.value ?? false;
 
   const dynamicColumns = tableColumnList
     .filter((column) => !excludedColumns.includes(column.value))
@@ -210,15 +217,19 @@ const WarrantyListTable = ({
           render: (record: Record<string, unknown>) => {
             const inventoryRecord = record as InventoryWarrantyList;
             return (
-              <Button
-                onClick={() => handleEdit(inventoryRecord)}
-                color="blue"
-                variant="outline"
-                size="sm"
-                rightIcon={<IconEdit size={16} />}
-              >
-                Edit
-              </Button>
+              <>
+                {canEdit && (
+                  <Button
+                    onClick={() => handleEdit(inventoryRecord)}
+                    color="blue"
+                    variant="outline"
+                    size="sm"
+                    rightIcon={<IconEdit size={16} />}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </>
             );
           },
         },

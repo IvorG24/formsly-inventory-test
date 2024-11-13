@@ -2,7 +2,7 @@ import ListTable from "@/components/ListTable/ListTable";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { BASE_URL, formatDate, ROW_PER_PAGE } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { InventoryMaintenanceList } from "@/utils/types";
+import { InventoryMaintenanceList, SecurityGroupData } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -21,6 +21,7 @@ import { FilterSelectedValuesType } from "./MaintenanceListFilter";
 
 type Props = {
   maintenanceList: InventoryMaintenanceList[];
+  securityGroup: SecurityGroupData;
   maintenanceListcount: number;
   activePage: number;
   isFetching: boolean;
@@ -69,6 +70,7 @@ const MaintenanceListTable = ({
   listTableColumnFilter,
   setListTableColumnFilter,
   tableColumnList,
+  securityGroup,
   defaulColumnList,
 }: Props) => {
   const activeTeam = useActiveTeam();
@@ -114,7 +116,10 @@ const MaintenanceListTable = ({
         return <Text>{String(value)}</Text>;
       },
     }));
-
+  const canEdit =
+    securityGroup?.asset?.permissions.find(
+      (permission) => permission.key === "editAssets"
+    )?.value ?? false;
   return (
     <ListTable
       idAccessor="inventory_maintenance_id"
@@ -192,15 +197,19 @@ const MaintenanceListTable = ({
           render: (record: Record<string, unknown>) => {
             const inventoryRecord = record as InventoryMaintenanceList;
             return (
-              <Button
-                onClick={() => handleEdit(inventoryRecord)}
-                color="blue"
-                variant="outline"
-                size="sm"
-                rightIcon={<IconEdit size={16} />}
-              >
-                Edit
-              </Button>
+              <>
+                {canEdit && (
+                  <Button
+                    onClick={() => handleEdit(inventoryRecord)}
+                    color="blue"
+                    variant="outline"
+                    size="sm"
+                    rightIcon={<IconEdit size={16} />}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </>
             );
           },
         },

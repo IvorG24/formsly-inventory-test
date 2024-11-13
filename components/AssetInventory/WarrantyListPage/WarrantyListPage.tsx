@@ -225,6 +225,7 @@ const WarrantyListPage = ({ securityGroupData, tableColumnList }: Props) => {
         </FormProvider>
         <Box h="fit-content">
           <WarrantyListTable
+            securityGroup={securityGroupData}
             handleEdit={handleEdit}
             isFetching={isFetchingRequestList}
             setSelectedRow={setSelectedRows}

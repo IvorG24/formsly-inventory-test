@@ -2,6 +2,7 @@
 import {
   checkIfOwnerOrAdmin,
   getAssetListFilterOptions,
+  getGroupList,
 } from "@/backend/api/get";
 import { Department } from "@/components/AssetInventory/DepartmentSetupPage/DepartmentSetupPage";
 import SecurityGroupDetailsPage from "@/components/AssetInventory/SecurityGroupPage/SecurityGroupDetailsPage";
@@ -21,7 +22,7 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
     supabaseClient,
     securityGroupData,
     user,
-    group,
+    context,
   }) => {
     try {
       const data = await getAssetListFilterOptions(supabaseClient, {
@@ -30,6 +31,9 @@ export const getServerSideProps: GetServerSideProps = withActiveGroup(
       const isOwnerOrAdmin = await checkIfOwnerOrAdmin(supabaseClient, {
         userId: user.id,
         teamId: userActiveTeam.team_id,
+      });
+      const { data: group } = await getGroupList(supabaseClient, {
+        groupId: context.query.groupId as string,
       });
 
       if (!isOwnerOrAdmin) {
@@ -62,7 +66,7 @@ type Props = {
   departmentList: Department[];
   categoryList: CategoryTableRow[];
   securityGroupData: SecurityGroupData;
-  group: TeamGroupTableRow;
+  group: TeamGroupTableRow[];
 };
 const Page = ({
   siteList,
@@ -74,11 +78,11 @@ const Page = ({
   return (
     <>
       <Meta
-        description="Check in List Page"
+        description="Security Group Page"
         url="/teamName/security-groups/[groupId]"
       />
       <SecurityGroupDetailsPage
-        group={group}
+        group={group[0]}
         securityGroupData={securityGroupData}
         siteList={siteList}
         departmentList={departmentList}

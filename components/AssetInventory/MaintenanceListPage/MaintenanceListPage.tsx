@@ -220,6 +220,7 @@ const MaintenanceListPage = ({ securityGroupData, tableColumnList }: Props) => {
         </FormProvider>
         <Box h="fit-content">
           <MaintenanceListTable
+            securityGroup={securityGroupData}
             isFetching={isFetchingRequestList}
             setSelectedRow={setSelectedRows}
             selectedRow={selectedRows}

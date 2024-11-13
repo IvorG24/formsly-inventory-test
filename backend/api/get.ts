@@ -8010,11 +8010,12 @@ export const getGroupList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     search?: string;
+    groupId?: string;
     page?: number;
     limit?: number;
   }
 ) => {
-  const { search, page, limit } = params;
+  const { search, page, groupId, limit } = params;
   const start = page && limit ? (page - 1) * limit : undefined;
   const end = start !== undefined && limit ? start + limit - 1 : undefined;
 
@@ -8029,6 +8030,9 @@ export const getGroupList = async (
   }
   if (search) {
     query = query.ilike("team_group_name", `%${search}%`);
+  }
+  if (groupId) {
+    query = query.eq("team_group_id", groupId);
   }
 
   const { data, count, error } = await query;

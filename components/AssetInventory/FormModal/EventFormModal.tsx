@@ -92,7 +92,6 @@ const EventFormModal = ({
           userId: userData?.user_id ?? "",
         });
       }
-      console.log(signature);
 
       if (!signature) {
         notifications.show({
@@ -135,8 +134,6 @@ const EventFormModal = ({
           color: "green",
         });
     } catch (e) {
-      console.log(e);
-
       notifications.show({
         message: "Something went wrong",
         color: "red",

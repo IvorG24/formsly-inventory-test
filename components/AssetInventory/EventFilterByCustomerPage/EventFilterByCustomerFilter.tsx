@@ -274,29 +274,6 @@ const EventFilterByCustomerFilter = ({
           </CSVLink>
           <Controller
             control={control}
-            name="limit"
-            render={({ field: { value, onChange } }) => (
-              <Select
-                data={limitOption}
-                label="Limit"
-                placeholder="limit"
-                ref={limitRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (limitRefFocused)
-                    handleFilterChange("limit", value as string | undefined);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("limit", value as string | undefined)
-                }
-                sx={{ flex: 1 }}
-                maw={100}
-              />
-            )}
-          />
-          <Controller
-            control={control}
             name="assignedToCustomer"
             render={({ field: { value, onChange } }) => (
               <Select
@@ -319,6 +296,29 @@ const EventFilterByCustomerFilter = ({
                 sx={{ flex: 1 }}
                 miw={250}
                 maw={320}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="limit"
+            render={({ field: { value, onChange } }) => (
+              <Select
+                data={limitOption}
+                label="Limit"
+                placeholder="limit"
+                ref={limitRef}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (limitRefFocused)
+                    handleFilterChange("limit", value as string | undefined);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("limit", value as string | undefined)
+                }
+                sx={{ flex: 1 }}
+                maw={100}
               />
             )}
           />
@@ -358,7 +358,7 @@ const EventFilterByCustomerFilter = ({
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
                   data={categoryListChoices}
-                  placeholder="category"
+                  placeholder="Category"
                   ref={categoryref}
                   value={value}
                   onChange={(value) => {

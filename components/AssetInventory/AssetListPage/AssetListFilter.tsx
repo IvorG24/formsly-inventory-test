@@ -354,7 +354,7 @@ const AssetListFilter = ({
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
                   data={categoryListChoices}
-                  placeholder="category"
+                  placeholder="Category"
                   ref={categoryref}
                   value={value}
                   onChange={(value) => {
