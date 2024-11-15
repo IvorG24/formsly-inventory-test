@@ -2,6 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
+  getRequestPageOnLoad,
   getSectionInRequestPage,
 } from "@/backend/api/get";
 import { insertError } from "@/backend/api/post";
@@ -317,21 +318,16 @@ const BillOfQuantityRequestPage = ({
       }
       setIsLoading(true);
 
-      const {
-        data: { request: lrfRequest },
-        error,
-      } = await supabaseClient.rpc("request_page_on_load", {
-        input_data: {
+      const { request: lrfRequest } = await getRequestPageOnLoad(
+        supabaseClient,
+        {
           requestId: parentLrfRequestId,
-          userId: user.user_id,
-        },
-      });
-
-      if (error) throw new Error("Faild to fetch LRF request.");
+        }
+      );
 
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
-        { teamProjectId: lrfRequest.request_project_id }
+        { teamProjectId: lrfRequest.request_project_id as string }
       );
 
       if (!jiraAutomationData?.jiraProjectData) {

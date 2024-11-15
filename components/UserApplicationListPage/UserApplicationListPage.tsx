@@ -1,4 +1,7 @@
-import { getUserApplicationList } from "@/backend/api/get";
+import {
+  getApplicationInformationIndicator,
+  getUserApplicationList,
+} from "@/backend/api/get";
 import { DEFAULT_APPLICATION_LIST_LIMIT } from "@/utils/constant";
 import {
   ApplicationListItemType,
@@ -77,7 +80,7 @@ const UserApplicationListPage = () => {
 
       setApplicationList(data);
       setApplicationListCount(count || 0);
-      // fetchIndicator(data);
+      fetchIndicator(data);
     } catch (e) {
       notifications.show({
         message: "Failed to fetch application list.",
@@ -114,35 +117,20 @@ const UserApplicationListPage = () => {
     }
   };
 
-  // const fetchIndicator = async (data: ApplicationListItemType[]) => {
-  //   try {
-  //     if (!data.length) return;
-  //     const idListWithIndicator: string[] = [];
-  //     for (let i = 0; i < data.length; i++) {
-  //       if (data[i].request_status !== "APPROVED") continue;
-  //       const isWithIndicator = await getApplicationInformationIndicator(
-  //         supabaseClient,
-  //         { request: data[i] }
-  //       );
-  //       isWithIndicator ? idListWithIndicator.push(data[i].request_id) : null;
-  //     }
-  //     setApplicationList((prev) =>
-  //       prev.map((application) => {
-  //         if (!idListWithIndicator.includes(application.request_id))
-  //           return application;
-  //         return {
-  //           ...application,
-  //           request_is_with_progress_indicator: true,
-  //         };
-  //       })
-  //     );
-  //   } catch (e) {
-  //     notifications.show({
-  //       message: "Failed to fetch application list indicator.",
-  //       color: "red",
-  //     });
-  //   }
-  // };
+  const fetchIndicator = async (data: ApplicationListItemType[]) => {
+    try {
+      if (!data.length) return;
+      const newData = await getApplicationInformationIndicator(supabaseClient, {
+        requestList: data,
+      });
+      setApplicationList(newData);
+    } catch (e) {
+      notifications.show({
+        message: "Failed to fetch application list indicator.",
+        color: "red",
+      });
+    }
+  };
 
   return (
     <Container maw={3840} h="100%">

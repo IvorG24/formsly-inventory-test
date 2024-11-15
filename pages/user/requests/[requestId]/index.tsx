@@ -1,3 +1,4 @@
+import { getRequestPageOnLoad } from "@/backend/api/get";
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -8,15 +9,11 @@ import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, user, context }) => {
+  async ({ supabaseClient, context }) => {
     try {
-      const { data, error } = await supabaseClient.rpc("request_page_on_load", {
-        input_data: {
-          requestId: context.query.requestId,
-          userId: user.id,
-        },
+      const data = await getRequestPageOnLoad(supabaseClient, {
+        requestId: context.query.requestId as string,
       });
-      if (error) throw error;
       return {
         props: data as Props,
       };

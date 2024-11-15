@@ -1,13 +1,5 @@
 import { HRAnalyticsData } from "@/utils/types";
-import {
-  Button,
-  Container,
-  Flex,
-  Stack,
-  Tabs,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Container, Flex, Stack, Tabs, Text, Title } from "@mantine/core";
 import { IconFileAnalytics, IconReportAnalytics } from "@tabler/icons-react";
 import { useState } from "react";
 import Analytics from "./Analytics";
@@ -26,9 +18,9 @@ const AnalyticsPage = ({ analyticsData }: Props) => {
       <Stack spacing="sm">
         <Flex gap="sm" wrap="wrap">
           <Title order={2}>Human Resources Analytics Page</Title>
-          <Button disabled={true} onClick={() => setOpenExportToCSVModal(true)}>
+          {/* <Button onClick={() => setOpenExportToCSVModal(true)}>
             Export to CSV
-          </Button>
+          </Button> */}
         </Flex>
         <Text>
           Gain valuable insights into your organization&apos;s HR metrics,

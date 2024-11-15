@@ -1,6 +1,8 @@
 // todo: Create deleteField query
 // import deleteField from "@/services/field/deleteField";
 
+import { getSpecialFieldTemplate } from "@/backend/api/get";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
@@ -29,6 +31,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -90,6 +93,7 @@ const Section = ({
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
+  const { setIsLoading } = useLoadingActions();
   const team = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
   const methods = useFormContext();
@@ -160,11 +164,18 @@ const Section = ({
 
   useEffect(() => {
     const fetchSpecialFieldList = async () => {
-      const { data } = await supabaseClient
-        .schema("form_schema")
-        .from("special_field_template_table")
-        .select("*");
-      setSpecialFieldTemplateList(data ?? []);
+      setIsLoading(true);
+      try {
+        const data = await getSpecialFieldTemplate(supabaseClient);
+        setSpecialFieldTemplateList(data ?? []);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchSpecialFieldList();
   }, [team]);
@@ -172,16 +183,26 @@ const Section = ({
   // fetch currency option list
   useEffect(() => {
     const fetchCurrencyOptionList = async () => {
-      const { data } = await supabaseClient
-        .schema("lookup_schema")
-        .from("currency_table")
-        .select("*");
-      if (!data) return;
-      const optionList = data.map((item) => ({
-        value: item.currency_alphabetic_code,
-        label: item.currency_alphabetic_code,
-      }));
-      setCurrencyOptionList(optionList);
+      setIsLoading(true);
+      try {
+        const { data } = await supabaseClient
+          .schema("lookup_schema")
+          .from("currency_table")
+          .select("*");
+        if (!data) return;
+        const optionList = data.map((item) => ({
+          value: item.currency_alphabetic_code,
+          label: item.currency_alphabetic_code,
+        }));
+        setCurrencyOptionList(optionList);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchCurrencyOptionList();
   }, []);

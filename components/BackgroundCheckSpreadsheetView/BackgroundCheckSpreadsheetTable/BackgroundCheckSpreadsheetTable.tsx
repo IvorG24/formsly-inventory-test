@@ -24,8 +24,7 @@ import BackgroundCheckMainTableRow from "./BackgroundCheckMainTableRow";
 
 const columnList = [
   { field_id: "position", field_name: "Position" },
-  { field_id: "application_information_full_name", field_name: "Full Name" },
-  { field_id: "application_information_nickname", field_name: "Nickname" },
+  { field_id: "application_information_full_name", field_name: "Name" },
   {
     field_id: "application_information_contact_number",
     field_name: "Contact Number",

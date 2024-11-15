@@ -275,6 +275,9 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           middleName: data.sections[1].section_field[1]
             .field_response as string,
           lastName: data.sections[1].section_field[2].field_response as string,
+          contactNumber: data.sections[2].section_field[0]
+            .field_response as string,
+          email: data.sections[2].section_field[1].field_response as string,
         },
       });
 

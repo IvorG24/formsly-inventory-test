@@ -7,7 +7,7 @@ import {
   updateHRPhoneInterviewStatus,
 } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { DEFAULT_NUMBER_HR_SSOT_ROWS } from "@/utils/constant";
 import { isEqual } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import {
@@ -108,12 +108,12 @@ const HRPhoneInterviewSpreadsheetView = ({
         ...filterData,
         ...data,
         userId: user.user_id,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
       });
 
-      if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
+      if (newData.length < DEFAULT_NUMBER_HR_SSOT_ROWS) {
         setIsMax(true);
       }
 
@@ -153,7 +153,7 @@ const HRPhoneInterviewSpreadsheetView = ({
       "hrPhoneInterviewSpreadsheetView",
       JSON.stringify({
         ...filterData,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
         sort,
       })
     );

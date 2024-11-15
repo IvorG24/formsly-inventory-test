@@ -71,28 +71,20 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
       try {
         setIsLoading(true);
 
-        const applicationInformationField = form.form_section[0]
-          .section_field[0] as FormType["form_section"][0]["section_field"][0] & {
-          field_response: string;
-        };
-        const generalAssessmentfield = form.form_section[0]
-          .section_field[1] as FormType["form_section"][0]["section_field"][0] & {
-          field_response: string;
-        };
+        if (
+          !(
+            router.query.generalAssessmentId &&
+            typeof router.query.generalAssessmentId === "string"
+          )
+        ) {
+          await router.push("/500");
+          return;
+        }
 
         const isAlreadyExists = await checkAssessmentCreateRequestPage(
           supabaseClient,
           {
-            fieldAndResponse: [
-              {
-                fieldId: applicationInformationField.field_id,
-                response: applicationInformationField.field_response,
-              },
-              {
-                fieldId: generalAssessmentfield.field_id,
-                response: generalAssessmentfield.field_response,
-              },
-            ],
+            generalAssessmentFormslyId: router.query.generalAssessmentId,
           }
         );
         if (isAlreadyExists) {

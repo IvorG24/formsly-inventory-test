@@ -52,14 +52,14 @@ const LeaveTeamSection = ({ onLeaveTeam }: Props) => {
       // compress image
       let compressedImage: File | null = null;
       if (signature.size > 50000) {
-        compressedImage = await new Promise((resolve) => {
+        compressedImage = await new Promise((resolve, reject) => {
           new Compressor(signature, {
             quality: 0.2,
             success(result) {
               resolve(result as File);
             },
             error(error) {
-              throw error;
+              reject(error);
             },
           });
         });

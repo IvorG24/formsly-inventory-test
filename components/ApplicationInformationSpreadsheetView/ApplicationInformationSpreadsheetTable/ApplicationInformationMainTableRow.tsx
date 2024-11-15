@@ -1,9 +1,13 @@
 import RequestSignerList from "@/components/RequestListPage/RequestSignerList";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
-import { ApplicationInformationSpreadsheetData } from "@/utils/types";
+import {
+  ApplicationInformationSpreadsheetData,
+  RequestListItemSignerType,
+} from "@/utils/types";
 import { Anchor, Badge, Center, createStyles, Text } from "@mantine/core";
 
 const useStyles = createStyles((theme) => ({
@@ -35,6 +39,19 @@ const ApplicationInformationMainTableRow = ({
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
+  const teamMemberList = useTeamMemberList();
+
+  const signerList = item.request_signer_list.map((signer) => {
+    const signerTeamMemberData = teamMemberList.find(
+      (member) =>
+        member.team_member_id === signer.request_signer.signer_team_member_id
+    );
+
+    return {
+      ...signer,
+      signer_team_member_user: signerTeamMemberData?.team_member_user,
+    };
+  });
 
   return (
     <tr>
@@ -77,7 +94,11 @@ const ApplicationInformationMainTableRow = ({
       )}
       {!hiddenColumnList.includes("Approver") && (
         <td className={classes["Request"]}>
-          <RequestSignerList signerList={item.request_signer_list} />
+          {signerList.length && teamMemberList.length ? (
+            <RequestSignerList
+              signerList={signerList as RequestListItemSignerType[]}
+            />
+          ) : null}
         </td>
       )}
       {!hiddenColumnList.includes("Score") && (

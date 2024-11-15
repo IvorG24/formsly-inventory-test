@@ -12,7 +12,6 @@ import {
   Container,
   Divider,
   Flex,
-  NumberInput,
   Paper,
   Stack,
   Text,
@@ -141,17 +140,14 @@ const TeamMemberPage = ({
           </Flex>
 
           <Flex direction={{ base: "column", md: "row" }} gap={16}>
-            <NumberInput
+            <TextInput
               w="100%"
               label="Mobile Number"
               maxLength={10}
-              hideControls
               icon="+63"
-              min={0}
-              max={9999999999}
               variant="filled"
               readOnly
-              value={Number(member.team_member_user.user_phone_number)}
+              value={member.team_member_user.user_phone_number ?? ""}
             />
             <TextInput
               w="100%"

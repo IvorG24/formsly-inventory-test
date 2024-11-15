@@ -709,18 +709,15 @@ const CreateLiquidationReimbursementRequestPage = ({
         );
       };
 
-      const rirNumberFieldIndex =
-        initialFormSectionList[1].section_field.findIndex(
-          (field) => field.field_name === "RIR Number"
-        );
       const materialTypeIndex =
         initialFormSectionList[1].section_field.findIndex(
           (field) => field.field_name === "Material Type"
         );
 
-      const rirNumberDoesNotExistInSection = !currentPayeeSectionFieldList.some(
-        (field) => field.field_name === "RIR Number"
-      );
+      const materialTypeDoesNotExistInSection =
+        !currentPayeeSectionFieldList.some(
+          (field) => field.field_name === "Material Type"
+        );
 
       const isMaterialsOption = `${value}`.includes("Materials");
 
@@ -732,15 +729,11 @@ const CreateLiquidationReimbursementRequestPage = ({
         addField(specifyOtherTypeOfRequestFieldIndex);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
-        // add rir number if true
-        if (isMaterialsOption && rirNumberDoesNotExistInSection) {
-          addField(rirNumberFieldIndex);
+        if (isMaterialsOption && materialTypeDoesNotExistInSection) {
           addField(materialTypeIndex);
         }
       } else if (isMaterialsOption) {
-        // add rir number if true
-        if (rirNumberDoesNotExistInSection) {
-          addField(rirNumberFieldIndex);
+        if (materialTypeDoesNotExistInSection) {
           addField(materialTypeIndex);
         }
 
@@ -769,8 +762,6 @@ const CreateLiquidationReimbursementRequestPage = ({
       }
 
       if (!value?.includes("Materials")) {
-        // RIR number
-        removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
         // Equipment Code
         removeFieldById("8cd26ce7-0a5e-4199-b4c9-baaf32541b3a");
         // Material Type
@@ -916,43 +907,63 @@ const CreateLiquidationReimbursementRequestPage = ({
     try {
       if (!value) return;
 
-      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
-      let currentPayeeSectionFieldList = currentPayeeSection.section_field;
-      const formslyIdFieldExists = currentPayeeSectionFieldList.find(
+      const currentSection = getValues(`sections.${sectionIndex}`);
+      let fields = currentSection.section_field;
+
+      const materialTypeWithRIR = ["Other Expenses", "Items"];
+      const formslyIdFieldExists = fields.some(
         (field) => field.field_name === "Formsly ID"
       );
+      const rirNumberExists = fields.some(
+        (field) => field.field_name === "RIR Number"
+      );
 
-      if (value === "Other Expenses" && !formslyIdFieldExists) {
-        const formslyIdField = initialFormSectionList[1].section_field.find(
-          (field) => field.field_name === "Formsly ID"
+      const getInitialField = (fieldName: string) =>
+        initialFormSectionList[1].section_field.find(
+          (field) => field.field_name === fieldName
         );
-        if (!formslyIdField) return;
-        currentPayeeSectionFieldList = [
-          ...currentPayeeSectionFieldList,
+
+      const addField = (fieldTemplate: Field) => {
+        fields = [
+          ...fields,
           {
-            ...formslyIdField,
+            ...fieldTemplate,
             field_section_duplicatable_id:
-              currentPayeeSectionFieldList[0].field_section_duplicatable_id,
+              fields[0].field_section_duplicatable_id,
           },
         ];
+      };
+
+      const removeFieldByName = (fieldName: string) => {
+        fields = fields.filter((field) => field.field_name !== fieldName);
+      };
+
+      // Handle "Formsly ID" field based on value
+      if (value === "Other Expenses" && !formslyIdFieldExists) {
+        const formslyIdField = getInitialField("Formsly ID");
+        if (formslyIdField) addField(formslyIdField);
       } else if (value !== "Other Expenses" && formslyIdFieldExists) {
-        currentPayeeSectionFieldList = currentPayeeSectionFieldList.filter(
-          (field) => field.field_name !== "Formsly ID"
-        );
+        removeFieldByName("Formsly ID");
+      }
+
+      // Handle "RIR Number" field based on value and existing fields
+      if (materialTypeWithRIR.includes(value) && !rirNumberExists) {
+        const rirField = getInitialField("RIR Number");
+        if (rirField) addField(rirField);
+      } else if (!materialTypeWithRIR.includes(value) && rirNumberExists) {
+        removeFieldByName("RIR Number");
       }
 
       removeSection(sectionIndex);
       insertSection(
         sectionIndex,
         {
-          ...currentPayeeSection,
-          section_field: currentPayeeSectionFieldList.sort(
-            (a, b) => a.field_order - b.field_order
-          ),
+          ...currentSection,
+          section_field: fields.sort((a, b) => a.field_order - b.field_order),
         },
         { shouldFocus: false }
       );
-    } catch (e) {
+    } catch (error) {
       setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",

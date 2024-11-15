@@ -1,3 +1,4 @@
+import { getSSOT } from "@/backend/api/get";
 import { useSSOTTableFilter } from "@/hooks/useSSOTTableFilter";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -11,6 +12,7 @@ import { addCommaToNumber } from "@/utils/string";
 import { SSOTResponseType, SSOTType } from "@/utils/types";
 import {
   Box,
+  Button,
   Flex,
   Group,
   Loader,
@@ -25,12 +27,12 @@ import {
 import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconReload } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
 import SSOTSpreadsheetViewTableFilter from "./SSOTSpreadsheetViewTableFilter";
 
-// TODO: Refactor
 const useStyles = createStyles((theme) => ({
   cell: {
     verticalAlign: "top",
@@ -44,11 +46,6 @@ const useStyles = createStyles((theme) => ({
     width: 180,
     minWidth: 180,
     maxWidth: 180,
-  },
-  short: {
-    width: 80,
-    minWidth: 80,
-    maxWidth: 80,
   },
   normal: {
     width: 100,
@@ -69,62 +66,6 @@ const useStyles = createStyles((theme) => ({
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.red[6]
-          : theme.colors.red[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.red[9]
-          : theme.colors.red[0],
-    },
-  },
-  quotationTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.grape[6]
-          : theme.colors.grape[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.grape[9]
-          : theme.colors.grape[0],
-    },
-  },
-  sourcedItemTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.orange[6]
-          : theme.colors.orange[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.orange[9]
-          : theme.colors.orange[0],
-    },
-  },
-  rirTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.cyan[6]
-          : theme.colors.cyan[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.cyan[9]
-          : theme.colors.cyan[0],
-    },
-  },
-  roTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
           ? theme.colors.blue[6]
           : theme.colors.blue[3],
     },
@@ -135,47 +76,12 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.blue[0],
     },
   },
-  chequeReferenceTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.green[6]
-          : theme.colors.green[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.green[9]
-          : theme.colors.green[0],
-    },
-  },
-  transferReceiptTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.lime[6]
-          : theme.colors.lime[3],
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.lime[9]
-          : theme.colors.lime[0],
-    },
-  },
 }));
 
 export type SSOTFilterFormValues = {
   search: string;
-  requestingProjectList: string[];
-  itemNameList: string[];
-  supplierList: string[];
-};
-
-type Props = {
-  data: SSOTType[];
-  requestingProjectList: string[];
-  itemNameList: string[];
+  requestingProject: string;
+  itemName: string;
 };
 
 export type ShowColumnList = { [key: string]: boolean };
@@ -198,90 +104,14 @@ const itemItemTableColumnList = [
   "Base Unit of Measurement",
   "Item Description",
   "GL Account",
-  // "CSI Code",
 ];
 
-// const quotationTableColumnList = [
-//   "Quotation ID",
-//   "Date Created",
-//   "Purchaser",
-//   "Supplier",
-//   "Supplier Quotation",
-//   "Request Send Method",
-//   "Proof of Sending",
-//   "Payment Terms",
-//   "Lead Time",
-//   "Required Down Payment",
-// ];
+type Props = {
+  requestingProjectList: string[];
+  itemNameList: string[];
+};
 
-// const quotationItemTableColumnList = [
-//   "Item Description",
-//   "Price Per Unit",
-//   "Quantity",
-//   "Base Unit of Measurement",
-// ];
-
-// const sourcedItemTableColumnList = [
-//   "Sourced Item ID",
-//   "Date Created",
-//   "Lead Inventory Controller",
-// ];
-
-// const sourcedItemItemTableColumnList = [
-//   "Item Description",
-//   "Quantity",
-//   "Base Unit of Measurement",
-//   "Source Project",
-// ];
-
-// const rirTableColumnList = [
-//   "RIR ID",
-//   "Date Created",
-//   "Site Warehouse",
-//   "DR",
-//   "SI",
-//   "QCIR",
-// ];
-
-// const rirItemTableColumnList = [
-//   "Item Description",
-//   "Quantity",
-//   "Base Unit of Measurement",
-//   "Receiving Status",
-// ];
-
-// const releaseOrderTableColumnList = [
-//   "RO ID",
-//   "Date Created",
-//   "Warehouse Corporate Support Lead",
-// ];
-
-// const releaseOrderItemTableColumnList = [
-//   "Item Description",
-//   "Quantity",
-//   "Base Unit of Measurement",
-//   "Receiving Status",
-//   "Source Project",
-// ];
-
-// const transferReceiptTableColumnList = [
-//   "Transfer Receipt ID",
-//   "Date Created",
-//   "Site Warehouse",
-//   "Transfer Shipment",
-//   "Transfer Receipt",
-// ];
-
-// const transferReceiptItemTableColumnList = [
-//   "Item Description",
-//   "Quantity",
-//   "Base Unit of Measurement",
-//   "Receiving Status",
-//   "Source Project",
-// ];
-
-const SSOTSpreadsheetView = ({
-  data,
+const SSOTSpreadsheetViewPage = ({
   requestingProjectList,
   itemNameList,
 }: Props) => {
@@ -293,7 +123,7 @@ const SSOTSpreadsheetView = ({
   const team = useActiveTeam();
   const viewport = useRef<HTMLDivElement>(null);
 
-  const [itemList, setItemList] = useState(data);
+  const [itemList, setItemList] = useState<SSOTType[]>([]);
   const [offset, setOffset] = useState(1);
   const [isInView, setIsInView] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -307,103 +137,37 @@ const SSOTSpreadsheetView = ({
   const itemTable = useSSOTTableFilter(true, itemTableColumnList);
   const itemItemTable = useSSOTTableFilter(true, itemItemTableColumnList);
 
-  // const quotationTable = useSSOTTableFilter(true, quotationTableColumnList);
-  // const quotationItemTable = useSSOTTableFilter(
-  //   true,
-  //   quotationItemTableColumnList
-  // );
-
-  // const sourcedItemTable = useSSOTTableFilter(true, sourcedItemTableColumnList);
-  // const sourcedItemItemTable = useSSOTTableFilter(
-  //   true,
-  //   sourcedItemItemTableColumnList
-  // );
-
-  // const rirTable = useSSOTTableFilter(true, rirTableColumnList);
-  // const rirItemTable = useSSOTTableFilter(true, rirItemTableColumnList);
-
-  // const releaseOrderTable = useSSOTTableFilter(
-  //   true,
-  //   releaseOrderTableColumnList
-  // );
-  // const releaseOrderItemTable = useSSOTTableFilter(
-  //   true,
-  //   releaseOrderItemTableColumnList
-  // );
-
-  // const transferReceiptTable = useSSOTTableFilter(
-  //   true,
-  //   transferReceiptTableColumnList
-  // );
-  // const transferReceiptItemTable = useSSOTTableFilter(
-  //   true,
-  //   transferReceiptItemTableColumnList
-  // );
-
   const tables = {
     itemTable,
     itemItemTable,
-    // quotationTable,
-    // quotationItemTable,
-    // sourcedItemTable,
-    // sourcedItemItemTable,
-    // rirTable,
-    // rirItemTable,
-    // releaseOrderTable,
-    // releaseOrderItemTable,
-    // transferReceiptTable,
-    // transferReceiptItemTable,
   };
 
   const filterSSOTMethods = useForm<SSOTFilterFormValues>({
     defaultValues: {
       search: "",
-      itemNameList: [],
-      requestingProjectList: [],
-      supplierList: [],
+      itemName: "",
+      requestingProject: "",
     },
     mode: "onChange",
   });
 
   const { handleSubmit, getValues } = filterSSOTMethods;
   const handleFilterSSOT = async (
-    {
-      search,
-      requestingProjectList,
-      itemNameList,
-      supplierList,
-    }: SSOTFilterFormValues = getValues()
+    { search, requestingProject, itemName }: SSOTFilterFormValues = getValues()
   ) => {
     try {
       setIsLoading(true);
       setScrollBarType("never");
       setOffset(1);
 
-      const trimmedSearch = search.trim();
-
-      let itemFilterCount = 0;
-      requestingProjectList.length !== 0 && itemFilterCount++;
-      itemNameList.length !== 0 && itemFilterCount++;
-      trimmedSearch.length !== 0 && itemFilterCount++;
-
-      const { data, error } = await supabaseClient.rpc("get_ssot", {
-        input_data: {
-          activeTeam: team.team_id,
-          pageNumber: 1,
-          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search: trimmedSearch,
-          itemFilter: [
-            ...requestingProjectList,
-            ...itemNameList,
-            ...(trimmedSearch ? [`${trimmedSearch}`] : []),
-          ],
-          itemFilterCount,
-          supplierList,
-        },
+      const formattedData = await getSSOT(supabaseClient, {
+        pageNumber: 1,
+        rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+        search: search.trim(),
+        requestingProject: requestingProject ?? "",
+        itemName: itemName ?? "",
       });
 
-      if (error) throw error;
-      const formattedData = data as SSOTType[];
       if (formattedData.length === DEFAULT_NUMBER_SSOT_ROWS) {
         setIsFetchable(true);
       } else {
@@ -425,12 +189,7 @@ const SSOTSpreadsheetView = ({
 
   const loadMoreRequests = async (
     offset: number,
-    {
-      search,
-      requestingProjectList,
-      itemNameList,
-      supplierList,
-    }: SSOTFilterFormValues = getValues()
+    { search, requestingProject, itemName }: SSOTFilterFormValues = getValues()
   ) => {
     try {
       setIsLoading(true);
@@ -443,23 +202,14 @@ const SSOTSpreadsheetView = ({
       itemNameList.length !== 0 && itemFilterCount++;
       trimmedSearch.length !== 0 && itemFilterCount++;
 
-      const { data, error } = await supabaseClient.rpc("get_ssot", {
-        input_data: {
-          activeTeam: team.team_id,
-          pageNumber: offset,
-          rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
-          search: trimmedSearch,
-          itemFilter: [
-            ...requestingProjectList,
-            ...itemNameList,
-            ...(trimmedSearch ? [`${trimmedSearch}`] : []),
-          ],
-          itemFilterCount,
-          supplierList: supplierList,
-        },
+      const data = await getSSOT(supabaseClient, {
+        pageNumber: offset,
+        rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
+        search: search.trim(),
+        requestingProject: requestingProject ?? "",
+        itemName: itemName ?? "",
       });
 
-      if (error) throw error;
       if (data) {
         const formattedData = data as SSOTType[];
         if (formattedData.length < DEFAULT_NUMBER_SSOT_ROWS) {
@@ -498,1028 +248,6 @@ const SSOTSpreadsheetView = ({
     }
   }, [isInView]);
 
-  // const renderRir = (
-  //   request: SSOTType["item_quotation_request"][0]["quotation_rir_request"]
-  // ) => {
-  //   return request.map((request) => {
-  //     const itemName: string[] = [];
-  //     const itemQuantity: string[] = [];
-  //     const itemUnit: string[] = [];
-  //     const itemStatus: string[] = [];
-  //     const itemNameOnly: string[] = [];
-  //     const itemDescriptionOnly: string[] = [];
-  //     const items = request.rir_request_response;
-  //     let dr = "";
-  //     let si = "";
-  //     let qcir = "";
-
-  //     items.forEach((item) => {
-  //       if (item.request_response_field_name === "Item") {
-  //         const quantityMatch = item.request_response.match(/(\d+)/);
-  //         if (!quantityMatch) return;
-  //         itemName.push(
-  //           JSON.parse(
-  //             item.request_response.replace(
-  //               quantityMatch[1],
-  //               addCommaToNumber(Number(quantityMatch[1]))
-  //             )
-  //           )
-  //         );
-  //       } else if (item.request_response_field_name === "Quantity") {
-  //         const matches = regExp.exec(itemName[itemQuantity.length]);
-  //         const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-  //         itemQuantity.push(JSON.parse(item.request_response));
-  //         itemUnit.push(`${unit}`);
-  //       } else if (item.request_response_field_name === "Receiving Status") {
-  //         itemStatus.push(JSON.parse(item.request_response));
-  //       } else if (item.request_response_field_name === "DR") {
-  //         dr = item.request_response;
-  //       } else if (item.request_response_field_name === "SI") {
-  //         si = item.request_response;
-  //       } else if (item.request_response_field_name === "QCIR") {
-  //         qcir = item.request_response;
-  //       }
-  //     });
-
-  //     itemName.forEach((item) => {
-  //       const closingIndex = item.indexOf(")");
-  //       const newItem = item.slice(0, closingIndex + 1);
-  //       const description = item
-  //         .slice(closingIndex + 3, item.length - 1)
-  //         .split(", ")
-  //         .join("\n");
-  //       itemNameOnly.push(newItem);
-  //       itemDescriptionOnly.push(description);
-  //     });
-
-  //     return (
-  //       <tr
-  //         key={request.rir_request_id}
-  //         className={classes.cell}
-  //         style={{ borderTop: "solid 1px #DEE2E6" }}
-  //       >
-  //         {rirTable.columnList["rir_id"] && (
-  //           <td>{request.rir_request_formsly_id}</td>
-  //         )}
-  //         {rirTable.columnList["date_created"] && (
-  //           <td>
-  //             {new Date(request.rir_request_date_created).toLocaleDateString()}
-  //           </td>
-  //         )}
-  //         {rirTable.columnList["site_warehouse"] && (
-  //           <td>{`${request.rir_request_owner.user_first_name} ${request.rir_request_owner.user_last_name}`}</td>
-  //         )}
-  //         {rirTable.columnList["dr"] && (
-  //           <td>
-  //             {dr && (
-  //               <ActionIcon
-  //                 w="100%"
-  //                 variant="outline"
-  //                 onClick={() => window.open(`${JSON.parse(dr)}`, "_blank")}
-  //               >
-  //                 <Flex align="center" justify="center" gap={2}>
-  //                   <Text size={14}>File</Text> <IconFile size={14} />
-  //                 </Flex>
-  //               </ActionIcon>
-  //             )}
-  //           </td>
-  //         )}
-  //         {rirTable.columnList["si"] && (
-  //           <td>
-  //             {si && (
-  //               <ActionIcon
-  //                 w="100%"
-  //                 variant="outline"
-  //                 onClick={() => window.open(`${JSON.parse(si)}`, "_blank")}
-  //               >
-  //                 <Flex align="center" justify="center" gap={2}>
-  //                   <Text size={14}>File</Text> <IconFile size={14} />
-  //                 </Flex>
-  //               </ActionIcon>
-  //             )}
-  //           </td>
-  //         )}
-  //         {rirTable.columnList["qcir"] && (
-  //           <td>
-  //             {qcir && (
-  //               <ActionIcon
-  //                 w="100%"
-  //                 variant="outline"
-  //                 onClick={() => window.open(`${JSON.parse(qcir)}`, "_blank")}
-  //               >
-  //                 <Flex align="center" justify="center" gap={2}>
-  //                   <Text size={14}>File</Text> <IconFile size={14} />
-  //                 </Flex>
-  //               </ActionIcon>
-  //             )}
-  //           </td>
-  //         )}
-  //         {rirItemTable.show && (
-  //           <td style={{ padding: 0 }}>
-  //             <Table
-  //               withBorder
-  //               withColumnBorders
-  //               pos="relative"
-  //               h="100%"
-  //               className={classes.rirTable}
-  //               ref={containerRef}
-  //             >
-  //               <thead>
-  //                 <tr>
-  //                   {rirItemTable.columnList["item_description"] && (
-  //                     <th className={classes.description}>Item Description</th>
-  //                   )}
-  //                   {rirItemTable.columnList["quantity"] && (
-  //                     <th className={classes.normal}>Quantity</th>
-  //                   )}
-  //                   {rirItemTable.columnList["base_unit_of_measurement"] && (
-  //                     <th className={classes.date}>Base Unit of Measurement</th>
-  //                   )}
-  //                   {rirItemTable.columnList["receiving_status"] && (
-  //                     <th className={classes.long}>Receiving Status</th>
-  //                   )}
-  //                 </tr>
-  //               </thead>
-  //               <tbody>
-  //                 {itemName.map((item, index) => {
-  //                   return (
-  //                     <tr key={index} className={classes.cell}>
-  //                       {rirItemTable.columnList["item_description"] && (
-  //                         <td>
-  //                           <Text fw={700}>{itemNameOnly[index]}</Text>
-  //                           <pre style={{ marginTop: 10 }}>
-  //                             <Text>{itemDescriptionOnly[index]}</Text>
-  //                           </pre>
-  //                         </td>
-  //                       )}
-  //                       {rirItemTable.columnList["quantity"] && (
-  //                         <td>
-  //                           <Text size={14}>
-  //                             {addCommaToNumber(Number(itemQuantity[index]))}
-  //                           </Text>
-  //                         </td>
-  //                       )}
-  //                       {rirItemTable.columnList[
-  //                         "base_unit_of_measurement"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemUnit[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                       {rirItemTable.columnList["receiving_status"] && (
-  //                         <td>
-  //                           <Text size={14}>{itemStatus[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                     </tr>
-  //                   );
-  //                 })}
-  //               </tbody>
-  //             </Table>
-  //           </td>
-  //         )}
-  //       </tr>
-  //     );
-  //   });
-  // };
-
-  // const renderTransferReceipt = (
-  //   request: SSOTType["item_sourced_item_request"][0]["sourced_item_ro_request"][0]["ro_transfer_receipt_request"]
-  // ) => {
-  //   return request.map((request) => {
-  //     const itemName: string[] = [];
-  //     const itemQuantity: string[] = [];
-  //     const itemUnit: string[] = [];
-  //     const itemStatus: string[] = [];
-  //     const items = request.transfer_receipt_request_response;
-  //     const itemSourceProject: string[] = [];
-  //     const itemNameOnly: string[] = [];
-  //     const itemDescriptionOnly: string[] = [];
-
-  //     let transferShipment = "";
-  //     let transferReceipt = "";
-
-  //     items.forEach((item) => {
-  //       if (item.request_response_field_name === "Item") {
-  //         const quantityMatch = item.request_response.match(/(\d+)/);
-  //         if (!quantityMatch) return;
-  //         itemName.push(
-  //           JSON.parse(
-  //             item.request_response.replace(
-  //               quantityMatch[1],
-  //               addCommaToNumber(Number(quantityMatch[1]))
-  //             )
-  //           )
-  //         );
-  //       } else if (item.request_response_field_name === "Quantity") {
-  //         const matches = regExp.exec(itemName[itemQuantity.length]);
-  //         const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-  //         itemQuantity.push(JSON.parse(item.request_response));
-  //         itemUnit.push(`${unit}`);
-  //       } else if (item.request_response_field_name === "Receiving Status") {
-  //         itemStatus.push(JSON.parse(item.request_response));
-  //       } else if (item.request_response_field_name === "Transfer Shipment") {
-  //         transferShipment = item.request_response;
-  //       } else if (item.request_response_field_name === "Transfer Receipt") {
-  //         transferReceipt = item.request_response;
-  //       } else if (item.request_response_field_name === "Source Project") {
-  //         itemSourceProject.push(JSON.parse(item.request_response));
-  //       }
-  //     });
-
-  //     itemName.forEach((item) => {
-  //       const firstClosingIndex = item.indexOf(")");
-  //       const secondClosingIndex = item
-  //         .slice(firstClosingIndex + 1)
-  //         .indexOf(")");
-
-  //       const newItem = item.slice(0, firstClosingIndex + 1);
-  //       const description = item
-  //         .slice(firstClosingIndex + secondClosingIndex + 4, item.length - 3)
-  //         .split(", ")
-  //         .join("\n");
-  //       itemNameOnly.push(newItem);
-  //       itemDescriptionOnly.push(description);
-  //     });
-
-  //     return (
-  //       <tr
-  //         key={request.transfer_receipt_request_id}
-  //         className={classes.cell}
-  //         style={{ borderTop: "solid 1px #DEE2E6" }}
-  //       >
-  //         {transferReceiptTable.columnList["transfer_receipt_id"] && (
-  //           <td>{request.transfer_receipt_request_formsly_id}</td>
-  //         )}
-  //         {transferReceiptTable.columnList["date_created"] && (
-  //           <td>
-  //             {new Date(
-  //               request.transfer_receipt_request_date_created
-  //             ).toLocaleDateString()}
-  //           </td>
-  //         )}
-  //         {transferReceiptTable.columnList["site_warehouse"] && (
-  //           <td>{`${request.transfer_receipt_request_owner.user_first_name} ${request.transfer_receipt_request_owner.user_last_name}`}</td>
-  //         )}
-  //         {transferReceiptTable.columnList["transfer_shipment"] && (
-  //           <td>
-  //             {transferShipment && (
-  //               <ActionIcon
-  //                 w="100%"
-  //                 variant="outline"
-  //                 onClick={() =>
-  //                   window.open(`${JSON.parse(transferShipment)}`, "_blank")
-  //                 }
-  //               >
-  //                 <Flex align="center" justify="center" gap={2}>
-  //                   <Text size={14}>File</Text> <IconFile size={14} />
-  //                 </Flex>
-  //               </ActionIcon>
-  //             )}
-  //           </td>
-  //         )}
-  //         {transferReceiptTable.columnList["transfer_receipt"] && (
-  //           <td>
-  //             {transferReceipt && (
-  //               <ActionIcon
-  //                 w="100%"
-  //                 variant="outline"
-  //                 onClick={() =>
-  //                   window.open(`${JSON.parse(transferReceipt)}`, "_blank")
-  //                 }
-  //               >
-  //                 <Flex align="center" justify="center" gap={2}>
-  //                   <Text size={14}>File</Text> <IconFile size={14} />
-  //                 </Flex>
-  //               </ActionIcon>
-  //             )}
-  //           </td>
-  //         )}
-
-  //         {transferReceiptItemTable.show && (
-  //           <td style={{ padding: 0 }}>
-  //             <Table
-  //               withBorder
-  //               withColumnBorders
-  //               pos="relative"
-  //               h="100%"
-  //               className={classes.transferReceiptTable}
-  //               ref={containerRef}
-  //             >
-  //               <thead>
-  //                 <tr>
-  //                   {transferReceiptItemTable.columnList[
-  //                     "item_description"
-  //                   ] && (
-  //                     <th className={classes.description}>Item Description</th>
-  //                   )}
-  //                   {transferReceiptItemTable.columnList["quantity"] && (
-  //                     <th className={classes.normal}>Quantity</th>
-  //                   )}
-  //                   {transferReceiptItemTable.columnList[
-  //                     "base_unit_of_measurement"
-  //                   ] && (
-  //                     <th className={classes.date}>Base Unit of Measurement</th>
-  //                   )}
-  //                   {transferReceiptItemTable.columnList[
-  //                     "receiving_status"
-  //                   ] && <th className={classes.long}>Receiving Status</th>}
-  //                   {transferReceiptItemTable.columnList["source_project"] && (
-  //                     <th className={classes.long}>Source Project</th>
-  //                   )}
-  //                 </tr>
-  //               </thead>
-  //               <tbody>
-  //                 {itemName.map((item, index) => {
-  //                   return (
-  //                     <tr key={index} className={classes.cell}>
-  //                       {transferReceiptItemTable.columnList[
-  //                         "item_description"
-  //                       ] && (
-  //                         <td>
-  //                           <Text fw={700}>{itemNameOnly[index]}</Text>
-  //                           <pre style={{ marginTop: 10 }}>
-  //                             <Text>{itemDescriptionOnly[index]}</Text>
-  //                           </pre>
-  //                         </td>
-  //                       )}
-  //                       {transferReceiptItemTable.columnList["quantity"] && (
-  //                         <td>
-  //                           <Text size={14}>
-  //                             {addCommaToNumber(Number(itemQuantity[index]))}
-  //                           </Text>
-  //                         </td>
-  //                       )}
-  //                       {transferReceiptItemTable.columnList[
-  //                         "base_unit_of_measurement"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemUnit[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                       {transferReceiptItemTable.columnList[
-  //                         "receiving_status"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemStatus[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                       {transferReceiptItemTable.columnList[
-  //                         "source_project"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemSourceProject[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                     </tr>
-  //                   );
-  //                 })}
-  //               </tbody>
-  //             </Table>
-  //           </td>
-  //         )}
-  //       </tr>
-  //     );
-  //   });
-  // };
-
-  // const renderReleaseOrder = (
-  //   request: SSOTType["item_sourced_item_request"][0]["sourced_item_ro_request"]
-  // ) => {
-  //   return request.map((request) => {
-  //     const itemName: string[] = [];
-  //     const itemQuantity: string[] = [];
-  //     const itemUnit: string[] = [];
-  //     const itemStatus: string[] = [];
-  //     const items = request.ro_request_response;
-  //     const itemSourceProject: string[] = [];
-  //     const itemNameOnly: string[] = [];
-  //     const itemDescriptionOnly: string[] = [];
-
-  //     items.forEach((item) => {
-  //       if (item.request_response_field_name === "Item") {
-  //         const quantityMatch = item.request_response.match(/(\d+)/);
-  //         if (!quantityMatch) return;
-  //         itemName.push(
-  //           JSON.parse(
-  //             item.request_response.replace(
-  //               quantityMatch[1],
-  //               addCommaToNumber(Number(quantityMatch[1]))
-  //             )
-  //           )
-  //         );
-  //       } else if (item.request_response_field_name === "Quantity") {
-  //         const matches = regExp.exec(itemName[itemQuantity.length]);
-  //         const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-  //         itemQuantity.push(JSON.parse(item.request_response));
-  //         itemUnit.push(`${unit}`);
-  //       } else if (item.request_response_field_name === "Receiving Status") {
-  //         itemStatus.push(JSON.parse(item.request_response));
-  //       } else if (item.request_response_field_name === "Source Project") {
-  //         itemSourceProject.push(JSON.parse(item.request_response));
-  //       }
-  //     });
-
-  //     itemName.forEach((item) => {
-  //       const firstClosingIndex = item.indexOf(")");
-  //       const secondClosingIndex = item
-  //         .slice(firstClosingIndex + 1)
-  //         .indexOf(")");
-
-  //       const newItem = item.slice(0, firstClosingIndex + 1);
-  //       const description = item
-  //         .slice(firstClosingIndex + secondClosingIndex + 4, item.length - 2)
-  //         .split(", ")
-  //         .join("\n");
-  //       itemNameOnly.push(newItem);
-  //       itemDescriptionOnly.push(description);
-  //     });
-
-  //     return (
-  //       <tr
-  //         key={request.ro_request_id}
-  //         className={classes.cell}
-  //         style={{ borderTop: "solid 1px #DEE2E6" }}
-  //       >
-  //         {releaseOrderTable.columnList["ro_id"] && (
-  //           <td>{request.ro_request_formsly_id}</td>
-  //         )}
-  //         {releaseOrderTable.columnList["date_created"] && (
-  //           <td>
-  //             {new Date(request.ro_request_date_created).toLocaleDateString()}
-  //           </td>
-  //         )}
-  //         {releaseOrderTable.columnList["warehouse_corporate_support_lead"] && (
-  //           <td>{`${request.ro_request_owner.user_first_name} ${request.ro_request_owner.user_last_name}`}</td>
-  //         )}
-
-  //         {releaseOrderItemTable.columnList && (
-  //           <td style={{ padding: 0 }}>
-  //             <Table
-  //               withBorder
-  //               withColumnBorders
-  //               pos="relative"
-  //               h="100%"
-  //               className={classes.roTable}
-  //               ref={containerRef}
-  //             >
-  //               <thead>
-  //                 <tr>
-  //                   {releaseOrderItemTable.columnList["item_description"] && (
-  //                     <th className={classes.description}>Item Description</th>
-  //                   )}
-  //                   {releaseOrderItemTable.columnList["quantity"] && (
-  //                     <th className={classes.normal}>Quantity</th>
-  //                   )}
-  //                   {releaseOrderItemTable.columnList[
-  //                     "base_unit_of_measurement"
-  //                   ] && (
-  //                     <th className={classes.date}>Base Unit of Measurement</th>
-  //                   )}
-  //                   {releaseOrderItemTable.columnList["receiving_status"] && (
-  //                     <th className={classes.long}>Receiving Status</th>
-  //                   )}
-  //                   {releaseOrderItemTable.columnList["source_project"] && (
-  //                     <th className={classes.long}>Source Project</th>
-  //                   )}
-  //                 </tr>
-  //               </thead>
-  //               <tbody>
-  //                 {itemName.map((item, index) => {
-  //                   return (
-  //                     <tr key={index} className={classes.cell}>
-  //                       {releaseOrderItemTable.columnList[
-  //                         "item_description"
-  //                       ] && (
-  //                         <td>
-  //                           <Text fw={700}>{itemNameOnly[index]}</Text>
-  //                           <pre style={{ marginTop: 10 }}>
-  //                             <Text>{itemDescriptionOnly[index]}</Text>
-  //                           </pre>
-  //                         </td>
-  //                       )}
-  //                       {releaseOrderItemTable.columnList["quantity"] && (
-  //                         <td>
-  //                           <Text size={14}>
-  //                             {addCommaToNumber(Number(itemQuantity[index]))}
-  //                           </Text>
-  //                         </td>
-  //                       )}
-  //                       {releaseOrderItemTable.columnList[
-  //                         "base_unit_of_measurement"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemUnit[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                       {releaseOrderItemTable.columnList[
-  //                         "receiving_status"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemStatus[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                       {releaseOrderItemTable.columnList["source_project"] && (
-  //                         <td>
-  //                           <Text size={14}>{itemSourceProject[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                     </tr>
-  //                   );
-  //                 })}
-  //               </tbody>
-  //             </Table>
-  //           </td>
-  //         )}
-  //         {transferReceiptTable.show && (
-  //           <td style={{ padding: 0 }}>
-  //             {request.ro_transfer_receipt_request.length !== 0 ? (
-  //               <Table
-  //                 withBorder
-  //                 withColumnBorders
-  //                 h="100%"
-  //                 className={classes.transferReceiptTable}
-  //               >
-  //                 <thead>
-  //                   <tr>
-  //                     {transferReceiptTable.columnList[
-  //                       "transfer_receipt_id"
-  //                     ] && (
-  //                       <th className={classes.long}>Transfer Receipt ID</th>
-  //                     )}
-  //                     {transferReceiptTable.columnList["date_created"] && (
-  //                       <th className={classes.date}>Date Created</th>
-  //                     )}
-  //                     {transferReceiptTable.columnList["site_warehouse"] && (
-  //                       <th className={classes.processor}>Site Warehouse</th>
-  //                     )}
-  //                     {transferReceiptTable.columnList["transfer_shipment"] && (
-  //                       <th className={classes.short}>Transfer Shipment</th>
-  //                     )}
-  //                     {transferReceiptTable.columnList["transfer_receipt"] && (
-  //                       <th className={classes.short}>Transfer Receipt</th>
-  //                     )}
-  //                     {transferReceiptItemTable && <th>Item</th>}
-  //                   </tr>
-  //                 </thead>
-  //                 <tbody>
-  //                   {renderTransferReceipt(request.ro_transfer_receipt_request)}
-  //                 </tbody>
-  //               </Table>
-  //             ) : null}
-  //           </td>
-  //         )}
-  //       </tr>
-  //     );
-  //   });
-  // };
-
-  // const renderQuotation = (
-  //   request: SSOTType["item_quotation_request"]
-  // ) => {
-  //   return request.map((request) => {
-  //     const itemName: string[] = [];
-  //     const itemPrice: string[] = [];
-  //     const itemQuantity: string[] = [];
-  //     const itemUnit: string[] = [];
-  //     const itemNameOnly: string[] = [];
-  //     const itemDescriptionOnly: string[] = [];
-
-  //     let supplier,
-  //       supplierQuotation: string,
-  //       requestSendMethod,
-  //       proofOfSending: string,
-  //       paymentTerms,
-  //       leadTime,
-  //       requiredDownPayment = "";
-
-  //     const requestReponse = request.quotation_request_response;
-
-  //     requestReponse.forEach((response) => {
-  //       if (response.request_response_field_name === "Item") {
-  //         const quantityMatch = response.request_response.match(/(\d+)/);
-  //         if (!quantityMatch) return;
-  //         itemName.push(
-  //           JSON.parse(
-  //             response.request_response.replace(
-  //               quantityMatch[1],
-  //               addCommaToNumber(Number(quantityMatch[1]))
-  //             )
-  //           )
-  //         );
-  //       } else if (response.request_response_field_name === "Price per Unit") {
-  //         itemPrice.push(JSON.parse(response.request_response));
-  //       } else if (response.request_response_field_name === "Quantity") {
-  //         const matches = regExp.exec(itemName[itemQuantity.length]);
-  //         const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-  //         itemQuantity.push(JSON.parse(response.request_response));
-  //         itemUnit.push(`${unit}`);
-  //       } else if (response.request_response_field_name === "Supplier") {
-  //         supplier = JSON.parse(response.request_response);
-  //       } else if (
-  //         response.request_response_field_name === "Supplier Quotation"
-  //       ) {
-  //         supplierQuotation = JSON.parse(response.request_response);
-  //       } else if (
-  //         response.request_response_field_name === "Request Send Method"
-  //       ) {
-  //         requestSendMethod = JSON.parse(response.request_response);
-  //       } else if (
-  //         response.request_response_field_name === "Proof of Sending"
-  //       ) {
-  //         proofOfSending = JSON.parse(response.request_response);
-  //       } else if (response.request_response_field_name === "Payment Terms") {
-  //         paymentTerms = JSON.parse(response.request_response);
-  //       } else if (response.request_response_field_name === "Lead Time") {
-  //         leadTime = addCommaToNumber(JSON.parse(response.request_response));
-  //       } else if (
-  //         response.request_response_field_name === "Required Down Payment"
-  //       ) {
-  //         requiredDownPayment = addCommaToNumber(
-  //           JSON.parse(response.request_response)
-  //         );
-  //       }
-  //     });
-
-  //     itemName.forEach((item) => {
-  //       const closingIndex = item.indexOf(")");
-  //       const newItem = item.slice(0, closingIndex + 1);
-  //       const description = item
-  //         .slice(closingIndex + 3, item.length - 1)
-  //         .split(", ")
-  //         .join("\n");
-  //       itemNameOnly.push(newItem);
-  //       itemDescriptionOnly.push(description);
-  //     });
-
-  //     return (
-  //       <tr
-  //         key={request.quotation_request_id}
-  //         className={classes.cell}
-  //         style={{ borderTop: "solid 1px #DEE2E6" }}
-  //       >
-  //         {quotationTable.columnList["quotation_id"] && (
-  //           <td>{request.quotation_request_formsly_id}</td>
-  //         )}
-  //         {quotationTable.columnList["date_created"] && (
-  //           <td>
-  //             {new Date(
-  //               request.quotation_request_date_created
-  //             ).toLocaleDateString()}
-  //           </td>
-  //         )}
-  //         {quotationTable.columnList["purchaser"] && (
-  //           <td>{`${request.quotation_request_owner.user_first_name} ${request.quotation_request_owner.user_last_name}`}</td>
-  //         )}
-  //         {quotationTable.columnList["supplier"] && (
-  //           <td style={{ wordBreak: "break-all" }}>{supplier}</td>
-  //         )}
-  //         {quotationTable.columnList["supplier_quotation"] && (
-  //           <td>
-  //             <ActionIcon
-  //               w="100%"
-  //               variant="outline"
-  //               onClick={() => window.open(supplierQuotation, "_blank")}
-  //             >
-  //               <Flex align="center" justify="center" gap={2}>
-  //                 <Text size={14}>File</Text> <IconFile size={14} />
-  //               </Flex>
-  //             </ActionIcon>
-  //           </td>
-  //         )}
-  //         {quotationTable.columnList["request_send_method"] && (
-  //           <td>{requestSendMethod}</td>
-  //         )}
-  //         {quotationTable.columnList["proof_of_sending"] && (
-  //           <td>
-  //             <ActionIcon
-  //               w="100%"
-  //               variant="outline"
-  //               onClick={() => window.open(proofOfSending, "_blank")}
-  //             >
-  //               <Flex align="center" justify="center" gap={2}>
-  //                 <Text size={14}>File</Text> <IconFile size={14} />
-  //               </Flex>
-  //             </ActionIcon>
-  //           </td>
-  //         )}
-  //         {quotationTable.columnList["payment_terms"] && (
-  //           <td>{paymentTerms}</td>
-  //         )}
-  //         {quotationTable.columnList["lead_time"] && (
-  //           <td>{addCommaToNumber(Number(leadTime))}</td>
-  //         )}
-  //         {quotationTable.columnList["required_down_payment"] && (
-  //           <td>₱ {requiredDownPayment}</td>
-  //         )}
-  //         {quotationItemTable.show && (
-  //           <td style={{ padding: 0 }}>
-  //             <Table
-  //               withBorder
-  //               withColumnBorders
-  //               pos="relative"
-  //               h="100%"
-  //               className={classes.quotationTable}
-  //               ref={containerRef}
-  //             >
-  //               <thead>
-  //                 <tr>
-  //                   {quotationItemTable.columnList["item_description"] && (
-  //                     <th className={classes.description}>Item Description</th>
-  //                   )}
-  //                   {quotationItemTable.columnList["price_per_unit"] && (
-  //                     <th className={classes.normal}>Price per Unit</th>
-  //                   )}
-  //                   {quotationItemTable.columnList["quantity"] && (
-  //                     <th className={classes.normal}>Quantity</th>
-  //                   )}
-  //                   {quotationItemTable.columnList[
-  //                     "base_unit_of_measurement"
-  //                   ] && (
-  //                     <th className={classes.date}>Base Unit of Measurement</th>
-  //                   )}
-  //                 </tr>
-  //               </thead>
-  //               <tbody>
-  //                 {itemName.map((item, index) => {
-  //                   return (
-  //                     <tr key={index} className={classes.cell}>
-  //                       {quotationItemTable.columnList["item_description"] && (
-  //                         <td>
-  //                           <Text fw={700}>{itemNameOnly[index]}</Text>
-  //                           <pre style={{ marginTop: 10 }}>
-  //                             <Text>{itemDescriptionOnly[index]}</Text>
-  //                           </pre>
-  //                         </td>
-  //                       )}
-  //                       {quotationItemTable.columnList["price_per_unit"] && (
-  //                         <td>
-  //                           <Text size={14}>
-  //                             ₱ {addCommaToNumber(Number(itemPrice[index]))}
-  //                           </Text>
-  //                         </td>
-  //                       )}
-  //                       {quotationItemTable.columnList["quantity"] && (
-  //                         <td>
-  //                           <Text size={14}>
-  //                             {addCommaToNumber(Number(itemQuantity[index]))}
-  //                           </Text>
-  //                         </td>
-  //                       )}
-  //                       {quotationItemTable.columnList[
-  //                         "base_unit_of_measurement"
-  //                       ] && (
-  //                         <td>
-  //                           <Text size={14}>{itemUnit[index]}</Text>
-  //                         </td>
-  //                       )}
-  //                     </tr>
-  //                   );
-  //                 })}
-  //               </tbody>
-  //             </Table>
-  //           </td>
-  //         )}
-  //         {quotationTable.show && (
-  //           <td style={{ padding: 0 }}>
-  //             {rirTable.show && request.quotation_rir_request.length !== 0 ? (
-  //               <Table
-  //                 withBorder
-  //                 withColumnBorders
-  //                 h="100%"
-  //                 className={classes.rirTable}
-  //               >
-  //                 <thead style={{ height: 58 }}>
-  //                   <tr>
-  //                     {rirTable.columnList["rir_id"] && (
-  //                       <th className={classes.long}>RIR ID</th>
-  //                     )}
-  //                     {rirTable.columnList["date_created"] && (
-  //                       <th className={classes.date}>Date Created</th>
-  //                     )}
-  //                     {rirTable.columnList["site_warehouse"] && (
-  //                       <th className={classes.processor}>Site Warehouse</th>
-  //                     )}
-  //                     {rirTable.columnList["dr"] && (
-  //                       <th className={classes.short}>DR</th>
-  //                     )}
-  //                     {rirTable.columnList["si"] && (
-  //                       <th className={classes.short}>SI</th>
-  //                     )}
-  //                     {rirTable.columnList["qcir"] && (
-  //                       <th className={classes.short}>QCIR</th>
-  //                     )}
-  //                     {rirItemTable.show && <th>Item</th>}
-  //                   </tr>
-  //                 </thead>
-  //                 <tbody>{renderRir(request.quotation_rir_request)}</tbody>
-  //               </Table>
-  //             ) : null}
-  //           </td>
-  //         )}
-  //       </tr>
-  //     );
-  //   });
-  // };
-
-  // const renderSourcedItem = (
-  //   request: SSOTType["item_sourced_item_request"]
-  // ) => {
-  //   return request.map((request) => {
-  //     const itemName: string[] = [];
-  //     const itemSourceProject: string[] = [];
-  //     const itemQuantity: string[] = [];
-  //     const itemUnit: string[] = [];
-  //     const itemNameOnly: string[] = [];
-  //     const itemDescriptionOnly: string[] = [];
-
-  //     const items = request.sourced_item_request_response.slice(1);
-
-  //     items.forEach((item) => {
-  //       if (item.request_response_field_name === "Item") {
-  //         const quantityMatch = item.request_response.match(/(\d+)/);
-  //         if (!quantityMatch) return;
-  //         itemName.push(
-  //           JSON.parse(
-  //             item.request_response.replace(
-  //               quantityMatch[1],
-  //               addCommaToNumber(Number(quantityMatch[1]))
-  //             )
-  //           )
-  //         );
-  //       } else if (item.request_response_field_name === "Quantity") {
-  //         const matches = regExp.exec(itemName[itemQuantity.length]);
-  //         const unit = matches && matches[1].replace(/[0-9,]/g, "").trim();
-
-  //         itemQuantity.push(JSON.parse(item.request_response));
-  //         itemUnit.push(`${unit}`);
-  //       } else if (item.request_response_field_name === "Source Project") {
-  //         itemSourceProject.push(JSON.parse(item.request_response));
-  //       }
-  //     });
-
-  //     itemName.forEach((item) => {
-  //       const closingIndex = item.indexOf(")");
-  //       const newItem = item.slice(0, closingIndex + 1);
-  //       const description = item
-  //         .slice(closingIndex + 3, item.length - 1)
-  //         .split(", ")
-  //         .join("\n");
-  //       itemNameOnly.push(newItem);
-  //       itemDescriptionOnly.push(description);
-  //     });
-
-  //     return (
-  //       <tr
-  //         key={request.sourced_item_request_id}
-  //         className={classes.cell}
-  //         style={{ borderTop: "solid 1px #DEE2E6" }}
-  //       >
-  //         {sourcedItemTable.show && (
-  //           <>
-  //             {sourcedItemTable.columnList["sourced_item_id"] && (
-  //               <td>{request.sourced_item_request_formsly_id}</td>
-  //             )}
-  //             {sourcedItemTable.columnList["date_created"] && (
-  //               <td>
-  //                 {new Date(
-  //                   request.sourced_item_request_date_created
-  //                 ).toLocaleDateString()}
-  //               </td>
-  //             )}
-  //             {sourcedItemTable.columnList["lead_inventory_controller"] && (
-  //               <td>{`${request.sourced_item_request_owner.user_first_name} ${request.sourced_item_request_owner.user_last_name}`}</td>
-  //             )}
-  //             {sourcedItemItemTable.show && (
-  //               <td style={{ padding: 0 }}>
-  //                 <Table
-  //                   withBorder
-  //                   withColumnBorders
-  //                   pos="relative"
-  //                   h="100%"
-  //                   className={classes.sourcedItemTable}
-  //                   ref={containerRef}
-  //                 >
-  //                   <thead>
-  //                     <tr>
-  //                       {sourcedItemItemTable.columnList[
-  //                         "item_description"
-  //                       ] && (
-  //                         <th className={classes.description}>
-  //                           Item Description
-  //                         </th>
-  //                       )}
-  //                       {sourcedItemItemTable.columnList["quantity"] && (
-  //                         <th className={classes.normal}>Quantity</th>
-  //                       )}
-  //                       {sourcedItemItemTable.columnList[
-  //                         "base_unit_of_measurement"
-  //                       ] && (
-  //                         <th className={classes.date}>
-  //                           Base Unit of Measurement
-  //                         </th>
-  //                       )}
-  //                       {sourcedItemItemTable.columnList["source_project"] && (
-  //                         <th className={classes.long}>Source Project</th>
-  //                       )}
-  //                     </tr>
-  //                   </thead>
-  //                   <tbody>
-  //                     {itemName.map((item, index) => {
-  //                       return (
-  //                         <tr key={index} className={classes.cell}>
-  //                           {sourcedItemItemTable.columnList[
-  //                             "item_description"
-  //                           ] && (
-  //                             <td>
-  //                               <Text fw={700}>{itemNameOnly[index]}</Text>
-  //                               <pre style={{ marginTop: 10 }}>
-  //                                 <Text>{itemDescriptionOnly[index]}</Text>
-  //                               </pre>
-  //                             </td>
-  //                           )}
-
-  //                           {sourcedItemItemTable.columnList["quantity"] && (
-  //                             <td>
-  //                               <Text size={14}>
-  //                                 {addCommaToNumber(
-  //                                   Number(itemQuantity[index])
-  //                                 )}
-  //                               </Text>
-  //                             </td>
-  //                           )}
-  //                           {sourcedItemItemTable.columnList[
-  //                             "base_unit_of_measurement"
-  //                           ] && (
-  //                             <td>
-  //                               <Text size={14}>{itemUnit[index]}</Text>
-  //                             </td>
-  //                           )}
-  //                           {sourcedItemItemTable.columnList[
-  //                             "source_project"
-  //                           ] && (
-  //                             <td>
-  //                               <Text size={14}>
-  //                                 {itemSourceProject[index]}
-  //                               </Text>
-  //                             </td>
-  //                           )}
-  //                         </tr>
-  //                       );
-  //                     })}
-  //                   </tbody>
-  //                 </Table>
-  //               </td>
-  //             )}
-  //             {releaseOrderTable.show && (
-  //               <td style={{ padding: 0 }}>
-  //                 {request.sourced_item_ro_request.length !== 0 ? (
-  //                   <Table
-  //                     withBorder
-  //                     withColumnBorders
-  //                     h="100%"
-  //                     className={classes.roTable}
-  //                   >
-  //                     <thead>
-  //                       <tr>
-  //                         {releaseOrderTable.columnList["ro_id"] && (
-  //                           <th className={classes.long}>Release Order ID</th>
-  //                         )}
-  //                         {releaseOrderTable.columnList["date_created"] && (
-  //                           <th className={classes.date}>Date Created</th>
-  //                         )}
-  //                         {releaseOrderTable.columnList[
-  //                           "warehouse_corporate_support_lead"
-  //                         ] && (
-  //                           <th className={classes.processor}>
-  //                             Warehouse Corporate Support Lead
-  //                           </th>
-  //                         )}
-  //                         {releaseOrderItemTable.show && <th>Item</th>}
-  //                         {releaseOrderTable.show &&
-  //                           transferReceiptTable.show && (
-  //                             <th>Transfer Receipt</th>
-  //                           )}
-  //                       </tr>
-  //                     </thead>
-  //                     <tbody>
-  //                       {renderReleaseOrder(request.sourced_item_ro_request)}
-  //                     </tbody>
-  //                   </Table>
-  //                 ) : null}
-  //               </td>
-  //             )}
-  //           </>
-  //         )}
-  //       </tr>
-  //     );
-  //   });
-  // };
-
   const renderItem = () => {
     return itemList.map((request) => {
       const itemName: string[] = [];
@@ -1553,13 +281,7 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
-          }
-          // else if (
-          //   item.request_response_field_name === "CSI Code Description"
-          // ) {
-          //   itemCSICode[groupIndex] = JSON.parse(item.request_response);
-          // }
-          else if (
+          } else if (
             [
               "CSI Code",
               "Division Description",
@@ -1715,101 +437,6 @@ const SSOTSpreadsheetView = ({
               )}
             </>
           )}
-          {/* {quotationTable.show && (
-            <td style={{ padding: 0 }}>
-              {request.item_quotation_request.length !== 0 ? (
-                <Table
-                  withBorder
-                  withColumnBorders
-                  h="100%"
-                  className={classes.quotationTable}
-                >
-                  <thead>
-                    <tr>
-                      {quotationTable.columnList["quotation_id"] && (
-                        <th className={classes.long}>Quotation ID</th>
-                      )}
-                      {quotationTable.columnList["date_created"] && (
-                        <th className={classes.date}>Date Created</th>
-                      )}
-                      {quotationTable.columnList["purchaser"] && (
-                        <th className={classes.processor}>Purchaser</th>
-                      )}
-                      {quotationTable.columnList["supplier"] && (
-                        <th className={classes.long}>Supplier</th>
-                      )}
-                      {quotationTable.columnList["supplier_quotation"] && (
-                        <th className={classes.normal}>Supplier Quotation</th>
-                      )}
-                      {quotationTable.columnList["request_send_method"] && (
-                        <th className={classes.short}>Send Method</th>
-                      )}
-                      {quotationTable.columnList["proof_of_sending"] && (
-                        <th className={classes.normal}>Proof of Sending</th>
-                      )}
-                      {quotationTable.columnList["payment_terms"] && (
-                        <th className={classes.normal}>Payment Terms</th>
-                      )}
-                      {quotationTable.columnList["lead_time"] && (
-                        <th className={classes.normal}>Lead Time</th>
-                      )}
-                      {quotationTable.columnList["required_down_payment"] && (
-                        <th className={classes.long}>Required Down Payment</th>
-                      )}
-                      {quotationItemTable.show && <th>Item</th>}
-
-                      {quotationTable.columnList && rirTable.show && (
-                        <th>Receiving Inspecting Report</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderQuotation(request.item_quotation_request)}
-                  </tbody>
-                </Table>
-              ) : null}
-            </td>
-          )}
-          {sourcedItemTable.show && (
-            <td style={{ padding: 0 }}>
-              {request.item_sourced_item_request.length !== 0 ? (
-                <Table
-                  withBorder
-                  withColumnBorders
-                  h="100%"
-                  className={classes.sourcedItemTable}
-                >
-                  <thead>
-                    <tr>
-                      {sourcedItemTable.columnList["sourced_item_id"] && (
-                        <th className={classes.long}>Sourced Item ID</th>
-                      )}
-                      {sourcedItemTable.columnList["date_created"] && (
-                        <th className={classes.date}>Date Created</th>
-                      )}
-                      {sourcedItemTable.columnList[
-                        "lead_inventory_controller"
-                      ] && (
-                        <th className={classes.processor}>
-                          Lead Inventory Controller
-                        </th>
-                      )}
-                      {sourcedItemItemTable.show && <th>Item</th>}
-
-                      {sourcedItemTable.show && releaseOrderTable.show && (
-                        <th>Release Order</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderSourcedItem(
-                      request.item_sourced_item_request
-                    )}
-                  </tbody>
-                </Table>
-              ) : null}
-            </td>
-          )} */}
         </tr>
       );
     });
@@ -1841,6 +468,12 @@ const SSOTSpreadsheetView = ({
     return returnValue;
   };
 
+  useEffect(() => {
+    if (team.team_id) {
+      handleFilterSSOT();
+    }
+  }, [team.team_id]);
+
   return (
     <Flex direction="column" p="0">
       <Box ref={topElementRef}>
@@ -1849,6 +482,15 @@ const SSOTSpreadsheetView = ({
             SSOT Spreadsheet View
           </Title>
 
+          <Button
+            leftIcon={<IconReload size={16} />}
+            onClick={() => {
+              handleFilterSSOT();
+            }}
+            disabled={isLoading}
+          >
+            Refresh
+          </Button>
           <FormProvider {...filterSSOTMethods}>
             <form onSubmit={handleSubmit(handleFilterSSOT)}>
               <SSOTSpreadsheetViewFilter
@@ -1929,8 +571,6 @@ const SSOTSpreadsheetView = ({
                       {itemItemTable.show && <th>Item</th>}
                     </>
                   )}
-                  {/* {quotationTable.show && <th>Quotation</th>}
-                  {sourcedItemTable.show && <th>Sourced Item</th>} */}
                 </tr>
               </thead>
               <tbody>{renderItem()}</tbody>
@@ -1942,4 +582,4 @@ const SSOTSpreadsheetView = ({
   );
 };
 
-export default SSOTSpreadsheetView;
+export default SSOTSpreadsheetViewPage;

@@ -1,3 +1,4 @@
+import { getCreatePublicRequestPageOnLoad } from "@/backend/api/get";
 import { insertError } from "@/backend/api/post";
 import CreateApplicationInformationRequestPage from "@/components/CreateApplicationInformationRequestPage/CreateApplicationInformationRequestPage";
 import CreateGeneralAssessmentRequestPage from "@/components/CreateGeneralAssessmentRequestPage/CreateGeneralAssessmentRequestPage";
@@ -23,20 +24,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    const { data, error } = await supabaseClient.rpc(
-      "create_public_request_page_on_load",
-      {
-        input_data: {
-          formId: context.query.formId,
-          applicationInformationId: context.query.applicationInformationId,
-          generalAssessmentId: context.query.generalAssessmentId,
-        },
-      }
-    );
-    if (error) throw error;
+    const data = await getCreatePublicRequestPageOnLoad(supabaseClient, {
+      formId: context.query.formId as string,
+      applicationInformationId: context.query
+        .applicationInformationId as string,
+      generalAssessmentId: context.query.generalAssessmentId as string,
+    });
 
     return {
-      props: data as Props,
+      props: data,
     };
   } catch (e) {
     if (isError(e)) {

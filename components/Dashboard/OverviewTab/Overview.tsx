@@ -1,14 +1,16 @@
 import {
+  getDashboardTopRequestor,
+  getDashboardTopSigner,
   getRequestStatusCount,
   getRequestStatusMonthlyCount,
 } from "@/backend/api/get";
 import { RadialChartData } from "@/components/Chart/RadialChart";
 import { StackedBarChartDataType } from "@/components/Chart/StackedBarChart";
 import { useFormList } from "@/stores/useFormStore";
-import { useTeamMemberStore } from "@/stores/useTeamMemberStore";
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_ON_SCROLL_LIMIT } from "@/utils/constant";
-import { TeamMemberType } from "@/utils/types";
+import { DashboardRequestorAndSignerType, TeamMemberType } from "@/utils/types";
 import { Box, Flex, Loader, LoadingOverlay, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -52,7 +54,7 @@ const Overview = ({
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = useSupabaseClient();
-  const teamMemberList = useTeamMemberStore();
+  const teamMemberList = useTeamMemberList();
   const [requestStatusCount, setRequestStatusCount] = useState<
     RadialChartData[] | null
   >(null);
@@ -66,11 +68,11 @@ const Overview = ({
   const [isFetchingMonthlyStatistics, setIsFetchingMonthlyStatistics] =
     useState(false);
   const [requestorList, setRequestorList] = useState<
-    RequestorAndSignerDataType[]
+    DashboardRequestorAndSignerType[]
   >([]);
-  const [signerList, setSignerList] = useState<RequestorAndSignerDataType[]>(
-    []
-  );
+  const [signerList, setSignerList] = useState<
+    DashboardRequestorAndSignerType[]
+  >([]);
 
   const [requestorOffset, setRequestorOffset] = useState(1);
   const [isRequestorFetchable, setIsRequestorFetchable] = useState(true);
@@ -79,7 +81,8 @@ const Overview = ({
   const [isSignerFetchable, setIsSignerFetchable] = useState(false);
 
   useEffect(() => {
-    if (!startDateFilter || !endDateFilter) return;
+    if (!startDateFilter || !endDateFilter || teamMemberList.length === 0)
+      return;
     const fetchOverviewData = async (selectedForm: string, teamId: string) => {
       endDateFilter?.setHours(23, 59, 59, 999);
 
@@ -133,33 +136,25 @@ const Overview = ({
 
         if (!formMatch) return;
         // set requestor data
-        const { data: requestorList, error: requestorListError } =
-          await supabaseClient.rpc("fetch_dashboard_top_requestor", {
-            input_data: {
-              formId: selectedForm,
-              startDate: moment(startDateFilter).format(),
-              endDate: moment(endDateFilter).format(),
-              page: 1,
-              limit: DEFAULT_ON_SCROLL_LIMIT,
-            },
-          });
-        if (requestorListError) throw requestorListError;
+        const requestorList = await getDashboardTopRequestor(supabaseClient, {
+          formId: selectedForm,
+          startDate: moment(startDateFilter).format(),
+          endDate: moment(endDateFilter).format(),
+          page: 1,
+          limit: DEFAULT_ON_SCROLL_LIMIT,
+        });
         setRequestorList(requestorList);
         setIsFetchingRequestor(false);
 
         // set signer data
-        const { data: sigerList, error: signerListError } =
-          await supabaseClient.rpc("fetch_dashboard_top_signer", {
-            input_data: {
-              formId: selectedForm,
-              startDate: moment(startDateFilter).format(),
-              endDate: moment(endDateFilter).format(),
-              page: 1,
-              limit: DEFAULT_ON_SCROLL_LIMIT,
-            },
-          });
-        if (signerListError) throw signerListError;
-        setSignerList(sigerList);
+        const signerList = await getDashboardTopSigner(supabaseClient, {
+          formId: selectedForm,
+          startDate: moment(startDateFilter).format(),
+          endDate: moment(endDateFilter).format(),
+          page: 1,
+          limit: DEFAULT_ON_SCROLL_LIMIT,
+        });
+        setSignerList(signerList);
         setIsFetchingSigner(false);
       } catch (e) {
         notifications.show({
@@ -190,17 +185,15 @@ const Overview = ({
   const loadMoreRequestor = async (page: number) => {
     try {
       setIsFetchingRequestor(true);
-      const { data: requestorList, error: requestorListError } =
-        await supabaseClient.rpc("fetch_dashboard_top_requestor", {
-          input_data: {
-            formId: selectedForm,
-            startDate: moment(startDateFilter).format(),
-            endDate: moment(endDateFilter).format(),
-            page: page,
-            limit: DEFAULT_ON_SCROLL_LIMIT,
-          },
-        });
-      if (requestorListError) throw requestorListError;
+
+      const requestorList = await getDashboardTopRequestor(supabaseClient, {
+        formId: selectedForm as string,
+        startDate: moment(startDateFilter).format(),
+        endDate: moment(endDateFilter).format(),
+        page: page,
+        limit: DEFAULT_ON_SCROLL_LIMIT,
+      });
+
       setRequestorList((prev) => [...prev, ...requestorList]);
       if (requestorList.length < DEFAULT_ON_SCROLL_LIMIT) {
         setIsRequestorFetchable(false);
@@ -219,17 +212,14 @@ const Overview = ({
   const loadMoreSigner = async (page: number) => {
     try {
       setIsFetchingSigner(true);
-      const { data: signerList, error: signerListError } =
-        await supabaseClient.rpc("fetch_dashboard_top_signer", {
-          input_data: {
-            formId: selectedForm,
-            startDate: moment(startDateFilter).format(),
-            endDate: moment(endDateFilter).format(),
-            page: page,
-            limit: DEFAULT_ON_SCROLL_LIMIT,
-          },
-        });
-      if (signerListError) throw signerListError;
+
+      const signerList = await getDashboardTopSigner(supabaseClient, {
+        formId: selectedForm as string,
+        startDate: moment(startDateFilter).format(),
+        endDate: moment(endDateFilter).format(),
+        page: page,
+        limit: DEFAULT_ON_SCROLL_LIMIT,
+      });
       setSignerList((prev) => [...prev, ...signerList]);
       if (signerList.length < DEFAULT_ON_SCROLL_LIMIT) {
         setIsSignerFetchable(false);

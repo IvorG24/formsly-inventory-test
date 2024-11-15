@@ -1,3 +1,4 @@
+import { getCreateRequestPageOnLoad } from "@/backend/api/get";
 import CreateBackgroundInvestigationRequestPage from "@/components/CreateBackgroundInvestigationRequestPage/CreateBackgroundInvestigationRequestPage";
 import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
 import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
@@ -33,20 +34,13 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       const connectedRequestFormslyId =
         context.query.lrf ?? context.query.rfp ?? context.query.wav;
 
-      const { data, error } = await supabaseClient.rpc(
-        "create_request_page_on_load",
-        {
-          input_data: {
-            formId: context.query.formId,
-            userId: user.id,
-            connectedRequestFormslyId: connectedRequestFormslyId
-              ? connectedRequestFormslyId
-              : null,
-          },
-        }
-      );
-
-      if (error) throw error;
+      const data = await getCreateRequestPageOnLoad(supabaseClient, {
+        formId: context.query.formId as string,
+        userId: user.id,
+        connectedRequestFormslyId: connectedRequestFormslyId
+          ? (connectedRequestFormslyId as string)
+          : null,
+      });
 
       return {
         props: data as Props,

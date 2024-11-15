@@ -16,11 +16,11 @@ import ITAssetPdfDocumentTableVersion from "./ITAssetPdfDocumentTableVersion";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import LiquidationReimbursementTableVersion from "./LiquidationReimbursementTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
+import PdfDocument from "./PdfDocument";
 import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
 import PEDItemBulkPdfDocumentTableVersion from "./PEDItemBulkPdfDocumentTableVersion";
 import PEDItemSinglePdfDocumentTableVersion from "./PEDItemSinglePdfDocumentTableVersion";
 import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
-import PdfDocument from "./PdfDocument";
 import PettyCashVoucherTableVersion from "./PettyCashVoucherTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
@@ -273,27 +273,26 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
+
+      default:
+        return (
+          <PdfDocument
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
     }
   };
-
-  const [instance] = usePDF({
-    document: (
-      <PdfDocument
-        requestDetails={requestDetails}
-        requestorDetails={requestorDetails}
-        requestIDs={requestIDs}
-        requestItems={requestItems}
-        approverDetails={approverDetails}
-      />
-    ),
-  });
 
   const [instanceTable] = usePDF({
     document: getDocument(),
   });
 
   useEffect(() => {
-    if (!instance.loading && instanceTable.url && pdfFileName) {
+    if (!instanceTable.loading && instanceTable.url && pdfFileName) {
       const link = document.createElement("a");
       link.href = instanceTable.url;
       link.download = `${pdfFileName}-${router.query.type}`;
@@ -301,7 +300,7 @@ const ExportToPdf = ({
       link.click();
       window.close();
     }
-  }, [instance.loading, instanceTable.url, pdfFileName, router]);
+  }, [instanceTable.loading, instanceTable.url, pdfFileName, router]);
 
   return (
     <Flex

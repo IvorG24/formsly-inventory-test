@@ -1,4 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
+import { getTeamMemberWithFilter } from "@/backend/api/get";
 import { uploadImage } from "@/backend/api/post";
 import {
   leaveTeam,
@@ -186,22 +187,13 @@ const TeamPage = ({
     try {
       setIsUpdatingTeamMembers(true);
       setTeamMemberPage(1);
-      const { data: memberData, error } = await supabaseClient.rpc(
-        "get_team_member_with_filter",
-        {
-          input_data: {
-            teamId: team.team_id,
-            page: 1,
-            limit: ROW_PER_PAGE,
-            search: data.keyword,
-          },
-        }
-      );
-      const formattedData = memberData as {
-        teamMembers: TeamMemberType[];
-        teamMembersCount: number;
-      };
-      if (error) throw error;
+      const formattedData = await getTeamMemberWithFilter(supabaseClient, {
+        teamId: team.team_id,
+        page: 1,
+        limit: ROW_PER_PAGE,
+        search: data.keyword,
+      });
+
       setTeamMemberList(formattedData.teamMembers);
       setTeamMemberCount(formattedData.teamMembersCount || 0);
       setIsUpdatingTeamMembers(false);
@@ -291,22 +283,14 @@ const TeamPage = ({
       setTeamMemberPage(page);
       setIsUpdatingTeamMembers(true);
       const keyword = searchTeamMemberMethods.getValues("keyword");
-      const { data, error } = await supabaseClient.rpc(
-        "get_team_member_with_filter",
-        {
-          input_data: {
-            teamId: team.team_id,
-            page,
-            limit: ROW_PER_PAGE,
-            search: keyword,
-          },
-        }
-      );
-      const formattedData = data as {
-        teamMembers: TeamMemberType[];
-        teamMembersCount: number;
-      };
-      if (error) throw error;
+
+      const formattedData = await getTeamMemberWithFilter(supabaseClient, {
+        teamId: team.team_id,
+        page,
+        limit: ROW_PER_PAGE,
+        search: keyword,
+      });
+
       setTeamMemberList(formattedData.teamMembers);
       setTeamMemberCount(formattedData.teamMembersCount || 0);
       setIsUpdatingTeamMembers(false);

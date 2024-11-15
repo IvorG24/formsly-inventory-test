@@ -20,7 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle } from "@tabler/icons-react";
 
-import { getAllItems } from "@/backend/api/get";
+import { analyzeItem, getAllItems } from "@/backend/api/get";
 import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ItemRow from "./ItemRow";
@@ -76,26 +76,16 @@ const ItemAnalyticsPage = ({ items }: Props) => {
     try {
       setIsAnalyzing(true);
       setPage(1);
-      const { data, error } = await supabaseClient
-        .rpc("analyze_item", {
-          input_data: {
-            itemName: item,
-            teamId: activeTeam.team_id,
-            page: 1,
-            limit: DEFAULT_ITEM_ANALYTICS_ROWS,
-          },
-        })
-        .select("*");
-      if (error) throw error;
-
-      const formattedData = data as unknown as {
-        data: ResultType[];
-        count: number;
-      };
+      const { data, count } = await analyzeItem(supabaseClient, {
+        itemName: item,
+        teamId: activeTeam.team_id,
+        page: 1,
+        limit: DEFAULT_ITEM_ANALYTICS_ROWS,
+      });
 
       setCurrentItem(item);
-      setResultList(formattedData.data);
-      setResultCount(formattedData.count ?? 0);
+      setResultList(data);
+      setResultCount(count ?? 0);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -110,17 +100,13 @@ const ItemAnalyticsPage = ({ items }: Props) => {
     setPage(page);
     try {
       setIsAnalyzing(true);
-      const { data, error } = await supabaseClient
-        .rpc("analyze_item", {
-          input_data: {
-            itemName: currentItem,
-            teamId: activeTeam.team_id,
-            page: page,
-            limit: DEFAULT_ITEM_ANALYTICS_ROWS,
-          },
-        })
-        .select("*");
-      if (error) throw error;
+      const data = await analyzeItem(supabaseClient, {
+        itemName: currentItem,
+        teamId: activeTeam.team_id,
+        page: page,
+        limit: DEFAULT_ITEM_ANALYTICS_ROWS,
+      });
+
       const formattedData = data as unknown as {
         data: ResultType[];
         count: number;

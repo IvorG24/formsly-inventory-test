@@ -1,3 +1,4 @@
+import { getUserApplicationProgressOnLoad } from "@/backend/api/get";
 import { insertError } from "@/backend/api/post";
 import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
@@ -17,17 +18,10 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, context, user }) => {
     try {
-      const { data, error } = await supabaseClient.rpc(
-        "get_user_application_progress_on_load",
-        {
-          input_data: {
-            requestId: `${context.query.requestId}`,
-            userEmail: user.email,
-          },
-        }
-      );
-
-      if (error) throw error;
+      const data = await getUserApplicationProgressOnLoad(supabaseClient, {
+        requestId: context.query.requestId as string,
+        userEmail: user.email as string,
+      });
       return {
         props: data as Props,
       };

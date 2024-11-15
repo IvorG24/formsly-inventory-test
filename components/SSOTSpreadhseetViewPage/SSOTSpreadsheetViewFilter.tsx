@@ -3,13 +3,13 @@ import {
   Button,
   Drawer,
   Group,
-  MultiSelect,
+  Select,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { IconFilter } from "@tabler/icons-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { SSOTFilterFormValues } from "./SSOTSpreadhseetViewPage";
 
@@ -26,36 +26,15 @@ const SSOTSpreadsheetViewFilter = ({
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     clearable: true,
-    clearSearchOnChange: true,
-    clearSearchOnBlur: true,
     searchable: true,
     nothingFound: "Nothing found",
   };
-  // const supabaseClient = createPagesBrowserClient<Database>();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // const team = useActiveTeam();
-  // const [isSearching, setIsSearching] = useState(false);
-  // const [supplierKeyword, setSupplierKeyword] = useState("");
-  // const [supplierOptions, setSupplierOptions] = useState<
-  //   {
-  //     label: string;
-  //     value: string;
-  //   }[]
-  // >([]);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const {
     reset,
     formState: { isDirty },
   } = useFormContext<SSOTFilterFormValues>();
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   const requestingProjectListData = requestingProjectList.map((project) => ({
     label: project,
@@ -68,42 +47,6 @@ const SSOTSpreadsheetViewFilter = ({
   }));
 
   const { register, control } = useFormContext<SSOTFilterFormValues>();
-
-  // const supplierSearch = async (value: string) => {
-  //   if (!value || value === supplierKeyword) return;
-
-  //   try {
-  //     setIsSearching(true);
-  //     const supplierList = await getSupplier(supabaseClient, {
-  //       supplier: value,
-  //       teamId: team.team_id,
-  //       fieldId: "",
-  //     });
-  //     const options = supplierList.map((supplier) => {
-  //       return {
-  //         label: supplier.option_value,
-  //         value: supplier.option_value,
-  //       };
-  //     });
-  //     const keywords = getValues("supplierList");
-  //     if (keywords) {
-  //       keywords.forEach((supplier) => {
-  //         options.push({
-  //           label: supplier,
-  //           value: supplier,
-  //         });
-  //       });
-  //     }
-  //     setSupplierOptions(options);
-  //   } catch (e) {
-  //     notifications.show({
-  //       message: "Something went wrong. Please try again later.",
-  //       color: "red",
-  //     });
-  //   } finally {
-  //     setIsSearching(false);
-  //   }
-  // };
 
   return (
     <Box>
@@ -121,9 +64,9 @@ const SSOTSpreadsheetViewFilter = ({
 
           <Controller
             control={control}
-            name="requestingProjectList"
+            name="requestingProject"
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
+              <Select
                 data={requestingProjectListData}
                 placeholder="Requesting Project"
                 value={value}
@@ -135,9 +78,9 @@ const SSOTSpreadsheetViewFilter = ({
 
           <Controller
             control={control}
-            name="itemNameList"
+            name="itemName"
             render={({ field: { value, onChange } }) => (
-              <MultiSelect
+              <Select
                 placeholder="Item Name"
                 data={itemNameListData}
                 value={value}
@@ -146,31 +89,6 @@ const SSOTSpreadsheetViewFilter = ({
               />
             )}
           />
-
-          {/* <Controller
-            control={control}
-            name="supplierList"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="Supplier"
-                value={value}
-                onChange={onChange}
-                data={supplierOptions}
-                {...inputFilterProps}
-                onSearchChange={(value) => {
-                  setSupplierKeyword(value);
-                  if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current);
-                  }
-                  timeoutRef.current = setTimeout(() => {
-                    supplierSearch(value);
-                  }, 500);
-                }}
-                rightSection={isSearching ? <Loader size={16} /> : null}
-                nothingFound="Nothing found. Try a different keyword"
-              />
-            )}
-          /> */}
 
           <Button
             color="red"
@@ -196,7 +114,8 @@ const SSOTSpreadsheetViewFilter = ({
       <Group position="center">
         <Button
           onClick={() => setShowFilterModal(true)}
-          leftIcon={<IconFilter size={14} />}
+          leftIcon={<IconFilter size={16} />}
+          variant="light"
         >
           Filters
         </Button>

@@ -1,4 +1,4 @@
-import { getForm } from "@/backend/api/get";
+import { getForm, getFormpageOnLoad } from "@/backend/api/get";
 import ApplicationInformationFormPage from "@/components/ApplicationInformationFormPage/ApplicationInformationFormPage";
 import ITAssetFormPage from "@/components/ITAssetFormPage/ITAssetFormPage";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
@@ -27,18 +27,15 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
         formId: `${context.query.formId}`,
       });
 
-      const { data, error } = await supabaseClient.rpc("form_page_on_load", {
-        input_data: {
-          userId: user.id,
-          isFormslyForm: form.form_is_formsly_form,
-          formName: form.form_name,
-          limit: ROW_PER_PAGE,
-        },
+      const data = await getFormpageOnLoad(supabaseClient, {
+        userId: user.id,
+        isFormslyForm: form.form_is_formsly_form,
+        formName: form.form_name,
+        limit: ROW_PER_PAGE,
       });
-      if (error) throw error;
 
       return {
-        props: { ...(data as unknown as Props), form },
+        props: { ...data, form },
       };
     } catch (e) {
       return {

@@ -1,26 +1,30 @@
 "use client";
 
 import {
+  getExistingConnectedRequest,
+  getRequest,
   getUserCurrentSignature,
   getUserSignatureList,
 } from "@/backend/api/get";
 import ExportToPdf from "@/components/ExportToPDF/ExportToPdf";
 import Meta from "@/components/Meta/Meta";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { Database } from "@/utils/database";
 import { ApproverDetailsType, RequestWithResponseType } from "@/utils/types";
 import { notifications } from "@mantine/notifications";
-import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import {
+  createPagesBrowserClient,
+  createPagesServerClient,
+} from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
-    const { data, error } = await supabaseClient.rpc("get_request", {
-      request_id: `${context.query.requestId}`,
+    const data = await getRequest(supabaseClient, {
+      request_id: context.query.requestId as string,
     });
-    if (error) throw error;
     return {
       props: {
         request: data,
@@ -41,7 +45,7 @@ type Props = {
 };
 
 const Page = ({ request }: Props) => {
-  const supabaseClient = useSupabaseClient();
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
     []
@@ -52,8 +56,27 @@ const Page = ({ request }: Props) => {
     try {
       setIsFetchingApprover(true);
       const fetchApproverDetails = async () => {
-        const data = await Promise.all(
-          request.request_signer.map(async (signer) => {
+        let approverData: ApproverDetailsType[] = [];
+        let signerList = request.request_signer;
+        const isLRF =
+          request.request_form.form_name === "Liquidation Reimbursement";
+        if (isLRF && request.request_status === "APPROVED") {
+          const boqRequest = await getExistingConnectedRequest(supabaseClient, {
+            parentRequestId: request.request_id,
+            fieldId: "eff42959-8552-4d7e-836f-f89018293ae8",
+          });
+
+          if (boqRequest?.request_id) {
+            const boqRequestData = await getRequest(supabaseClient, {
+              request_id: boqRequest.request_id as string,
+            });
+
+            signerList = boqRequestData.request_signer;
+          }
+        }
+
+        approverData = await Promise.all(
+          signerList.map(async (signer) => {
             let signatureUrl: string | null = null;
             if (
               signer.request_signer_status === "APPROVED" &&
@@ -120,7 +143,7 @@ const Page = ({ request }: Props) => {
           })
         );
 
-        setApproverDetails(data);
+        setApproverDetails(approverData);
       };
       if (request) {
         fetchApproverDetails();

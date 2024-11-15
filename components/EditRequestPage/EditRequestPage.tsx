@@ -1,4 +1,5 @@
 import {
+  getCurrencyOptionList,
   getNonDuplictableSectionResponse,
   getSectionInRequestPage,
 } from "@/backend/api/get";
@@ -378,16 +379,23 @@ const EditRequestPage = ({
   // fetch currency option list
   useEffect(() => {
     const fetchCurrencyOptionList = async () => {
-      const { data } = await supabaseClient
-        .schema("lookup_schema")
-        .from("currency_table")
-        .select("*");
-      if (!data) return;
-      const optionList = data.map((item) => ({
-        value: item.currency_alphabetic_code,
-        label: item.currency_alphabetic_code,
-      }));
-      setCurrencyOptionList(optionList);
+      setIsLoading(true);
+      try {
+        const data = await getCurrencyOptionList(supabaseClient);
+        if (!data) return;
+        const optionList = data.map((item) => ({
+          value: item.currency_alphabetic_code,
+          label: item.currency_alphabetic_code,
+        }));
+        setCurrencyOptionList(optionList);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchCurrencyOptionList();
   }, []);

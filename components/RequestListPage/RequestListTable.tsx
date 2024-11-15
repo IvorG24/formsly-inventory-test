@@ -19,7 +19,7 @@ import {
   RequestListFilterValues,
   RequestListItemSignerType,
   RequestListItemType,
-  requestSignerType,
+  RequestSignerType,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -765,13 +765,13 @@ const RequestListTable = ({
           hidden: checkIfColumnIsHidden("request_signer"),
           render: (request) => {
             const { request_signer } = request as {
-              request_signer: requestSignerType[];
+              request_signer: RequestSignerType[];
             };
             if (!teamMemberList || teamMemberList.length === 0) {
               return;
             }
             const signerList = request_signer.map(
-              (signer: requestSignerType) => {
+              (signer: RequestSignerType) => {
                 const signerTeamMemberData = teamMemberList.find(
                   (member) =>
                     member.team_member_id ===

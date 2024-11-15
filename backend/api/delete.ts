@@ -1,7 +1,6 @@
 import { Database } from "@/utils/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-// Delete form
 export const deleteForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -17,7 +16,6 @@ export const deleteForm = async (
   if (error) throw error;
 };
 
-// Delete request
 export const deleteRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -31,7 +29,6 @@ export const deleteRequest = async (
   if (error) throw error;
 };
 
-// Delete comment
 export const deleteComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: { commentId: string }
@@ -51,7 +48,6 @@ export const deleteComment = async (
   if (deleteAttachmentError) throw deleteAttachmentError;
 };
 
-// Delete row
 export const deleteRow = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -77,7 +73,6 @@ export const deleteRow = async (
   if (error) throw error;
 };
 
-// Remove member from group
 export const removeMemberFromGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -101,7 +96,6 @@ export const removeMemberFromGroup = async (
   if (error) throw error;
 };
 
-// Remove member from project
 export const removeMemberFromProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -125,7 +119,6 @@ export const removeMemberFromProject = async (
   if (error) throw error;
 };
 
-// Remove jira user from project
 export const removeJiraUserFromProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -182,7 +175,7 @@ export const deleteJiraOrganization = async (
   if (error) throw error;
 };
 
-export const deleteJobTittle = async (
+export const deleteJobTitle = async (
   supabaseClient: SupabaseClient<Database>,
   jira_job_id: string
 ) => {

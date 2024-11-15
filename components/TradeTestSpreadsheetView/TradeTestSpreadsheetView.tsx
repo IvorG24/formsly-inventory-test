@@ -10,7 +10,7 @@ import {
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
-  DEFAULT_NUMBER_SSOT_ROWS,
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
   formatDate,
   formatTime,
 } from "@/utils/constant";
@@ -118,12 +118,12 @@ const TradeTestSpreadsheetView = ({
         ...filterData,
         ...data,
         userId: user.user_id,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
       });
 
-      if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
+      if (newData.length < DEFAULT_NUMBER_HR_SSOT_ROWS) {
         setIsMax(true);
       }
 
@@ -163,7 +163,7 @@ const TradeTestSpreadsheetView = ({
       "tradeTestSpreadsheetView",
       JSON.stringify({
         ...filterData,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
         sort,
       })
     );

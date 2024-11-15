@@ -2,6 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
+  getRequestPageOnLoad,
 } from "@/backend/api/get";
 import { createComment, insertError } from "@/backend/api/post";
 import {
@@ -304,17 +305,15 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       }
       setIsLoading(true);
 
-      const [jiraAutomationData, parentWavRequest] = await Promise.all([
-        getJiraAutomationDataByProjectId(supabaseClient, {
-          teamProjectId: request.request_project_id,
-        }),
-        supabaseClient.rpc("request_page_on_load", {
-          input_data: {
+      const [jiraAutomationData, { request: parentWavRequest }] =
+        await Promise.all([
+          getJiraAutomationDataByProjectId(supabaseClient, {
+            teamProjectId: request.request_project_id,
+          }),
+          getRequestPageOnLoad(supabaseClient, {
             requestId: parentWavRequestId,
-            userId: user.user_id,
-          },
-        }),
-      ]);
+          }),
+        ]);
 
       if (!jiraAutomationData?.jiraProjectData || !parentWavRequest) {
         throw new Error(
@@ -322,13 +321,9 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         );
       }
 
-      const {
-        data: { request: wavRequest },
-      } = parentWavRequest;
-
       let approvedOfficialBusiness = "";
       const requestSectionFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-        wavRequest.request_form.form_section[1].section_field;
+        parentWavRequest.request_form.form_section[1].section_field;
 
       const particularsField = requestSectionFieldList.find(
         (field) => field.field_name === "Particulars"
@@ -370,8 +365,8 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       );
 
       const jiraTicketPayload = formatJiraWAVPayload({
-        requestId: wavRequest.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${wavRequest.request_formsly_id}`,
+        requestId: parentWavRequest.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${parentWavRequest.request_formsly_id}`,
         requestor: employeeName,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
@@ -387,7 +382,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
       const jiraTicket = await createJiraTicket({
         requestType: "Petty Cash Voucher",
-        formslyId: wavRequest.request_formsly_id,
+        formslyId: parentWavRequest.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
       });

@@ -2,6 +2,7 @@ import { InventoryFormValues } from "@/components/AssetInventory/FormModal/Event
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
+import { PersonalInfoForm } from "@/components/UserSettingsPage/UserSettingsPage";
 import { Database } from "@/utils/database";
 import { editImageWithUUIDFromURL } from "@/utils/functions";
 import {
@@ -59,7 +60,6 @@ import moment from "moment";
 import { getCurrentDate, getMemoFormat } from "./get";
 import { createNotification, handleSignatureUpload, uploadImage } from "./post";
 
-// Update Team
 export const updateTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: TeamTableUpdate
@@ -75,24 +75,6 @@ export const updateTeam = async (
   return data;
 };
 
-// Update user's active app
-export const updateUserActiveApp = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    app: string;
-  }
-) => {
-  const { userId, app } = params;
-  const { error } = await supabaseClient
-    .schema("user_schema")
-    .from("user_table")
-    .update({ user_active_app: app })
-    .eq("user_id", userId);
-  if (error) throw error;
-};
-
-// Update user's active team
 export const updateUserActiveTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -109,7 +91,6 @@ export const updateUserActiveTeam = async (
   if (error) throw error;
 };
 
-// Update User
 export const updateUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: UserTableUpdate
@@ -122,7 +103,6 @@ export const updateUser = async (
   if (error) throw error;
 };
 
-// Update form visibility
 export const updateFormVisibility = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -140,7 +120,6 @@ export const updateFormVisibility = async (
   if (error) throw error;
 };
 
-// Update request status and signer status
 export const approveOrRejectRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -170,7 +149,6 @@ export const approveOrRejectRequest = async (
   return data as string;
 };
 
-// Update request status to canceled
 export const cancelRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string; memberId: string }
@@ -188,7 +166,6 @@ export const cancelRequest = async (
   if (error) throw error;
 };
 
-// Update comment
 export const updateComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: { commentId: string; newComment: string }
@@ -208,7 +185,6 @@ export const updateComment = async (
   if (error) throw error;
 };
 
-// Update team member role
 export const updateTeamMemberRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: { memberId: string; role: MemberRoleType }
@@ -224,7 +200,6 @@ export const updateTeamMemberRole = async (
   if (error) throw error;
 };
 
-// Transfer ownership
 export const updateTeamOwner = async (
   supabaseClient: SupabaseClient<Database>,
   params: { ownerId: string; memberId: string }
@@ -237,7 +212,6 @@ export const updateTeamOwner = async (
   if (error) throw error;
 };
 
-// Update status
 export const toggleStatus = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -259,7 +233,6 @@ export const toggleStatus = async (
   if (error) throw error;
 };
 
-// Upsert form signers
 export const updateFormSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -280,7 +253,6 @@ export const updateFormSigner = async (
   return data as SignerTableRow[];
 };
 
-// Update notification status
 export const updateNotificationStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -295,7 +267,6 @@ export const updateNotificationStatus = async (
   if (error) throw error;
 };
 
-// Accept team invitation
 export const acceptTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: { invitationId: string; teamId: string; userId: string }
@@ -312,7 +283,6 @@ export const acceptTeamInvitation = async (
   return data as TeamTableRow[];
 };
 
-// Decline team invitation
 export const declineTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: { invitationId: string }
@@ -326,7 +296,6 @@ export const declineTeamInvitation = async (
   if (invitationError) throw invitationError;
 };
 
-// Read all notification
 export const readAllNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -343,7 +312,6 @@ export const readAllNotification = async (
   if (error) throw error;
 };
 
-// Update form group
 export const updateFormGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -359,7 +327,6 @@ export const updateFormGroup = async (
   if (error) throw error;
 };
 
-// Update form description
 export const updateFormDescription = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -377,7 +344,6 @@ export const updateFormDescription = async (
   if (error) throw error;
 };
 
-// Delete team
 export const deleteTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -395,7 +361,6 @@ export const deleteTeam = async (
   if (error) throw error;
 };
 
-// Update approver role
 export const updateApproverRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -410,7 +375,6 @@ export const updateApproverRole = async (
   return data as unknown as TeamApproverChoiceType[];
 };
 
-// Update approver role
 export const updateAdminRole = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -425,7 +389,6 @@ export const updateAdminRole = async (
   return data as unknown as TeamApproverChoiceType[];
 };
 
-// Update OTP ID
 export const updateOtpId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -442,7 +405,6 @@ export const updateOtpId = async (
   if (error) throw error;
 };
 
-// Assign ticket
 export const assignTicket = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -480,7 +442,6 @@ export const assignTicket = async (
   return data as TicketType;
 };
 
-// update ticket status
 export const updateTicketStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -499,7 +460,6 @@ export const updateTicketStatus = async (
   return data as TicketTableRow;
 };
 
-// leave team
 export const leaveTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -533,7 +493,6 @@ export const cancelTeamInvitation = async (
   if (error) throw error;
 };
 
-// Update item
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -552,7 +511,6 @@ export const updateItem = async (
   return data;
 };
 
-// Update equipment
 export const updateEquipment = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -578,7 +536,6 @@ export const updateEquipment = async (
   };
 };
 
-// Update equipment description
 export const updateEquipmentDescription = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -615,7 +572,6 @@ export const updateEquipmentDescription = async (
   };
 };
 
-// Update equipment part
 export const updateEquipmentPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -649,7 +605,6 @@ export const updateEquipmentPart = async (
   };
 };
 
-// Update equipment lookup
 export const updateEquipmentLookup = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -683,7 +638,6 @@ export const updateEquipmentLookup = async (
   };
 };
 
-// Update lookup
 export const updateLookup = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -717,7 +671,6 @@ export const updateLookup = async (
   };
 };
 
-// approve or reject memo
 export const approveOrRejectMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -747,7 +700,6 @@ export const approveOrRejectMemo = async (
   };
 };
 
-// update memo
 export const updateMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: EditMemoType,
@@ -956,7 +908,6 @@ export const updateMemoFormat = async (
   return updatedFormatData;
 };
 
-// Update other expenses type
 export const updateOtherExpensesType = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -978,7 +929,6 @@ export const updateOtherExpensesType = async (
   return data;
 };
 
-// Update valid id status and add approver
 export const approveOrRejectValidId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1002,7 +952,6 @@ export const approveOrRejectValidId = async (
   if (error) throw error;
 };
 
-// Update SLA Hours
 export const updateSLAHours = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1024,7 +973,6 @@ export const updateSLAHours = async (
   return data[0];
 };
 
-// update jira item category
 export const updateJiraItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraItemCategoryTableUpdate
@@ -1068,7 +1016,6 @@ export const updateJiraItemCategory = async (
   return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
 };
 
-// update jira project
 export const updateJiraProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraProjectTableUpdate
@@ -1085,7 +1032,6 @@ export const updateJiraProject = async (
   return { success: true, error: null };
 };
 
-// update jira user
 export const updateJiraUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraUserAccountTableUpdate
@@ -1102,7 +1048,6 @@ export const updateJiraUser = async (
   return { success: true, error: null };
 };
 
-// Update item category
 export const updateItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1119,7 +1064,6 @@ export const updateItemCategory = async (
   if (error) throw error;
 };
 
-// re-assign jira formsly project
 export const updateJiraFormslyProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1141,7 +1085,6 @@ export const updateJiraFormslyProject = async (
   return { success: true, data: data };
 };
 
-// update jira organization
 export const updateJiraOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraOrganizationTableUpdate
@@ -1158,7 +1101,6 @@ export const updateJiraOrganization = async (
   return { success: true, error: null };
 };
 
-// re-assign jira formsly organization
 export const updateJiraFormslyOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1194,7 +1136,6 @@ export const updateJiraFormslyOrganization = async (
   return data;
 };
 
-// add jira id and link to request
 export const updateRequestJiraId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1216,21 +1157,6 @@ export const updateRequestJiraId = async (
   if (error) throw error;
 };
 
-export const updateRequestStatus = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string; status: string }
-) => {
-  const { requestId, status } = params;
-  const { error } = await supabaseClient
-    .schema("request_schema")
-    .from("request_table")
-    .update({ request_status: status })
-    .eq("request_id", requestId);
-
-  if (error) throw error;
-};
-
-// update jira project
 export const updateJobTitle = async (
   supabaseClient: SupabaseClient<Database>,
   params: JobTitleTableUpdate
@@ -1370,40 +1296,6 @@ export const updateTradeTestStatus = async (
   if (error) throw error;
 };
 
-export const updateSchedule = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    interviewSchedule: string;
-    targetId: string;
-    status: string;
-    table: string;
-    meetingTypeNumber?: number;
-    team_member_id: string;
-  }
-) => {
-  const { error } = await supabaseClient.rpc("update_schedule", {
-    input_data: params,
-  });
-  if (error) throw error;
-};
-
-export const updateTradeTestSchedule = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-    schedule: string;
-    requestReferenceId: string;
-    userEmail: string;
-    applicationInformationFormslyId: string;
-    notificationMessage: string;
-  }
-) => {
-  const { error } = await supabaseClient.rpc("update_trade_test_schedule", {
-    input_data: params,
-  });
-  if (error) throw error;
-};
-
 export const updateTechnicalInterviewStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1415,27 +1307,6 @@ export const updateTechnicalInterviewStatus = async (
 ) => {
   const { error } = await supabaseClient.rpc(
     "update_technical_interview_status",
-    {
-      input_data: params,
-    }
-  );
-  if (error) throw error;
-};
-
-export const updateTechnicalInterviewSchedule = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-    schedule: string;
-    requestReferenceId: string;
-    userEmail: string;
-    applicationInformationFormslyId: string;
-    notificationMessage: string;
-    technicalInterviewNumber: number;
-  }
-) => {
-  const { error } = await supabaseClient.rpc(
-    "update_technical_interview_schedule",
     {
       input_data: params,
     }
@@ -2079,4 +1950,23 @@ export const updateWaitingForSignatureStatus = async (
   if (error) throw error;
 
   return data;
+};
+
+export const updateUserUsernameOrSignature = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userData:
+      | (PersonalInfoForm & { user_signature_attachment_id?: string })
+      | { user_id: string };
+    previousUsername?: string;
+    previousSignatureUrl?: string;
+  }
+) => {
+  const { error } = await supabaseClient
+    .rpc("update_user", {
+      input_data: params,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
 };

@@ -759,9 +759,7 @@ export type UserWithSignatureType = UserTableRow & {
 
 export type RequestWithResponseType = RequestTableRow & {
   isWithNextStep?: boolean;
-} & {
   request_formsly_id: string;
-} & {
   request_form: {
     form_id: string;
     form_name: string;
@@ -779,7 +777,6 @@ export type RequestWithResponseType = RequestTableRow & {
       })[];
     })[];
   };
-} & {
   request_team_member: {
     team_member_team_id: string;
     team_member_user: {
@@ -791,7 +788,6 @@ export type RequestWithResponseType = RequestTableRow & {
       user_job_title: string;
     };
   };
-} & {
   request_signer: (RequestSignerTableRow & {
     request_signer_id: string;
     request_signer_status: string;
@@ -812,7 +808,6 @@ export type RequestWithResponseType = RequestTableRow & {
       };
     };
   })[];
-} & {
   request_comment: {
     comment_id: string;
     comment_date_created: string;
@@ -832,7 +827,6 @@ export type RequestWithResponseType = RequestTableRow & {
     };
     comment_attachment: CommentAttachmentWithPublicUrl;
   }[];
-} & {
   request_project: {
     team_project_name: string;
     team_project_id: string;
@@ -1183,16 +1177,6 @@ export type RequestResponseDataType = {
   sectionLabel: string;
   responseData: FieldWithResponseType;
 };
-export type FormslyFormType = {
-  Item: string[];
-  Quotation: string[];
-  "Receiving Inspecting Report": string[];
-};
-
-export type FormslyFormKeyType =
-  | "Item"
-  | "Quotation"
-  | "Receiving Inspecting Report";
 
 export type RequestSignerListType =
   RequestDashboardOverviewData["request_signer"][0]["request_signer_signer"] & {
@@ -1201,11 +1185,6 @@ export type RequestSignerListType =
       rejected: number;
     };
   };
-export type TeamGroupForFormType =
-  | "Item"
-  | "Quotation"
-  | "Receiving Inspecting Report"
-  | "Audit";
 
 type SSOTRequestOwnerType = {
   user_first_name: string;
@@ -1227,48 +1206,6 @@ export type SSOTType = {
   item_request_date_created: string;
   item_request_owner: SSOTRequestOwnerType;
   item_request_response: SSOTResponseType[];
-  item_quotation_request: {
-    quotation_request_id: string;
-    quotation_request_formsly_id: string;
-    quotation_request_date_created: string;
-    quotation_request_owner: SSOTRequestOwnerType;
-    quotation_request_response: SSOTResponseType[];
-    quotation_rir_request: {
-      rir_request_id: string;
-      rir_request_formsly_id: string;
-      rir_request_date_created: string;
-      rir_request_owner: SSOTRequestOwnerType;
-      rir_request_response: SSOTResponseType[];
-    }[];
-  }[];
-  item_sourced_item_request: {
-    sourced_item_request_id: string;
-    sourced_item_request_formsly_id: string;
-    sourced_item_request_date_created: string;
-    sourced_item_request_owner: SSOTRequestOwnerType;
-    sourced_item_request_response: SSOTResponseType[];
-    sourced_item_ro_request: {
-      ro_request_id: string;
-      ro_request_formsly_id: string;
-      ro_request_date_created: string;
-      ro_request_owner: SSOTRequestOwnerType;
-      ro_request_response: SSOTResponseType[];
-      ro_transfer_receipt_request: {
-        transfer_receipt_request_id: string;
-        transfer_receipt_request_formsly_id: string;
-        transfer_receipt_request_date_created: string;
-        transfer_receipt_request_owner: SSOTRequestOwnerType;
-        transfer_receipt_request_response: SSOTResponseType[];
-      }[];
-    }[];
-  }[];
-  item_cheque_reference_request: {
-    cheque_reference_request_id: string;
-    cheque_reference_request_formsly_id: string;
-    cheque_reference_request_date_created: string;
-    cheque_reference_request_response: SSOTResponseType[];
-    cheque_reference_request_owner: SSOTRequestOwnerType;
-  }[];
 };
 
 export type Section = SectionTableRow & {
@@ -1290,22 +1227,6 @@ export type DuplicateSectionType = SectionTableRow & {
     field_section_duplicatable_id?: string;
   })[];
 };
-
-export type CanvassType = Record<
-  string,
-  {
-    quotationId: string;
-    price: number;
-    quantity: number;
-  }[]
->;
-export type CanvassLowestPriceType = Record<string, number>;
-export type CanvassAdditionalDetailsType = {
-  quotation_id: string;
-  formsly_id: string;
-  lead_time: number;
-  payment_terms: string;
-}[];
 
 export type RequestProjectSignerStatusType = {
   signer_project_name: string;
@@ -1331,7 +1252,7 @@ export type RequestProjectSignerType = {
   };
 }[];
 
-export type requestSignerType = {
+export type RequestSignerType = {
   request_signer_id: string;
   request_signer_status: string;
   request_signer: {
@@ -1350,7 +1271,7 @@ export type RequestListItemType = {
   request_otp_id?: string;
   request_form_id: string;
   request_team_member_id: string;
-  request_signer: requestSignerType[];
+  request_signer: RequestSignerType[];
   user_id: string;
   user_first_name: string;
   user_last_name: string;
@@ -1454,7 +1375,6 @@ export type RequestPageOnLoad = {
     form_is_for_every_member: boolean;
     form_is_member: boolean;
   }[];
-  canvassRequest?: string[];
   projectSignerStatus?: RequestProjectSignerStatusType;
 };
 
@@ -2244,7 +2164,14 @@ export type ApplicationInformationSpreadsheetData = {
   request_status_date_updated: string;
   request_score_value: string;
   request_ad_owner: string;
-  request_signer_list: RequestListItemSignerType[];
+  request_signer_list: {
+    request_signer_id: string;
+    request_signer_status: string;
+    request_signer: {
+      signer_team_member_id: string;
+      signer_is_primary_signer: boolean;
+    };
+  }[];
   application_information_additional_details_position: string;
   application_information_additional_details_first_name: string;
   application_information_additional_details_middle_name: string | null;
@@ -2361,7 +2288,7 @@ export type UserRequestListItemType = {
   request_date_created: string;
   request_status: string;
   request_form_id: string;
-  request_signer: requestSignerType[];
+  request_signer: RequestSignerType[];
   form_name: string;
 };
 
@@ -2416,6 +2343,9 @@ export type HRSpreadsheetGeneralFilterFormValues = {
     end?: number;
   };
   assigned_hr?: string;
+  applicant_name?: string;
+  applicant_contact_number?: string;
+  applicant_email?: string;
 };
 
 export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
@@ -2492,7 +2422,6 @@ export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
   background_check_date_created: string;
   background_check_status: string;
   background_check_evaluation_request_id: string;
-  application_information_nickname: string;
 };
 
 export type BackgroundCheckFilterFormValues =
@@ -3026,4 +2955,10 @@ export type InventoryEventList = EventTableRow & {
   has_assigned_to: boolean;
   has_site: boolean;
   has_customer: boolean;
+};
+
+export type DashboardRequestorAndSignerType = {
+  total: number;
+  team_member_id: string;
+  request: { label: string; value: number }[];
 };

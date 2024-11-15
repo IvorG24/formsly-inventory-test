@@ -24,13 +24,8 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 
-// response tab is hidden
+
 const TABS = ["overview"];
-// const SPECIAL_FORMS = [
-//   "Item",
-//   "Receiving Inspecting Report",
-//   "Quotation",
-// ];
 const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },
   { value: "14", label: "Last 14 days" },

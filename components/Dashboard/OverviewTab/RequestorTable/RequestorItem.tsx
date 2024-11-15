@@ -1,5 +1,6 @@
 import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
+import { DashboardRequestorAndSignerType, TeamMemberType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -9,21 +10,23 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import { RequestorAndSignerDataType } from "../Overview";
 
 type RequestorItemProps = {
-  requestor: RequestorAndSignerDataType;
-  totalRequest: number;
+  requestor: DashboardRequestorAndSignerType;
+  teamMemberData: TeamMemberType;
 };
 
-const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
+const RequestorItem = ({ requestor, teamMemberData }: RequestorItemProps) => {
   const progressSections = requestor.request.map(({ label, value }) => ({
-    value: (value / totalRequest) * 100,
+    value: (value / requestor.total) * 100,
     color: `${getStatusToColor(label) || "dark"}`,
     tooltip: `${startCase(label)}: ${value}`,
     // label: `${startCase(key)}: ${value}`,
   }));
-  const user = requestor.team_member_user;
+  const user = teamMemberData.team_member_user;
+  const requestorFullname = startCase(
+    `${user.user_first_name} ${user.user_last_name}`
+  );
   const progressSectionsWithoutTotal = progressSections.filter(
     (section) => !section.tooltip.includes("Total")
   );
@@ -31,20 +34,22 @@ const RequestorItem = ({ requestor, totalRequest }: RequestorItemProps) => {
   return (
     <Stack spacing="xs">
       <Group position="apart">
-        <Group spacing="xs">
-          <Avatar
-            size="sm"
-            radius="xl"
-            src={user.user_avatar ?? null}
-            color={getAvatarColor(Number(`${user.user_id.charCodeAt(0)}`))}
-          >
-            {!user.user_avatar &&
-              `${user.user_first_name[0]}${user.user_last_name[0]}`}
-          </Avatar>
-          <Text
-            weight={500}
-          >{`${user.user_first_name} ${user.user_last_name}`}</Text>
-        </Group>
+        <Tooltip label={requestorFullname}>
+          <Group spacing="xs">
+            <Avatar
+              size="sm"
+              radius="xl"
+              src={user.user_avatar ?? null}
+              color={getAvatarColor(Number(`${user.user_id.charCodeAt(0)}`))}
+            >
+              {!user.user_avatar &&
+                `${user.user_first_name[0]}${user.user_last_name[0]}`}
+            </Avatar>
+            <Text weight={500} maw={120} truncate>
+              {requestorFullname}
+            </Text>
+          </Group>
+        </Tooltip>
         <Tooltip
           label={progressSectionsWithoutTotal.map((section, idx) => (
             <Text key={section.tooltip + idx}>{section.tooltip}</Text>

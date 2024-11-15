@@ -61,12 +61,27 @@ const ExportToCSVModal = ({ opened, onClose }: Props) => {
         parsedEndDate = moment(endDate ? endDate : undefined).format();
       }
 
-      const data = await getRecruitmentData(supabaseClient, {
-        startDate: parsedStartDate,
-        endDate: parsedEndDate,
-      });
+      const recruitmentData: HRRecruitmentData[] = [];
+      let offset = 0;
+      const limit = 100;
+      let fetchRecruitmentData = true;
 
-      if (data.length === 0) {
+      while (fetchRecruitmentData) {
+        const data = await getRecruitmentData(supabaseClient, {
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          offset,
+          limit,
+        });
+
+        if (data.length > 0) {
+          recruitmentData.push(...data);
+          offset += limit;
+        }
+        fetchRecruitmentData = data.length === limit;
+      }
+
+      if (recruitmentData.length === 0) {
         notifications.show({
           message: "Data is empty",
           color: "red",
@@ -75,7 +90,7 @@ const ExportToCSVModal = ({ opened, onClose }: Props) => {
         return;
       }
 
-      setCSVData(data);
+      setCSVData(recruitmentData);
     } catch (error) {
       notifications.show({
         message: "Failed to export to csv",
@@ -133,7 +148,7 @@ const ExportToCSVModal = ({ opened, onClose }: Props) => {
               valueFormat="MMMM DD, YYYY"
               value={startDate}
               onChange={setStartDate}
-              allowDeselect
+              required
             />
             <DatePickerInput
               label="End Date"
@@ -143,7 +158,7 @@ const ExportToCSVModal = ({ opened, onClose }: Props) => {
               maxDate={new Date()}
               value={endDate}
               onChange={setEndDate}
-              allowDeselect
+              required
             />
             <Button
               mt="md"

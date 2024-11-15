@@ -1,3 +1,5 @@
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
+import { DashboardRequestorAndSignerType } from "@/utils/types";
 import {
   Box,
   Center,
@@ -11,7 +13,6 @@ import {
 } from "@mantine/core";
 import { IconTrophyFilled } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { RequestorAndSignerDataType } from "../Overview";
 import RequestorItem from "./RequestorItem";
 
 const useStyles = createStyles(() => ({
@@ -22,7 +23,7 @@ const useStyles = createStyles(() => ({
 
 type RequestorTableProps = {
   totalRequestCount: number;
-  requestorList: RequestorAndSignerDataType[];
+  requestorList: DashboardRequestorAndSignerType[];
   loadMoreRequestor: (page: number) => void;
   isRequestorFetchable: boolean;
   requestorOffset: number;
@@ -37,6 +38,7 @@ const RequestorTable = ({
   requestorOffset,
   setRequestorOffset,
 }: RequestorTableProps) => {
+  const teamMemberList = useTeamMemberList();
   const { classes } = useStyles();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -54,8 +56,9 @@ const RequestorTable = ({
 
   useEffect(() => {
     if (isInView) {
-      loadMoreRequestor(requestorOffset + 1);
-      setRequestorOffset((prev) => (prev += 1));
+      const newRequestorOffset = requestorOffset + 1;
+      loadMoreRequestor(newRequestorOffset);
+      setRequestorOffset(newRequestorOffset);
     }
   }, [isInView]);
 
@@ -71,14 +74,20 @@ const RequestorTable = ({
 
         <Stack p="lg" mb="sm" spacing={32} ref={containerRef}>
           {totalRequestCount > 0 ? (
-            requestorList.map((requestor) => (
-              <Box key={requestor.team_member_id}>
-                <RequestorItem
-                  requestor={requestor}
-                  totalRequest={totalRequestCount}
-                />
-              </Box>
-            ))
+            requestorList.map((requestor) => {
+              const teamMemberData = teamMemberList.find(
+                (member) => member.team_member_id === requestor.team_member_id
+              );
+              if (!teamMemberData) return <></>;
+              return (
+                <Box key={requestor.team_member_id}>
+                  <RequestorItem
+                    requestor={requestor}
+                    teamMemberData={teamMemberData}
+                  />
+                </Box>
+              );
+            })
           ) : (
             <Center h={175}>
               <Text size={20} color="dimmed" weight={600}>

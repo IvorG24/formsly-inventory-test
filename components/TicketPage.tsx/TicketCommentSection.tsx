@@ -2,7 +2,7 @@ import { createAttachment, createTicketComment } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
   getFileType,
   getFileTypeColor,
@@ -106,7 +106,7 @@ const TicketCommentSection = ({
       const commentData = await createTicketComment(supabaseClient, {
         commentInput: {
           ticket_comment_id: newCommentId,
-          ticket_comment_content: data.comment,
+          ticket_comment_content: escapeQuotes(data.comment),
           ticket_comment_type: "ACTION_COMMENT",
           ticket_comment_team_member_id: teamMember?.team_member_id,
           ticket_comment_ticket_id: ticket.ticket_id,

@@ -141,16 +141,4 @@ export const helpPageData = [
     </ol>
     `,
   },
-  {
-    id: uuidv4(),
-    title: "How to add and remove suppliers in the Quotation Form",
-    content: `
-    <ol>
-        <li>Go to <a target="__blank" href="https://formsly.io/team-requests/forms">Forms</a> page.</li>
-        <li>Select Quotation form. Once in the form page, scroll down to find the "Supplier" section.</li>
-        <li>To add a supplier, click <strong>Add</strong>, enter supplier name, and click <strong>Save</strong></li>
-        <li>To remove a supplier, check the box next to the supplier name, and click <strong>Remove</strong> found next to the "Add" button.</li>
-    </ol>
-    `,
-  },
 ];

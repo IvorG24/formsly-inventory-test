@@ -1,3 +1,4 @@
+import { redirectToNewTeam } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
@@ -31,14 +32,11 @@ const TeamCard = ({ team }: TeamCardProps) => {
       if (!user) return;
       setIsLoading(true);
       setActiveTeam(team);
-      const { data, error } = await supabaseClient.rpc("redirect_to_new_team", {
-        input_data: {
-          userId: user.user_id,
-          teamId: team.team_id,
-          app: "REQUEST",
-        },
+      const data = await redirectToNewTeam(supabaseClient, {
+        userId: user.user_id,
+        teamId: team.team_id,
+        app: "REQUEST",
       });
-      if (error) throw error;
       setUserTeamMember(data.teamMember);
       setUserTeamMemberGroupList([]);
       setNotificationList([]);

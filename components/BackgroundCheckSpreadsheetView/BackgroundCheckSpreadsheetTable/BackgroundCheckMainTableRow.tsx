@@ -54,13 +54,6 @@ const BackgroundCheckMainTableRow = ({
           </Text>
         </td>
       )}
-      {!hiddenColumnList.includes("application_information_nickname") && (
-        <td>
-          <Text sx={{ whiteSpace: "nowrap" }}>
-            {capitalizeEachWord(item.application_information_nickname)}
-          </Text>
-        </td>
-      )}
       {!hiddenColumnList.includes("application_information_contact_number") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>

@@ -1,3 +1,4 @@
+import { getTeamInvoiceOnload } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TeamInvoicePage from "@/components/TeamInvoicePage/TeamInvoicePage";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -16,21 +17,17 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         };
       }
 
-      const { data, error } = await supabaseClient.rpc("team_invoice_on_load", {
-        input_data: {
+      const { currentDate, expirationDate, price } = await getTeamInvoiceOnload(
+        supabaseClient,
+        {
           teamId: userActiveTeam.team_id,
           teamDateCreated:
             userActiveTeam.team_id === "a5a28977-6956-45c1-a624-b9e90911502e"
               ? "06/01/2024"
               : userActiveTeam.team_date_created,
-        },
-      });
-      if (error) throw error;
-      const { currentDate, expirationDate, price } = data as {
-        currentDate: string;
-        expirationDate: string;
-        price: number;
-      };
+        }
+      );
+
       let outstandingBalance = 0;
       const difference = moment(currentDate).diff(
         moment(expirationDate),

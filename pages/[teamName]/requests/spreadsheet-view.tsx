@@ -2,7 +2,6 @@ import { getSSOTOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import SSOTSpreadsheetView from "@/components/SSOTSpreadhseetViewPage/SSOTSpreadhseetViewPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { SSOTType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -27,12 +26,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  data: SSOTType[];
   projectNameList: string[];
   itemNameList: string[];
 };
 
-const Page = ({ data, projectNameList, itemNameList }: Props) => {
+const Page = ({ projectNameList, itemNameList }: Props) => {
   return (
     <>
       <Meta
@@ -40,7 +38,6 @@ const Page = ({ data, projectNameList, itemNameList }: Props) => {
         url="/{teamName}/requests/spreadsheet-view"
       />
       <SSOTSpreadsheetView
-        data={data}
         requestingProjectList={projectNameList}
         itemNameList={itemNameList}
       />

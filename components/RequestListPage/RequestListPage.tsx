@@ -3,20 +3,28 @@ import { useFormList } from "@/stores/useFormStore";
 import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import {
-  DEFAULT_REQUEST_LIST_LIMIT,
-  REQUEST_LIST_HIDDEN_FORMS,
-} from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   RequestListFilterValues,
   RequestListItemType,
   TeamProjectTableRow,
 } from "@/utils/types";
-import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Menu,
+  Paper,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { DataTableSortStatus } from "mantine-datatable";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
@@ -30,6 +38,7 @@ type Props = {
 const RequestListPage = ({ projectList }: Props) => {
   // const router = useRouter();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
@@ -60,10 +69,7 @@ const RequestListPage = ({ projectList }: Props) => {
   });
 
   const filteredFormList = formList
-    .filter(
-      ({ form_name, form_is_public_form }) =>
-        !REQUEST_LIST_HIDDEN_FORMS.includes(form_name) && !form_is_public_form
-    )
+    .filter(({ form_is_public_form }) => !form_is_public_form)
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
@@ -178,38 +184,37 @@ const RequestListPage = ({ projectList }: Props) => {
           <Title order={4}>Request List Page</Title>
           <Text>Manage your team requests here.</Text>
         </Box>
-        {/* {isFormslyTeam ? (
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <Button variant="light">Spreadsheet View</Button>
-            </Menu.Target>
 
-            <Menu.Dropdown>
-              <Menu.Item
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name
-                    )}/requests/spreadsheet-view`
-                  )
-                }
-              >
-                SSOT
-              </Menu.Item>
-              <Menu.Item
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name
-                    )}/requests/lrf-spreadsheet-view`
-                  )
-                }
-              >
-                Liquidation
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        ) : null} */}
+        <Menu shadow="md" width={200}>
+          <Menu.Target>
+            <Button variant="light">Spreadsheet View</Button>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Item
+              onClick={async () =>
+                await router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name
+                  )}/requests/spreadsheet-view`
+                )
+              }
+            >
+              SSOT
+            </Menu.Item>
+            {/* <Menu.Item
+              onClick={async () =>
+                await router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name
+                  )}/requests/lrf-spreadsheet-view`
+                )
+              }
+            >
+              Liquidation
+            </Menu.Item> */}
+          </Menu.Dropdown>
+        </Menu>
       </Flex>
       <Paper p="md">
         <FormProvider {...filterFormMethods}>

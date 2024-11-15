@@ -1,3 +1,4 @@
+import { getBuildFormpageOnLoad } from "@/backend/api/get";
 import BuildRequestFormPage from "@/components/BuildRequestFormPage/BuildRequestFormPage";
 import Meta from "@/components/Meta/Meta";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -7,18 +8,12 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient, user }) => {
     try {
-      const { data, error } = await supabaseClient.rpc(
-        "build_form_page_on_load",
-        {
-          input_data: {
-            userId: user.id,
-          },
-        }
-      );
-      if (error) throw error;
+      const data = await getBuildFormpageOnLoad(supabaseClient, {
+        userId: user.id,
+      });
 
       return {
-        props: { ...(data as unknown as Props) },
+        props: data,
       };
     } catch (e) {
       return {

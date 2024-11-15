@@ -1,4 +1,4 @@
-import { deleteJobTittle } from "@/backend/api/delete";
+import { deleteJobTitle } from "@/backend/api/delete";
 import { getJobTitleList } from "@/backend/api/get";
 import { createJobTitle } from "@/backend/api/post";
 import { updateJobTitle } from "@/backend/api/update";
@@ -161,7 +161,7 @@ const JobTitleLookupTable = () => {
   const handleDeleteJobTitle = async (JobTitleId: string) => {
     try {
       setIsLoading(true);
-      await deleteJobTittle(supabaseClient, JobTitleId);
+      await deleteJobTitle(supabaseClient, JobTitleId);
       setJobTitleList((prev) =>
         prev.filter((proj) => proj.employee_job_title_id !== JobTitleId)
       );

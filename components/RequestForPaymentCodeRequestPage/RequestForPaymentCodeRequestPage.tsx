@@ -3,6 +3,7 @@ import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
   getRequestFieldResponse,
+  getRequestPageOnLoad,
   getSectionInRequestPage,
 } from "@/backend/api/get";
 import {
@@ -295,45 +296,41 @@ const RequestForPaymentCodeRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      if (!request.request_project_id) {
+      if (!request.request_project_id || !user)
         throw new Error("Project id is not defined.");
-      }
+
       setIsLoading(true);
       let obTicket = "";
       let departmentCode = "";
-      const [jiraAutomationData, automationFormResponse, rfpRequest] =
-        await Promise.all([
-          getJiraAutomationDataByProjectId(supabaseClient, {
-            teamProjectId: request.request_project_id,
-          }),
-          fetch("/api/jira/get-form?serviceDeskId=23&requestType=337", {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }),
-          supabaseClient.rpc("request_page_on_load", {
-            input_data: {
-              requestId: parentLrfRequestId,
-              userId: user?.user_id,
-            },
-          }),
-        ]);
+      const [
+        jiraAutomationData,
+        automationFormResponse,
+        { request: rfpRequest },
+      ] = await Promise.all([
+        getJiraAutomationDataByProjectId(supabaseClient, {
+          teamProjectId: request.request_project_id,
+        }),
+        fetch("/api/jira/get-form?serviceDeskId=23&requestType=337", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }),
+        getRequestPageOnLoad(supabaseClient, {
+          requestId: parentLrfRequestId,
+        }),
+      ]);
 
-      if (
-        !jiraAutomationData?.jiraProjectData ||
-        !automationFormResponse.ok ||
-        rfpRequest.error
-      ) {
+      if (!jiraAutomationData?.jiraProjectData || !automationFormResponse.ok) {
         throw new Error("Error fetching of jira automation data.");
       }
 
-      const rfpHeaderSectionFieldList = rfpRequest.data.request.request_form
-        .form_section[0].section_field as SectionField;
+      const rfpHeaderSectionFieldList = rfpRequest.request_form.form_section[0]
+        .section_field as SectionField;
 
-      const rfpPayeeSectionFieldList = rfpRequest.data.request.request_form
-        .form_section[1].section_field as SectionField;
+      const rfpPayeeSectionFieldList = rfpRequest.request_form.form_section[1]
+        .section_field as SectionField;
 
       const purposeFieldId = rfpPayeeSectionFieldList.find(
         (field) => field.field_name === "Purpose of Payment"
@@ -351,7 +348,7 @@ const RequestForPaymentCodeRequestPage = ({
       const payeeSectionFieldResponse = await getRequestFieldResponse(
         supabaseClient,
         {
-          requestId: rfpRequest.data.request.request_id,
+          requestId: rfpRequest.request_id,
           fieldId: [`${purposeFieldId}`, `${chargeToFieldId}`, `${obFieldId}`],
         }
       );

@@ -769,9 +769,8 @@ const EditITAssetRequestPage = ({
             <>
               <Alert color="blue">
                 Employee not found. Please enter your Project Manager&apos;s
-                details as the assignee to continue. Rest assured that
-                we&apos;re continuously updating our employee records, so you
-                won&apos;t need to do this in future requests.
+                details as the assignee of the IT Asset for advance requests or
+                for newly hired employees.
               </Alert>
               <Button fullWidth onClick={() => modals.closeAll()} mt="md">
                 I understand

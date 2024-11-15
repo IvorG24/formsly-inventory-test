@@ -89,38 +89,6 @@ export const areEqual = (array1: string[], array2: string[]) => {
   return false;
 };
 
-export const sortFormList = (
-  formList: FormTableRow[],
-  formslyFormSortingReferrence: string[]
-): FormTableRow[] => {
-  return formList.sort((formA, formB) => {
-    // Check if form_is_formsly_form is different
-    if (formA.form_is_formsly_form !== formB.form_is_formsly_form) {
-      return formA.form_is_formsly_form ? -1 : 1;
-    }
-
-    // If both forms have the same form_is_formsly_form value, sort them based on form_name
-    const indexA = formslyFormSortingReferrence.indexOf(formA.form_name);
-    const indexB = formslyFormSortingReferrence.indexOf(formB.form_name);
-
-    // If both form names are in the reference array, compare their indices
-    if (indexA !== -1 && indexB !== -1) {
-      return indexA - indexB;
-    }
-
-    // If only one form name is in the reference array, the one in the reference comes first
-    if (indexA !== -1) {
-      return -1;
-    }
-    if (indexB !== -1) {
-      return 1;
-    }
-
-    // If neither form name is in the reference array, keep their original order
-    return 0;
-  });
-};
-
 export const generateRequestDuplicateSection = (
   originalSection: RequestWithResponseType["request_form"]["form_section"][0]
 ) => {

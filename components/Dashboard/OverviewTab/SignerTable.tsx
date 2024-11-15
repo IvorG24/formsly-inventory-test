@@ -1,5 +1,7 @@
+import { useTeamMemberList } from "@/stores/useTeamMemberStore";
 import { startCase } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
+import { DashboardRequestorAndSignerType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -11,11 +13,11 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
   createStyles,
 } from "@mantine/core";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { RequestorAndSignerDataType } from "./Overview";
 
 const useStyles = createStyles(() => ({
   withBorderBottom: {
@@ -24,7 +26,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type SignerTableProps = {
-  signerList: RequestorAndSignerDataType[];
+  signerList: DashboardRequestorAndSignerType[];
   totalRequestCount: number;
   loadMoreSigner: (page: number) => void;
   isSignerFetchable: boolean;
@@ -40,6 +42,7 @@ const SignerTable = ({
   signerOffset,
   setSignerOffset,
 }: SignerTableProps) => {
+  const teamMemberList = useTeamMemberList();
   const { classes } = useStyles();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,10 +79,17 @@ const SignerTable = ({
         <Stack p="lg" mb="sm" spacing={32} ref={containerRef}>
           {totalRequestCount > 0 ? (
             signerList.map((signer) => {
-              const user = signer.team_member_user;
+              const teamMemberMatch = teamMemberList.find(
+                (member) => member.team_member_id === signer.team_member_id
+              );
+              if (!teamMemberMatch) return <></>;
+              const user = teamMemberMatch.team_member_user;
+              const signerFullname = startCase(
+                `${user.user_first_name} ${user.user_last_name}`
+              );
               const progressSections = signer.request
                 .map(({ label, value }) => ({
-                  value: (value / totalRequestCount) * 100,
+                  value: (value / signer.total) * 100,
                   color: `${getStatusToColor(label) || "dark"}`,
                   tooltip: `${startCase(label)}: ${value}`,
                 }))
@@ -88,22 +98,24 @@ const SignerTable = ({
               return (
                 <Stack key={user.user_id} spacing="xs">
                   <Group position="apart">
-                    <Group spacing="xs">
-                      <Avatar
-                        size="sm"
-                        radius="xl"
-                        src={user.user_avatar ?? null}
-                        color={getAvatarColor(
-                          Number(`${user.user_id.charCodeAt(0)}`)
-                        )}
-                      >
-                        {!user.user_avatar &&
-                          `${user.user_first_name[0]}${user.user_last_name[0]}`}
-                      </Avatar>
-                      <Text
-                        weight={500}
-                      >{`${user.user_first_name} ${user.user_last_name}`}</Text>
-                    </Group>
+                    <Tooltip label={signerFullname}>
+                      <Group spacing="xs">
+                        <Avatar
+                          size="sm"
+                          radius="xl"
+                          src={user.user_avatar ?? null}
+                          color={getAvatarColor(
+                            Number(`${user.user_id.charCodeAt(0)}`)
+                          )}
+                        >
+                          {!user.user_avatar &&
+                            `${user.user_first_name[0]}${user.user_last_name[0]}`}
+                        </Avatar>
+                        <Text weight={500} maw={120} truncate>
+                          {signerFullname}
+                        </Text>
+                      </Group>
+                    </Tooltip>
 
                     <Badge size="sm" variant="filled" color="dark">
                       Total: {signer.total.toLocaleString()}

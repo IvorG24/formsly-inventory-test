@@ -1,3 +1,4 @@
+import { getRequestPageOnLoad } from "@/backend/api/get";
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import ApplicationInformationV1RequestPage from "@/components/ApplicationInformationV1RequestPage/ApplicationInformationV1RequestPage";
 import BackgroundInvestigationRequestPage from "@/components/BackgroundInvestigationRequestPage/BackgroundInvestigationRequestPage";
@@ -28,32 +29,23 @@ import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps =
-  withAuthAndOnboardingRequestPage(
-    async ({ supabaseClient, user, context }) => {
-      try {
-        const { data, error } = await supabaseClient.rpc(
-          "request_page_on_load",
-          {
-            input_data: {
-              requestId: context.query.requestId,
-              userId: user.id,
-            },
-          }
-        );
-        if (error) throw error;
-        return {
-          props: data as Props,
-        };
-      } catch (e) {
-        return {
-          redirect: {
-            destination: "/500",
-            permanent: false,
-          },
-        };
-      }
+  withAuthAndOnboardingRequestPage(async ({ supabaseClient, context }) => {
+    try {
+      const data = await getRequestPageOnLoad(supabaseClient, {
+        requestId: context.query.requestId as string,
+      });
+      return {
+        props: data as Props,
+      };
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
     }
-  );
+  });
 
 type Props = {
   request: RequestWithResponseType;

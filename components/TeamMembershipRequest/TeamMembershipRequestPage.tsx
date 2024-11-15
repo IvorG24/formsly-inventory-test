@@ -12,6 +12,7 @@ import { getAvatarColor } from "@/utils/styling";
 import { TeamMembershipRequestTableRow, TeamTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Alert,
   Avatar,
   Badge,
   Box,
@@ -23,13 +24,19 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
-import { IconReload, IconSearch } from "@tabler/icons-react";
+import {
+  IconInfoCircle,
+  IconRefresh,
+  IconReload,
+  IconSearch,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type AvailableTeam = Pick<
   TeamTableRow,
@@ -39,9 +46,14 @@ type AvailableTeam = Pick<
 type Props = {
   teams: AvailableTeam;
   teamsCount: number;
+  teamMembershipRequestList: TeamMembershipRequestTableRow[];
 };
 
-const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
+const TeamMembershipRequestPage = ({
+  teams,
+  teamsCount,
+  teamMembershipRequestList,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const user = useUser();
   const router = useRouter();
@@ -50,7 +62,7 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembershipRequest, setTeamMembershipRequest] = useState<
     TeamMembershipRequestTableRow[]
-  >([]);
+  >(teamMembershipRequestList);
   const [availableTeamList, setAvailableTeamList] =
     useState<AvailableTeam>(teams);
   const [availableTeamCount, setAvailableTeamCount] = useState(teamsCount);
@@ -78,6 +90,26 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
       });
       setAvailableTeamList(teamsData.data);
       setAvailableTeamCount(teamsData.count);
+
+      const allUserTeamMembershipRequest: TeamMembershipRequestTableRow[] = [];
+      let offset = 0;
+      const limit = 500;
+      let fetchMoreUserTeamMembershipRequest = true;
+
+      while (fetchMoreUserTeamMembershipRequest) {
+        const userId = `${user?.id}`;
+        const data = await getUserTeamMembershipRequest(supabaseClient, {
+          userId,
+          offset,
+        });
+        if (data.length > 0) {
+          allUserTeamMembershipRequest.push(...data);
+          offset += limit;
+        }
+        fetchMoreUserTeamMembershipRequest = data.length === limit;
+      }
+
+      setTeamMembershipRequest(allUserTeamMembershipRequest);
     } catch (error) {
       notifications.show({
         message: "Failed to fetch teams",
@@ -120,64 +152,49 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
         color: "green",
       });
     } catch (error) {
-      notifications.show({
-        message: "Failed to join team. Please contact IT",
-        color: "red",
-      });
       if (isError(error)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: error.message,
-            error_url: router.asPath,
-            error_function: "handleSendRequestToJoin",
-            error_user_email: user?.email,
-            error_user_id: user?.id,
-          },
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        const errorMessage = error.message;
 
-  const handleFetchTeamMembershipRequest = async () => {
-    try {
-      setIsLoading(true);
-
-      const allUserTeamMembershipRequest: TeamMembershipRequestTableRow[] = [];
-      let offset = 0;
-      const limit = ROW_PER_PAGE;
-      let fetchMoreUserTeamMembershipRequest = true;
-
-      while (fetchMoreUserTeamMembershipRequest) {
-        const userId = `${user?.id}`;
-        const data = await getUserTeamMembershipRequest(supabaseClient, {
-          userId,
-          offset,
-        });
-        if (data.length > 0) {
-          allUserTeamMembershipRequest.push(...data);
-          offset += limit;
+        if (errorMessage === "Member already exists") {
+          modals.open({
+            title: <Text fw={500}>You are already a member of this team.</Text>,
+            centered: true,
+            children: (
+              <>
+                <Alert color="blue" icon={<IconInfoCircle size={16} />}>
+                  Please refresh the page to see the changes.
+                </Alert>
+                <Button
+                  fullWidth
+                  onClick={() => {
+                    modals.closeAll();
+                    router.reload();
+                  }}
+                  mt="md"
+                  leftIcon={<IconRefresh size={16} />}
+                >
+                  Refresh Page
+                </Button>
+              </>
+            ),
+          });
         }
-        fetchMoreUserTeamMembershipRequest = data.length === limit;
-      }
-
-      setTeamMembershipRequest(allUserTeamMembershipRequest);
-    } catch (e) {
-      notifications.show({
-        message: "Failed to fetch team membership requests",
-        color: "red",
-      });
-      if (isError(e)) {
-        await insertError(supabaseClient, {
-          errorTableRow: {
-            error_message: e.message,
-            error_url: router.asPath,
-            error_function: "handleFetchTeamMembershipRequest",
-            error_user_email: user?.email,
-            error_user_id: user?.id,
-          },
+      } else {
+        notifications.show({
+          message: "Failed to join team. Please contact IT",
+          color: "red",
         });
+        if (isError(error)) {
+          await insertError(supabaseClient, {
+            errorTableRow: {
+              error_message: error.message,
+              error_url: router.asPath,
+              error_function: "handleSendRequestToJoin",
+              error_user_email: user?.email,
+              error_user_id: user?.id,
+            },
+          });
+        }
       }
     } finally {
       setIsLoading(false);
@@ -216,12 +233,6 @@ const TeamMembershipRequestPage = ({ teams, teamsCount }: Props) => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (user && user.id) {
-      handleFetchTeamMembershipRequest();
-    }
-  }, [user]);
 
   return (
     <Container maw={3840} h="100%">

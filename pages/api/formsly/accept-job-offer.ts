@@ -21,7 +21,6 @@ export default async function handler(
         },
         body: JSON.stringify({
           input_data: {
-            requestReferenceId: data.requestReferenceId,
             email: data.email,
           },
         }),

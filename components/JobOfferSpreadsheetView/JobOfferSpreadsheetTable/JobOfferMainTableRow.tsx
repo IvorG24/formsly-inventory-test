@@ -483,7 +483,7 @@ const JobOfferMainTableRow = ({
                 render={({ field: { value, onChange } }) => {
                   return (
                     <Select
-                      label="Manpower Loading Reference Createdy By"
+                      label="Manpower Loading Reference Created By"
                       clearable
                       value={value}
                       required

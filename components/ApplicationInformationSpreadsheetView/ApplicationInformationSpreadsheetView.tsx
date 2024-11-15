@@ -4,7 +4,10 @@ import {
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
 import { useUserProfile } from "@/stores/useUserStore";
-import { DEFAULT_NUMBER_SSOT_ROWS, FETCH_OPTION_LIMIT } from "@/utils/constant";
+import {
+  DEFAULT_NUMBER_HR_SSOT_ROWS,
+  FETCH_OPTION_LIMIT,
+} from "@/utils/constant";
 import { isEqual } from "@/utils/functions";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
@@ -107,13 +110,13 @@ const ApplicationInformationSpreadsheetView = ({
           ...filterData,
           ...data,
           userId: user.user_id,
-          limit: DEFAULT_NUMBER_SSOT_ROWS,
+          limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
           page: data?.page ?? page,
           sort: data?.sort ?? sort,
         }
       );
 
-      if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
+      if (newData.length < DEFAULT_NUMBER_HR_SSOT_ROWS) {
         setIsMax(true);
       }
 
@@ -153,7 +156,7 @@ const ApplicationInformationSpreadsheetView = ({
       "applicationInformationSpreadsheetView",
       JSON.stringify({
         ...filterData,
-        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        limit: DEFAULT_NUMBER_HR_SSOT_ROWS,
         sort,
       })
     );

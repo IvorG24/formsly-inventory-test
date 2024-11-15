@@ -10,15 +10,10 @@ const useRealtimeProjectRequestSignerList = (
     requestId: string;
     initialRequestProjectSignerList: RequestProjectSignerStatusType;
     requestSignerList: RequestSignerType[];
-    isSourcedItemForm: boolean;
   }
 ) => {
-  const {
-    requestId,
-    initialRequestProjectSignerList,
-    requestSignerList,
-    isSourcedItemForm,
-  } = params;
+  const { requestId, initialRequestProjectSignerList, requestSignerList } =
+    params;
   const [projectSignerList, setProjectSignerList] = useState(
     initialRequestProjectSignerList
   );
@@ -41,7 +36,7 @@ const useRealtimeProjectRequestSignerList = (
                 signer.signer_id === payload.new.request_signer_signer_id
             );
 
-            if (signerTeamMember && isSourcedItemForm) {
+            if (signerTeamMember) {
               setProjectSignerList((signers) => {
                 return signers.map((signer) => {
                   if (
@@ -64,7 +59,7 @@ const useRealtimeProjectRequestSignerList = (
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [supabaseClient, requestId, requestSignerList, isSourcedItemForm]);
+  }, [supabaseClient, requestId, requestSignerList]);
 
   return projectSignerList;
 };

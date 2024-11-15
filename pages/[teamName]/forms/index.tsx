@@ -1,9 +1,8 @@
+import { getFormListPageOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import RequestFormListPage from "@/components/RequestFormListPage/RequestFormListPage";
-import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   DEFAULT_FORM_LIST_LIMIT,
-  FORMSLY_FORM_ORDER,
   UNHIDEABLE_FORMLY_FORMS,
 } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -13,24 +12,16 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient, user }) => {
     try {
-      const { data, error } = await supabaseClient.rpc(
-        "form_list_page_on_load",
-        {
-          input_data: {
-            userId: user.id,
-            limit: DEFAULT_FORM_LIST_LIMIT,
-          },
-        }
-      );
-      if (error) throw error;
+      const data = await getFormListPageOnLoad(supabaseClient, {
+        userId: user.id,
+        limit: DEFAULT_FORM_LIST_LIMIT,
+      });
+
       const formattedData = data as unknown as Props;
       return {
         props: {
           ...formattedData,
-          formList: sortFormList(
-            formattedData.formList,
-            FORMSLY_FORM_ORDER
-          ).filter(
+          formList: formattedData.formList.filter(
             (form) =>
               (form.form_is_formsly_form &&
                 !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)) ||

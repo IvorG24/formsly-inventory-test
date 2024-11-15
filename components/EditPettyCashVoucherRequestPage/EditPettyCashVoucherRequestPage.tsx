@@ -25,16 +25,20 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
+  Alert,
   Box,
   Button,
   Container,
   Flex,
   Space,
   Stack,
+  Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -392,6 +396,26 @@ const EditPettyCashVoucherRequestPage = ({
       } else {
         setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");
         setValue(`sections.${sectionIndex}.section_field.4.field_response`, "");
+        modals.open({
+          title: (
+            <Flex gap="xs" align="center">
+              <IconAlertTriangle size={16} color="red" />
+              <Text>Employee not found!</Text>
+            </Flex>
+          ),
+          centered: true,
+          children: (
+            <>
+              <Alert color="blue">
+                Newly hired employees or those with less than 6 months in the
+                company are not permitted to request a Petty Cash Voucher.
+              </Alert>
+              <Button fullWidth onClick={() => modals.closeAll()} mt="md">
+                I understand
+              </Button>
+            </>
+          ),
+        });
       }
     } catch (e) {
       setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");

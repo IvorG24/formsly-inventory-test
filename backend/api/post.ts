@@ -22,7 +22,6 @@ import {
   getFileType,
 } from "@/utils/string";
 import {
-  AddressTableInsert,
   AdOwnerRequestTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
@@ -81,7 +80,6 @@ import {
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
   SignerTableInsert,
-  SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
   TeamProjectWithAddressType,
@@ -94,8 +92,6 @@ import {
   TicketTableRow,
   UserSSSTableInsert,
   UserTableInsert,
-  UserTableRow,
-  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -103,7 +99,6 @@ import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import { getAssetId, getCurrentDate } from "./get";
 
-// Upload Image
 export const uploadImage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -140,17 +135,27 @@ export const uploadImage = async (
   };
 
   // compress image
-  const compressedImage: Blob = await new Promise((resolve) => {
-    new Compressor(image, {
-      quality: 0.6,
-      success(result) {
-        resolve(result);
-      },
-      error(error) {
-        throw error;
-      },
+  let compressedImage: Blob;
+
+  if (
+    ["image/jpeg", "image/png", "image/webp"].includes(
+      image.type.toLocaleLowerCase()
+    )
+  ) {
+    compressedImage = await new Promise((resolve, reject) => {
+      new Compressor(image, {
+        quality: 0.6,
+        success(result) {
+          resolve(result);
+        },
+        error(error) {
+          reject(error);
+        },
+      });
     });
-  });
+  } else {
+    compressedImage = image;
+  }
 
   const formattedFileName = `${formatDate(
     new Date(currentDate)
@@ -173,7 +178,6 @@ export const uploadImage = async (
   };
 };
 
-// Upload File
 export const uploadFile = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -230,28 +234,6 @@ export const uploadFile = async (
   };
 };
 
-// Create User
-export const createUser = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: UserTableInsert & { user_employee_number: string }
-) => {
-  const { user_phone_number } = params;
-
-  const { data, error } = await supabaseClient
-    .rpc("create_user", {
-      input_data: {
-        ...params,
-        user_phone_number: user_phone_number || "",
-      },
-    })
-    .select()
-    .single();
-  if (error) throw error;
-
-  return data as UserTableRow;
-};
-
-// Create Team
 export const createTeam = async (
   supabaseClient: SupabaseClient<Database>,
   params: TeamTableInsert
@@ -266,7 +248,6 @@ export const createTeam = async (
   return data;
 };
 
-// Create Team Member
 export const createTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: TeamMemberTableInsert
@@ -280,7 +261,6 @@ export const createTeamMember = async (
   return data;
 };
 
-// Create Team Member with team name
 export const createTeamMemberReturnTeamName = async (
   supabaseClient: SupabaseClient<Database>,
   params: TeamMemberTableInsert
@@ -298,7 +278,6 @@ export const createTeamMemberReturnTeamName = async (
   ];
 };
 
-// Create Team Invitation/s
 export const createTeamInvitation = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -316,7 +295,6 @@ export const createTeamInvitation = async (
   return data as InvitationTableRow[];
 };
 
-// Sign Up User
 export const signUpUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: { email: string; password: string }
@@ -333,7 +311,6 @@ export const signUpUser = async (
   }
 };
 
-// Sign In User
 export const signInUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: { email: string; password: string }
@@ -349,7 +326,6 @@ export const signInUser = async (
   }
 };
 
-// Email verification
 export const checkIfEmailExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -365,7 +341,6 @@ export const checkIfEmailExists = async (
   return data.length > 0;
 };
 
-// Send Reset Password Email
 export const sendResetPasswordEmail = async (
   supabaseClient: SupabaseClient<Database>,
   email: string
@@ -375,7 +350,6 @@ export const sendResetPasswordEmail = async (
   });
 };
 
-// Reset Password
 export const resetPassword = async (
   supabaseClient: SupabaseClient<Database>,
   password: string
@@ -431,7 +405,6 @@ export const createAttachment = async (
   return { data, url: attachmentValue.publicUrl };
 };
 
-// Create notification
 export const createNotification = async (
   supabaseClient: SupabaseClient<Database>,
   params: NotificationTableInsert
@@ -442,7 +415,6 @@ export const createNotification = async (
   if (error) throw error;
 };
 
-// Create comment
 export const createComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: CommentTableInsert
@@ -458,7 +430,6 @@ export const createComment = async (
   return { data, error };
 };
 
-// Create item
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -482,7 +453,6 @@ export const createItem = async (
   return data;
 };
 
-// Update item
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -504,7 +474,6 @@ export const updateItem = async (
   return data;
 };
 
-// Create item description field
 export const createItemDescriptionField = async (
   supabaseClient: SupabaseClient<Database>,
   params: (ItemDescriptionFieldTableInsert & {
@@ -554,7 +523,6 @@ export const createItemDescriptionField = async (
   });
 };
 
-// Create request form
 export const createRequestForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -573,7 +541,6 @@ export const createRequestForm = async (
   return data as unknown as FormTableRow;
 };
 
-// Create request
 export const createRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -599,6 +566,8 @@ export const createRequest = async (
       firstName: string;
       middleName: string;
       lastName: string;
+      contactNumber: string;
+      email: string;
     };
     interviewParams?: {
       status: string;
@@ -815,7 +784,6 @@ export const createRequest = async (
   return data as RequestTableRow;
 };
 
-// Edit request
 export const editRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -966,7 +934,6 @@ export const editRequest = async (
   return data as RequestTableRow;
 };
 
-// Create formsly premade forms
 export const createFormslyPremadeForms = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1029,25 +996,6 @@ export const createFormslyPremadeForms = async (
   if (error) throw error;
 };
 
-// Create Supplier
-export const createSupplier = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    supplierData: SupplierTableInsert;
-  }
-) => {
-  const { supplierData } = params;
-  const { data, error } = await supabaseClient
-    .schema("team_schema")
-    .from("supplier_table")
-    .insert(supplierData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
-// Create Team Group
 export const createTeamGroup = async (
   supabaseClient: SupabaseClient<Database>,
   params: TeamGroupTableInsert
@@ -1063,7 +1011,6 @@ export const createTeamGroup = async (
   return data;
 };
 
-// Create Team Project
 export const createTeamProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1093,7 +1040,6 @@ export const createTeamProject = async (
   return data as TeamProjectWithAddressType;
 };
 
-// Insert team member to group
 export const insertGroupMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1111,7 +1057,6 @@ export const insertGroupMember = async (
   return data as unknown as { data: GroupTeamMemberType[]; count: number };
 };
 
-// Insert team member to project
 export const insertProjectMember = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1146,57 +1091,6 @@ export const cancelTeamInvitation = async (
   if (error) throw error;
 };
 
-export const downloadFromStorage = (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    bucket: string;
-    filename: string;
-  }
-) => {
-  const { bucket, filename } = params;
-
-  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(filename, {
-    download: true,
-  });
-
-  return data.publicUrl;
-};
-
-// Create service
-export const createService = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    serviceData: ServiceTableInsert;
-    scope: ServiceForm["scope"];
-    formId: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("create_service", { input_data: params })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-// Create item description field
-export const createServiceScopeChoice = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: ServiceScopeChoiceTableInsert
-) => {
-  const { data, error } = await supabaseClient
-    .schema("service_schema")
-    .from("service_scope_choice_table")
-    .insert(params)
-    .select("*")
-    .single();
-  if (error) throw error;
-
-  return data;
-};
-
-// Create ticket comment
 export const createTicketComment = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1212,7 +1106,6 @@ export const createTicketComment = async (
   return data as TicketCommentTableRow;
 };
 
-// Create row in lookup table
 export const createRowInLookupTable = async (
   supabaseClient: SupabaseClient,
   params: {
@@ -1245,7 +1138,6 @@ export const createRowInLookupTable = async (
   };
 };
 
-// Create memo
 export const createTeamMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1334,10 +1226,6 @@ const processAllMemoLineItems = async (
   return JSON.parse(JSON.stringify(processedLineItems));
 };
 
-// End create memo
-
-// Agree to memo
-
 export const agreeToMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: { memoId: string; teamMemberId: string }
@@ -1362,7 +1250,6 @@ export const agreeToMemo = async (
   };
 };
 
-// create reference memo
 export const createReferenceMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: ReferenceMemoType,
@@ -1481,7 +1368,7 @@ const processReferenceMemoLineItems = async (
 
   return JSON.parse(JSON.stringify(processedLineItems));
 };
-// Create row in other expenses type table
+
 export const createRowInOtherExpensesTypeTable = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1500,20 +1387,6 @@ export const createRowInOtherExpensesTypeTable = async (
   return data;
 };
 
-// Create Valid ID
-export const createValidID = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: Omit<UserValidIDTableInsert, "user_valid_id_address_id"> &
-    AddressTableInsert
-) => {
-  const { data, error } = await supabaseClient.rpc("create_user_valid_id", {
-    input_data: params,
-  });
-  if (error) throw error;
-  return data;
-};
-
-// Create ticket
 export const createTicket = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1599,7 +1472,6 @@ export const createTicket = async (
   return data as TicketTableRow;
 };
 
-// Edit ticket
 export const editTicket = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1679,7 +1551,6 @@ export const editTicket = async (
   else return true;
 };
 
-// Create custom CSI
 export const createCustomCSI = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1697,7 +1568,6 @@ export const createCustomCSI = async (
   return Boolean(data);
 };
 
-// Create item division
 export const createItemDivision = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1714,7 +1584,6 @@ export const createItemDivision = async (
   return data;
 };
 
-// Create equipment
 export const createEquipment = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1737,7 +1606,6 @@ export const createEquipment = async (
   };
 };
 
-// Create equipment description
 export const createEquipmentDescription = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1762,7 +1630,6 @@ export const createEquipmentDescription = async (
   };
 };
 
-// Create equipment part
 export const createEquipmentPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1793,7 +1660,6 @@ export const createEquipmentPart = async (
   };
 };
 
-// create ped part from ticket request
 export const createPedPartFromTicketRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1817,7 +1683,6 @@ export const createPedPartFromTicketRequest = async (
   return data;
 };
 
-// assign jira formsly project
 export const assignJiraFormslyProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1842,7 +1707,6 @@ export const assignJiraFormslyProject = async (
   return { success: true, data: data };
 };
 
-// assign jira user to project
 export const assignJiraUserToProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1908,8 +1772,6 @@ export const assignJiraUserToProject = async (
     return { success: true, data: null, error: null };
   }
 };
-
-// assign or update jira user to item category
 
 export const assignJiraUserToItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1986,7 +1848,6 @@ const insertJiraItemCategory = async (
   return formatJiraItemUserTableData(data as unknown as JiraItemUserTableData);
 };
 
-// create jira project
 export const createJiraProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraProjectTableInsert
@@ -2015,7 +1876,6 @@ export const createJiraProject = async (
   return { data, error: null };
 };
 
-// create jira user
 export const createJiraUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraUserAccountTableInsert
@@ -2043,7 +1903,6 @@ export const createJiraUser = async (
   return { data, error: null };
 };
 
-// create jira item category
 export const createJiraFormslyItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraItemCategoryTableInsert
@@ -2084,7 +1943,6 @@ export const createJiraFormslyItemCategory = async (
   return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
 };
 
-// Create item category
 export const createItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2100,7 +1958,6 @@ export const createItemCategory = async (
   if (error) throw error;
 };
 
-// create jira organization
 export const createJiraOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraOrganizationTableInsert
@@ -2129,7 +1986,6 @@ export const createJiraOrganization = async (
   return { data, error: null };
 };
 
-// assign project organization
 export const assignJiraFormslyOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2155,7 +2011,6 @@ export const assignJiraFormslyOrganization = async (
   return data;
 };
 
-// Ecrypt app source id
 export const encryptAppSourceId = async () => {
   const response = await fetch("/api/jwt", {
     method: "POST",
@@ -2268,7 +2123,6 @@ export const sendNotificationToCostEngineer = async (
   if (error) throw error;
 };
 
-// create item from ticket request
 export const createItemFromTicketRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2353,6 +2207,7 @@ export const generateApiKey = async (
 
   return data;
 };
+
 export const createAdOwnerRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: AdOwnerRequestTableInsert
@@ -2813,6 +2668,16 @@ export const sendRequestToJoinTeam = async (
   }
 ) => {
   const { teamId, userId } = params;
+  const { count, error: checkIfUserIsMemberError } = await supabaseClient
+    .schema("team_schema")
+    .from("team_member_table")
+    .select("*", { count: "exact", head: true })
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId);
+  if (checkIfUserIsMemberError) throw checkIfUserIsMemberError;
+
+  if (Number(count)) throw Error("Member already exists");
+
   const { data, error } = await supabaseClient
     .schema("team_schema")
     .from("team_membership_request_table")
