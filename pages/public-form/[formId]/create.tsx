@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     });
 
     return {
-      props: data,
+      props: { form: data },
     };
   } catch (e) {
     if (isError(e)) {

@@ -14,11 +14,13 @@ import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormTableRow, TeamMemberTableRow } from "@/utils/types";
 import {
+  Accordion,
   Box,
   Button,
-  Divider,
   Menu,
+  NavLink,
   Portal,
+  ScrollArea,
   Space,
   Stack,
   Text,
@@ -65,12 +67,41 @@ type HRIndicatorCountType = {
   jobOffer: number;
 };
 
+type NavigationLinkType = {
+  idx: number;
+  link: {
+    label: string;
+    icon?: JSX.Element;
+  };
+  onClick: () => (void | Promise<void> | Promise<boolean>) | null;
+  active: boolean;
+};
+
+const NavigationLink = ({ idx, link, onClick, active }: NavigationLinkType) => {
+  return (
+    <NavLink
+      px={0}
+      key={`navLink-${idx}`}
+      label={link.label}
+      style={{ borderRadius: 5, display: "flex" }}
+      icon={link.icon ? link.icon : null}
+      active={active}
+      onClick={onClick}
+    />
+  );
+};
+
 const ReviewAppNavLink = () => {
+  const router = useRouter();
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
+  const [openedFormAccordion, setOpenedFormAccordion] = useState<string[]>([]);
+  const [openedRequestAccordion, setOpenedRequestAccordion] = useState<
+    string[]
+  >([]);
   const [hrIndicatorCount, setHrIndicatorCount] = useState({
     applicationInformation: 0,
     hrPhoneInterview: 0,
@@ -94,8 +125,6 @@ const ReviewAppNavLink = () => {
   const teamMemberGroup = useUserTeamMemberGroupList();
   const teamMemberGroups = useUserTeamMemberGroupList();
 
-  const router = useRouter();
-
   const createRequestFormList = forms.filter(
     (form) =>
       ![
@@ -105,6 +134,47 @@ const ReviewAppNavLink = () => {
       ].includes(form.form_name) &&
       !form.form_is_public_form &&
       !form.form_is_hidden
+  );
+
+  const hrFormNames = [
+    "Application Information",
+    "Background Investigation",
+    "Practical Test",
+    "General Assessment",
+    "Technical Assessment",
+  ];
+
+  const financeFormNames = [
+    "Liquidation",
+    "Petty Cash Voucher",
+    "Petty Cash Voucher Balance",
+    "Request for Payment Code",
+  ];
+
+  const hrManageForm = forms.filter((form) =>
+    hrFormNames.includes(form.form_name)
+  );
+
+  const financeManageForm = forms.filter((form) =>
+    financeFormNames.includes(form.form_name)
+  );
+
+  const operationManageForm = forms.filter(
+    (form) => !(hrManageForm.includes(form) || financeManageForm.includes(form))
+  );
+
+  const hrRequestForm = createRequestFormList.filter((form) =>
+    hrFormNames.includes(form.form_name)
+  );
+
+  const financeRequestForm = createRequestFormList.filter((form) =>
+    financeFormNames.includes(form.form_name)
+  );
+
+  const operationRequestForm = createRequestFormList.filter(
+    (form) =>
+      !hrFormNames.includes(form.form_name) &&
+      !financeFormNames.includes(form.form_name)
   );
 
   const itemForm = forms.filter(
@@ -142,66 +212,199 @@ const ReviewAppNavLink = () => {
 
   const renderCreateRequestMenu = () => {
     return (
-      <Box h="fit-content" mt="md">
-        <Text size="xs" weight={400}>
-          Create
-        </Text>
-        <Menu
-          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
-          withArrow
-          position="right"
+      <Box h="fit-content">
+        <Accordion
+          variant="separated"
+          multiple
+          value={openedRequestAccordion}
+          onChange={(value) => setOpenedRequestAccordion(value)}
         >
-          <Stack align="start" {...defaultNavLinkContainerProps}>
-            <Menu.Target>
-              <Button
-                fw={400}
-                leftIcon={<IconFile {...defaultIconProps} />}
-                variant="transparent"
+          <Accordion.Item value="create">
+            <Accordion.Control>
+              <Text size="sm" weight={400}>
+                Create
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Menu
+                trigger="hover"
+                shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                withArrow
+                position="right"
               >
-                Create Request
-              </Button>
-            </Menu.Target>
-            <Button
-              fw={400}
-              leftIcon={<IconTicket {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/tickets/create`)
-              }
-            >
-              Create Ticket
-            </Button>
-            <Button
-              fw={400}
-              leftIcon={<IconFileDescription {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/memo/create`)
-              }
-            >
-              Create Memo
-            </Button>
-          </Stack>
+                <Stack
+                  spacing={0}
+                  align="start"
+                  {...defaultNavLinkContainerProps}
+                >
+                  <Menu.Target>
+                    <Box w="100%">
+                      <NavigationLink
+                        idx={0}
+                        link={{
+                          label: "Create Request",
+                          icon: (
+                            <Box ml="sm" {...defaultNavLinkContainerProps}>
+                              <IconFile {...defaultIconProps} />
+                            </Box>
+                          ),
+                        }}
+                        onClick={() => {
+                          return null;
+                        }}
+                        active={
+                          router.pathname.includes("forms") &&
+                          router.pathname.includes("create")
+                        }
+                      />
+                    </Box>
+                  </Menu.Target>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "Create Ticket",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconTicket {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(
+                          `/${activeTeamNameToUrl}/tickets/create`
+                        )
+                      }
+                      active={
+                        router.pathname.includes("tickets") &&
+                        router.pathname.includes("create")
+                      }
+                    />
+                  </Box>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "Create Memo",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconFileDescription {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/memo/create`)
+                      }
+                      active={
+                        router.pathname.includes("memo") &&
+                        router.pathname.includes("create")
+                      }
+                    />
+                  </Box>
+                </Stack>
 
-          <Portal>
-            <Menu.Dropdown>
-              {createRequestFormList
-                .sort((a, b) => a.form_name.localeCompare(b.form_name))
-                .map((form) => (
-                  <Menu.Item
-                    key={form.form_id}
-                    onClick={async () =>
-                      await router.push(
-                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                      )
-                    }
-                  >
-                    {form.form_name}
-                  </Menu.Item>
-                ))}
-            </Menu.Dropdown>
-          </Portal>
-        </Menu>
+                <Portal>
+                  <Menu.Dropdown>
+                    <ScrollArea.Autosize mah={300}>
+                      {/* HR Forms Section */}
+                      {hrRequestForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="hr">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Human Resources
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {hrRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Button
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Button>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+
+                      {/* Finance Forms Section */}
+                      {financeRequestForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="finance">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Finance
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {financeRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+
+                      {/* Operation Forms Section */}
+                      {operationRequestForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="operations">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Operations
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {operationRequestForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+                    </ScrollArea.Autosize>
+                  </Menu.Dropdown>
+                </Portal>
+              </Menu>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       </Box>
     );
   };
@@ -209,62 +412,188 @@ const ReviewAppNavLink = () => {
   const renderManageFormMenu = () => {
     return (
       <Box h="fit-content">
-        <Menu
-          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
-          withArrow
-          position="right"
+        <Accordion
+          variant="separated"
+          multiple
+          value={openedFormAccordion}
+          onChange={(value) => setOpenedFormAccordion(value)}
         >
-          <Stack align="start" {...defaultNavLinkContainerProps}>
-            <Menu.Target>
-              <Button
-                fw={400}
-                leftIcon={<IconFileText {...defaultIconProps} />}
-                variant="transparent"
+          <Accordion.Item value="form">
+            <Accordion.Control>
+              <Text size="sm" weight={400}>
+                Form
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Menu
+                trigger="hover"
+                shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                withArrow
+                position="right"
               >
-                Manage Form{forms.length > 1 ? "s" : ""} ({forms.length})
-              </Button>
-            </Menu.Target>
-            <Button
-              fw={400}
-              leftIcon={<IconFilePlus {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/forms/build`)
-              }
-            >
-              Build Form
-            </Button>
-          </Stack>
+                <Stack
+                  spacing={0}
+                  align="start"
+                  {...defaultNavLinkContainerProps}
+                >
+                  <Menu.Target>
+                    <Box w="100%">
+                      <NavigationLink
+                        idx={0}
+                        link={{
+                          label:
+                            forms.length > 1 ? "Manage Forms" : "Manage Form",
+                          icon: (
+                            <Box ml="sm" {...defaultNavLinkContainerProps}>
+                              <IconFileText {...defaultIconProps} />
+                            </Box>
+                          ),
+                        }}
+                        onClick={() => {
+                          return null;
+                        }}
+                        active={
+                          router.pathname.includes("forms") &&
+                          !router.pathname.includes("create") &&
+                          !router.pathname.includes("build")
+                        }
+                      />
+                    </Box>
+                  </Menu.Target>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "Build Form",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconFilePlus {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/forms/build`)
+                      }
+                      active={
+                        router.pathname.includes("forms") &&
+                        router.pathname.includes("build")
+                      }
+                    />
+                  </Box>
+                </Stack>
 
-          <Portal>
-            <Menu.Dropdown>
-              <Menu.Item
-                key={"all-form"}
-                onClick={async () =>
-                  await router.push(`/${activeTeamNameToUrl}/forms/`)
-                }
-                c="blue"
-              >
-                View All
-              </Menu.Item>
-              <Divider />
-              {forms
-                .sort((a, b) => a.form_name.localeCompare(b.form_name))
-                .map((form) => (
-                  <Menu.Item
-                    key={form.form_id}
-                    onClick={async () =>
-                      await router.push(
-                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
-                      )
-                    }
-                  >
-                    {form.form_name}
-                  </Menu.Item>
-                ))}
-            </Menu.Dropdown>
-          </Portal>
-        </Menu>
+                <Portal>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      w={290}
+                      key={"all-form"}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/forms/`)
+                      }
+                      c="blue"
+                    >
+                      View All
+                    </Menu.Item>
+                    <ScrollArea.Autosize mah={300}>
+                      {/* HR Forms Section */}
+                      {hrManageForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="hr">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Human Resources
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {hrManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+
+                      {/* Finance Forms Section */}
+                      {financeManageForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="finance">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Finance
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {financeManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+
+                      {/* Operation Forms Section */}
+                      {operationManageForm.length > 0 && (
+                        <Accordion variant="contained">
+                          <Accordion.Item value="operations">
+                            <Accordion.Control>
+                              <Text size="sm" weight={400} color="black">
+                                Operations
+                              </Text>
+                            </Accordion.Control>
+                            <Accordion.Panel>
+                              {operationManageForm
+                                .sort((a, b) =>
+                                  a.form_name.localeCompare(b.form_name)
+                                )
+                                .map((form) => (
+                                  <Menu.Item
+                                    key={form.form_id}
+                                    onClick={async () =>
+                                      await router.push(
+                                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                                      )
+                                    }
+                                  >
+                                    {form.form_name}
+                                  </Menu.Item>
+                                ))}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        </Accordion>
+                      )}
+                    </ScrollArea.Autosize>
+                  </Menu.Dropdown>
+                </Portal>
+              </Menu>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       </Box>
     );
   };
@@ -272,69 +601,113 @@ const ReviewAppNavLink = () => {
   const renderMetricsMenu = () => {
     return (
       <Box h="fit-content" mt="md">
-        <Text size="xs" weight={400}>
-          Metrics
-        </Text>
-        <Menu
-          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
-          withArrow
-          position="right"
-        >
-          <Stack align="start" {...defaultNavLinkContainerProps}>
-            <Button
-              fw={400}
-              leftIcon={<IconDashboard {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/dashboard`)
-              }
-            >
-              Dashboard
-            </Button>
-            <Menu.Target>
-              <Button
-                fw={400}
-                leftIcon={<IconTicket {...defaultIconProps} />}
-                variant="transparent"
+        <Accordion variant="separated">
+          <Accordion.Item value="metrics">
+            <Accordion.Control>
+              <Text size="sm" weight={400}>
+                Metrics
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Menu
+                trigger="hover"
+                shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+                withArrow
+                position="right"
               >
-                Analytics
-              </Button>
-            </Menu.Target>
-            <Button
-              fw={400}
-              leftIcon={<IconFileReport {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/sla`)
-              }
-            >
-              SLA
-            </Button>
-            <Button
-              fw={400}
-              leftIcon={<IconReportAnalytics {...defaultIconProps} />}
-              variant="transparent"
-              onClick={async () =>
-                await router.push(`/${activeTeamNameToUrl}/report`)
-              }
-            >
-              Report
-            </Button>
-          </Stack>
-
-          <Portal>
-            <Menu.Dropdown>
-              {analyticsMenuOptions.map((option, index) => (
-                <Menu.Item
-                  key={index}
-                  onClick={() => handleRedirectToAnalyticsPage(option)}
+                <Stack
+                  spacing={0}
+                  align="start"
+                  {...defaultNavLinkContainerProps}
                 >
-                  {option}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Portal>
-        </Menu>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "Dashboard",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconDashboard {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/dashboard`)
+                      }
+                      active={router.pathname.includes("dashboard")}
+                    />
+                  </Box>
+                  <Menu.Target>
+                    <Box w="100%">
+                      <NavigationLink
+                        idx={0}
+                        link={{
+                          label: "Analytics",
+                          icon: (
+                            <Box ml="sm" {...defaultNavLinkContainerProps}>
+                              <IconTicket {...defaultIconProps} />
+                            </Box>
+                          ),
+                        }}
+                        onClick={() => {
+                          return null;
+                        }}
+                        active={router.pathname.includes("analytics")}
+                      />
+                    </Box>
+                  </Menu.Target>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "SLA",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconFileReport {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/sla`)
+                      }
+                      active={router.pathname.includes("sla")}
+                    />
+                  </Box>
+                  <Box w="100%">
+                    <NavigationLink
+                      idx={0}
+                      link={{
+                        label: "Report",
+                        icon: (
+                          <Box ml="sm" {...defaultNavLinkContainerProps}>
+                            <IconReportAnalytics {...defaultIconProps} />
+                          </Box>
+                        ),
+                      }}
+                      onClick={async () =>
+                        await router.push(`/${activeTeamNameToUrl}/report`)
+                      }
+                      active={router.pathname.includes("report")}
+                    />
+                  </Box>
+                </Stack>
+
+                <Portal>
+                  <Menu.Dropdown>
+                    {analyticsMenuOptions.map((option, index) => (
+                      <Menu.Item
+                        key={index}
+                        onClick={() => handleRedirectToAnalyticsPage(option)}
+                      >
+                        {option}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Dropdown>
+                </Portal>
+              </Menu>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       </Box>
     );
   };
@@ -679,6 +1052,29 @@ const ReviewAppNavLink = () => {
           links={listSection.slice(0, 2)}
           {...defaultNavLinkProps}
         />
+      )}
+
+      {forms.length > 0 && (
+        <>
+          {
+            (userTeamMemberData?.team_member_role === "ADMIN" ||
+              userTeamMemberData?.team_member_role === "OWNER") &&
+              renderManageFormMenu()
+            // <>
+            //   <NavLinkSection
+            //     label={"Form"}
+            //     links={[]}
+            //     {...defaultNavLinkProps}
+            //   />
+            //   {renderManageFormMenu()}
+            //   {/* <NavLinkSection
+            //     label={"Form"}
+            //     links={ownerAndAdminFormSection}
+            //     {...defaultNavLinkProps}
+            //   /> */}
+            // </>
+          }
+        </>
       )}
 
       {!isEmpty(activeTeam) && hasTeam && (
