@@ -1054,29 +1054,6 @@ const ReviewAppNavLink = () => {
         />
       )}
 
-      {forms.length > 0 && (
-        <>
-          {
-            (userTeamMemberData?.team_member_role === "ADMIN" ||
-              userTeamMemberData?.team_member_role === "OWNER") &&
-              renderManageFormMenu()
-            // <>
-            //   <NavLinkSection
-            //     label={"Form"}
-            //     links={[]}
-            //     {...defaultNavLinkProps}
-            //   />
-            //   {renderManageFormMenu()}
-            //   {/* <NavLinkSection
-            //     label={"Form"}
-            //     links={ownerAndAdminFormSection}
-            //     {...defaultNavLinkProps}
-            //   /> */}
-            // </>
-          }
-        </>
-      )}
-
       {!isEmpty(activeTeam) && hasTeam && (
         <NavLinkSection
           label={"Team"}
@@ -1092,7 +1069,6 @@ const ReviewAppNavLink = () => {
           {...defaultNavLinkProps}
         />
       )}
-
       {!isEmpty(activeTeam) && hasTeam && teamMemberGroups && (
         <NavLinkSection
           label={"Inventory"}
@@ -1105,11 +1081,6 @@ const ReviewAppNavLink = () => {
           {(userTeamMemberData?.team_member_role === "ADMIN" ||
             userTeamMemberData?.team_member_role === "OWNER") && (
             <>
-              <NavLinkSection
-                label={"Form"}
-                links={[]}
-                {...defaultNavLinkProps}
-              />
               {/* <NavLinkSection
                 label={"Form"}
                 links={ownerAndAdminFormSection}
